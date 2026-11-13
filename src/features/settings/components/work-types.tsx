@@ -23,7 +23,7 @@ import type {
   TimeInputMode,
 } from '#/data/types'
 import { LIMITS } from '#/domain/rules'
-import { FREE_LIMITS } from '#/features/billing/plans'
+import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
 import { useCurrentUser } from '#/features/auth/session'
 import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
@@ -66,7 +66,7 @@ export function WorkTypeSettings() {
           const active = types.filter((x) => !x.archivedAt)
           const archived = types.filter((x) => x.archivedAt)
           const customCount = active.filter((x) => !x.isSystem).length
-          const limited = user?.plan === 'free'
+          const limited = !hasProAccess(user)
           const atLimit = limited && customCount >= FREE_LIMITS.customWorkTypes
 
           return (

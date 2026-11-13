@@ -285,8 +285,12 @@ export function AdminPage() {
                         {u.id === me?.id && (
                           <Badge tone="muted">{t.badges.you}</Badge>
                         )}
-                        {u.role === 'admin' && (
-                          <Badge tone="info">{t.badges.admin}</Badge>
+                        {u.isOwner ? (
+                          <Badge tone="success">{t.badges.owner}</Badge>
+                        ) : (
+                          u.role === 'admin' && (
+                            <Badge tone="info">{t.badges.admin}</Badge>
+                          )
                         )}
                         {u.isDemo && (
                           <Badge tone="muted">{t.badges.demo}</Badge>
@@ -483,6 +487,8 @@ function ManageDialog({
     onSuccess: onClose,
   })
   const busy = update.isPending || revoke.isPending || remove.isPending
+  // Własne konto i konto właściciela: bez zmiany roli, blokady i usuwania.
+  const locked = self || user.isOwner
   const sub = user.subscription
 
   return (
@@ -496,8 +502,12 @@ function ManageDialog({
           <div className="space-y-6">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="mr-1 text-lg font-semibold">{name}</span>
-              {user.role === 'admin' && (
-                <Badge tone="info">{t.badges.admin}</Badge>
+              {user.isOwner ? (
+                <Badge tone="success">{t.badges.owner}</Badge>
+              ) : (
+                user.role === 'admin' && (
+                  <Badge tone="info">{t.badges.admin}</Badge>
+                )
               )}
               {user.isDemo && <Badge tone="muted">{t.badges.demo}</Badge>}
               {user.disabledAt && (
@@ -546,9 +556,9 @@ function ManageDialog({
               )}
             </dl>
 
-            {self && (
+            {locked && (
               <p className="rounded-lg border border-line bg-muted/50 px-3.5 py-3 text-sm">
-                {t.dialog.self}
+                {user.isOwner ? t.dialog.owner : t.dialog.self}
               </p>
             )}
             {user.isDemo && (
@@ -588,7 +598,7 @@ function ManageDialog({
               </div>
             )}
 
-            {!user.isDemo && !self && (
+            {!user.isDemo && !locked && (
               <div className="border-t border-line pt-5">
                 <Switch
                   label={t.dialog.role}
@@ -616,7 +626,7 @@ function ManageDialog({
                   {t.dialog.revoke}
                 </Button>
               </div>
-              {!self && (
+              {!locked && (
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="max-w-[38ch] text-sm text-ink-soft">
                     {user.disabledAt
@@ -646,7 +656,7 @@ function ManageDialog({
               )}
             </div>
 
-            {!self && (
+            {!locked && (
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
                 <div>
                   <h3 className="font-semibold">{t.dialog.danger}</h3>

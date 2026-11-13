@@ -36,7 +36,10 @@ export function PlanSettings({
         {(user) => (
           <>
             {user.isDemo && <DemoNotice />}
-            <PlanDetails planId={user.plan} />
+            <PlanDetails
+              planId={user.role === 'admin' ? 'lifetime' : user.plan}
+              admin={user.role === 'admin'}
+            />
           </>
         )}
       </QueryView>
@@ -92,7 +95,13 @@ function CheckoutReturn({ sessionId }: { sessionId: string }) {
 
 type PlanCode = 'free' | 'pro' | 'lifetime'
 
-function PlanDetails({ planId }: { planId: PlanCode }) {
+function PlanDetails({
+  planId,
+  admin = false,
+}: {
+  planId: PlanCode
+  admin?: boolean
+}) {
   const t = useMessages(settingsMessages).plan
   const b = useMessages(billingMessages).plan
   const pricing = useMessages(marketingMessages).pricing
@@ -103,7 +112,11 @@ function PlanDetails({ planId }: { planId: PlanCode }) {
   const customCount = types.filter((x) => !x.isSystem && !x.archivedAt).length
   const pro = planById('pro')
   const isFree = planId === 'free'
-  const name = planId === 'lifetime' ? 'Lifetime' : planById(planId).name
+  const name = admin
+    ? 'Admin'
+    : planId === 'lifetime'
+      ? 'Lifetime'
+      : planById(planId).name
   const featureList = pricing.features[planId === 'free' ? 'free' : 'pro']
   const sub = billing?.subscription
   const day = (iso: string) =>
@@ -187,7 +200,9 @@ function PlanDetails({ planId }: { planId: PlanCode }) {
             </p>
           )}
           {planId === 'lifetime' && (
-            <p className="mt-3 text-ink-soft">{b.lifetimeNote}</p>
+            <p className="mt-3 text-ink-soft">
+              {admin ? b.adminNote : b.lifetimeNote}
+            </p>
           )}
         </div>
       </SettingsCard>

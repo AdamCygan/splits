@@ -5,6 +5,7 @@ import { ArrowLeft, Check, Lock, ShieldCheck } from 'lucide-react'
 import { FormAlert } from '#/components/form/form-field'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { data } from '#/data'
+import { useCurrentUser } from '#/features/auth/session'
 import { useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
 import { billingMessages } from '#/i18n/messages/billing'
@@ -35,7 +36,9 @@ export function CheckoutPage({
   const checkout = useStripeRedirect((id: 'pro') => data.billing.checkout(id))
 
   const status = billing.data
+  const isAdmin = useCurrentUser()?.role === 'admin'
   const owned =
+    isAdmin ||
     status?.plan === 'lifetime' ||
     status?.plan === planId ||
     (status?.subscription?.active && status.subscription.plan === planId)

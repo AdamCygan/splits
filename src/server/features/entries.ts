@@ -9,7 +9,7 @@ import {
   validateEntry,
 } from '#/domain/entries'
 import { spForType, taskGroupKey } from '#/domain/report'
-import { FREE_LIMITS } from '#/features/billing/plans'
+import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
 import { db } from '../db/client'
 import type { Tx } from '../db/client'
 import * as t from '../db/schema'
@@ -223,7 +223,7 @@ export const entryRoutes = new Hono<AppEnv>()
     if (range.to < range.from) throw invalid('to')
     // Plan Free: raporty z ostatnich 30 dni (jak w cenniku) — pilnowane także tutaj, nie tylko w UI.
     const [user] = await db
-      .select({ plan: t.users.plan })
+      .select({ plan: t.users.plan, role: t.users.role })
       .from(t.users)
       .where(eq(t.users.id, userId))
     const oldest = addDays(
@@ -231,7 +231,7 @@ export const entryRoutes = new Hono<AppEnv>()
       -(FREE_LIMITS.historyDays - 1),
     )
     const from =
-      user?.plan === 'free' && range.from < oldest ? oldest : range.from
+      !hasProAccess(user) && range.from < oldest ? oldest : range.from
     const { to } = range
     if (to < from) return c.json([])
     const rows = await db

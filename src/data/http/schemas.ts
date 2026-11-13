@@ -182,6 +182,7 @@ export const adminUserSchema = z.object({
   isDemo: z.boolean(),
   hasPassword: z.boolean(),
   emailVerified: z.boolean(),
+  isOwner: z.boolean().default(false),
   disabledAt: z.string().nullable(),
   createdAt: z.string(),
   lastLoginAt: z.string().nullable(),

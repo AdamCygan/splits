@@ -237,6 +237,8 @@ export type AdminUser = {
   isDemo: boolean
   hasPassword: boolean
   emailVerified: boolean
+  /** Właściciel aplikacji (ADMIN_EMAILS): nie da się go zablokować, usunąć ani zdegradować. */
+  isOwner: boolean
   /** Data blokady konta albo null. */
   disabledAt: string | null
   createdAt: string

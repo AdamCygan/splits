@@ -30,6 +30,7 @@ import {
 import type { AppEnv } from '../http/context'
 import { ApiError, invalid, notFound } from '../http/errors'
 import { body, parse } from '../http/inputs'
+import { isOwner } from './auth'
 import { cancelSubscriptionsFor } from './billing'
 
 /**
@@ -125,6 +126,7 @@ async function describe(rows: Array<UserRow>) {
       isDemo: u.isDemo,
       hasPassword: u.passwordHash !== null,
       emailVerified: u.emailVerifiedAt !== null,
+      isOwner: isOwner(u),
       disabledAt: iso(u.disabledAt),
       createdAt: u.createdAt.toISOString(),
       lastLoginAt: iso(u.lastLoginAt),
@@ -256,6 +258,9 @@ export const adminRoutes = new Hono<AppEnv>()
       throw new ApiError('admin.self', 400)
     if (user.isDemo && (input.plan !== undefined || input.role !== undefined))
       throw invalid()
+    // Właściciela (ADMIN_EMAILS) nie da się zdegradować ani zablokować z panelu.
+    if (isOwner(user) && (input.role === 'client' || input.disabled === true))
+      throw new ApiError('admin.owner', 400)
 
     const updated = await db.transaction(async (tx) => {
       const set: Partial<UserRow> = {}
@@ -322,6 +327,7 @@ export const adminRoutes = new Hono<AppEnv>()
     const admin = c.get('admin')!
     const user = await findUser(c.req.param('id'))
     if (user.id === admin.id) throw new ApiError('admin.self', 400)
+    if (isOwner(user)) throw new ApiError('admin.owner', 400)
     if (billingEnabled()) await cancelSubscriptionsFor(user.id)
     await db.transaction(async (tx) => {
       await log(tx, admin, user, 'user.deleted', `plan ${user.plan}`)

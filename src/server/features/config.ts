@@ -2,7 +2,7 @@ import { and, asc, eq, isNull, ne, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import type { TaskTypeInput } from '#/data/types'
 import { validateScale } from '#/domain/sp-scale'
-import { FREE_LIMITS } from '#/features/billing/plans'
+import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
 import { db } from '../db/client'
 import type { Tx } from '../db/client'
 import * as t from '../db/schema'
@@ -68,7 +68,7 @@ async function activeCustomTypes(tx: Tx, userId: string) {
 async function assertTypeSlot(tx: Tx, userId: string) {
   const user = await currentUser(userId)
   if (
-    user.plan === 'free' &&
+    !hasProAccess(user) &&
     (await activeCustomTypes(tx, userId)) >= FREE_LIMITS.customWorkTypes
   )
     throw new ApiError('plan.limit_custom_types', 403)

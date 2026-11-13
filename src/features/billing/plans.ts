@@ -25,6 +25,14 @@ export const plans: ReadonlyArray<Plan> = [
 export const planById = (id: PlanId) => plans.find((p) => p.id === id)!
 
 /** Limity planu Free (egzekwowane też przez API). */
+/**
+ * Pełny dostęp do funkcji Pro: płatny plan (Pro, Lifetime) albo konto administratora.
+ * Administrator nie płaci za własną aplikację, a jego plan w bazie zostaje bez zmian.
+ */
+export const hasProAccess = (
+  user: { plan: string; role: string } | null | undefined,
+) => !!user && (user.plan !== 'free' || user.role === 'admin')
+
 export const FREE_LIMITS = { customWorkTypes: 3, historyDays: 30 } as const
 
 /** Dzień, w którym kończy się roczny okres opłacony dziś. */

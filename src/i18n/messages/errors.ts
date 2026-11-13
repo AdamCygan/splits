@@ -24,6 +24,8 @@ const en = {
   'demo.unavailable':
     'The demo is busy right now. Try again in a few minutes or create a free account.',
   'admin.self': 'You can’t do this to your own account.',
+  'admin.owner':
+    'This is an owner account (ADMIN_EMAILS). It can’t be blocked, deleted or lose admin rights.',
   'admin.last_admin': 'This is the last administrator. Add another one first.',
   'billing.unavailable': 'Payments aren’t switched on yet. Try again later.',
   'billing.already_subscribed':
@@ -75,6 +77,8 @@ const pl: ErrorMessages = {
   'demo.unavailable':
     'Demo jest teraz zajęte. Spróbuj za kilka minut albo załóż darmowe konto.',
   'admin.self': 'Nie możesz zrobić tego na własnym koncie.',
+  'admin.owner':
+    'To konto właściciela (ADMIN_EMAILS). Nie da się go zablokować, usunąć ani odebrać mu roli admina.',
   'admin.last_admin': 'To ostatni administrator. Najpierw dodaj kolejnego.',
   'billing.unavailable': 'Płatności nie są jeszcze włączone. Spróbuj później.',
   'billing.already_subscribed':

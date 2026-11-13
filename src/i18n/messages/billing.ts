@@ -54,6 +54,8 @@ const en = {
       'We’re confirming your payment. It usually takes a few seconds, refresh the page in a moment.',
     lifetimeNote:
       'You have Lifetime. Every Pro feature is yours, now and in the future.',
+    adminNote:
+      'Administrator account: every Pro feature is on, with no payment.',
   },
 }
 
@@ -112,6 +114,8 @@ const pl: BillingMessages = {
       'Potwierdzamy płatność. Zwykle trwa to kilka sekund, odśwież stronę za chwilę.',
     lifetimeNote:
       'Masz Lifetime. Wszystkie funkcje Pro są Twoje, teraz i w przyszłości.',
+    adminNote:
+      'Konto administratora: wszystkie funkcje Pro działają bez opłat.',
   },
 }
 

@@ -115,7 +115,10 @@ Wyłączysz to zmienną `MIGRATE_ON_START=false`.
   na typy pracy) i porównanie zakończonych sprintów ze średnim czasem na SP.
 - **Admin** (rola `admin`) – statystyki, lista kont z wyszukiwaniem i filtrami, zmiana planu i roli,
   blokada (od razu wylogowuje), wylogowanie ze wszystkich urządzeń, usunięcie konta, dziennik działań.
-  Administrator nie widzi treści wpisów. Pierwszego administratora ustawiasz w bazie:
+  Administrator nie widzi treści wpisów i ma wszystko z Pro bez płacenia.
+  Siebie (właściciela) ustawiasz zmienną `ADMIN_EMAILS=ty@firma.pl`: po zalogowaniu z potwierdzonym
+  adresem (Google albo reset hasła) konto dostaje rolę admin, a inni administratorzy nie mogą go
+  zablokować, usunąć ani odebrać mu roli. Alternatywa w bazie:
   `UPDATE users SET role = 'admin' WHERE email = 'ty@firma.pl';`
 - **Demo** – `/demo` otwiera konto z przykładowymi danymi bez rejestracji (bez płatności i zmian
   konta, usuwane po 24 h).

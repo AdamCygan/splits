@@ -63,11 +63,35 @@ export function requestMeta(c: Context) {
 
 const lower = (value: string) => value.trim().toLowerCase()
 
+/** Czy konto należy do właściciela aplikacji (ADMIN_EMAILS) i ma potwierdzony adres. */
+export const isOwner = (
+  user: Pick<typeof users.$inferSelect, 'email' | 'emailVerifiedAt' | 'isDemo'>,
+) =>
+  !user.isDemo &&
+  user.emailVerifiedAt !== null &&
+  serverEnv.adminEmails.has(user.email.toLowerCase())
+
+/**
+ * Właściciel dostaje rolę admina przy logowaniu i odświeżeniu sesji. Tylko z potwierdzonym
+ * adresem (Google albo hasło ustawione z linku z e-maila): rejestracja nie sprawdza adresu,
+ * więc bez tego obcy mógłby założyć konto na e-mail właściciela i przejąć panel.
+ */
+async function promoteOwner(tx: Tx, user: typeof users.$inferSelect) {
+  if (user.role === 'admin' || !isOwner(user)) return user
+  const [promoted] = await tx
+    .update(users)
+    .set({ role: 'admin' })
+    .where(eq(users.id, user.id))
+    .returning()
+  return promoted ?? user
+}
+
 export async function sessionFor(
   c: Context,
   tx: Tx,
-  user: typeof users.$inferSelect,
+  account: typeof users.$inferSelect,
 ): Promise<AuthSession> {
+  const user = await promoteOwner(tx, account)
   const refresh = await issueRefreshToken(tx, user.id, requestMeta(c))
   setRefreshCookie(c, refresh)
   const access = await signAccessToken(user.id)
@@ -299,11 +323,12 @@ export const authRoutes = new Hono<AppEnv>()
     const session = await db.transaction(async (tx) => {
       const rotated = await rotateRefreshToken(tx, token, requestMeta(c))
       if (!rotated.ok) return null
-      const [user] = await tx
+      const [found] = await tx
         .select()
         .from(users)
         .where(eq(users.id, rotated.userId))
-      if (!user || user.disabledAt) return null
+      if (!found || found.disabledAt) return null
+      const user = await promoteOwner(tx, found)
       setRefreshCookie(c, rotated.token)
       const access = await signAccessToken(user.id)
       return {
@@ -380,6 +405,8 @@ export const authRoutes = new Hono<AppEnv>()
           passwordChangedAt: new Date(),
           failedLoginCount: 0,
           lockoutUntil: null,
+          // Link przyszedł na ten adres, więc adres jest potwierdzony.
+          emailVerifiedAt: sql`coalesce(${users.emailVerifiedAt}, now())`,
         })
         .where(eq(users.id, row.userId))
       // Nowe hasło = wylogowanie ze wszystkich urządzeń.

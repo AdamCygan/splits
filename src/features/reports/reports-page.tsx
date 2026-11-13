@@ -25,7 +25,7 @@ import {
   totalsOf,
 } from '#/domain/report'
 import type { PeriodPreset, ReportRange, TaskSort } from '#/domain/report'
-import { FREE_LIMITS } from '#/features/billing/plans'
+import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
 import {
   meQuery,
   projectsQuery,
@@ -115,7 +115,7 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
       ? custom
       : presetRange(period as PeriodPreset, today, settings?.weekStartsOn ?? 1)
   // Plan Free: historia z ostatnich 30 dni (jak w cenniku).
-  const isFree = user?.plan === 'free'
+  const isFree = !hasProAccess(user)
   const oldest = addDays(today, -(FREE_LIMITS.historyDays - 1))
   const clamped = isFree && requested.from < oldest
   const range = clamped ? { ...requested, from: oldest } : requested

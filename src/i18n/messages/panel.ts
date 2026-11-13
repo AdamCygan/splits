@@ -152,6 +152,7 @@ const en = {
     plans: { free: 'Free', pro: 'Pro', lifetime: 'Lifetime' },
     badges: {
       admin: 'Admin',
+      owner: 'Owner',
       blocked: 'Blocked',
       demo: 'Demo',
       you: 'You',
@@ -193,6 +194,8 @@ const en = {
       deleteHint:
         'Removes the account with all its data and ends its subscription.',
       self: 'This is your own account. Role, blocking and deletion are off here.',
+      owner:
+        'Owner account (ADMIN_EMAILS): always an administrator with every Pro feature. It can’t be blocked or deleted here.',
       demo: 'Demo accounts can only be blocked or deleted.',
     },
     confirm: {
@@ -399,6 +402,7 @@ const pl: PanelMessages = {
     plans: { free: 'Free', pro: 'Pro', lifetime: 'Lifetime' },
     badges: {
       admin: 'Admin',
+      owner: 'Właściciel',
       blocked: 'Zablokowane',
       demo: 'Demo',
       you: 'Ty',
@@ -445,6 +449,8 @@ const pl: PanelMessages = {
       delete: 'Usuń konto',
       deleteHint: 'Usuwa konto ze wszystkimi danymi i kończy jego subskrypcję.',
       self: 'To Twoje konto. Zmiana roli, blokada i usunięcie są tu wyłączone.',
+      owner:
+        'Konto właściciela (ADMIN_EMAILS): zawsze administrator ze wszystkimi funkcjami Pro. Nie da się go tu zablokować ani usunąć.',
       demo: 'Konta demo można tylko zablokować albo usunąć.',
     },
     confirm: {

@@ -13,7 +13,7 @@ import {
   sprintStats,
 } from '#/domain/sprint-stats'
 import type { SprintStats } from '#/domain/sprint-stats'
-import { FREE_LIMITS } from '#/features/billing/plans'
+import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
 import {
   meQuery,
   settingsQuery,
@@ -128,7 +128,7 @@ export function SprintsPage() {
   const averaged = (pastStats.length ? pastStats : stats).filter(
     (s) => s.minutesPerSp !== null,
   ).length
-  const isFree = user?.plan === 'free'
+  const isFree = !hasProAccess(user)
   const clamped =
     isFree && from < addDays(today, -(FREE_LIMITS.historyDays - 1))
   const typeOf = (id: string) => types.find((x) => x.id === id)

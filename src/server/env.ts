@@ -69,6 +69,16 @@ export const serverEnv = {
   release: env.APP_RELEASE ?? env.FLY_IMAGE_REF ?? null,
   emailFrom: env.EMAIL_FROM ?? 'Splits <no-reply@splits.app>',
   /** Limity prób logowania/rejestracji w pamięci; RATE_LIMITS=off tylko w testach. */
+  /**
+   * Właściciele aplikacji (ADMIN_EMAILS, po przecinku): konto z takim potwierdzonym adresem
+   * dostaje rolę admina przy logowaniu, a inni administratorzy nie mogą go zablokować ani usunąć.
+   */
+  adminEmails: new Set(
+    (env.ADMIN_EMAILS ?? '')
+      .split(',')
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  ),
   rateLimits: env.RATE_LIMITS !== 'off' || isProduction,
   /** Tylko testy e2e: endpoint z danymi przykładowymi. Nigdy w produkcji. */
   testRoutes:

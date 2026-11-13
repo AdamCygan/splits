@@ -11,7 +11,7 @@ import { groupTasks, sortRows, taskGroupKey, totalsOf } from '#/domain/report'
 import type { TaskRow } from '#/domain/report'
 import { estimateOf } from '#/domain/sprint-stats'
 import type { EstimateStatus } from '#/domain/sprint-stats'
-import { FREE_LIMITS } from '#/features/billing/plans'
+import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
 import { SectionHeader } from '#/features/settings/components/ui'
 import {
   meQuery,
@@ -46,7 +46,7 @@ export function TasksPage() {
   const types = useQuery(taskTypesQuery).data ?? []
   const scale = useQuery(scaleQuery).data ?? []
   const today = todayIn(settings?.timezone)
-  const isFree = user?.plan === 'free'
+  const isFree = !hasProAccess(user)
 
   const [periodId, setPeriodId] = useState<PeriodId>('d30')
   const [search, setSearch] = useState('')
