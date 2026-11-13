@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Splits shorts</title>
+<!--
+  Trzy pionowe shorty (1080×1920) o problemach, które rozwiązuje Splits:
+    ?story=sprint   gdzie poszedł sprint (podział na typy pracy)
+    ?story=pause    pilne przerwanie zadania (pauza, przełączenie, powrót, interwały)
+    ?story=invoice  koniec miesiąca na B2B (raport godzin do faktury)
+    ?story=review | pairing | meetings | extra | estimate | forgot | templates | summary
+                    8 kolejnych historii we wspólnym schemacie (funkcja generic)
+  Język: ?lang=en (domyślnie) albo ?lang=pl. Adres na planszy końcowej: ?url=splits.app
+  (bez niego: „Link w bio”). Podgląd w przeglądarce: dodaj &play.
+  Animacja jest deterministyczna: window.render(t) ustawia klatkę dla czasu t (s), shorts.py zapisuje MP4.
+  Treść trzyma się bezpiecznej strefy (y 200–1480, x 64–940), bo dół i prawą krawędź zasłaniają przyciski platform.
+-->
+<style>
+  @font-face { font-family: 'Brand Display'; src: url('../../src/assets/fonts/brand-display-core.woff2') format('woff2'); font-weight: 600 800; }
+  @font-face { font-family: 'Brand Text'; src: url('../../src/assets/fonts/brand-text-core.woff2') format('woff2'); font-weight: 400 700; }
+  :root {
+    --ink: #14162b; --ink-2: #1d2040; --paper: #f5f6fa; --surface: #fff;
+    --text: #14162b; --soft: #4a4e69; --faint: #646882; --line: #dcdfea; --muted: #eceef5;
+    --on-ink-soft: #b3b7cc;
+    --task: #3d3bf3; --review: #e8a33d; --pair: #0f9f86; --extra: #db4a7c; --meeting: #8a8fa8; --alert: #e5484d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; }
+  body { background: var(--ink); color: #fff; font-family: 'Brand Text', sans-serif; -webkit-font-smoothing: antialiased; position: relative; }
+  .abs { position: absolute; }
+  .layer { position: absolute; inset: 0; }
+  .display { font-family: 'Brand Display', sans-serif; font-weight: 760; letter-spacing: -0.025em; line-height: 1.02; }
+  .kicker { font-weight: 700; font-size: 34px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--on-ink-soft); }
+  .big { font-size: 104px; }
+  .mid { font-size: 76px; }
+  .word { display: inline-block; will-change: transform, opacity; }
+  .hl-extra { color: #ff7aa8; } .hl-review { color: #f5be6a; } .hl-task { color: #9d9bff; }
+  .ink-text { color: var(--text); }
+  .soft { color: var(--soft); }
+
+  #paper { background: var(--paper); transform: translateY(100%); }
+  .card { background: var(--surface); border: 2px solid var(--line); border-radius: 36px; box-shadow: 0 4px 0 var(--line), 0 60px 90px -50px rgba(20,22,43,0.45); color: var(--text); overflow: hidden; }
+  .dark-card { background: var(--ink-2); border-radius: 32px; color: #fff; }
+  .h { font-family: 'Brand Display'; font-weight: 720; letter-spacing: -0.01em; }
+  .muted { color: var(--soft); }
+
+  /* timer */
+  .timer { display: flex; align-items: center; gap: 26px; background: var(--ink); color: #fff; border-radius: 28px; padding: 26px 30px; }
+  .play { width: 76px; height: 76px; border-radius: 50%; background: #fff; display: grid; place-items: center; flex: none; }
+  .play svg { width: 30px; height: 30px; }
+  .t-state { color: #b8bad0; font-size: 26px; }
+  .t-name { font-weight: 650; font-size: 34px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .clock { font-family: 'Brand Display'; font-weight: 720; font-size: 56px; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .btn { display: inline-flex; align-items: center; gap: 12px; border-radius: 18px; padding: 16px 26px; font-weight: 700; font-size: 28px; }
+  .btn-light { background: #fff; color: var(--ink); }
+  .btn-ghost { border: 2px solid #4a4e69; color: #fff; }
+  .chip { display: inline-flex; align-items: center; gap: 14px; border: 2px solid var(--line); border-radius: 999px; padding: 12px 26px 12px 14px; font-weight: 650; font-size: 28px; color: var(--text); background: var(--surface); }
+  .chip i { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-weight: 800; color: #fff; font-size: 22px; }
+  .dot { width: 22px; height: 22px; border-radius: 50%; flex: none; display: inline-block; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 33px; }
+  th { text-align: left; font-weight: 500; color: var(--soft); padding: 0 0 14px; font-size: 26px; }
+  td { padding: 16px 0; border-top: 2px solid var(--line); }
+  th:not(:first-child), td:not(:first-child) { text-align: right; }
+  tr.hl td { background: rgba(232,163,61,0.18); }
+  .lit { background: rgba(232,163,61,0.2); border-radius: 12px; }
+
+  #cursor { position: absolute; left: 0; top: 0; width: 64px; height: 64px; z-index: 30; opacity: 0; filter: drop-shadow(0 6px 8px rgba(20,22,43,0.35)); }
+  #ring { position: absolute; left: 0; top: 0; width: 110px; height: 110px; margin: -55px 0 0 -55px; border-radius: 50%; border: 6px solid var(--task); opacity: 0; z-index: 29; }
+
+  #endcard { background: var(--ink); transform: translateY(100%); }
+  .end { position: absolute; left: 64px; right: 64px; top: 330px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 46px; }
+  .logo-row { display: flex; align-items: center; gap: 28px; }
+  .mark { width: 128px; height: 128px; }
+  .wordmark { font-family: 'Brand Display'; font-weight: 790; font-size: 112px; letter-spacing: -0.035em; line-height: 1; }
+  .tagline { font-size: 40px; color: var(--on-ink-soft); }
+  .punch { font-size: 92px; max-width: 14ch; }
+  .price { font-size: 38px; color: var(--on-ink-soft); }
+  .cta { display: inline-flex; align-items: center; background: #fff; color: var(--ink); font-weight: 750; font-size: 46px; padding: 30px 60px; border-radius: 24px; }
+  .endstrip { position: absolute; left: 0; right: 0; bottom: 0; height: 26px; display: flex; gap: 6px; }
+  .endstrip b { display: block; height: 100%; transform-origin: left center; }
+</style>
+</head>
+<body>
+  <div class="layer" id="ink"></div>
+  <div class="layer" id="paper"></div>
+  <div class="layer" id="endcard">
+    <div class="end">
+      <div class="logo-row" id="logo">
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="13" y="1.5" width="6" height="3.2" rx="1.3" fill="#fff"/><rect x="15" y="3.8" width="2" height="3.6" fill="#fff"/><g transform="rotate(-90 16 18)" fill="none" stroke-width="4.2"><circle cx="16" cy="18" r="11" stroke="var(--task)" stroke-dasharray="25.33 69.115" stroke-dashoffset="-1.1"/><circle cx="16" cy="18" r="11" stroke="var(--review)" stroke-dasharray="9.65 69.115" stroke-dashoffset="-28.63"/><circle cx="16" cy="18" r="11" stroke="var(--pair)" stroke-dasharray="15.68 69.115" stroke-dashoffset="-40.48"/><circle cx="16" cy="18" r="11" stroke="var(--extra)" stroke-dasharray="9.65 69.115" stroke-dashoffset="-58.36"/></g><path d="M16 18 L19.9 13.4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="16" cy="18" r="1.9" fill="#fff"/></svg>
+        <div class="wordmark">splits</div>
+      </div>
+      <p class="tagline" id="end-tag"></p>
+      <h2 class="display punch" id="end-punch"></h2>
+      <p class="price" id="end-price"></p>
+      <div class="cta" id="end-cta"></div>
+    </div>
+    <div class="endstrip" id="endstrip"><b style="flex:38;background:var(--task)"></b><b style="flex:17;background:var(--review)"></b><b style="flex:11;background:var(--pair)"></b><b style="flex:9;background:var(--meeting)"></b><b style="flex:5;background:var(--extra)"></b></div>
+  </div>
+  <div id="ring"></div>
+  <svg id="cursor" viewBox="0 0 24 24"><path d="M4 2.5l15 9.2-6.6 1.4 3.9 7.4-2.7 1.4-3.9-7.4L4.9 19z" fill="#fff" stroke="#14162b" stroke-width="1.4" stroke-linejoin="round"/></svg>
+
+<script>
+(() => {
+  const params = new URLSearchParams(location.search);
+  const LANG = params.get('lang') === 'pl' ? 'pl' : 'en';
+  const STORIES = ['sprint', 'pause', 'invoice', 'review', 'pairing', 'meetings', 'extra', 'estimate', 'forgot', 'templates', 'summary'];
+  const STORY = STORIES.includes(params.get('story')) ? params.get('story') : 'sprint';
+  const URL_TEXT = params.get('url');
+
+  /* ------------------------------------------------------------------ teksty */
+  const I18N = {
+    en: {
+      tagline: 'Time tracking for developers',
+      price: 'Free forever · Pro $24 a year',
+      cta: URL_TEXT || 'Link in bio',
+      sprint: {
+        kicker: 'Sprint 14 review',
+        hook1: 'Estimated: 3 story points.', hook2: 'Took: 4 days.',
+        says: 'Your time tracker says:', blob: 'Development · 80 h',
+        nothing: '…and nothing else.', where: 'So where did the sprint go?',
+        caption: 'Splits splits it.',
+        cardHead: 'Sprint 14', cardMeta: '80 h · 34 story points',
+        cols: ['Type of work', 'Hours', 'Share'],
+        rows: [['Tasks', '38 h', '48%'], ['Code review', '17 h', '21%'], ['Pairing', '11 h', '14%'], ['Meetings', '9 h', '11%'], ['Extra work', '5 h', '6%']],
+        perSp: '2.4 h', perSpLabel: 'per story point',
+        outro: 'Now you know what a story point really costs.',
+        punch: 'Know where your sprint went.',
+      },
+      pause: {
+        kicker: 'Tuesday, 6:40 AM',
+        hook: "You're deep in PAY-142.",
+        task: 'PAY-142 Payment gateway', running: 'Running',
+        notifChan: '#incidents · now', notif: 'URGENT: checkout returns 500 on prod',
+        jump: 'You jump in.', wrong: 'The timer keeps ticking on the wrong task.',
+        wrongLabel: 'Still running · wrong task',
+        caption: 'Pause. Switch. Resume.',
+        pauseBtn: 'Pause', stopBtn: 'Done', resumeBtn: 'Resume', paused: 'paused',
+        hotfix: 'Hotfix: checkout 500',
+        clocks: ['7:20 AM', '8:50 AM', '9:00 AM'],
+        today: 'Today',
+        group: 'PAY-142 Payment gateway', groupTotal: '1 h 40 min',
+        iv1: '6:40–7:20 AM', iv1d: '40 min', iv2: '9:00–10:00 AM', iv2d: '1 h',
+        hot: 'Hotfix: checkout 500', hotIv: '7:20–8:50 AM', hotD: '1 h 30 min',
+        outro: 'Every interval counted. No guessing at 5 PM.',
+        punch: 'Pause. Switch. Resume.',
+      },
+      invoice: {
+        month: 'Oct', day: '31',
+        hook1: 'Last day of the month.', hook2: 'The client wants your hours.',
+        scraps: ['git log --since=2026-10-01', '“Did you finish PAY-139?”', 'Sprint planning · 2 h', 'PAY-142 · In review', 'PAY-1?? ~3 h?'],
+        dig: '2 hours of digging through Git, Slack and Jira.', guess: '…and you still guess.',
+        caption: 'Your timesheet, ready.',
+        cardHead: 'October 2026', cardMeta: 'Client: Acme · by ticket',
+        cols: ['Ticket', 'SP', 'Hours'],
+        rows: [['PAY-151 Invoice PDF', '8', '34.5'], ['PAY-142 Payment gateway', '5', '21.5'], ['PAY-139 Refund API', '3', '14.0'], ['Code reviews', '–', '18.5'], ['Meetings', '–', '12.0'], ['+ 11 more tickets', '13', '51.5']],
+        total: 'Total', totalSp: '29', totalH: '152.0',
+        export: 'Export CSV', file: 'splits-report-2026-10.csv',
+        outro: 'One click. Attach it to your invoice.',
+        punch: 'Timesheets in one click.',
+      },
+    },
+    pl: {
+      tagline: 'Czas pracy dla programistów',
+      price: 'Za darmo na zawsze · Pro 24 $ rocznie',
+      cta: URL_TEXT || 'Link w bio',
+      sprint: {
+        kicker: 'Review sprintu 14',
+        hook1: 'Wycena: 3 story pointy.', hook2: 'Zajęło: 4 dni.',
+        says: 'Twój tracker mówi:', blob: 'Programowanie · 80 h',
+        nothing: '…i nic więcej.', where: 'To gdzie poszedł sprint?',
+        caption: 'Splits go rozbija.',
+        cardHead: 'Sprint 14', cardMeta: '80 h · 34 story pointy',
+        cols: ['Typ pracy', 'Godziny', 'Udział'],
+        rows: [['Taski', '38 h', '48%'], ['Code review', '17 h', '21%'], ['Pair programming', '11 h', '14%'], ['Spotkania', '9 h', '11%'], ['Praca extra', '5 h', '6%']],
+        perSp: '2,4 h', perSpLabel: 'na story point',
+        outro: 'Teraz wiesz, ile naprawdę kosztuje story point.',
+        punch: 'Zobacz, gdzie poszedł sprint.',
+      },
+      pause: {
+        kicker: 'Wtorek, 6:40',
+        hook: 'Siedzisz w PAY-142.',
+        task: 'PAY-142 Integracja bramki', running: 'W toku',
+        notifChan: '#incydenty · teraz', notif: 'PILNE: checkout zwraca 500 na produkcji',
+        jump: 'Rzucasz wszystko.', wrong: 'A timer dalej liczy czas złego zadania.',
+        wrongLabel: 'Dalej liczy · złe zadanie',
+        caption: 'Pauza. Zmiana. Powrót.',
+        pauseBtn: 'Pauza', stopBtn: 'Gotowe', resumeBtn: 'Wznów', paused: 'wstrzymane',
+        hotfix: 'Hotfix: checkout 500',
+        clocks: ['7:20', '8:50', '9:00'],
+        today: 'Dziś',
+        group: 'PAY-142 Integracja bramki', groupTotal: '1 h 40 min',
+        iv1: '6:40–7:20', iv1d: '40 min', iv2: '9:00–10:00', iv2d: '1 h',
+        hot: 'Hotfix: checkout 500', hotIv: '7:20–8:50', hotD: '1 h 30 min',
+        outro: 'Każdy interwał policzony. Bez zgadywania o 17:00.',
+        punch: 'Pauza. Zmiana. Powrót.',
+      },
+      invoice: {
+        month: 'paź', day: '31',
+        hook1: 'Ostatni dzień miesiąca.', hook2: 'Klient chce zestawienie godzin.',
+        scraps: ['git log --since=2026-10-01', '„Skończyłeś PAY-139?”', 'Planowanie sprintu · 2 h', 'PAY-142 · w review', 'PAY-1?? ~3 h?'],
+        dig: '2 godziny grzebania w Gicie, Slacku i Jirze.', guess: '…i dalej zgadujesz.',
+        caption: 'Zestawienie gotowe.',
+        cardHead: 'Październik 2026', cardMeta: 'Klient: Acme · per ticket',
+        cols: ['Ticket', 'SP', 'Godziny'],
+        rows: [['PAY-151 Faktura PDF', '8', '34,5'], ['PAY-142 Bramka płatności', '5', '21,5'], ['PAY-139 API zwrotów', '3', '14,0'], ['Code review', '–', '18,5'], ['Spotkania', '–', '12,0'], ['+ 11 kolejnych ticketów', '13', '51,5']],
+        total: 'Razem', totalSp: '29', totalH: '152,0',
+        export: 'Eksport CSV', file: 'splits-raport-2026-10.csv',
+        outro: 'Jedno kliknięcie. Załącz do faktury.',
+        punch: 'Raport do faktury w minutę.',
+      },
+    },
+  };
+  /* --------------------------------------------- 8 kolejnych historii: teksty */
+  const EXTRA = {
+    en: {
+      review: {
+        kicker: 'Daily standup', hook1: '“What did you do yesterday?”', hook2: '“Uh… some reviews?”',
+        board: 'Your tickets moved yesterday',
+        mrs: [['MR !481 Refund form', '14 comments'], ['MR !486 Webhook retries', '9 comments'], ['MR !490 Invoice PDF', 'approved']],
+        p1: 'Over 3 hours of code review.', p2: 'Zero tickets moved.',
+        caption: 'In Splits, reviews count.', head: 'Yesterday', meta: 'code review',
+        rows: [['CR !481 Refund form validation', '1 h 25 min'], ['CR !486 Webhook retries', '1 h 05 min'], ['CR !490 Invoice PDF', '50 min'], ['Code review total', '3 h 20 min']],
+        stat: '21%', statLabel: 'of your sprint is code review',
+        outro: 'Next standup, show the numbers.', punch: 'Make code review visible.',
+      },
+      pairing: {
+        kicker: 'Pair programming', hook1: 'Two devs. One ticket.', hook2: 'Who logs the time?',
+        ticket: 'PAY-142 · 3 SP', doubled: '4 h?', you: 'You · task', helper: 'Kate · helping',
+        p1: 'The ticket looks twice as expensive…', p2: '…or Kate’s 2 hours vanish.',
+        caption: 'Pairing is its own type.', head: 'Sprint 14', meta: 'by type of work',
+        rows: [['Tasks', '38 h'], ['Pairing', '11 h'], ['Code review', '17 h'], ['PAY-142: task 2 h + pairing 2 h', '4 h']],
+        stat: '11 h', statLabel: 'of pairing this sprint',
+        outro: 'Helping the team finally shows in reports.', punch: 'Pairing counts.',
+      },
+      meetings: {
+        kicker: 'Your calendar, this week', hook1: 'Planning. Refinement. Retro.', hook2: 'When do you actually code?',
+        days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], blocks: ['Planning', 'Refinement', '1:1', 'Workshop', 'Demo', 'Retro'],
+        p1: 'Meetings feel like the whole week.', p2: 'But nobody knows the number.',
+        caption: 'Splits knows the number.', head: 'This week', meta: '38 h logged',
+        rows: [['Tasks', '19 h'], ['Meetings', '9 h 30 min'], ['Code review', '6 h'], ['Pairing', '3 h 30 min']],
+        stat: '25%', statLabel: 'of your week in meetings',
+        outro: 'Bring it to the retro. Cut one meeting.', punch: 'Meetings, measured.',
+      },
+      extra: {
+        kicker: 'Sprint 15 · day 6', hook1: '“Can you just quickly…”', hook2: 'Again.',
+        asks: [['PM', '“Quick fix on the CSV export?”'], ['Support', '“Can you check this bug?”'], ['Account manager', '“Small change for the client, 5 min!”']],
+        p1: 'Unplanned work eats the sprint…', p2: '…and it looks like you missed the plan.',
+        caption: 'Log it as extra work.', head: 'Extra work', meta: 'Sprint 15',
+        rows: [['CSV export fix · PM', '1 h 15 min'], ['Bug check · support', '45 min'], ['Client change', '2 h 30 min'], ['+ 4 more', '4 h 30 min'], ['Extra work this sprint', '9 h']],
+        stat: '9 h', statLabel: 'outside the plan, on the record',
+        outro: 'Show it at the sprint review.', punch: 'Unplanned work, on the record.',
+      },
+      estimate: {
+        kicker: 'Sprint planning', hook1: '“How many points?”', hook2: '“…5?”',
+        p1: 'Estimates by gut feeling.', p2: 'Missed again.',
+        caption: 'Estimate from your data.', head: 'Last 3 sprints', meta: 'hours per story point',
+        rows: [['Sprint 12 · 31 SP · 76 h', '2.5 h'], ['Sprint 13 · 28 SP · 70 h', '2.5 h'], ['Sprint 14 · 34 SP · 80 h', '2.4 h'], ['Average per story point', '2.4 h']],
+        stat: '5 SP ≈ 12 h', statLabel: 'about 1.5 days of work',
+        outro: 'Next planning: numbers, not guesses.', punch: 'Estimates you can trust.',
+      },
+      forgot: {
+        kicker: '4:55 PM', hook1: 'You forgot to start the timer.', hook2: 'At 9 AM.',
+        notStarted: 'Not started', task: 'PAY-142 Payment gateway', missing: '7 h 55 min not logged',
+        p1: 'Now you guess…', p2: '…and the report is fiction.',
+        caption: 'Add it in 10 seconds.', head: 'New entry', meta: 'Today',
+        types: ['Task', 'Code review', 'Meeting'],
+        fields: [['Title', 'PAY-142 Payment gateway'], ['Ticket', 'jira.acme.com/browse/PAY-142']], from: ['From', '9:00 AM'], to: ['To', '12:30 PM'], sp: 'Story points',
+        save: 'Save', saved: 'Saved · 3 h 30 min on PAY-142',
+        stat: '3 h 30 min', statLabel: 'back in your day',
+        outro: 'Your whole day counted, no guessing.', punch: 'Forgot the timer? Relax.',
+      },
+      templates: {
+        kicker: 'Every day, 9:30 AM', hook1: 'Daily standup.', hook2: 'Typed by hand. Every day.',
+        days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], entry: 'Daily standup',
+        p1: 'Same entries, again and again…', p2: '…so you stop logging them.',
+        caption: 'One tap with templates.', head: 'Quick templates', meta: 'Today',
+        chips: ['Daily standup', 'Code review', 'Sprint planning', '1:1'],
+        added: ['Daily standup · Meeting', '15 min'], toast: 'Added: Daily standup',
+        stat: '1 tap', statLabel: 'instead of typing it every day',
+        outro: 'Routine logged. You focus on code.', punch: 'Templates for your routine.',
+      },
+      summary: {
+        kicker: 'Ticket done', hook1: 'PM: “Add a summary in Jira.”', hook2: '“How long did it take?”',
+        comment: 'comment', timeSpent: 'Time spent:', notes: ['Mon: started gateway, 2 h?', 'Tue: review fixes', 'Wed: ???'],
+        p1: 'You scroll through 3 days of notes…', p2: '…and write “about a day”.',
+        caption: 'Splits writes it for you.', head: 'PAY-142 Payment gateway', meta: 'task summary',
+        lines: ['Total: 7 h 10 min · 5 SP', 'Sessions: 4 over 3 days', 'Task 5 h 20 min · Code review 1 h 10 min · Pairing 40 min', 'Intervals: 6:40–7:20, 9:00–10:00, …'],
+        copy: 'Copy', copied: 'Copied to clipboard',
+        outro: 'Paste it into Jira. Done.', punch: 'Task summaries in one click.',
+      },
+    },
+    pl: {
+      review: {
+        kicker: 'Daily', hook1: '„Co robiłeś wczoraj?”', hook2: '„Eee… jakieś review?”',
+        board: 'Twoje tickety przesunięte wczoraj',
+        mrs: [['MR !481 Formularz zwrotów', '14 komentarzy'], ['MR !486 Retry webhooków', '9 komentarzy'], ['MR !490 Faktura PDF', 'zatwierdzony']],
+        p1: 'Ponad 3 godziny code review.', p2: 'Zero przesuniętych ticketów.',
+        caption: 'W Splits review się liczy.', head: 'Wczoraj', meta: 'code review',
+        rows: [['CR !481 Walidacja formularza zwrotów', '1 h 25 min'], ['CR !486 Retry webhooków', '1 h 05 min'], ['CR !490 Faktura PDF', '50 min'], ['Code review razem', '3 h 20 min']],
+        stat: '21%', statLabel: 'sprintu to code review',
+        outro: 'Na kolejnym daily pokaż liczby.', punch: 'Code review widać w liczbach.',
+      },
+      pairing: {
+        kicker: 'Pair programming', hook1: 'Dwie osoby. Jeden ticket.', hook2: 'Kto wpisuje czas?',
+        ticket: 'PAY-142 · 3 SP', doubled: '4 h?', you: 'Ty · task', helper: 'Kasia · pomoc',
+        p1: 'Ticket wygląda na dwa razy droższy…', p2: '…albo 2 godziny Kasi znikają.',
+        caption: 'Pairing to osobny typ pracy.', head: 'Sprint 14', meta: 'według typu pracy',
+        rows: [['Taski', '38 h'], ['Pair programming', '11 h'], ['Code review', '17 h'], ['PAY-142: task 2 h + pairing 2 h', '4 h']],
+        stat: '11 h', statLabel: 'pairingu w tym sprincie',
+        outro: 'Pomoc zespołowi w końcu widać w raporcie.', punch: 'Pairing się liczy.',
+      },
+      meetings: {
+        kicker: 'Twój kalendarz, ten tydzień', hook1: 'Planning. Refinement. Retro.', hook2: 'A kiedy kodujesz?',
+        days: ['Pn', 'Wt', 'Śr', 'Cz', 'Pt'], blocks: ['Planning', 'Refinement', '1:1', 'Warsztat', 'Demo', 'Retro'],
+        p1: 'Spotkania zajmują cały tydzień?', p2: 'Tylko nikt nie zna liczby.',
+        caption: 'Splits zna liczbę.', head: 'Ten tydzień', meta: '38 h wpisane',
+        rows: [['Taski', '19 h'], ['Spotkania', '9 h 30 min'], ['Code review', '6 h'], ['Pair programming', '3 h 30 min']],
+        stat: '25%', statLabel: 'tygodnia na spotkaniach',
+        outro: 'Pokaż to na retro. Wytnijcie jedno spotkanie.', punch: 'Spotkania w liczbach.',
+      },
+      extra: {
+        kicker: 'Sprint 15 · dzień 6', hook1: '„Możesz tylko szybko…”', hook2: 'Znowu.',
+        asks: [['PM', '„Szybka poprawka eksportu CSV?”'], ['Support', '„Zerkniesz na ten błąd?”'], ['Opiekun klienta', '„Mała zmiana dla klienta, 5 minut!”']],
+        p1: 'Praca spoza planu zjada sprint…', p2: '…a wygląda, że to Ty nie dowiozłeś.',
+        caption: 'Wpisz to jako pracę extra.', head: 'Praca extra', meta: 'Sprint 15',
+        rows: [['Poprawka eksportu CSV · PM', '1 h 15 min'], ['Błąd od supportu', '45 min'], ['Zmiana dla klienta', '2 h 30 min'], ['+ 4 kolejne', '4 h 30 min'], ['Praca extra w sprincie', '9 h']],
+        stat: '9 h', statLabel: 'spoza planu, czarno na białym',
+        outro: 'Pokaż to na review sprintu.', punch: 'Praca spoza planu, czarno na białym.',
+      },
+      estimate: {
+        kicker: 'Planowanie sprintu', hook1: '„Ile punktów?”', hook2: '„…5?”',
+        p1: 'Wycena na oko.', p2: 'I znowu nie wyszło.',
+        caption: 'Wyceniaj na danych.', head: 'Ostatnie 3 sprinty', meta: 'godziny na story point',
+        rows: [['Sprint 12 · 31 SP · 76 h', '2,5 h'], ['Sprint 13 · 28 SP · 70 h', '2,5 h'], ['Sprint 14 · 34 SP · 80 h', '2,4 h'], ['Średnio na story point', '2,4 h']],
+        stat: '5 SP ≈ 12 h', statLabel: 'czyli około 1,5 dnia pracy',
+        outro: 'Na planningu liczby zamiast zgadywania.', punch: 'Wyceny, którym możesz ufać.',
+      },
+      forgot: {
+        kicker: '16:55', hook1: 'Zapomniałeś włączyć timer.', hook2: 'O 9:00.',
+        notStarted: 'Nieuruchomiony', task: 'PAY-142 Integracja bramki', missing: '7 h 55 min bez wpisu',
+        p1: 'Teraz zgadujesz…', p2: '…a raport to fikcja.',
+        caption: 'Dodasz to w 10 sekund.', head: 'Nowy wpis', meta: 'Dziś',
+        types: ['Task', 'Code review', 'Spotkanie'],
+        fields: [['Tytuł', 'PAY-142 Integracja bramki'], ['Ticket', 'jira.firma.pl/browse/PAY-142']], from: ['Od', '9:00'], to: ['Do', '12:30'], sp: 'Story pointy',
+        save: 'Zapisz', saved: 'Zapisane · 3 h 30 min w PAY-142',
+        stat: '3 h 30 min', statLabel: 'wróciło do Twojego dnia',
+        outro: 'Cały dzień policzony, bez zgadywania.', punch: 'Zapomniałeś timera? Spokojnie.',
+      },
+      templates: {
+        kicker: 'Codziennie, 9:30', hook1: 'Daily.', hook2: 'Wpisywane ręcznie. Codziennie.',
+        days: ['Pn', 'Wt', 'Śr', 'Cz', 'Pt'], entry: 'Daily',
+        p1: 'Te same wpisy w kółko…', p2: '…więc przestajesz je wpisywać.',
+        caption: 'Jedno kliknięcie z szablonem.', head: 'Szybkie szablony', meta: 'Dziś',
+        chips: ['Daily', 'Code review', 'Planowanie sprintu', '1:1'],
+        added: ['Daily · Spotkanie', '15 min'], toast: 'Dodano: Daily',
+        stat: '1 kliknięcie', statLabel: 'zamiast pisania codziennie',
+        outro: 'Rutyna wpisana. Ty skup się na kodzie.', punch: 'Szablony na codzienność.',
+      },
+      summary: {
+        kicker: 'Ticket gotowy', hook1: 'PM: „Dodaj podsumowanie w Jirze.”', hook2: '„Ile to zajęło?”',
+        comment: 'komentarz', timeSpent: 'Czas pracy:', notes: ['Pn: start bramki, 2 h?', 'Wt: poprawki po review', 'Śr: ???'],
+        p1: 'Przewijasz notatki z 3 dni…', p2: '…i piszesz „mniej więcej dzień”.',
+        caption: 'Splits napisze to za Ciebie.', head: 'PAY-142 Integracja bramki', meta: 'podsumowanie zadania',
+        lines: ['Razem: 7 h 10 min · 5 SP', 'Sesje: 4 w ciągu 3 dni', 'Task 5 h 20 min · Code review 1 h 10 min · Pairing 40 min', 'Interwały: 6:40–7:20, 9:00–10:00, …'],
+        copy: 'Kopiuj', copied: 'Skopiowano do schowka',
+        outro: 'Wklej do Jiry. Gotowe.', punch: 'Podsumowanie zadania jednym kliknięciem.',
+      },
+    },
+  };
+  Object.assign(I18N.en, EXTRA.en);
+  Object.assign(I18N.pl, EXTRA.pl);
+  const T = I18N[LANG], S = T[STORY];
+  document.documentElement.lang = LANG;
+
+  /* ------------------------------------------------------------- narzędzia */
+  const $ = id => document.getElementById(id);
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const p = (t, a, b) => clamp((t - a) / (b - a));
+  const eo = x => 1 - Math.pow(1 - x, 3);
+  const eio = x => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const lerp = (a, b, x) => a + (b - a) * x;
+  const set = (el, o, dy = 0, s = 1, dx = 0, rot = 0) => {
+    el.style.opacity = o;
+    el.style.transform = `translate(${dx}px, ${dy}px) scale(${s}) rotate(${rot}deg)`;
+  };
+  /** Widoczność sceny [a, b] z płynnym wejściem i wyjściem. */
+  const vis = (t, a, b, fin = 0.35, fout = 0.3) => Math.min(eo(p(t, a, a + fin)), 1 - p(t, b - fout, b));
+  const words = text => text.split(' ').map(w => `<span class="word">${w}</span>`).join(' ');
+  /** Słowa pojawiają się po kolei od czasu a. */
+  const revealWords = (el, t, a, step = 0.07, dur = 0.38) => {
+    [...el.querySelectorAll('.word')].forEach((w, i) => {
+      const x = eo(p(t, a + i * step, a + i * step + dur));
+      w.style.opacity = x;
+      w.style.transform = `translateY(${(1 - x) * 36}px)`;
+    });
+  };
+  const hms = s => {
+    s = Math.max(0, Math.floor(s));
+    const h = String(Math.floor(s / 3600)).padStart(2, '0'), m = String(Math.floor(s / 60) % 60).padStart(2, '0'), x = String(s % 60).padStart(2, '0');
+    return `${h}:${m}:${x}`;
+  };
+  const el = (html, style = '', cls = 'abs') => {
+    const d = document.createElement('div');
+    d.className = cls;
+    d.style.cssText = style;
+    d.innerHTML = html;
+    return d;
+  };
+  const ink = $('ink'), paper = $('paper');
+  const add = (parent, html, style, cls) => parent.appendChild(el(html, style, cls));
+
+  /* Kursor: punkty [czas, x, y]; kliknięcia: czasy. */
+  const cursor = $('cursor'), ring = $('ring');
+  const moveCursor = (t, path, clicks, visible) => {
+    if (!visible) { cursor.style.opacity = 0; ring.style.opacity = 0; return; }
+    let x = path[0][1], y = path[0][2];
+    for (let i = 1; i < path.length; i++) {
+      const [t0, x0, y0] = path[i - 1], [t1, x1, y1] = path[i];
+      if (t >= t0) { const k = eio(p(t, t0, t1)); x = lerp(x0, x1, k); y = lerp(y0, y1, k); }
+    }
+    const press = clicks.some(c => t >= c && t < c + 0.14);
+    cursor.style.opacity = 1;
+    cursor.style.transform = `translate(${x}px, ${y}px) scale(${press ? 0.86 : 1})`;
+    const last = clicks.filter(c => t >= c).pop();
+    const k = last === undefined ? 1 : p(t, last, last + 0.5);
+    ring.style.opacity = last === undefined || k >= 1 ? 0 : 1 - k;
+    ring.style.transform = `translate(${x + 10}px, ${y + 8}px) scale(${0.4 + k * 0.9})`;
+  };
+
+  /* Plansza końcowa: wspólna dla wszystkich historii. */
+  $('end-tag').textContent = T.tagline;
+  $('end-punch').innerHTML = words(S.punch);
+  $('end-price').textContent = T.price;
+  $('end-cta').textContent = T.cta;
+  const endcard = (t, a) => {
+    $('endcard').style.transform = `translateY(${(1 - eio(p(t, a, a + 0.55))) * 100}%)`;
+    const logo = eo(p(t, a + 0.35, a + 0.95));
+    set($('logo'), logo, (1 - logo) * 40, 0.9 + logo * 0.1);
+    set($('end-tag'), eo(p(t, a + 0.6, a + 1.1)), (1 - eo(p(t, a + 0.6, a + 1.1))) * 24);
+    revealWords($('end-punch'), t, a + 0.9);
+    set($('end-price'), eo(p(t, a + 1.7, a + 2.1)), (1 - eo(p(t, a + 1.7, a + 2.1))) * 24);
+    const c = eo(p(t, a + 2.0, a + 2.5));
+    set($('end-cta'), c, (1 - c) * 30, 0.92 + c * 0.08);
+    [...$('endstrip').children].forEach((b, i) => { b.style.transform = `scaleX(${eo(p(t, a + 0.5 + i * 0.12, a + 1.2 + i * 0.12))})`; });
+  };
+  const paperIn = (t, a, b = Infinity) => {
+    const k = eio(p(t, a, a + 0.55));
+    paper.style.transform = `translateY(${(1 - k) * 100}%)`;
+  };
+
+  /* ===================================================== 1. SPRINT ====== */
+  function sprint() {
+    const D = 21, END = 16.4;
+    const kicker = add(ink, `<p class="kicker">${S.kicker}</p>`, 'left:64px;top:470px;right:120px');
+    const h1 = add(ink, `<p class="display big">${words(S.hook1)}</p>`, 'left:64px;top:560px;right:110px');
+    const h2 = add(ink, `<p class="display big hl-extra">${words(S.hook2)}</p>`, 'left:64px;top:820px;right:110px');
+    const says = add(ink, `<p class="display mid" style="color:var(--on-ink-soft)">${words(S.says)}</p>`, 'left:64px;top:380px;right:110px');
+    const blob = add(ink, `<div style="height:170px;border-radius:28px;background:#4a4e69;display:flex;align-items:center;padding:0 40px;font-size:44px;font-weight:700">${S.blob}</div>`, 'left:64px;top:560px;width:876px');
+    const nothing = add(ink, `<p class="display mid" style="color:var(--on-ink-soft)">${words(S.nothing)}</p>`, 'left:64px;top:800px;right:110px');
+    const where = add(ink, `<p class="display big">${words(S.where)}</p>`, 'left:64px;top:1000px;right:110px');
+
+    const cap = add(paper, `<h2 class="display big ink-text">${words(S.caption)}</h2>`, 'left:64px;top:250px;right:110px');
+    const colors = ['var(--task)', 'var(--review)', 'var(--pair)', 'var(--meeting)', 'var(--extra)'];
+    const shares = [38, 17, 11, 9, 5];
+    const card = add(paper, `
+      <div class="card" style="padding:44px 48px 40px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="h" style="font-size:52px">${S.cardHead}</span><span class="muted" style="font-size:28px">${S.cardMeta}</span></div>
+        <div id="stack" style="position:relative;display:flex;gap:6px;height:64px;border-radius:999px;overflow:hidden;margin:34px 0 36px;background:#cfd3e1">
+          ${shares.map((s, i) => `<b style="display:block;height:100%;flex:${s};background:${colors[i]};transform-origin:left center"></b>`).join('')}
+        </div>
+        <table><thead><tr>${S.cols.map(c => `<th>${c}</th>`).join('')}</tr></thead>
+        <tbody>${S.rows.map((r, i) => `<tr id="r${i}"><td><span class="dot" style="background:${colors[i]};margin-right:18px;vertical-align:-2px"></span>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody></table>
+      </div>`, 'left:64px;top:440px;width:876px');
+    const perSp = add(paper, `<div style="display:flex;align-items:baseline;gap:22px"><span class="display" style="font-size:120px;color:var(--text)">${S.perSp}</span><span style="font-size:40px;color:var(--soft);font-weight:600">${S.perSpLabel}</span></div>`, 'left:64px;top:1190px;right:110px');
+    const outro = add(paper, `<p class="display" style="font-size:56px;color:var(--text)">${words(S.outro)}</p>`, 'left:64px;top:1340px;right:120px');
+
+    return { duration: D, frame(t) {
+      set(kicker, vis(t, 0.05, 2.8), 0);
+      revealWords(h1.firstChild, t, 0.15); h1.style.opacity = 1 - p(t, 2.5, 2.8);
+      revealWords(h2.firstChild, t, 1.0); h2.style.opacity = 1 - p(t, 2.5, 2.8);
+      const b = vis(t, 2.8, 7.5);
+      revealWords(says.firstChild, t, 2.9); says.style.opacity = b;
+      const bk = eo(p(t, 3.3, 3.9));
+      blob.style.opacity = b; blob.firstChild.style.clipPath = `inset(0 ${(1 - bk) * 80}% 0 0 round 28px)`;
+      revealWords(nothing.firstChild, t, 4.2); nothing.style.opacity = b;
+      revealWords(where.firstChild, t, 5.3); where.style.opacity = b;
+
+      paperIn(t, 7.3);
+      revealWords(cap.firstChild, t, 7.8);
+      const c = eo(p(t, 8.0, 8.6));
+      set(card, c, (1 - c) * 80);
+      [...card.querySelectorAll('#stack b')].forEach((bar, i) => { bar.style.transform = `scaleX(${eo(p(t, 8.6 + i * 0.3, 9.2 + i * 0.3))})`; });
+      S.rows.forEach((_, i) => {
+        const r = card.querySelector(`#r${i}`), k = eo(p(t, 9.4 + i * 0.25, 9.8 + i * 0.25));
+        r.style.opacity = k;
+        r.classList.toggle('hl', i === 1 && t >= 11.5);
+      });
+      const ps = eo(p(t, 12.3, 12.8));
+      set(perSp, ps, (1 - ps) * 40);
+      revealWords(outro.firstChild, t, 13.2, 0.06);
+      endcard(t, END);
+    }};
+  }
+
+  /* ====================================================== 2. PAUSE ====== */
+  function pause() {
+    const D = 22, END = 17.4;
+    const pauseIcon = '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1" fill="#14162b"/><rect x="14" y="5" width="4" height="14" rx="1" fill="#14162b"/></svg>';
+    const playIcon = '<svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="#14162b"/></svg>';
+    const kicker = add(ink, `<p class="kicker">${S.kicker}</p>`, 'left:64px;top:430px;right:120px');
+    const hook = add(ink, `<p class="display big">${words(S.hook)}</p>`, 'left:64px;top:520px;right:110px');
+    const timer = add(ink, `
+      <div class="dark-card" style="padding:34px 36px;display:flex;align-items:center;gap:28px">
+        <div class="play">${pauseIcon}</div>
+        <div style="flex:1;min-width:0"><div class="t-state" id="tstate">${S.running}</div><div class="t-name">${S.task}</div></div>
+        <div class="clock" id="tclock">00:38:12</div>
+      </div>`, 'left:64px;top:820px;width:876px');
+    const notif = add(ink, `
+      <div style="background:#fff;color:var(--text);border-radius:30px;padding:30px 34px;display:flex;gap:24px;align-items:flex-start;box-shadow:0 30px 60px -30px rgba(0,0,0,0.6)">
+        <span class="dot" style="background:var(--alert);width:30px;height:30px;margin-top:8px"></span>
+        <div><div style="font-size:26px;color:var(--soft);font-weight:600">${S.notifChan}</div><div style="font-size:40px;font-weight:750;line-height:1.2;margin-top:6px">${S.notif}</div></div>
+      </div>`, 'left:64px;top:230px;width:876px');
+    const jump = add(ink, `<p class="display mid">${words(S.jump)}</p>`, 'left:64px;top:1130px;right:110px');
+    const wrong = add(ink, `<p class="display mid hl-extra">${words(S.wrong)}</p>`, 'left:64px;top:1230px;right:110px');
+
+    const cap = add(paper, `<h2 class="display big ink-text">${words(S.caption)}</h2>`, 'left:64px;top:230px;right:110px');
+    const board = add(paper, `
+      <div class="card" style="padding:36px 36px 40px">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:24px"><span class="chip" id="clockchip" style="padding:10px 24px;font-size:28px"><svg viewBox="0 0 24 24" style="width:30px;height:30px"><circle cx="12" cy="12" r="9" fill="none" stroke="#14162b" stroke-width="2"/><path d="M12 7v5l3 2" fill="none" stroke="#14162b" stroke-width="2" stroke-linecap="round"/></svg><span id="clocktxt">${S.clocks[0]}</span></span></div>
+        <div class="timer" id="ptimer">
+          <div class="play" id="pplay">${pauseIcon}</div>
+          <div style="flex:1;min-width:0"><div class="t-state" id="pstate">${S.running}</div><div class="t-name" id="pname">${S.task}</div></div>
+          <div class="clock" id="pclock" style="font-size:48px">00:40:00</div>
+        </div>
+        <div style="display:flex;gap:18px;margin-top:22px">
+          <span class="btn" id="bpause" style="background:var(--ink);color:#fff">${S.pauseBtn}</span>
+          <span class="btn" id="bstop" style="border:2px solid var(--line);color:var(--text)">${S.stopBtn}</span>
+        </div>
+        <div id="pausedrow" style="margin-top:26px;display:flex;align-items:center;gap:18px;border:2px dashed #cfd3e1;border-radius:22px;padding:18px 22px">
+          <span class="dot" style="background:var(--task)"></span>
+          <span style="flex:1;font-size:30px;font-weight:650">${S.task.split(' ')[0]} · <span class="muted" style="font-weight:500">${S.paused}</span></span>
+          <span class="btn" id="bresume" style="background:var(--task);color:#fff;padding:12px 24px">${playIcon.replace('#14162b', '#fff').replace('<svg', '<svg style="width:26px;height:26px"')}${S.resumeBtn}</span>
+        </div>
+      </div>`, 'left:64px;top:410px;width:876px');
+    const today = add(paper, `
+      <div class="card" style="padding:32px 36px">
+        <div class="h" style="font-size:40px;margin-bottom:14px">${S.today}</div>
+        <div id="g1" style="display:flex;justify-content:space-between;font-size:32px;font-weight:700;padding:14px 0"><span><span class="dot" style="background:var(--task);margin-right:16px"></span>${S.group}</span><span>${S.groupTotal}</span></div>
+        <div id="g1a" style="display:flex;justify-content:space-between;font-size:30px;color:var(--soft);padding:10px 0 10px 40px;border-left:4px solid var(--task);margin-left:9px"><span>${S.iv1}</span><span>${S.iv1d}</span></div>
+        <div id="g1b" style="display:flex;justify-content:space-between;font-size:30px;color:var(--soft);padding:10px 0 10px 40px;border-left:4px solid var(--task);margin-left:9px"><span>${S.iv2}</span><span>${S.iv2d}</span></div>
+        <div id="g2" style="display:flex;justify-content:space-between;font-size:30px;padding:18px 0 4px;border-top:2px solid var(--line);margin-top:14px"><span><span class="dot" style="background:var(--extra);margin-right:16px"></span>${S.hot} <span class="muted">· ${S.hotIv}</span></span><span>${S.hotD}</span></div>
+      </div>`, 'left:64px;top:1010px;width:876px');
+    const outro = add(paper, `<p class="display" style="font-size:52px;color:var(--text)">${words(S.outro)}</p>`, 'left:64px;top:1415px;right:120px');
+
+    return { duration: D, frame(t) {
+      const a = vis(t, 0.05, 7.6);
+      set(kicker, vis(t, 0.05, 3.1), 0);
+      revealWords(hook.firstChild, t, 0.15); hook.style.opacity = 1 - p(t, 3.0, 3.3);
+      // timer: zwykłe tykanie, po alarmie przyspiesza i robi się czerwony
+      const fast = p(t, 5.7, 7.2);
+      const secs = 38 * 60 + 12 + t + Math.pow(fast, 2) * 7600;
+      $('tclock').textContent = hms(secs);
+      const red = eo(p(t, 5.6, 6.0));
+      timer.firstElementChild.style.background = `rgb(${lerp(29, 120, red)}, ${lerp(32, 28, red)}, ${lerp(64, 48, red)})`;
+      $('tstate').textContent = t >= 5.6 ? S.wrongLabel : S.running;
+      const tm = eo(p(t, 0.6, 1.2));
+      set(timer, Math.min(tm, a), (1 - tm) * 50 + eo(p(t, 3.2, 3.8)) * 100);
+      const n = eo(p(t, 3.2, 3.7));
+      set(notif, Math.min(n, a), (1 - n) * -220);
+      revealWords(jump.firstChild, t, 4.4); jump.style.opacity = a;
+      revealWords(wrong.firstChild, t, 5.4, 0.06); wrong.style.opacity = a;
+
+      paperIn(t, 7.5);
+      revealWords(cap.firstChild, t, 7.9);
+      const bc = eo(p(t, 8.1, 8.6));
+      set(board, bc, (1 - bc) * 80);
+      // stan karty: 0 PAY-142 w toku → 1 pauza + hotfix w toku → 2 hotfix gotowy → 3 PAY-142 wznowione
+      const st = t < 9.4 ? 0 : t < 11.3 ? 1 : t < 12.1 ? 2 : 3;
+      $('clocktxt').textContent = st === 0 ? S.clocks[0] : st === 1 ? S.clocks[0] : st === 2 ? S.clocks[1] : S.clocks[2];
+      const hotRun = p(t, 9.4, 11.2);
+      $('pname').textContent = st === 1 || st === 2 ? S.hotfix : S.task;
+      $('pstate').textContent = st === 2 ? '—' : S.running;
+      $('pclock').textContent = st === 0 ? hms(40 * 60 + (t - 8.1) * 3) : st === 1 ? hms(hotRun * 5400) : st === 2 ? '01:30:00' : hms(40 * 60 + (t - 12.1) * 900);
+      $('ptimer').style.background = st === 1 ? '#5a1f35' : 'var(--ink)';
+      const pr = $('pausedrow');
+      pr.style.opacity = st === 1 || st === 2 ? 1 : st === 3 ? 1 - p(t, 12.1, 12.4) : 0;
+      $('bresume').style.transform = st === 2 && t > 11.9 ? 'scale(0.94)' : 'scale(1)';
+      $('bpause').style.transform = t >= 9.2 && t < 9.4 ? 'scale(0.94)' : 'scale(1)';
+      $('bstop').style.transform = t >= 11.1 && t < 11.3 ? 'scale(0.94)' : 'scale(1)';
+      moveCursor(t, [[8.5, 700, 1300], [9.2, 200, 727], [10.5, 210, 760], [11.1, 400, 727], [11.6, 560, 860], [11.9, 800, 880], [12.6, 960, 1000]], [9.2, 11.1, 11.95], t >= 8.5 && t < 12.6);
+      const td = eo(p(t, 12.6, 13.1));
+      set(today, td, (1 - td) * 60);
+      ['g1', 'g1a', 'g1b', 'g2'].forEach((id, i) => { $(id).style.opacity = eo(p(t, 13.0 + i * 0.3, 13.4 + i * 0.3)); });
+      $('g1a').style.background = t > 14.4 && t < 15.6 ? 'rgba(61,59,243,0.08)' : 'transparent';
+      $('g1b').style.background = t > 14.4 && t < 15.6 ? 'rgba(61,59,243,0.08)' : 'transparent';
+      revealWords(outro.firstChild, t, 14.6, 0.06);
+      endcard(t, END);
+    }};
+  }
+
+  /* ==================================================== 3. INVOICE ====== */
+  function invoice() {
+    const D = 21, END = 16.4;
+    const cal = add(ink, `
+      <div style="width:220px;border-radius:30px;overflow:hidden;background:#fff;color:var(--text);text-align:center;box-shadow:0 30px 60px -30px rgba(0,0,0,0.6)">
+        <div style="background:var(--extra);color:#fff;font-weight:800;font-size:40px;padding:12px 0;text-transform:uppercase">${S.month}</div>
+        <div class="display" style="font-size:130px;padding:14px 0 20px">${S.day}</div>
+      </div>`, 'left:64px;top:300px');
+    const h1 = add(ink, `<p class="display big">${words(S.hook1)}</p>`, 'left:64px;top:640px;right:110px');
+    const h2 = add(ink, `<p class="display big hl-review">${words(S.hook2)}</p>`, 'left:64px;top:880px;right:110px');
+    const scrapStyle = [
+      ['left:64px;top:300px', -4, 'font-family:ui-monospace,Menlo,monospace;background:#0d0f1f;color:#9be59b'],
+      ['left:330px;top:480px', 3, 'background:#fff;color:var(--text)'],
+      ['left:90px;top:660px', -2, 'background:#e7e6ff;color:var(--text)'],
+      ['left:420px;top:820px', 4, 'background:#fff;color:var(--text)'],
+      ['left:140px;top:960px', -6, 'background:#ffe58a;color:#3b2f00;font-family:\'Comic Sans MS\',cursive'],
+    ];
+    const scraps = S.scraps.map((s, i) => add(ink, `<div style="padding:26px 32px;border-radius:22px;font-size:36px;font-weight:650;${scrapStyle[i][2]};box-shadow:0 26px 50px -28px rgba(0,0,0,0.7)">${s}</div>`, scrapStyle[i][0]));
+    const dig = add(ink, `<p class="display mid">${words(S.dig)}</p>`, 'left:64px;top:1150px;right:110px');
+    const guess = add(ink, `<p class="display mid hl-review">${words(S.guess)}</p>`, 'left:64px;top:1340px;right:110px');
+
+    const cap = add(paper, `<h2 class="display big ink-text">${words(S.caption)}</h2>`, 'left:64px;top:230px;right:110px');
+    const card = add(paper, `
+      <div class="card" style="padding:40px 44px 36px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:20px">
+          <div><div class="h" style="font-size:46px">${S.cardHead}</div><div class="muted" style="font-size:28px;margin-top:6px">${S.cardMeta}</div></div>
+          <span class="btn" id="bexport" style="background:var(--ink);color:#fff;font-size:28px;white-space:nowrap">⤓ ${S.export}</span>
+        </div>
+        <table style="margin-top:30px"><thead><tr>${S.cols.map(c => `<th>${c}</th>`).join('')}</tr></thead>
+        <tbody>${S.rows.map((r, i) => `<tr id="ir${i}"><td style="max-width:520px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}
+        <tr id="itot"><td style="font-weight:800">${S.total}</td><td style="font-weight:800">${S.totalSp}</td><td style="font-weight:800">${S.totalH} h</td></tr></tbody></table>
+      </div>`, 'left:64px;top:430px;width:876px');
+    const file = add(paper, `<span class="chip" style="font-size:32px;padding:16px 30px 16px 16px"><i style="background:var(--pair)">✓</i>${S.file}</span>`, 'left:64px;top:1230px');
+    const outro = add(paper, `<p class="display" style="font-size:60px;color:var(--text)">${words(S.outro)}</p>`, 'left:64px;top:1340px;right:120px');
+
+    return { duration: D, frame(t) {
+      const c0 = eo(p(t, 0.05, 0.5));
+      set(cal, Math.min(c0, 1 - p(t, 2.7, 3.0)), (1 - c0) * -40, 0.9 + c0 * 0.1, 0, -4 * c0);
+      revealWords(h1.firstChild, t, 0.3); h1.style.opacity = 1 - p(t, 2.7, 3.0);
+      revealWords(h2.firstChild, t, 1.1); h2.style.opacity = 1 - p(t, 2.7, 3.0);
+      const b = vis(t, 3.0, 7.7);
+      scraps.forEach((s, i) => {
+        const k = eo(p(t, 3.1 + i * 0.28, 3.55 + i * 0.28));
+        const wob = Math.sin((t - 3) * 2.2 + i) * 1.2;
+        set(s, Math.min(k, b), (1 - k) * 90, 0.85 + k * 0.15, (i % 2 ? 1 : -1) * (1 - k) * 120, scrapStyle[i][1] + wob);
+      });
+      revealWords(dig.firstChild, t, 4.8, 0.06); dig.style.opacity = b;
+      revealWords(guess.firstChild, t, 6.1); guess.style.opacity = b;
+
+      paperIn(t, 7.6);
+      revealWords(cap.firstChild, t, 8.0);
+      const c = eo(p(t, 8.2, 8.8));
+      set(card, c, (1 - c) * 80);
+      S.rows.forEach((_, i) => { $(`ir${i}`).style.opacity = eo(p(t, 8.9 + i * 0.22, 9.3 + i * 0.22)); });
+      $('itot').style.opacity = eo(p(t, 10.4, 10.8));
+      $('bexport').style.transform = t >= 12.0 && t < 12.2 ? 'scale(0.93)' : 'scale(1)';
+      moveCursor(t, [[11.0, 600, 1300], [12.0, 820, 492], [13.2, 900, 620]], [12.0], t >= 11.0 && t < 13.2);
+      const f = eo(p(t, 12.4, 12.9));
+      set(file, f, (1 - f) * 40, 0.9 + f * 0.1);
+      revealWords(outro.firstChild, t, 13.3, 0.06);
+      endcard(t, END);
+    }};
+  }
+
+  /* ============================ 8 kolejnych historii: wspólny schemat ====== */
+  // hak (0–3 s) → problem na ciemnym tle (3–7,7 s) → rozwiązanie w Splits na jasnym tle → plansza końcowa.
+  // Elementy .pv pojawiają się po kolei w scenie problemu, .rv w karcie rozwiązania, .hlrow podświetla się
+  // po wszystkich .rv, #click to przycisk klikany kursorem, a .after pojawia się po kliknięciu.
+  const C = { task: 'var(--task)', review: 'var(--review)', pair: 'var(--pair)', meeting: 'var(--meeting)', extra: 'var(--extra)' };
+  const whiteRow = (l, r, extra = '') => `<div class="pv" style="background:#fff;color:var(--text);border-radius:22px;padding:22px 28px;font-size:32px;font-weight:650;display:flex;justify-content:space-between;gap:20px;${extra}"><span>${l}</span><span style="color:var(--soft);font-weight:500;white-space:nowrap">${r}</span></div>`;
+  const inkCard = html => `<div class="pv dark-card" style="padding:30px 34px">${html}</div>`;
+  const solCard = (head, meta, body) => `<div class="card" style="padding:38px 42px 30px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:20px"><span class="h" style="font-size:44px">${head}</span><span class="muted" style="font-size:27px;white-space:nowrap">${meta}</span></div><div style="margin-top:18px">${body}</div></div>`;
+  const solRow = (color, l, r, cls = 'rv') => `<div class="${cls}" style="display:flex;align-items:center;gap:18px;padding:17px 12px;border-top:2px solid var(--line);font-size:31px"><span class="dot" style="background:${color}"></span><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l}</span><span style="font-weight:700;white-space:nowrap">${r}</span></div>`;
+  const rowsOf = (rows, colors, hlLast = true) => rows.map((r, i) => solRow(colors[i % colors.length], r[0], r[1], hlLast && i === rows.length - 1 ? 'rv hlrow' : 'rv')).join('');
+  const field = (label, value, style = '') => `<div class="rv" style="${style}"><div style="font-size:24px;font-weight:650;margin-bottom:8px">${label}</div><div style="border:2px solid #cfd3e1;border-radius:14px;padding:14px 18px;font-size:30px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${value}</div></div>`;
+
+  const VIS = {
+    review: S => ({
+      problem: inkCard(`<div style="font-size:28px;color:var(--on-ink-soft)">${S.board}</div><div class="display" style="font-size:110px;margin-top:8px">0</div>`) + S.mrs.map(m => whiteRow(m[0], m[1])).join(''),
+      solution: solCard(S.head, S.meta, rowsOf(S.rows, [C.review])),
+    }),
+    pairing: S => ({
+      problem: inkCard(`<div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:28px;color:var(--on-ink-soft)">${S.ticket}</div><div class="display" style="font-size:110px;margin-top:8px;color:#ff7aa8">${S.doubled}</div></div><div style="display:flex"><span style="width:110px;height:110px;border-radius:50%;background:var(--task);display:grid;place-items:center;font-size:48px;font-weight:800">A</span><span style="width:110px;height:110px;border-radius:50%;background:var(--pair);display:grid;place-items:center;font-size:48px;font-weight:800;margin-left:-26px;border:6px solid var(--ink-2)">K</span></div></div>`) + whiteRow(S.you, '2 h') + whiteRow(S.helper, '2 h'),
+      solution: solCard(S.head, S.meta, S.rows.map((r, i) => solRow([C.task, C.pair, C.review, C.pair][i], r[0], r[1], i === 1 ? 'rv hlrow' : 'rv')).join('')),
+    }),
+    meetings: S => {
+      const blocks = [[0, 4, 14, 0], [0, 46, 9, -1], [1, 10, 12, 1], [1, 58, 16, -1], [2, 6, 8, -1], [2, 30, 12, 2], [3, 14, 24, 3], [3, 62, 9, -1], [4, 18, 11, 4], [4, 46, 16, 5]];
+      return {
+        problem: `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px">${S.days.map(d => `<div style="text-align:center;font-weight:700;font-size:28px;color:var(--on-ink-soft)">${d}</div>`).join('')}</div>
+          <div style="position:relative;height:560px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px">${S.days.map(() => '<div style="background:var(--ink-2);border-radius:16px"></div>').join('')}
+          ${blocks.map(([d, top, h, label]) => `<div class="pv" style="position:absolute;left:calc(${d} * (100% - 48px) / 5 + ${d * 12}px);width:calc((100% - 48px) / 5);top:${top}%;height:${h}%;background:${label === -1 ? '#4a4e69' : '#7d7bf7'};border-radius:12px;padding:8px 10px;font-size:22px;font-weight:700;overflow:hidden">${label === -1 ? '' : S.blocks[label]}</div>`).join('')}</div>`,
+        solution: solCard(S.head, S.meta, S.rows.map((r, i) => solRow([C.task, C.meeting, C.review, C.pair][i], r[0], r[1], i === 1 ? 'rv hlrow' : 'rv')).join('')),
+      };
+    },
+    extra: S => ({
+      problem: S.asks.map(([who, msg], i) => `<div class="pv" style="align-self:${i % 2 ? 'flex-end' : 'flex-start'};max-width:780px;background:#fff;color:var(--text);border-radius:28px;${i % 2 ? 'border-bottom-right-radius:8px' : 'border-bottom-left-radius:8px'};padding:22px 30px;box-shadow:0 24px 50px -30px rgba(0,0,0,0.7)"><div style="font-size:24px;font-weight:700;color:var(--extra)">${who}</div><div style="font-size:36px;font-weight:650;margin-top:4px">${msg}</div></div>`).join(''),
+      solution: solCard(S.head, S.meta, rowsOf(S.rows, [C.extra])),
+    }),
+    estimate: S => ({
+      problem: `<div style="display:flex;gap:18px;justify-content:center;padding:30px 0">${['3', '5', '8', '13', '?'].map((v, i) => `<div class="pv" style="width:150px;height:220px;border-radius:20px;background:#fff;color:var(--text);display:grid;place-items:center;font-family:'Brand Display';font-weight:780;font-size:90px;rotate:${[-8, -3, 2, 6, 10][i]}deg;${v === '?' ? 'background:var(--review);color:#3b2600' : ''}">${v}</div>`).join('')}</div>`,
+      solution: solCard(S.head, S.meta, rowsOf(S.rows, [C.task])),
+    }),
+    forgot: S => ({
+      problem: inkCard(`<div style="display:flex;align-items:center;gap:26px"><div class="play" style="background:#4a4e69"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="#b3b7cc"/></svg></div><div style="flex:1;min-width:0"><div class="t-state">${S.notStarted}</div><div class="t-name" style="color:#b3b7cc">${S.task}</div></div><div class="clock" style="color:#7d81a0">00:00:00</div></div>`)
+        + `<div class="pv" style="height:90px;border-radius:18px;background:repeating-linear-gradient(90deg, #2a2d4d 0, #2a2d4d calc(12.5% - 3px), #14162b calc(12.5% - 3px), #14162b 12.5%);display:grid;place-items:center;font-size:34px;font-weight:800;color:#ff7aa8;border:3px dashed #ff7aa8">${S.missing}</div>`,
+      solution: solCard(S.head, S.meta, `<div style="display:flex;flex-direction:column;gap:18px">
+          <div class="rv" style="display:flex;gap:12px">${S.types.map((x, i) => `<span class="chip" style="font-size:26px;padding:10px 22px 10px 12px;${i === 0 ? 'background:var(--ink);color:#fff;border-color:var(--ink)' : ''}"><i style="background:${[C.task, C.review, C.meeting][i]};width:28px;height:28px"></i>${x}</span>`).join('')}</div>
+          ${S.fields.map(f => field(f[0], f[1])).join('')}
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px">${field(S.from[0], S.from[1])}${field(S.to[0], S.to[1])}${field(S.sp, '5')}</div>
+          <div class="rv" style="display:flex;justify-content:space-between;align-items:center;gap:16px"><span class="chip after" style="font-size:26px;padding:10px 22px 10px 12px"><i style="background:var(--pair)">✓</i>${S.saved}</span><span class="btn" id="click" style="background:var(--ink);color:#fff">${S.save}</span></div></div>`),
+      click: true,
+    }),
+    templates: S => ({
+      problem: S.days.map(d => whiteRow(`${d} · ${S.entry}`, '15 min', 'padding:18px 28px')).join(''),
+      solution: solCard(S.head, S.meta, `<div style="display:flex;flex-wrap:wrap;gap:14px;padding:6px 0 22px">${S.chips.map((c, i) => `<span class="chip rv" ${i === 0 ? 'id="click"' : ''} style="font-size:28px"><i style="background:${[C.meeting, C.review, C.meeting, C.meeting][i]}">+</i>${c}</span>`).join('')}</div>
+          <div class="after">${solRow(C.meeting, S.added[0], S.added[1], '')}</div>
+          <div class="after" style="padding-top:18px"><span class="chip" style="font-size:26px;padding:10px 22px 10px 12px"><i style="background:var(--pair)">✓</i>${S.toast}</span></div>`),
+      click: true,
+    }),
+    summary: S => ({
+      problem: `<div class="pv" style="background:#fff;color:var(--text);border-radius:24px;padding:28px 30px"><div style="font-size:26px;color:var(--soft);font-weight:600">PAY-142 · ${S.comment}</div><div style="margin-top:14px;border:2px solid #cfd3e1;border-radius:16px;height:150px;padding:20px 22px;font-size:34px">${S.timeSpent} <span style="color:var(--alert);font-weight:800">?</span></div></div>`
+        + S.notes.map((n, i) => `<div class="pv" style="align-self:flex-start;background:#ffe58a;color:#3b2f00;border-radius:12px;padding:16px 24px;font-size:32px;font-family:'Comic Sans MS',cursive;rotate:${[-3, 2, -1][i]}deg;margin-left:${[0, 120, 40][i]}px">${n}</div>`).join(''),
+      solution: solCard(S.head, S.meta, `<div style="display:flex;flex-direction:column;gap:12px;border-left:6px solid var(--task);padding:6px 0 6px 22px;margin:8px 0 22px">${S.lines.map(l => `<div class="rv" style="font-size:31px;line-height:1.3">${l.replace(/(\d) (h|min|SP)/g, '$1\u00a0$2')}</div>`).join('')}</div>
+          <div class="rv" style="display:flex;justify-content:space-between;align-items:center;gap:16px"><span class="chip after" style="font-size:26px;padding:10px 22px 10px 12px"><i style="background:var(--pair)">✓</i>${S.copied}</span><span class="btn" id="click" style="background:var(--ink);color:#fff">⧉ ${S.copy}</span></div>`),
+      click: true,
+    }),
+  };
+
+  function generic(name) {
+    const V = VIS[name](S);
+    const kicker = add(ink, `<p class="kicker">${S.kicker}</p>`, 'left:64px;top:470px;right:120px');
+    const h1 = add(ink, `<p class="display big">${words(S.hook1)}</p>`, 'left:64px;top:560px;right:110px');
+    const h2 = add(ink, `<p class="display big hl-review">${words(S.hook2)}</p>`, 'left:64px;top:900px;right:110px');
+    const prob = add(ink, `${V.problem}<p class="display mid" id="p1" style="margin-top:20px">${words(S.p1)}</p><p class="display mid hl-extra" id="p2">${words(S.p2)}</p>`,
+      'left:64px;top:280px;right:120px;display:flex;flex-direction:column;gap:22px');
+    const sol = add(paper, `<h2 class="display ink-text" id="cap" style="font-size:88px">${words(S.caption)}</h2>${V.solution}
+      ${S.stat ? `<div id="stat" style="display:flex;align-items:baseline;gap:22px;flex-wrap:wrap"><span class="display" style="font-size:112px;color:var(--text)">${S.stat}</span><span style="font-size:38px;color:var(--soft);font-weight:600">${S.statLabel}</span></div>` : ''}
+      <p class="display" id="outro" style="font-size:56px;color:var(--text)">${words(S.outro)}</p>`,
+      'left:64px;top:220px;width:876px;display:flex;flex-direction:column;gap:36px');
+
+    const pv = [...prob.querySelectorAll('.pv')], step = Math.min(0.25, 1.3 / Math.max(1, pv.length));
+    const rv = [...sol.querySelectorAll('.rv')], rStep = Math.min(0.32, 2.4 / Math.max(1, rv.length));
+    const afters = [...sol.querySelectorAll('.after')], hl = [...sol.querySelectorAll('.hlrow')];
+    const card = sol.querySelector('.card'), click = sol.querySelector('#click'), stat = sol.querySelector('#stat');
+    const pAt = 3.15 + pv.length * step + 0.3;
+    const rowsEnd = 8.8 + rv.length * rStep, hlAt = rowsEnd + 0.3;
+    const clickAt = V.click ? rowsEnd + 0.7 : null;
+    const statAt = clickAt ? clickAt + 0.5 + afters.length * 0.3 : rowsEnd + 0.5;
+    const outroAt = statAt + (stat ? 0.8 : 0);
+    const END = Math.max(16.4, outroAt + 2.6);
+    let target = null, placed = false;
+
+    return { duration: Math.ceil(END + 4.6), frame(t) {
+      if (!placed) { h2.style.top = `${560 + h1.offsetHeight + 56}px`; placed = true; }
+      set(kicker, vis(t, 0.05, 3.0), 0);
+      revealWords(h1.firstChild, t, 0.15); h1.style.opacity = 1 - p(t, 2.7, 3.0);
+      revealWords(h2.firstChild, t, 1.0); h2.style.opacity = 1 - p(t, 2.7, 3.0);
+
+      prob.style.opacity = vis(t, 3.0, 7.7);
+      pv.forEach((e, i) => { const k = eo(p(t, 3.15 + i * step, 3.55 + i * step)); e.style.opacity = k; e.style.transform = `translateY(${(1 - k) * 50}px)`; });
+      revealWords($('p1'), t, pAt, 0.06); revealWords($('p2'), t, pAt + 1.1, 0.06);
+
+      paperIn(t, 7.5);
+      revealWords($('cap'), t, 7.9);
+      const c = eo(p(t, 8.1, 8.6));
+      set(card, c, (1 - c) * 80);
+      rv.forEach((e, i) => { const k = eo(p(t, 8.8 + i * rStep, 9.2 + i * rStep)); e.style.opacity = k; e.style.transform = `translateY(${(1 - k) * 24}px)`; });
+      hl.forEach(e => e.classList.toggle('lit', t >= hlAt));
+      afters.forEach((e, i) => { const k = clickAt === null ? 1 : eo(p(t, clickAt + 0.3 + i * 0.3, clickAt + 0.7 + i * 0.3)); e.style.opacity = k; e.style.transform = `translateY(${(1 - k) * 20}px)`; });
+      if (click) {
+        click.style.transform = t >= clickAt && t < clickAt + 0.15 ? 'scale(0.93)' : 'scale(1)';
+        if (t >= clickAt - 1.1 && !target) { const r = click.getBoundingClientRect(); target = [r.left + r.width * 0.55, r.top + r.height * 0.55]; }
+        moveCursor(t, target ? [[clickAt - 1.0, 760, 1560], [clickAt, target[0], target[1]], [clickAt + 0.9, target[0] + 90, target[1] + 160]] : [[0, 0, 0]], [clickAt], target && t >= clickAt - 1.0 && t < clickAt + 0.9);
+      }
+      if (stat) { const s = eo(p(t, statAt, statAt + 0.5)); set(stat, s, (1 - s) * 40); }
+      revealWords($('outro'), t, outroAt, 0.06);
+      endcard(t, END);
+    }};
+  }
+
+  const story = ({ sprint, pause, invoice })[STORY]?.() ?? generic(STORY);
+  window.DURATION = story.duration;
+  window.render = t => story.frame(t);
+  window.__ready = document.fonts.ready.then(() => { story.frame(0); return true; });
+
+  if (params.has('play')) {
+    let start = performance.now();
+    const loop = now => {
+      const t = ((now - start) / 1000) % story.duration;
+      story.frame(t);
+      requestAnimationFrame(loop);
+    };
+    window.__ready.then(() => requestAnimationFrame(loop));
+  }
+})();
+</script>
+</body>
+</html>

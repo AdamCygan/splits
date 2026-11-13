@@ -1,0 +1,60 @@
+# ---------------------------------------------------------------------------
+# Lokalnie w Dockerze: Postgres + aplikacja (strony i API w jednym procesie).
+#
+#   docker compose up -d --build          # wszystko: http://localhost:3000
+#   docker compose up -d db               # tylko baza (aplikację odpalasz przez `pnpm dev`)
+#   docker compose --profile tools up -d  # + Adminer (podgląd bazy): http://localhost:8081
+# ---------------------------------------------------------------------------
+name: splits
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: splits
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      # Od Postgresa 18 obraz trzyma dane w /var/lib/postgresql/18/docker, więc montujemy katalog wyżej.
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d splits"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      args:
+        VITE_APP_URL: ${VITE_APP_URL:-http://localhost:3000}
+        VITE_POSTHOG_KEY: ${VITE_POSTHOG_KEY:-}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/splits
+      JWT_SECRET: ${JWT_SECRET:?Ustaw JWT_SECRET w pliku .env (openssl rand -base64 48)}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-Splits <no-reply@splits.app>}
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Podgląd bazy w przeglądarce: http://localhost:8081 (serwer: db, użytkownik i hasło: postgres)
+  adminer:
+    image: adminer:latest
+    profiles: ["tools"]
+    ports:
+      - "8081:8080"
+    depends_on:
+      - db
+
+volumes:
+  db-data:

@@ -1,0 +1,393 @@
+@import 'tailwindcss';
+
+/*
+ * Fonty: podzbiory Bricolage Grotesque (OFL), patrz scripts/build-fonts.sh.
+ * "Brand Text" do treści, "Brand Display" do nagłówków. Core jest preloadowany
+ * w __root.tsx, plik ext pobiera się tylko, gdy na stronie wystąpi rzadki znak.
+ */
+@font-face {
+  font-family: 'Brand Text';
+  src: url('./assets/fonts/brand-text-core.woff2') format('woff2');
+  font-weight: 400 700;
+  font-display: swap;
+  unicode-range:
+    U+0020-007E, U+00A0-00FF, U+0104-0107, U+0118-0119, U+0141-0144,
+    U+015A-015B, U+0179-017C, U+2013-2014, U+2018-201E, U+2022, U+2026, U+20AC,
+    U+2122, U+2212;
+}
+@font-face {
+  font-family: 'Brand Text';
+  src: url('./assets/fonts/brand-text-ext.woff2') format('woff2');
+  font-weight: 400 700;
+  font-display: swap;
+  unicode-range:
+    U+0100-0103, U+0108-0117, U+011A-0140, U+0145-0159, U+015C-0178,
+    U+017D-024F, U+0259, U+1E00-1EFF, U+2020-2021, U+20A0-20AB, U+20AD-20C0,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Brand Display';
+  src: url('./assets/fonts/brand-display-core.woff2') format('woff2');
+  font-weight: 600 800;
+  font-display: swap;
+  unicode-range:
+    U+0020-007E, U+00A0-00FF, U+0104-0107, U+0118-0119, U+0141-0144,
+    U+015A-015B, U+0179-017C, U+2013-2014, U+2018-201E, U+2022, U+2026, U+20AC,
+    U+2122, U+2212;
+}
+/* Fonty zastępcze z dopasowanymi metrykami: tekst nie przeskakuje po załadowaniu fontu (CLS). */
+@font-face {
+  font-family: 'Brand Text Fallback';
+  src:
+    local('Arial'), local('Liberation Sans'), local('Helvetica Neue'),
+    local('Helvetica');
+  size-adjust: 109.07%;
+  ascent-override: 85.27%;
+  descent-override: 24.76%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Brand Display Fallback';
+  src:
+    local('Arial'), local('Liberation Sans'), local('Helvetica Neue'),
+    local('Helvetica');
+  size-adjust: 82.76%;
+  ascent-override: 112.38%;
+  descent-override: 32.63%;
+  line-gap-override: 0%;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Splits — tokeny marki.
+ * Interfejs jest monochromatyczny (atrament na chłodnym papierze).
+ * Kolor niosą wyłącznie dane: każdy typ pracy ma swoją barwę (--wt-*).
+ */
+:root {
+  --paper: #f5f6fa;
+  --surface: #ffffff;
+  --ink: #14162b;
+  --ink-soft: #4a4e69;
+  --ink-faint: #646882;
+  --line: #dcdfea;
+  /* Powierzchnie zawsze ciemne (sekcje na atramencie), niezależnie od motywu. */
+  --ink-fixed: #14162b;
+
+  --wt-task: #3d3bf3;
+  --wt-review: #e8a33d;
+  --wt-pair: #0f9f86;
+  --wt-extra: #db4a7c;
+  --wt-meeting: #8a8fa8;
+  --wt-custom: #2c8fd6;
+
+  --radius: 0.75rem;
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: #ffffff;
+  --secondary: #e9ebf3;
+  --secondary-foreground: var(--ink);
+  --muted: #eceef5;
+  --muted-foreground: var(--ink-soft);
+  --accent: #e7e9f4;
+  --accent-foreground: var(--ink);
+  --destructive: #c8303b;
+  --border: var(--line);
+  --input: #cfd3e1;
+  --ring: #3d3bf3;
+}
+
+.dark {
+  --paper: #121426;
+  --surface: #1a1d33;
+  --ink: #eef0f8;
+  --ink-soft: #b3b7cc;
+  --ink-faint: #9094ad;
+  --line: #2b2f4a;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: #eef0f8;
+  --primary-foreground: #14162b;
+  --secondary: #252945;
+  --secondary-foreground: var(--ink);
+  --muted: #232742;
+  --muted-foreground: var(--ink-soft);
+  --accent: #262a47;
+  --accent-foreground: var(--ink);
+  --destructive: #f0646e;
+  --border: var(--line);
+  --input: #343957;
+  --ring: #7b7af7;
+}
+
+@theme inline {
+  --font-sans:
+    'Brand Text', 'Brand Text Fallback', ui-sans-serif, system-ui, sans-serif;
+  --font-display:
+    'Brand Display', 'Brand Display Fallback', 'Brand Text', ui-sans-serif,
+    system-ui, sans-serif;
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 3px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 6px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-wt-task: var(--wt-task);
+  --color-wt-review: var(--wt-review);
+  --color-wt-pair: var(--wt-pair);
+  --color-wt-extra: var(--wt-extra);
+  --color-wt-meeting: var(--wt-meeting);
+  --color-wt-custom: var(--wt-custom);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/60;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-delay: 0s !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Nagłówki: zwężony krój display (wdth 80, opsz 72) = charakter Splits. */
+  .type-display {
+    font-family: var(--font-display);
+    font-weight: 740;
+    letter-spacing: -0.02em;
+    line-height: 0.98;
+    text-wrap: balance;
+  }
+  .type-heading {
+    font-family: var(--font-display);
+    font-weight: 680;
+    letter-spacing: -0.01em;
+    line-height: 1.08;
+    text-wrap: balance;
+  }
+}
+
+/*
+ * Sekcje poniżej pierwszego ekranu: przeglądarka liczy ich styl i układ dopiero,
+ * gdy zbliżają się do widoku. Mniej pracy przy starcie = niższy TBT na telefonach.
+ */
+@utility below-fold {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+
+/* Okna dialogowe: krótkie wejście, wyłączane przez prefers-reduced-motion (reguła w @layer base). */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 8px)) scale(0.98);
+  }
+}
+
+/* Jedyna animacja wejścia na stronie: dzień "dopisuje się" na pasku w hero. */
+@keyframes strip-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.strip-block {
+  transform-origin: left center;
+  animation: strip-grow 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/*
+ * Małe animacje. Zasada: ruch odpowiada na działanie użytkownika (wejście na ekran, najechanie,
+ * kliknięcie) albo raz pokazuje, co robi produkt (hero). Stan bazowy elementu to stan końcowy,
+ * a klatki opisują tylko początek, więc przy „ogranicz ruch” wszystko od razu stoi na miejscu.
+ */
+
+/* Wejście ekranu panelu po zmianie zakładki. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.page-in {
+  animation: page-in 220ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* Paski postępu i udziałów „dorastają” do swojej wartości. */
+@keyframes bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+.bar-grow {
+  transform-origin: left center;
+  animation: bar-grow 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes bar-rise {
+  from {
+    transform: scaleY(0);
+  }
+}
+.bar-rise {
+  transform-origin: center bottom;
+  animation: bar-rise 500ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* Wiersze list: delikatne tło pod kursorem. */
+.row-hover {
+  transition: background-color 150ms ease;
+}
+.row-hover:hover {
+  background: color-mix(in oklab, var(--muted) 55%, transparent);
+}
+
+/* Przyciski: lekkie „wciśnięcie” przy kliknięciu. */
+[data-slot='button']:active {
+  transform: scale(0.98);
+}
+
+/* Ekran /demo: pasek typów pracy pulsuje podczas przygotowania konta. */
+@keyframes demo-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+.demo-loader {
+  animation: demo-pulse 1.4s ease-in-out infinite;
+}
+
+/*
+ * Hero strony głównej: jeden szary blok rozpada się na typy pracy (raz, po wejściu na stronę).
+ * split-before: podpis „Programowanie, 80 h” znika; split-bar: otwierają się przerwy;
+ * split-segment: szary przechodzi w kolor typu; split-row: liczby wjeżdżają po kolei.
+ */
+@keyframes split-before {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes split-gap {
+  from {
+    gap: 0;
+  }
+}
+@keyframes split-color {
+  from {
+    background: #6b6f8a;
+  }
+}
+@keyframes split-row {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.split-before {
+  opacity: 0;
+  animation: split-before 350ms ease-out 900ms both;
+}
+.split-bar {
+  animation: split-gap 600ms cubic-bezier(0.2, 0.7, 0.2, 1) 900ms both;
+}
+.split-segment {
+  animation: split-color 600ms ease-out both;
+}
+.split-row {
+  animation: split-row 450ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* FAQ: odpowiedź rozwija się płynnie (przeglądarki bez ::details-content pokazują ją od razu). */
+@supports selector(::details-content) {
+  details::details-content {
+    block-size: 0;
+    overflow: clip;
+    opacity: 0;
+    transition:
+      block-size 220ms ease,
+      opacity 220ms ease,
+      content-visibility 220ms allow-discrete;
+  }
+  details[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+  :root {
+    interpolate-size: allow-keywords;
+  }
+}
+
+/* Formularz wpisu: pola nadgodzin wysuwają się po włączeniu przełącznika. */
+@keyframes overtime-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.overtime-in {
+  animation: overtime-in 180ms ease-out both;
+}

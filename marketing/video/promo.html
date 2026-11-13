@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Splits promo</title>
+<!--
+  Film promocyjny Splits (26 s). Animacja jest w pełni deterministyczna: window.render(t)
+  ustawia scenę dla czasu t w sekundach, a render.py zapisuje klatki i składa MP4.
+  Działa w każdej proporcji ekranu (16:9, 9:16, 1:1) — układ dopasowuje się sam.
+  Podgląd w przeglądarce: otwórz plik i dodaj ?play (pętla w czasie rzeczywistym).
+  Język: ?lang=en (domyślnie) albo ?lang=pl.
+  Parametry: ?url=splits.app — adres na planszy końcowej.
+-->
+<style>
+  @font-face { font-family: 'Brand Display'; src: url('../../src/assets/fonts/brand-display-core.woff2') format('woff2'); font-weight: 600 800; }
+  @font-face { font-family: 'Brand Text'; src: url('../../src/assets/fonts/brand-text-core.woff2') format('woff2'); font-weight: 400 700; }
+
+  :root {
+    --ink: #14162b; --ink-2: #1d2040; --paper: #f5f6fa; --surface: #fff;
+    --text: #14162b; --soft: #4a4e69; --faint: #646882; --line: #dcdfea; --muted: #eceef5;
+    --on-ink-soft: #b3b7cc; --scatter: #343857;
+    --task: #3d3bf3; --review: #e8a33d; --pair: #0f9f86; --extra: #db4a7c; --meeting: #8a8fa8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: var(--ink); color: #fff; font-family: 'Brand Text', sans-serif; -webkit-font-smoothing: antialiased; }
+  .layer { position: absolute; inset: 0; }
+  .display { font-family: 'Brand Display', sans-serif; font-weight: 760; letter-spacing: -0.02em; line-height: 0.98; }
+
+  /* --- Sceny 1–3: atrament ---------------------------------------- */
+  #blocks span { position: absolute; left: 0; top: 0; border-radius: 0.35rem; will-change: transform; }
+  .hook { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 0 9vw; gap: 1.2rem; }
+  .hook p { font-size: 5.2rem; }
+  .hook .word { display: inline-block; }
+  .sq .hook p { font-size: 4.6rem; }
+  .port .hook p { font-size: 5.6rem; }
+  .port .center-line p { font-size: 6rem; }
+  .port .end h2 { font-size: 6rem; }
+  .port .hook { padding: 0 7vw; }
+  .center-line { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 0 8vw; }
+  .center-line p { font-size: 5.6rem; }
+  .logo { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.2rem; }
+  .logo-row { display: flex; align-items: center; gap: 1.6rem; }
+  .mark { width: 7.4rem; height: 7.4rem; display: block; }
+  .wordmark { font-family: 'Brand Display'; font-weight: 790; font-size: 6.4rem; letter-spacing: -0.035em; line-height: 1; }
+  .tagline { font-size: 2.2rem; color: var(--on-ink-soft); text-align: center; padding: 0 6vw; }
+
+  /* --- Sceny 4–6: papier, podpis + karta aplikacji -------------------- */
+  #paper { background: var(--paper); transform: translateY(100%); }
+  .split { position: absolute; inset: 0; display: flex; align-items: center; gap: 5rem; padding: 0 6rem; color: var(--text); }
+  .caption { flex: 0 0 34%; display: flex; flex-direction: column; gap: 1.4rem; }
+  .caption h2 { font-size: 4.4rem; }
+  .caption p { font-size: 1.7rem; color: var(--soft); line-height: 1.4; }
+  .stage-card { flex: 1; min-width: 0; position: relative; }
+  .port .split { flex-direction: column; justify-content: center; align-items: stretch; gap: 3rem; padding: 0 3.4rem; padding-top: 6vh; padding-bottom: 12vh; }
+  .port .caption { flex: none; }
+  .sq .split { flex-direction: column; justify-content: center; align-items: stretch; gap: 1.8rem; padding: 0 3rem; }
+  .sq .caption { flex: none; gap: 0.6rem; }
+  .sq .caption h2 { font-size: 3.2rem; }
+  .sq .caption p { font-size: 1.35rem; }
+  .land .stage-card { font-size: 1.22rem; }
+  .port .stage-card { flex: none; font-size: 1.5rem; }
+  .port .tabs .tab:last-child { display: none; }
+  .sq .stage-card { flex: none; font-size: 1.04rem; }
+  .port .caption h2 { font-size: 4.8rem; }
+  .port .caption p { font-size: 1.9rem; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 1.4rem; box-shadow: 0 0.1rem 0 var(--line), 0 2.2rem 4rem -2rem rgba(20,22,43,0.35); overflow: hidden; font-size: 1em; }
+  .muted { color: var(--soft); font-size: 0.95em; }
+  .h { font-family: 'Brand Display'; font-weight: 700; font-size: 1.9em; letter-spacing: -0.01em; line-height: 1.1; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 1em; }
+
+  /* Karta "Twój dzień" */
+  .day-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 2em; padding: 1.5em 1.8em 1.2em; border-bottom: 1px solid var(--line); }
+  .stats { display: flex; gap: 2.2em; }
+  .stat .v { font-family: 'Brand Display'; font-weight: 700; font-size: 1.6em; line-height: 1.1; }
+  .day-body { padding: 1.4em 1.8em 1.6em; display: flex; flex-direction: column; gap: 1.2em; }
+  .strip { position: relative; height: 3.6em; border-radius: 0.7em; overflow: hidden; background: repeating-linear-gradient(90deg, var(--muted) 0, var(--muted) calc(12.5% - 1px), var(--line) calc(12.5% - 1px), var(--line) 12.5%); }
+  .strip b { position: absolute; top: 0; bottom: 0; border-right: 0.18em solid var(--surface); transform-origin: left center; }
+  .strip .running { background: repeating-linear-gradient(135deg, var(--task) 0, var(--task) 0.4em, #7f7df7 0.4em, #7f7df7 0.8em); border-right: 0; }
+  .hours { display: flex; justify-content: space-between; color: var(--faint); font-size: 0.8em; margin-top: -0.7em; }
+  .timer { display: flex; align-items: center; gap: 1em; background: var(--ink); color: #fff; border-radius: 1em; padding: 0.9em 1.1em; }
+  .play { width: 2.6em; height: 2.6em; border-radius: 50%; background: #fff; display: grid; place-items: center; flex: none; position: relative; }
+  .play svg { width: 1em; height: 1em; position: absolute; }
+  .timer .t-title { flex: 1; min-width: 0; }
+  .timer .t-state { color: #b8bad0; font-size: 0.85em; }
+  .timer .t-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .time { font-family: 'Brand Display'; font-weight: 700; font-size: 1.9em; display: flex; }
+  .time .d { display: inline-block; width: 0.6em; text-align: center; }
+  .time .c { opacity: 0.5; padding: 0 0.04em; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.6em; }
+  .chip { display: inline-flex; align-items: center; gap: 0.5em; border: 1px solid var(--line); border-radius: 99em; padding: 0.42em 1em 0.42em 0.5em; font-weight: 600; font-size: 0.92em; color: var(--text); background: var(--surface); }
+  .chip i { width: 1.4em; height: 1.4em; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-weight: 700; color: #fff; font-size: 0.9em; }
+  .entries { position: relative; height: 7.8em; overflow: hidden; }
+  .entry { position: absolute; left: 0; right: 0; height: 2.6em; display: flex; align-items: center; gap: 0.9em; border-bottom: 1px solid var(--line); font-size: 0.95em; }
+  .entry .dot { width: 0.7em; height: 0.7em; border-radius: 50%; flex: none; }
+  .entry .when { color: var(--faint); width: 7.4em; flex: none; }
+  .entry .what { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .entry .dur { color: var(--soft); }
+
+  /* Karta formularza */
+  .form { padding: 1.5em 1.8em 1.7em; }
+  .tabs { display: flex; gap: 0.4em; flex-wrap: nowrap; position: relative; }
+  .tab { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 0.5em; padding: 0.5em 1em; border-radius: 99em; font-weight: 600; font-size: 0.95em; color: var(--soft); white-space: nowrap; }
+  .tab i { width: 0.6em; height: 0.6em; border-radius: 50%; }
+  .tab-pill { position: absolute; top: 0; height: 100%; background: var(--ink); border-radius: 99em; }
+  .fieldsets { position: relative; height: 22.5em; margin-top: 1.4em; }
+  .fieldset { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 1em; }
+  .field label { display: block; font-weight: 600; font-size: 0.92em; margin-bottom: 0.35em; }
+  .field label span { color: var(--faint); font-weight: 400; }
+  .input { border: 1px solid #cfd3e1; border-radius: 0.6em; padding: 0.6em 0.8em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 2.5em; }
+  .input .caret { display: inline-block; width: 0.08em; height: 1.1em; background: var(--task); vertical-align: -0.15em; margin-left: 0.05em; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
+  .sp { display: flex; gap: 0.4em; flex-wrap: wrap; }
+  .sp span { min-width: 2.6em; padding: 0.35em 0.5em; text-align: center; border: 1px solid var(--line); border-radius: 0.45em; color: var(--soft); font-size: 0.9em; }
+  .sp span.on { background: var(--ink); border-color: var(--ink); color: #fff; font-weight: 700; }
+  .save { align-self: flex-end; background: var(--ink); color: #fff; font-weight: 600; padding: 0.6em 1.2em; border-radius: 0.6em; font-size: 0.95em; margin-top: auto; }
+
+  /* Karta sprintu */
+  .sprint { padding: 1.6em 1.9em 1.8em; display: flex; flex-direction: column; gap: 1.3em; }
+  .big { display: flex; gap: 3em; }
+  .big .v { font-family: 'Brand Display'; font-weight: 760; font-size: 3.4em; line-height: 1; letter-spacing: -0.02em; }
+  .stack { display: flex; gap: 0.25em; height: 1.4em; border-radius: 99em; overflow: hidden; }
+  .stack b { display: block; height: 100%; transform-origin: left center; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.98em; }
+  th { text-align: left; font-weight: 400; color: var(--soft); padding-bottom: 0.5em; font-size: 0.92em; }
+  td { padding: 0.55em 0.4em; border-top: 1px solid var(--line); }
+  th:not(:first-child), td:not(:first-child) { text-align: right; }
+  td .sw { display: inline-block; width: 0.8em; height: 0.8em; border-radius: 0.2em; margin-right: 0.6em; vertical-align: -0.05em; }
+  tr.hl td { background: rgba(232,163,61,0.16); }
+
+  /* Kursor */
+  #cursor { position: absolute; left: 0; top: 0; width: 2.4rem; height: 2.4rem; z-index: 20; opacity: 0; filter: drop-shadow(0 0.2rem 0.3rem rgba(20,22,43,0.35)); }
+  #ring { position: absolute; left: 0; top: 0; width: 4rem; height: 4rem; margin: -2rem 0 0 -2rem; border-radius: 50%; border: 0.25rem solid var(--task); opacity: 0; z-index: 19; }
+
+  /* --- Scena 7: plansza końcowa ------------------------------------ */
+  #inkend { background: var(--ink); transform: translateY(100%); }
+  .end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4rem; text-align: center; padding: 0 7vw; }
+  .end h2 { font-size: 5.4rem; max-width: 16ch; }
+  .sq .end h2 { font-size: 4.4rem; }
+  .cta { display: inline-flex; align-items: center; background: #fff; color: var(--ink); font-weight: 700; font-size: 2rem; padding: 0.8em 1.6em; border-radius: 0.6em; }
+  .fine { color: var(--on-ink-soft); font-size: 1.6rem; }
+  .endstrip { position: absolute; left: 0; right: 0; bottom: 0; height: 1.4rem; display: flex; gap: 0.3rem; }
+  .endstrip b { display: block; height: 100%; transform-origin: left center; }
+</style>
+</head>
+<body>
+  <!-- Sceny 1–3 -->
+  <div class="layer" id="blocks"></div>
+  <div class="hook" id="s1">
+    <p class="display" id="s1a"></p>
+    <p class="display" id="s1b"></p>
+  </div>
+  <div class="center-line" id="s2"><p class="display" data-t="s2"></p></div>
+  <div class="logo" id="s3">
+    <div class="logo-row" id="s3logo">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="13" y="1.5" width="6" height="3.2" rx="1.3" fill="#fff"/><rect x="15" y="3.8" width="2" height="3.6" fill="#fff"/><g transform="rotate(-90 16 18)" fill="none" stroke-width="4.2"><circle cx="16" cy="18" r="11" stroke="var(--task)" stroke-dasharray="25.33 69.115" stroke-dashoffset="-1.1"/><circle cx="16" cy="18" r="11" stroke="var(--review)" stroke-dasharray="9.65 69.115" stroke-dashoffset="-28.63"/><circle cx="16" cy="18" r="11" stroke="var(--pair)" stroke-dasharray="15.68 69.115" stroke-dashoffset="-40.48"/><circle cx="16" cy="18" r="11" stroke="var(--extra)" stroke-dasharray="9.65 69.115" stroke-dashoffset="-58.36"/></g><path d="M16 18 L19.9 13.4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="16" cy="18" r="1.9" fill="#fff"/></svg>
+      <div class="wordmark">splits</div>
+    </div>
+    <p class="tagline" id="s3tag" data-t="tagline"></p>
+  </div>
+
+  <!-- Sceny 4–6 -->
+  <div class="layer" id="paper"></div>
+
+  <div class="split" id="s4">
+    <div class="caption">
+      <h2 class="display" data-t="s4h"></h2>
+      <p id="s4sub"></p>
+    </div>
+    <div class="stage-card">
+      <div class="card" id="daycard">
+        <div class="day-head">
+          <div><div class="muted" data-t="date"></div><div class="h" data-t="yourDay"></div></div>
+          <div class="stats">
+            <div class="stat"><div class="muted" data-t="logged"></div><div class="v" id="d-total">5 h 12 min</div></div>
+            <div class="stat"><div class="muted" data-t="sp"></div><div class="v" id="d-sp">5,5 SP</div></div>
+          </div>
+        </div>
+        <div class="day-body">
+          <div class="strip" id="d-strip"></div>
+          <div class="hours"><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span></div>
+          <div class="timer">
+            <div class="play" id="d-play">
+              <svg id="ic-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1" fill="#14162b"/><rect x="14" y="5" width="4" height="14" rx="1" fill="#14162b"/></svg>
+              <svg id="ic-play" viewBox="0 0 24 24" style="opacity:0"><path d="M8 5.5v13l11-6.5z" fill="#14162b"/></svg>
+            </div>
+            <div class="t-title"><div class="t-state" id="d-state"></div><div class="t-name" data-t="taskName"></div></div>
+            <div class="time" id="d-time"></div>
+          </div>
+          <div class="chips">
+            <span class="chip" id="chip-cr"><i style="background:var(--review);color:var(--ink)">+</i><span data-t="crChip"></span></span>
+            <span class="chip"><i style="background:var(--meeting)">+</i><span data-t="meetingChip"></span></span>
+            <span class="chip"><i style="background:var(--pair)">+</i>Pair programming, 1 h</span>
+          </div>
+          <div class="entries" id="d-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="split" id="s5">
+    <div class="caption">
+      <h2 class="display" data-t="s5h"></h2>
+      <p data-t="s5p"></p>
+    </div>
+    <div class="stage-card">
+      <div class="card form">
+        <div class="tabs" id="tabs">
+          <div class="tab-pill" id="tab-pill"></div>
+          <div class="tab"><i style="background:var(--task)"></i><span data-t="tabTask"></span></div>
+          <div class="tab"><i style="background:var(--review)"></i><span data-t="tabReview"></span></div>
+          <div class="tab"><i style="background:var(--pair)"></i>Pair programming</div>
+          <div class="tab"><i style="background:var(--extra)"></i><span data-t="tabExtra"></span></div>
+        </div>
+        <div class="fieldsets">
+          <div class="fieldset" id="fs0">
+            <div class="field"><label data-h="titleReq"></label><div class="input" data-t="taskTitle"></div></div>
+            <div class="field"><label data-t="taskLink"></label><div class="input" data-t="jira"></div></div>
+            <div class="field"><label data-t="sp"></label><div class="sp"><span data-t="half"></span><span>1</span><span>2</span><span class="on">3</span><span>5</span><span>8</span><span>13</span></div></div>
+            <div class="two"><div class="field"><label>Start</label><div class="input" data-t="t0915"></div></div><div class="field"><label data-t="end"></label><div class="input" data-t="t1125"></div></div></div>
+          </div>
+          <div class="fieldset" id="fs1">
+            <div class="field"><label data-h="mrReq"></label><div class="input" id="mr-input"></div></div>
+            <div class="field"><label data-t="time"></label><div class="input">25 min</div></div>
+            <div class="field"><label data-t="sp"></label><div class="sp"><span class="on" data-t="half"></span><span>1</span><span>2</span><span>3</span><span>5</span><span>8</span><span>13</span></div></div>
+            <div class="save" data-t="save"></div>
+          </div>
+          <div class="fieldset" id="fs2">
+            <div class="field"><label data-h="titleReq"></label><div class="input" data-t="pairTitle"></div></div>
+            <div class="field"><label data-t="time"></label><div class="input">1 h</div></div>
+            <div class="field"><label data-t="sp"></label><div class="sp"><span data-t="half"></span><span class="on">1</span><span>2</span><span>3</span><span>5</span><span>8</span><span>13</span></div></div>
+            <div class="save" data-t="save"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="split" id="s6">
+    <div class="caption">
+      <h2 class="display" data-t="s6h"></h2>
+      <p data-t="s6p"></p>
+    </div>
+    <div class="stage-card">
+      <div class="card sprint">
+        <div class="row"><div class="h">Sprint 14</div><div class="muted" data-t="range"></div></div>
+        <div class="big">
+          <div><div class="muted" data-t="completed"></div><div class="v" id="sp-total">0 SP</div></div>
+          <div><div class="muted" data-t="timeLogged"></div><div class="v" id="h-total">0 h</div></div>
+        </div>
+        <div class="stack" id="stack"></div>
+        <table>
+          <thead><tr><th data-t="thType"></th><th data-t="thEntries"></th><th>SP</th><th data-t="time"></th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <svg id="cursor" viewBox="0 0 24 24"><path d="M4 2.5l15 9.2-6.6 1.4 3.9 7.4-2.7 1.4-3.9-7.4L4.9 19z" fill="#fff" stroke="#14162b" stroke-width="1.4" stroke-linejoin="round"/></svg>
+  <div id="ring"></div>
+
+  <!-- Scena 7 -->
+  <div class="layer" id="inkend"></div>
+  <div class="end" id="s7">
+    <div class="logo-row" id="s7logo">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="13" y="1.5" width="6" height="3.2" rx="1.3" fill="#fff"/><rect x="15" y="3.8" width="2" height="3.6" fill="#fff"/><g transform="rotate(-90 16 18)" fill="none" stroke-width="4.2"><circle cx="16" cy="18" r="11" stroke="var(--task)" stroke-dasharray="25.33 69.115" stroke-dashoffset="-1.1"/><circle cx="16" cy="18" r="11" stroke="var(--review)" stroke-dasharray="9.65 69.115" stroke-dashoffset="-28.63"/><circle cx="16" cy="18" r="11" stroke="var(--pair)" stroke-dasharray="15.68 69.115" stroke-dashoffset="-40.48"/><circle cx="16" cy="18" r="11" stroke="var(--extra)" stroke-dasharray="9.65 69.115" stroke-dashoffset="-58.36"/></g><path d="M16 18 L19.9 13.4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="16" cy="18" r="1.9" fill="#fff"/></svg>
+      <div class="wordmark">splits</div>
+    </div>
+    <h2 class="display" id="s7h" data-t="s7h"></h2>
+    <div class="cta" id="s7cta" data-t="cta"></div>
+    <p class="fine" id="s7fine" data-t="fine"></p>
+  </div>
+  <div class="endstrip" id="endstrip">
+    <b style="width:30%;background:var(--task)"></b><b style="width:10%;background:var(--review)"></b><b style="width:17%;background:var(--pair)"></b><b style="width:8%;background:var(--extra)"></b><b style="width:12%;background:var(--meeting)"></b><b style="width:23%;background:var(--task)"></b>
+  </div>
+
+<script>
+(() => {
+  'use strict';
+  // 28 s: plansza końcowa trzyma się dłużej, żeby lektor zdążył z ostatnim zdaniem.
+  const DURATION = 28;
+  const $ = (id) => document.getElementById(id);
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const lerp = (a, b, p) => a + (b - a) * p;
+  const ease = {
+    out: (t) => 1 - Math.pow(1 - t, 3),
+    inOut: (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
+    back: (t) => { const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); },
+  };
+  const p = (t, start, dur) => clamp((t - start) / dur);
+  // ---------- Teksty: ?lang=en (domyślnie) albo ?lang=pl ----------
+  const I18N = {
+    en: {
+      tag: 'en-US',
+      s1a: [['Friday.'], ['Retro.']],
+      s1b: [['How'], ['much'], ['time'], ['did'], ['code', 1], ['reviews', 1], ['take?']],
+      s2: 'Nobody remembers.', tagline: 'The time tracker for developers.',
+      s4h: 'Log time in three seconds.', s4a: 'Click a template and it lands on your day.', s4b: 'Stop the timer and the entry saves itself.',
+      date: 'Tuesday, November 4', yourDay: 'Your day', logged: 'Logged', sp: 'Story points',
+      running: 'Timer running', stopped: 'Timer stopped, entry saved', taskName: 'PAY-142 Payment gateway integration',
+      meetingChip: 'Meeting, 30 min', crChip: 'Code review, 25 min', tabReview: 'Code review',
+      entries: ['1:30–2:10 PM', 'Staging certificate hotfix', '12:30–1:30 PM', 'Queue migration with Kate', '11:25–11:50 AM', 'CR !481 Refund form validation', '2:10–2:35 PM', 'CR !486 Webhook retries', '2:35–3:17 PM', 'PAY-142 Payment gateway integration'],
+      s5h: 'A form that fits the work.', s5p: 'Code review is an MR link and time. Pair programming is a title and time. Nothing else.',
+      tabTask: 'Task', tabExtra: 'Extra work',
+      titleReq: 'Title <span>(required)</span>', mrReq: 'MR link <span>(required)</span>', taskLink: 'Task link',
+      jira: 'https://acme.atlassian.net/browse/PAY-142', mr: 'https://gitlab.com/acme/shop/-/merge_requests/481',
+      taskTitle: 'Payment gateway integration', pairTitle: 'Queue migration with Kate', t0915: '9:15 AM', t1125: '11:25 AM', end: 'End', time: 'Time', save: 'Save entry', half: '0.5',
+      s6h: 'Sprint ends. Full picture.', s6p: 'Story points and hours for every kind of work. Code review counts too.',
+      range: 'Nov 3–14', completed: 'Completed', timeLogged: 'Time logged', thType: 'Work type', thEntries: 'Entries',
+      kinds: ['Tasks', 'Code review', 'Pair programming', 'Extra work', 'Meetings'],
+      s7h: 'Start your next sprint with the full picture.', cta: 'Create a free account', fine: 'Free plan, no card needed',
+    },
+    pl: {
+      tag: 'pl-PL',
+      s1a: [['Piątek.'], ['Retro.']],
+      s1b: [['Ile'], ['czasu'], ['zjadły'], ['Code', 1], ['Review?', 1]],
+      s2: 'Nikt nie pamięta.', tagline: 'Time tracker dla programistów.',
+      s4h: 'Wpis w trzy sekundy.', s4a: 'Klikasz szablon i wpis jest na osi dnia.', s4b: 'Zatrzymujesz timer i wpis zapisuje się sam.',
+      date: 'Wtorek, 4 listopada', yourDay: 'Twój dzień', logged: 'Zalogowane', sp: 'Story pointy',
+      running: 'Timer działa', stopped: 'Timer zatrzymany, wpis zapisany', taskName: 'PAY-142 Integracja bramki płatności',
+      meetingChip: 'Spotkanie, 30 min', crChip: 'Code Review, 25 min', tabReview: 'Code Review',
+      entries: ['13:30–14:10', 'Hotfix certyfikatu na stagingu', '12:30–13:30', 'Migracja kolejek z Kasią', '11:25–11:50', 'CR !481 Walidacja formularza zwrotów', '14:10–14:35', 'CR !486 Retry webhooków', '14:35–15:17', 'PAY-142 Integracja bramki płatności'],
+      s5h: 'Formularz dopasowany do pracy.', s5p: 'Code Review to link do MR i czas. Pair programming to tytuł i czas. Nic więcej.',
+      tabTask: 'Zadanie', tabExtra: 'Prace dodatkowe',
+      titleReq: 'Tytuł <span>(wymagane)</span>', mrReq: 'Link do MR <span>(wymagane)</span>', taskLink: 'Link do zadania',
+      jira: 'https://jira.firma.pl/browse/PAY-142', mr: 'https://gitlab.firma.pl/shop/-/merge_requests/481',
+      taskTitle: 'Integracja bramki płatności', pairTitle: 'Migracja kolejek z Kasią', t0915: '09:15', t1125: '11:25', end: 'Koniec', time: 'Czas', save: 'Zapisz wpis', half: '0,5',
+      s6h: 'Koniec sprintu. Pełny obraz.', s6p: 'Story pointy i godziny dla każdego rodzaju pracy. Code Review też się liczy.',
+      range: '3–14 listopada', completed: 'Ukończone', timeLogged: 'Zalogowany czas', thType: 'Rodzaj pracy', thEntries: 'Wpisy',
+      kinds: ['Zadania', 'Code Review', 'Pair programming', 'Prace dodatkowe', 'Spotkania'],
+      s7h: 'Następny sprint zacznij z pełnym obrazem.', cta: 'Załóż darmowe konto', fine: 'Plan Free bez karty',
+    },
+  };
+  const LANG = new URLSearchParams(location.search).get('lang') === 'pl' ? 'pl' : 'en';
+  const T = I18N[LANG];
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = T[el.dataset.t]; });
+  document.querySelectorAll('[data-h]').forEach((el) => { el.innerHTML = T[el.dataset.h]; });
+  const words = (id, list) => { $(id).innerHTML = list.map(([w, hl]) => `<span class="word"${hl ? ' style="color:var(--review)"' : ''}>${w}</span>`).join(' '); };
+  words('s1a', T.s1a); words('s1b', T.s1b);
+
+  /** Widoczność sceny: wejście [a, a+fi], wyjście [b-fo, b]. */
+  const vis = (t, a, b, fi = 0.3, fo = 0.3) => Math.min(p(t, a, fi), 1 - p(t, b - fo, fo));
+  const set = (el, opacity, transform = '') => { el.style.opacity = opacity; el.style.transform = transform; el.style.visibility = opacity <= 0.001 ? 'hidden' : 'visible'; };
+  const fmtNum = (n, d = 0) => n.toLocaleString(T.tag, { minimumFractionDigits: d, maximumFractionDigits: d });
+  const fmtMin = (m) => { m = Math.round(m); const h = Math.floor(m / 60), r = m % 60; return h ? (r ? `${h} h ${r} min` : `${h} h`) : `${r} min`; };
+  const C = { task: 'var(--task)', review: 'var(--review)', pair: 'var(--pair)', extra: 'var(--extra)', meeting: 'var(--meeting)' };
+
+  // ---------- Układ zależny od proporcji ----------
+  const W = innerWidth, H = innerHeight, S = Math.min(W, H);
+  document.documentElement.style.fontSize = `${S / 54}px`;
+  const shape = W / H > 1.2 ? 'land' : H / W > 1.2 ? 'port' : 'sq';
+  document.body.classList.add(shape);
+  const rem = S / 54;
+  const urlParam = new URLSearchParams(location.search).get('url');
+  if (urlParam) $('s7fine').textContent = `${T.fine}  ·  ${urlParam}`;
+
+  // ---------- Bloki (sceny 1–3) ----------
+  // Dzień pracy: [typ, minuty]. Te same bloki są najpierw rozsypane, potem układają się w pasek dnia.
+  const day = [['meeting', 15], ['task', 130], ['review', 25], ['pair', 60], ['extra', 40], ['review', 25], ['task', 42], ['meeting', 30], ['task', 70], ['review', 20]];
+  const total = day.reduce((a, d) => a + d[1], 0);
+  const stripW = W * (shape === 'land' ? 0.7 : 0.86), stripH = 3.2 * rem, gap = 0.45 * rem;
+  const usable = stripW - gap * (day.length - 1);
+  let rand = 7; const rnd = () => { rand = (rand * 16807) % 2147483647; return (rand - 1) / 2147483646; };
+  let x0 = (W - stripW) / 2;
+  const blocks = day.map(([kind, min], i) => {
+    const w = (min / total) * usable;
+    const el = document.createElement('span');
+    el.style.width = `${w}px`; el.style.height = `${stripH}px`;
+    $('blocks').appendChild(el);
+    const target = { x: x0, y: H / 2 - stripH / 2 };
+    x0 += w + gap;
+    // rozsypane: górny lub dolny pas ekranu, poza tekstem
+    const top = i % 2 === 0;
+    const band = shape === 'port' ? [0.1, 0.24] : [0.08, 0.26];
+    const ry = top ? lerp(band[0], band[1], rnd()) : lerp(1 - band[1], 1 - band[0], rnd());
+    const scatter = { x: lerp(0.04, 0.96, rnd()) * W - w / 2, y: ry * H - stripH / 2, r: lerp(-14, 14, rnd()), ph: rnd() * 6.28 };
+    return { el, kind, w, target, scatter };
+  });
+
+  function renderBlocks(t) {
+    const layer = $('blocks');
+    const show = Math.min(p(t, 2.0, 1.2), 1 - p(t, 7.0, 0.6));
+    layer.style.visibility = show <= 0 ? 'hidden' : 'visible';
+    const gather = ease.inOut(p(t, 5.2, 1.0));
+    const shrink = ease.inOut(p(t, 6.95, 0.6));
+    blocks.forEach((b, i) => {
+      const drift = 1 - gather;
+      const sx = b.scatter.x + Math.sin(t * 0.7 + b.scatter.ph) * 1.4 * rem * drift;
+      const sy = b.scatter.y + Math.cos(t * 0.6 + b.scatter.ph) * 1.0 * rem * drift;
+      let x = lerp(sx, b.target.x, gather), y = lerp(sy, b.target.y, gather);
+      const r = lerp(b.scatter.r, 0, gather);
+      // pasek kurczy się do środka, robiąc miejsce logo
+      const cx = W / 2, cy = H / 2, sc = lerp(1, 0.3, shrink);
+      x = cx + (x + b.w / 2 - cx) * sc - b.w / 2; y = cy + (y + stripH / 2 - cy) * sc - stripH / 2;
+      const color = p(t, 6.05 + i * 0.05, 0.35);
+      b.el.style.background = color > 0 ? C[b.kind] : 'var(--scatter)';
+      b.el.style.opacity = (t < 3.6 ? 0.55 : 1) * (color > 0 ? 1 : 1);
+      b.el.style.filter = color > 0 && color < 1 ? `brightness(${lerp(1.6, 1, color)})` : 'none';
+      b.el.style.transform = `translate(${x}px, ${y}px) rotate(${r}deg) scale(${sc}, ${sc})`;
+      b.el.style.transformOrigin = 'center';
+    });
+    layer.style.opacity = show;
+  }
+
+  // ---------- Scena 1 i 2: tekst ----------
+  const words1 = [...$('s1a').querySelectorAll('.word')], words2 = [...$('s1b').querySelectorAll('.word')];
+  function renderHook(t) {
+    const out = ease.inOut(p(t, 3.5, 0.45));
+    set($('s1'), 1 - out, `translateY(${-out * 3}rem)`);
+    words1.forEach((w, i) => { const q = ease.out(p(t, 0.25 + i * 0.14, 0.45)); w.style.opacity = q; w.style.transform = `translateY(${(1 - q) * 1.2}em)`; });
+    words2.forEach((w, i) => { const q = ease.out(p(t, 1.15 + i * 0.12, 0.45)); w.style.opacity = q; w.style.transform = `translateY(${(1 - q) * 1.2}em)`; });
+    const q2 = vis(t, 3.95, 5.4, 0.4, 0.35);
+    set($('s2'), q2, `scale(${lerp(0.94, 1, ease.out(p(t, 3.95, 0.5)))})`);
+  }
+
+  function renderLogo(t) {
+    const q = ease.back(p(t, 7.05, 0.6));
+    const o = Math.min(p(t, 7.05, 0.35), 1 - p(t, 8.35, 0.25));
+    set($('s3logo'), o, `scale(${lerp(1.25, 1, q)})`);
+    set($('s3tag'), Math.min(ease.out(p(t, 7.5, 0.45)), 1 - p(t, 8.35, 0.25)), `translateY(${(1 - ease.out(p(t, 7.5, 0.45))) * 1}rem)`);
+    $('s3').style.visibility = t > 6.9 && t < 8.7 ? 'visible' : 'hidden';
+  }
+
+  // ---------- Scena 4: dzień pracy ----------
+  const DAY = 480;
+  const strip = $('d-strip');
+  const mkBlock = (kind, start, len, cls = '') => { const b = document.createElement('b'); b.className = cls; b.style.left = `${start / DAY * 100}%`; b.style.width = `${len / DAY * 100}%`; if (kind) b.style.background = C[kind]; strip.appendChild(b); return b; };
+  [['meeting', 0, 15], ['task', 15, 130], ['review', 145, 25], ['pair', 210, 60], ['extra', 270, 40]].forEach(([k, s, l]) => mkBlock(k, s, l));
+  const newCR = mkBlock('review', 310, 25);
+  const running = mkBlock(null, 310, 42, 'running');
+  const savedTask = mkBlock('task', 335, 42);
+
+  const list = $('d-list');
+  const mkEntry = (kind, when, what, dur) => { const r = document.createElement('div'); r.className = 'entry'; r.innerHTML = `<span class="dot" style="background:${C[kind]}"></span><span class="when">${when}</span><span class="what">${what}</span><span class="dur">${dur}</span>`; list.appendChild(r); return r; };
+  // Zdarzenia: E1 = szablon CR (10.95 s), E2 = stop timera (12.55 s)
+  const E1 = 10.95, E2 = 12.55;
+  const entries = [
+    { el: mkEntry('extra', T.entries[0], T.entries[1], '40 min'), slot: 0, born: -1 },
+    { el: mkEntry('pair', T.entries[2], T.entries[3], '1 h'), slot: 1, born: -1 },
+    { el: mkEntry('review', T.entries[4], T.entries[5], '25 min'), slot: 2, born: -1 },
+    { el: mkEntry('review', T.entries[6], T.entries[7], '25 min'), slot: 0, born: E1 },
+    { el: mkEntry('task', T.entries[8], T.entries[9], '42 min'), slot: 0, born: E2 },
+  ];
+
+  const renderTime = (sec) => {
+    const s = Math.floor(sec), str = [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map((n) => String(n).padStart(2, '0')).join(':');
+    $('d-time').innerHTML = str.split('').map((ch) => (ch === ':' ? '<span class="c">:</span>' : `<span class="d">${ch}</span>`)).join('');
+  };
+
+  function renderDay(t) {
+    const o = vis(t, 8.6, 13.75, 0.35, 0.3);
+    const rise = ease.out(p(t, 8.65, 0.6));
+    set($('s4'), o);
+    $('daycard').style.transform = `translateY(${(1 - rise) * 3}rem)`;
+
+    const e1 = ease.out(p(t, E1, 0.45)), e2 = ease.out(p(t, E2, 0.45));
+    // nowy blok CR rośnie, pasek timera przesuwa się za niego
+    newCR.style.transform = `scaleX(${e1})`;
+    const runStart = 310 + 25 * e1;
+    const stopped = t >= E2;
+    const elapsed = 42 * 60 + 13 + Math.max(0, Math.min(t, E2) - 8.6);
+    renderTime(elapsed);
+    running.style.left = `${runStart / DAY * 100}%`;
+    running.style.width = `${42 / DAY * 100}%`;
+    running.style.opacity = 1 - e2;
+    savedTask.style.opacity = e2;
+    $('ic-pause').style.opacity = stopped ? 0 : 1;
+    $('ic-play').style.opacity = stopped ? 1 : 0;
+    $('d-state').textContent = stopped ? T.stopped : T.running;
+    $('s4sub').textContent = t < 11.9 ? T.s4a : T.s4b;
+
+    $('d-total').textContent = `${fmtMin(312 + 25 * e1)}`;
+    $('d-sp').textContent = `${fmtNum(5.5 + 0.5 * (e1 > 0.5 ? 1 : 0), e1 > 0.5 ? 0 : 1)} SP`;
+
+    const rowH = 2.6;
+    entries.forEach((en) => {
+      let slot = en.slot, op = 1, enter = 0;
+      if (en.born < 0) slot += e1 + e2;
+      else if (en.born === E1) { enter = e1; slot += e2; }
+      else { enter = e2; }
+      if (en.born >= 0) op = enter;
+      op *= clamp(3 - slot);
+      en.el.style.top = `${(slot - (en.born >= 0 ? 1 - enter : 0) * 0.6) * rowH}em`;
+      en.el.style.opacity = op;
+      en.el.style.visibility = op <= 0 ? 'hidden' : 'visible';
+    });
+
+    // przyciśnięcie chipa
+    const press1 = Math.sin(Math.PI * p(t, E1 - 0.15, 0.3));
+    $('chip-cr').style.transform = `scale(${1 - 0.07 * press1})`;
+    $('chip-cr').style.background = press1 > 0 ? 'rgba(232,163,61,0.15)' : 'var(--surface)';
+    const press2 = Math.sin(Math.PI * p(t, E2 - 0.15, 0.3));
+    $('d-play').style.transform = `scale(${1 - 0.1 * press2})`;
+  }
+
+  // ---------- Kursor ----------
+  const center = (el) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+  function renderCursor(t) {
+    const cur = $('cursor'), ring = $('ring');
+    const o = Math.min(p(t, 9.9, 0.3), 1 - p(t, 13.2, 0.3));
+    if (o <= 0) { cur.style.opacity = 0; ring.style.opacity = 0; return; }
+    const chip = center($('chip-cr')), play = center($('d-play'));
+    const start = { x: W * 0.92, y: H * 0.95 };
+    let pos;
+    if (t < E1) { const q = ease.inOut(p(t, 9.95, 0.85)); pos = { x: lerp(start.x, chip.x, q), y: lerp(start.y, chip.y, q) }; }
+    else { const q = ease.inOut(p(t, 11.55, 0.8)); pos = { x: lerp(chip.x, play.x, q), y: lerp(chip.y, play.y, q) }; }
+    cur.style.opacity = o;
+    cur.style.transform = `translate(${pos.x - 0.25 * rem}px, ${pos.y - 0.2 * rem}px)`;
+    const click = (at) => p(t, at - 0.05, 0.45);
+    const c = t < E2 - 0.2 ? click(E1) : click(E2);
+    ring.style.opacity = c > 0 && c < 1 ? 0.7 * (1 - c) : 0;
+    ring.style.transform = `translate(${pos.x}px, ${pos.y}px) scale(${lerp(0.3, 1.4, c)})`;
+  }
+
+  // ---------- Scena 5: formularz ----------
+  const tabs = [...document.querySelectorAll('#tabs .tab')];
+  const fs = [$('fs0'), $('fs1'), $('fs2')];
+  const MR = T.mr;
+  function renderForm(t) {
+    const o = vis(t, 13.75, 17.85, 0.35, 0.3);
+    set($('s5'), o, `translateY(${(1 - ease.out(p(t, 13.75, 0.5))) * 2}rem)`);
+    if (o <= 0) return;
+    const switches = [13.6, 15.0, 16.35];
+    let idx = 0; switches.forEach((s, i) => { if (t >= s) idx = i; });
+    const q = ease.inOut(p(t, switches[idx], 0.35));
+    const from = tabs[Math.max(0, idx - 1)], to = tabs[idx];
+    const box = $('tabs').getBoundingClientRect();
+    const fr = from.getBoundingClientRect(), tr = to.getBoundingClientRect();
+    const pill = $('tab-pill');
+    pill.style.left = `${lerp(fr.left, tr.left, q) - box.left}px`;
+    pill.style.width = `${lerp(fr.width, tr.width, q)}px`;
+    tabs.forEach((tab, i) => { tab.style.color = i === idx && q > 0.5 ? '#fff' : i === idx - 1 && q <= 0.5 ? '#fff' : 'var(--soft)'; });
+    fs.forEach((f, i) => {
+      const a = i === idx ? q : i === idx - 1 ? 1 - q : 0;
+      f.style.opacity = a; f.style.transform = `translateY(${(1 - a) * (i === idx ? 1 : -1) * 0.8}em)`;
+      f.style.visibility = a <= 0 ? 'hidden' : 'visible';
+    });
+    const typed = Math.floor(MR.length * clamp((t - 15.25) / 0.9));
+    const caret = t > 15.2 && t < 16.3 && Math.floor(t * 3) % 2 === 0;
+    $('mr-input').innerHTML = (typed > 0 ? MR.slice(0, typed) : '') + (caret ? '<span class="caret"></span>' : '');
+  }
+
+  // ---------- Scena 6: sprint ----------
+  const sprint = [['task', T.kinds[0], 7, 21, 2280], ['review', T.kinds[1], 13, 6.5, 610], ['pair', T.kinds[2], 4, 4, 420], ['extra', T.kinds[3], 5, 2.5, 330], ['meeting', T.kinds[4], 12, 3, 540]];
+  const sumMin = sprint.reduce((a, r) => a + r[4], 0), sumSp = sprint.reduce((a, r) => a + r[3], 0);
+  const stackEls = sprint.map(([k, , , , m]) => { const b = document.createElement('b'); b.style.width = `${m / sumMin * 100}%`; b.style.background = C[k]; $('stack').appendChild(b); return b; });
+  const rowEls = sprint.map(([k, label, n, sp, m]) => { const tr = document.createElement('tr'); if (k === 'review') tr.className = 'hlrow'; tr.innerHTML = `<td><span class="sw" style="background:${C[k]}"></span>${label}</td><td>${n}</td><td><b>${fmtNum(sp, sp % 1 ? 1 : 0)}</b></td><td>${fmtMin(m)}</td>`; $('rows').appendChild(tr); return tr; });
+  function renderSprint(t) {
+    const o = vis(t, 17.85, 22.3, 0.35, 0.01);
+    set($('s6'), o, `translateY(${(1 - ease.out(p(t, 17.85, 0.5))) * 2}rem)`);
+    if (o <= 0) return;
+    const c = ease.out(p(t, 18.3, 1.3));
+    $('sp-total').textContent = `${fmtNum(sumSp * c)} SP`;
+    $('h-total').textContent = `${fmtNum(sumMin / 60 * c)} h`;
+    stackEls.forEach((b, i) => { b.style.transform = `scaleX(${ease.out(p(t, 18.5 + i * 0.18, 0.4))})`; });
+    rowEls.forEach((r, i) => { const q = ease.out(p(t, 19.0 + i * 0.16, 0.35)); r.style.opacity = q; r.style.transform = `translateX(${(1 - q) * 1}em)`; });
+    const hl = p(t, 20.5, 0.4);
+    rowEls[1].querySelectorAll('td').forEach((td) => { td.style.background = `rgba(232,163,61,${0.2 * hl})`; });
+  }
+
+  // ---------- Kurtyny i scena 7 ----------
+  function renderEnd(t) {
+    const paperIn = ease.inOut(p(t, 8.2, 0.45));
+    $('paper').style.transform = `translateY(${(1 - paperIn) * 100}%)`;
+    const inkIn = ease.inOut(p(t, 21.95, 0.45));
+    $('inkend').style.transform = `translateY(${(1 - inkIn) * 100}%)`;
+    const lq = ease.back(p(t, 22.45, 0.6));
+    set($('s7logo'), p(t, 22.45, 0.3), `scale(${lerp(0.8, 1, lq)})`);
+    const hq = ease.out(p(t, 22.8, 0.5));
+    set($('s7h'), hq, `translateY(${(1 - hq) * 1.2}rem)`);
+    const cq = ease.back(p(t, 23.35, 0.5));
+    set($('s7cta'), p(t, 23.35, 0.25), `scale(${lerp(0.85, 1, cq)})`);
+    set($('s7fine'), ease.out(p(t, 23.7, 0.4)));
+    $('s7').style.visibility = t > 22.3 ? 'visible' : 'hidden';
+    const es = $('endstrip'); es.style.visibility = t > 22.3 ? 'visible' : 'hidden';
+    [...es.children].forEach((b, i) => { b.style.transform = `scaleX(${ease.out(p(t, 22.5 + i * 0.1, 0.45))})`; });
+  }
+
+  window.DURATION = DURATION;
+  window.render = (t) => {
+    renderBlocks(t); renderHook(t); renderLogo(t);
+    renderDay(t); renderCursor(t); renderForm(t); renderSprint(t); renderEnd(t);
+  };
+
+  window.__ready = document.fonts.ready.then(() => { window.render(0); return true; });
+
+  if (new URLSearchParams(location.search).has('play')) {
+    window.__ready.then(() => {
+      const t0 = performance.now();
+      const loop = (now) => { window.render(((now - t0) / 1000) % DURATION); requestAnimationFrame(loop); };
+      requestAnimationFrame(loop);
+    });
+  }
+})();
+</script>
+</body>
+</html>

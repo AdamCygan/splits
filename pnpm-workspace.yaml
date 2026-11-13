@@ -1,0 +1,11 @@
+# Ustawienia pnpm (jeden projekt, bez podpakietów).
+
+# Skrypty instalacyjne uruchamiamy tylko dla zaufanych paczek, które ich potrzebują.
+allowBuilds:
+  esbuild: true
+  # Wyświetla tylko komunikat o darowiznach.
+  core-js: false
+
+# Playwright i jego rdzeń w tej samej wersji co przeglądarka w CI i w testach.
+overrides:
+  playwright-core: 1.63.0

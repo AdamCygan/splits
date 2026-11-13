@@ -1,0 +1,16 @@
+node_modules
+.output
+.nitro
+.tanstack
+dist
+.env
+.env.*
+!.env.example
+Dockerfile
+.dockerignore
+.git
+.github
+marketing
+docs
+test-results
+playwright-report

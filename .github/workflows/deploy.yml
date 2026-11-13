@@ -1,0 +1,56 @@
+# Testy i wdrożenie na Fly.io po każdym pushu do main.
+# Wymaga sekretu repozytorium FLY_API_TOKEN (fly tokens create deploy -x 999999h).
+# Migracje bazy (Neon) wykonuje sama aplikacja przy starcie.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: splits_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s
+          --health-timeout 3s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/splits_test
+      E2E_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/splits_e2e
+    steps:
+      - uses: actions/checkout@v4
+      # Wersję pnpm bierze z pola packageManager w package.json.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck && pnpm lint
+      - run: pnpm test
+      - run: PGPASSWORD=postgres psql -h localhost -U postgres -c 'create database splits_e2e'
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm build && pnpm test:e2e
+
+  deploy:
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

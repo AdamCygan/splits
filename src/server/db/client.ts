@@ -1,0 +1,61 @@
+import path from 'node:path'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { migrate } from 'drizzle-orm/node-postgres/migrator'
+import pg from 'pg'
+import { serverEnv } from '../env'
+import * as schema from './schema'
+
+/**
+ * Połączenie z Postgresem (lokalnie albo Neon). Na Fly.io aplikacja działa cały czas,
+ * więc wystarcza zwykła pula połączeń `pg`; na Neonie użyj adresu z `-pooler`, gdy maszyn jest kilka.
+ */
+const pool = new pg.Pool({
+  connectionString: serverEnv.databaseUrl,
+  max: serverEnv.databasePoolSize,
+  // Neon usypia bazę po 5 min bezczynności: pierwsze połączenie po przerwie trwa dłużej.
+  connectionTimeoutMillis: 15_000,
+  idleTimeoutMillis: 30_000,
+})
+
+export const db = drizzle(pool, { schema, casing: 'snake_case' })
+export type Db = typeof db
+/** Transakcja albo zwykłe połączenie: funkcje domenowe przyjmują jedno i drugie. */
+export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0] | Db
+
+let ready: Promise<void> | null = null
+
+/**
+ * Migracje przy starcie (raz na proces). Blokada doradcza w Postgresie sprawia, że przy kilku
+ * maszynach migracje wykonuje tylko jedna. Wyłączysz to zmienną MIGRATE_ON_START=false.
+ */
+export function ensureMigrated(): Promise<void> {
+  if (!serverEnv.migrateOnStart) return Promise.resolve()
+  ready ??= (async () => {
+    const client = new pg.Client({
+      connectionString: serverEnv.migrationUrl,
+      connectionTimeoutMillis: 15_000,
+    })
+    await client.connect()
+    try {
+      await client.query(
+        "select pg_advisory_lock(hashtext('splits:migrations'))",
+      )
+      await migrate(drizzle(client), {
+        migrationsFolder: path.resolve(serverEnv.migrationsDir),
+      })
+    } finally {
+      await client
+        .query("select pg_advisory_unlock(hashtext('splits:migrations'))")
+        .catch(() => undefined)
+      await client.end()
+    }
+  })().catch((error: unknown) => {
+    ready = null
+    throw error
+  })
+  return ready
+}
+
+export async function closeDb() {
+  await pool.end()
+}

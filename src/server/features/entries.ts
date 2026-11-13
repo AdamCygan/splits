@@ -1,0 +1,417 @@
+import { and, asc, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm'
+import { Hono } from 'hono'
+import type { TimeEntryInput } from '#/data/types'
+import { addDays, nowTimeIn, todayIn } from '#/domain/dates'
+import {
+  isFutureStart,
+  startedAtFor,
+  stoppedValues,
+  validateEntry,
+} from '#/domain/entries'
+import { spForType, taskGroupKey } from '#/domain/report'
+import { FREE_LIMITS } from '#/features/billing/plans'
+import { db } from '../db/client'
+import type { Tx } from '../db/client'
+import * as t from '../db/schema'
+import type { AppEnv } from '../http/context'
+import { ApiError, invalid, notFound } from '../http/errors'
+import {
+  body,
+  dateQuery,
+  entryInput,
+  parse,
+  rangeQuery,
+  taskRefInput,
+  timerInput,
+} from '../http/inputs'
+import { ownProject, ownTaskType } from './config'
+import { toEntry } from './dto'
+
+type Row = typeof t.timeEntries.$inferSelect
+type TaskRef = { link: string | null; taskTypeId: string; title: string }
+
+async function userTimezone(tx: Tx, userId: string) {
+  const [s] = await tx
+    .select({ timezone: t.userSettings.timezone })
+    .from(t.userSettings)
+    .where(eq(t.userSettings.userId, userId))
+  return s?.timezone ?? 'UTC'
+}
+
+/** Puste teksty zapisujemy jako null. */
+const clean = (input: TimeEntryInput) => ({
+  ...input,
+  title: input.title.trim(),
+  link: input.link?.trim() || null,
+  note: input.note?.trim() ? input.note.trimEnd() : null,
+  overtimeMinutes: input.overtimeMinutes,
+  overtimeNote:
+    input.overtimeMinutes === null
+      ? null
+      : (input.overtimeNote?.trim() ?? null),
+})
+
+/** Te same reguły co formularz (validateEntry) plus własność typu i projektu. */
+async function check(
+  tx: Tx,
+  userId: string,
+  input: TimeEntryInput,
+  timezone: string,
+) {
+  const type = await ownTaskType(tx, userId, input.taskTypeId)
+  if (!type) throw new ApiError('type.unknown', 400, 'taskTypeId')
+  if (input.projectId && !(await ownProject(tx, userId, input.projectId)))
+    throw invalid('projectId')
+  const issue = validateEntry(input, type)[0]
+  if (issue) throw invalid(issue.field)
+  if (
+    input.running &&
+    input.startTime &&
+    isFutureStart(input.startTime, nowTimeIn(timezone))
+  )
+    throw invalid('time')
+}
+
+const mine = (userId: string) => eq(t.timeEntries.userId, userId)
+
+/** Wpisy tego samego zadania — to samo co sameTask(): ten sam link, a bez linku typ i tytuł. */
+function sameTaskAs(ref: TaskRef) {
+  const link = ref.link?.trim()
+  return link
+    ? eq(t.timeEntries.link, link)
+    : and(
+        isNull(t.timeEntries.link),
+        eq(t.timeEntries.taskTypeId, ref.taskTypeId),
+        eq(
+          sql`lower(trim(${t.timeEntries.title}))`,
+          ref.title.trim().toLowerCase(),
+        ),
+      )
+}
+
+/**
+ * Zatrzymuje działający timer (poza `exceptId`); w bazie pilnuje tego unikalny indeks.
+ * Start innego zadania przerywa bieżące, więc zostaje ono wstrzymane i czeka na „Wznów”.
+ */
+async function stopRunning(
+  tx: Tx,
+  userId: string,
+  timezone: string,
+  exceptId?: string,
+) {
+  const [running] = await tx
+    .select()
+    .from(t.timeEntries)
+    .where(and(mine(userId), eq(t.timeEntries.running, true)))
+    .for('update')
+  if (!running || running.id === exceptId) return null
+  return stop(tx, running, timezone, true)
+}
+
+async function stop(tx: Tx, entry: Row, timezone: string, paused = false) {
+  const values = stoppedValues(
+    { ...entry, startedAt: entry.startedAt?.toISOString() ?? null },
+    todayIn(timezone),
+    nowTimeIn(timezone),
+  )
+  const [stopped] = await tx
+    .update(t.timeEntries)
+    .set({ ...values, startedAt: entry.startedAt, paused })
+    .where(eq(t.timeEntries.id, entry.id))
+    .returning()
+  return stopped!
+}
+
+/** Zadanie znowu ruszyło albo jest skończone: znika z listy wstrzymanych. */
+async function clearPaused(tx: Tx, userId: string, ref: TaskRef) {
+  await tx
+    .update(t.timeEntries)
+    .set({ paused: false })
+    .where(and(mine(userId), eq(t.timeEntries.paused, true), sameTaskAs(ref)))
+}
+
+/** Godzina startu bez zmian = ten sam moment; nowa godzina = przeliczamy od „teraz”. */
+function timerStart(
+  input: TimeEntryInput,
+  previous: Row | null,
+  timezone: string,
+) {
+  if (!input.running || !input.startTime) return null
+  if (previous?.running && previous.startTime === input.startTime)
+    return previous.startedAt
+  return new Date(startedAtFor(input.startTime, nowTimeIn(timezone)))
+}
+
+async function ownEntry(tx: Tx, userId: string, id: string) {
+  const [entry] = await tx
+    .select()
+    .from(t.timeEntries)
+    .where(and(eq(t.timeEntries.id, id), mine(userId)))
+    .for('update')
+  if (!entry) throw notFound()
+  return entry
+}
+
+/** Nowy działający wpis; poprzedni timer zostaje wstrzymany, a to zadanie znika z wstrzymanych. */
+async function startTimer(
+  tx: Tx,
+  userId: string,
+  input: TimeEntryInput,
+  timezone: string,
+) {
+  await check(tx, userId, input, timezone)
+  const stopped = await stopRunning(tx, userId, timezone)
+  const values = clean(input)
+  await clearPaused(tx, userId, values)
+  const [started] = await tx
+    .insert(t.timeEntries)
+    .values({
+      ...values,
+      userId,
+      startedAt: timerStart(input, null, timezone),
+    })
+    .returning()
+  return { started: started!, stopped }
+}
+
+const timerResult = (r: { started: Row; stopped: Row | null }) => ({
+  started: toEntry(r.started),
+  stopped: r.stopped ? toEntry(r.stopped) : null,
+})
+
+/** Wpisy z jednego dnia, najnowsze najpierw (świeży wpis jest na górze listy). */
+export const entriesOn = (tx: Tx, userId: string, date: string) =>
+  tx
+    .select()
+    .from(t.timeEntries)
+    .where(and(mine(userId), eq(t.timeEntries.workDate, date)))
+    .orderBy(desc(t.timeEntries.createdAt))
+
+/** Wstrzymane danego dnia: jedna pozycja na zadanie, najświeższe najpierw, najwyżej 5. */
+export async function pausedOn(tx: Tx, userId: string, date: string) {
+  const rows = await tx
+    .select()
+    .from(t.timeEntries)
+    .where(
+      and(
+        mine(userId),
+        eq(t.timeEntries.paused, true),
+        eq(t.timeEntries.running, false),
+        eq(t.timeEntries.workDate, date),
+      ),
+    )
+    .orderBy(desc(t.timeEntries.updatedAt))
+  const seen = new Set<string>()
+  return rows
+    .filter((r) => {
+      const key = taskGroupKey(r)
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    .slice(0, 5)
+}
+
+export const entryRoutes = new Hono<AppEnv>()
+  .get('/', async (c) => {
+    const userId = c.get('userId')
+    if (c.req.query('date')) {
+      const { date } = parse(dateQuery, c.req.query())
+      return c.json((await entriesOn(db, userId, date)).map(toEntry))
+    }
+    const range = parse(rangeQuery, c.req.query())
+    if (range.to < range.from) throw invalid('to')
+    // Plan Free: raporty z ostatnich 30 dni (jak w cenniku) — pilnowane także tutaj, nie tylko w UI.
+    const [user] = await db
+      .select({ plan: t.users.plan })
+      .from(t.users)
+      .where(eq(t.users.id, userId))
+    const oldest = addDays(
+      todayIn(await userTimezone(db, userId)),
+      -(FREE_LIMITS.historyDays - 1),
+    )
+    const from =
+      user?.plan === 'free' && range.from < oldest ? oldest : range.from
+    const { to } = range
+    if (to < from) return c.json([])
+    const rows = await db
+      .select()
+      .from(t.timeEntries)
+      .where(
+        and(
+          mine(userId),
+          gte(t.timeEntries.workDate, from),
+          lte(t.timeEntries.workDate, to),
+        ),
+      )
+      .orderBy(asc(t.timeEntries.workDate), asc(t.timeEntries.createdAt))
+    return c.json(rows.map(toEntry))
+  })
+
+  .get('/running', async (c) => {
+    const [row] = await db
+      .select()
+      .from(t.timeEntries)
+      .where(and(mine(c.get('userId')), eq(t.timeEntries.running, true)))
+    return c.json(row ? toEntry(row) : null)
+  })
+
+  /** Wstrzymane dziś zadania (jedna pozycja na zadanie, najświeższe najpierw, najwyżej 5). */
+  .get('/paused', async (c) => {
+    const userId = c.get('userId')
+    const today = todayIn(await userTimezone(db, userId))
+    return c.json((await pausedOn(db, userId, today)).map(toEntry))
+  })
+
+  .get('/by-task', async (c) => {
+    const ref = parse(taskRefInput, c.req.query())
+    const rows = await db
+      .select()
+      .from(t.timeEntries)
+      .where(
+        and(
+          mine(c.get('userId')),
+          eq(t.timeEntries.running, false),
+          sameTaskAs({ ...ref, link: ref.link ?? null }),
+        ),
+      )
+      .orderBy(asc(t.timeEntries.workDate), asc(t.timeEntries.createdAt))
+    return c.json(rows.map(toEntry))
+  })
+
+  .post('/', async (c) => {
+    const userId = c.get('userId')
+    const input = await body(c, entryInput)
+    const row = await db.transaction(async (tx) => {
+      const timezone = await userTimezone(tx, userId)
+      if (input.running)
+        return (await startTimer(tx, userId, input, timezone)).started
+      await check(tx, userId, input, timezone)
+      const [created] = await tx
+        .insert(t.timeEntries)
+        .values({ ...clean(input), userId, startedAt: null })
+        .returning()
+      return created!
+    })
+    return c.json(toEntry(row), 201)
+  })
+
+  .post('/timer', async (c) => {
+    const userId = c.get('userId')
+    const raw = await body(c, timerInput)
+    const input: TimeEntryInput = {
+      ...raw,
+      endTime: null,
+      durationMinutes: 0,
+      overtimeMinutes: null,
+      overtimeNote: null,
+      running: true,
+    }
+    const result = await db.transaction(async (tx) =>
+      startTimer(tx, userId, input, await userTimezone(tx, userId)),
+    )
+    return c.json(timerResult(result), 201)
+  })
+
+  /** Koniec pracy nad zadaniem: zatrzymany wpis nie trafia do wstrzymanych. */
+  .post('/:id/stop', async (c) => {
+    const userId = c.get('userId')
+    const row = await db.transaction(async (tx) => {
+      const entry = await ownEntry(tx, userId, c.req.param('id'))
+      if (!entry.running) return entry
+      return stop(tx, entry, await userTimezone(tx, userId))
+    })
+    return c.json(toEntry(row))
+  })
+
+  /** Przerwa: sesja się kończy, a zadanie czeka na pasku z przyciskiem „Wznów”. */
+  .post('/:id/pause', async (c) => {
+    const userId = c.get('userId')
+    const row = await db.transaction(async (tx) => {
+      const entry = await ownEntry(tx, userId, c.req.param('id'))
+      if (!entry.running) return entry
+      return stop(tx, entry, await userTimezone(tx, userId), true)
+    })
+    return c.json(toEntry(row))
+  })
+
+  /**
+   * Wznów: nowa sesja (nowy odcinek czasu) z tym samym tytułem, linkiem, typem, projektem i SP.
+   * Działający timer innego zadania zostaje wstrzymany, więc można swobodnie skakać między zadaniami.
+   */
+  .post('/:id/resume', async (c) => {
+    const userId = c.get('userId')
+    const result = await db.transaction(async (tx) => {
+      const entry = await ownEntry(tx, userId, c.req.param('id'))
+      if (entry.running) return { started: entry, stopped: null }
+      const timezone = await userTimezone(tx, userId)
+      const type = await ownTaskType(tx, userId, entry.taskTypeId)
+      return startTimer(
+        tx,
+        userId,
+        {
+          taskTypeId: entry.taskTypeId,
+          projectId: entry.projectId,
+          title: entry.title,
+          link: entry.link,
+          storyPoints: spForType(type, entry.storyPoints),
+          workDate: todayIn(timezone),
+          startTime: nowTimeIn(timezone),
+          endTime: null,
+          durationMinutes: 0,
+          note: null,
+          // Nowa sesja zaczyna bez nadgodzin; oznaczysz je po zatrzymaniu.
+          overtimeMinutes: null,
+          overtimeNote: null,
+          running: true,
+        },
+        timezone,
+      )
+    })
+    return c.json(timerResult(result), 201)
+  })
+
+  /** Zadanie skończone: znika z paska wstrzymanych (zalogowany czas zostaje). */
+  .post('/:id/dismiss', async (c) => {
+    const userId = c.get('userId')
+    await db.transaction(async (tx) => {
+      const entry = await ownEntry(tx, userId, c.req.param('id'))
+      await clearPaused(tx, userId, entry)
+    })
+    return c.body(null, 204)
+  })
+
+  .put('/:id', async (c) => {
+    const userId = c.get('userId')
+    const id = c.req.param('id')
+    const input = await body(c, entryInput)
+    const row = await db.transaction(async (tx) => {
+      const entry = await ownEntry(tx, userId, id)
+      const timezone = await userTimezone(tx, userId)
+      await check(tx, userId, input, timezone)
+      if (input.running) await stopRunning(tx, userId, timezone, id)
+      const [updated] = await tx
+        .update(t.timeEntries)
+        .set({
+          ...clean(input),
+          startedAt: timerStart(input, entry, timezone),
+          // Edycja działającego wpisu nie zmienia wstrzymania; zatrzymanie w formularzu je kończy.
+          paused: input.running ? false : entry.paused && !entry.running,
+        })
+        .where(eq(t.timeEntries.id, id))
+        .returning()
+      return updated!
+    })
+    return c.json(toEntry(row))
+  })
+
+  .delete('/:id', async (c) => {
+    const [row] = await db
+      .delete(t.timeEntries)
+      .where(
+        and(eq(t.timeEntries.id, c.req.param('id')), mine(c.get('userId'))),
+      )
+      .returning({ id: t.timeEntries.id })
+    if (!row) throw notFound()
+    return c.body(null, 204)
+  })

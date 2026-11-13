@@ -1,0 +1,24 @@
+# Sekrety
+.env
+.env.*
+!.env.example
+
+# Zależności i buildy
+node_modules
+.output
+.nitro
+.tanstack
+.vinxi
+dist
+dist-ssr
+*.local
+__unconfig*
+
+# Testy
+/test-results
+/playwright-report
+/blob-report
+
+# IDE / OS
+.idea/
+.DS_Store

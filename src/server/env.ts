@@ -1,0 +1,77 @@
+/**
+ * Konfiguracja serwera ze zmiennych środowiskowych (tylko po stronie serwera, nigdy w bundlu przeglądarki).
+ * W produkcji brak DATABASE_URL albo JWT_SECRET zatrzymuje start z czytelnym błędem.
+ */
+import { existsSync } from 'node:fs'
+
+// Lokalnie (pnpm dev) zmienne serwera czytamy z .env; istniejące zmienne środowiska mają pierwszeństwo.
+if (process.env.NODE_ENV !== 'production' && existsSync('.env'))
+  process.loadEnvFile('.env')
+
+const env = process.env
+const isProduction = env.NODE_ENV === 'production'
+
+function required(name: string, devFallback: string): string {
+  const value = env[name]
+  if (value) return value
+  if (isProduction) throw new Error(`Brak zmiennej środowiskowej ${name}.`)
+  return devFallback
+}
+
+const databaseUrl = required(
+  'DATABASE_URL',
+  'postgresql://postgres@localhost:5432/splits',
+)
+
+const jwtSecret = required(
+  'JWT_SECRET',
+  'dev-only-secret-change-me-0123456789abcdef',
+)
+if (isProduction && jwtSecret.length < 32)
+  throw new Error('JWT_SECRET musi mieć co najmniej 32 znaki.')
+
+export const serverEnv = {
+  isProduction,
+  databaseUrl,
+  /** Migracje przez bezpośrednie połączenie (na Neonie adres bez -pooler). */
+  migrationUrl: env.DATABASE_URL_UNPOOLED ?? databaseUrl,
+  databasePoolSize: Number(env.DATABASE_POOL_SIZE ?? 10),
+  migrateOnStart: env.MIGRATE_ON_START !== 'false',
+  migrationsDir: env.MIGRATIONS_DIR ?? 'drizzle',
+  jwtSecret,
+  /** Publiczny adres aplikacji (linki w e-mailach, powrót z Google). */
+  appUrl: (env.APP_URL ?? env.VITE_APP_URL ?? 'http://localhost:3000').replace(
+    /\/$/,
+    '',
+  ),
+  google:
+    env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+      ? {
+          clientId: env.GOOGLE_CLIENT_ID,
+          clientSecret: env.GOOGLE_CLIENT_SECRET,
+        }
+      : null,
+  resendApiKey: env.RESEND_API_KEY ?? null,
+  /** Płatności Stripe; bez STRIPE_SECRET_KEY przyciski zakupu są wyłączone. */
+  stripe: env.STRIPE_SECRET_KEY
+    ? {
+        secretKey: env.STRIPE_SECRET_KEY,
+        webhookSecret: env.STRIPE_WEBHOOK_SECRET ?? null,
+        /** Stripe Tax: VAT liczony z adresu klienta (wymaga konfiguracji w panelu Stripe). */
+        automaticTax: env.STRIPE_AUTOMATIC_TAX === 'true',
+        /** Opcjonalnie id ceny zamiast wyszukiwania po lookup key. */
+        priceProYearly: env.STRIPE_PRICE_PRO_YEARLY ?? null,
+      }
+    : null,
+  /** Sentry (np. https://klucz@o1.ingest.de.sentry.io/123); bez niego błędy są tylko w logach. */
+  sentryDsn: env.SENTRY_DSN ?? null,
+  /** Wersja aplikacji w zgłoszeniach błędów (Fly ustawia FLY_IMAGE_REF przy każdym deployu). */
+  release: env.APP_RELEASE ?? env.FLY_IMAGE_REF ?? null,
+  emailFrom: env.EMAIL_FROM ?? 'Splits <no-reply@splits.app>',
+  /** Limity prób logowania/rejestracji w pamięci; RATE_LIMITS=off tylko w testach. */
+  rateLimits: env.RATE_LIMITS !== 'off' || isProduction,
+  /** Tylko testy e2e: endpoint z danymi przykładowymi. Nigdy w produkcji. */
+  testRoutes:
+    env.ENABLE_TEST_ROUTES === '1' &&
+    (!isProduction || /^http:\/\/localhost[:/]/.test(env.APP_URL ?? '')),
+} as const

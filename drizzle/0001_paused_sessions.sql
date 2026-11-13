@@ -1,0 +1,2 @@
+ALTER TABLE "time_entries" ADD COLUMN "paused" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+CREATE INDEX "time_entries_user_paused_idx" ON "time_entries" USING btree ("user_id","work_date") WHERE "time_entries"."paused";

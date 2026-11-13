@@ -1,0 +1,69 @@
+{
+  "_comment": "Tekst lektora zsynchronizowany ze scenami promo.html (czasy w sekundach). {name} = nazwa produktu z --name. Każdy fragment musi zmieścić się przed startem następnego; skrypt lekko przyspieszy za długi fragment (maks. 12%) i ostrzeże, jeśli to nie wystarczy.",
+  "en": {
+    "voice": "pNInz6obpgDQGcFmaJgB",
+    "segments": [
+      {
+        "start": 0.3,
+        "text": "Friday retro. How much time did code reviews take?"
+      },
+      {
+        "start": 3.95,
+        "text": "Nobody remembers."
+      },
+      {
+        "start": 6.6,
+        "text": "{name}. Time tracking for developers."
+      },
+      {
+        "start": 8.9,
+        "text": "Click a template: it's on your day. Stop the timer: it saves itself."
+      },
+      {
+        "start": 13.95,
+        "text": "Code review? Just the MR link and time. Pairing? A title and time."
+      },
+      {
+        "start": 18.05,
+        "text": "Sprint's over: points and hours for every kind of work. Reviews count too."
+      },
+      {
+        "start": 22.7,
+        "text": "Your next sprint, with the full picture. Free, no card."
+      }
+    ]
+  },
+  "pl": {
+    "voice": "pNInz6obpgDQGcFmaJgB",
+    "segments": [
+      {
+        "start": 0.3,
+        "text": "Piątkowe retro. Ile czasu zjadło code review?"
+      },
+      {
+        "start": 3.95,
+        "text": "Nikt nie pamięta."
+      },
+      {
+        "start": 6.6,
+        "text": "{name}. Time tracker dla programistów."
+      },
+      {
+        "start": 8.9,
+        "text": "Klikasz szablon i wpis jest w Twoim dniu. Stop timera i gotowe."
+      },
+      {
+        "start": 13.95,
+        "text": "Code review? Link do MR i czas. Pairing? Tytuł i czas."
+      },
+      {
+        "start": 18.05,
+        "text": "Koniec sprintu: punkty i godziny dla każdej pracy. Review też się liczy."
+      },
+      {
+        "start": 22.7,
+        "text": "Następny sprint z pełnym obrazem. Za darmo, bez karty."
+      }
+    ]
+  }
+}
