@@ -135,6 +135,11 @@ const en = {
   templates: {
     title: 'Quick templates',
     logged: 'Logged “{name}”, {time}',
+    pickTitle: '{name}: which project?',
+    pickText: 'The entry goes to the project you pick.',
+    anyProject: 'Pick a project',
+    detailsTitle: '{name}: a few details',
+    detailsText: 'This kind of work needs them before the entry is saved.',
   },
   timer: {
     running: 'Running',
@@ -321,6 +326,11 @@ const pl: EntriesMessages = {
   templates: {
     title: 'Szybkie szablony',
     logged: 'Zapisano „{name}”, {time}',
+    pickTitle: '{name}: do którego projektu?',
+    pickText: 'Wpis trafi do projektu, który wybierzesz.',
+    anyProject: 'Wybierz projekt',
+    detailsTitle: '{name}: jeszcze kilka szczegółów',
+    detailsText: 'Ten rodzaj pracy ich wymaga, zanim wpis zostanie zapisany.',
   },
   timer: {
     running: 'Trwa',

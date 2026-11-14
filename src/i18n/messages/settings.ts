@@ -344,6 +344,7 @@ const en = {
     noShortcut: 'No shortcut',
     usedBy: 'Alt+{n}, used by “{label}”',
     summary: '{type}, {duration}',
+    anyProject: 'any project',
     moved: '“{name}” moved to position {position} of {total}',
     dialog: {
       addTitle: 'Add template',
@@ -362,6 +363,9 @@ const en = {
       spNone: 'no SP',
       project: 'Project',
       noProject: 'No project',
+      anyProject: 'Any project, pick when using',
+      anyProjectHint:
+        'One template for all your projects: you choose the project each time you use it.',
       hotkey: 'Keyboard shortcut',
     },
     created: 'Template added',
@@ -834,6 +838,7 @@ const pl: SettingsMessages = {
     noShortcut: 'Bez skrótu',
     usedBy: 'Alt+{n}, zajęty przez „{label}”',
     summary: '{type}, {duration}',
+    anyProject: 'dowolny projekt',
     moved: '„{name}” przeniesiono na pozycję {position} z {total}',
     dialog: {
       addTitle: 'Dodaj szablon',
@@ -852,6 +857,9 @@ const pl: SettingsMessages = {
       spNone: 'bez SP',
       project: 'Projekt',
       noProject: 'Bez projektu',
+      anyProject: 'Dowolny, wybierasz przy użyciu',
+      anyProjectHint:
+        'Jeden szablon dla wszystkich projektów: projekt wybierasz za każdym razem, gdy go używasz.',
       hotkey: 'Skrót klawiszowy',
     },
     created: 'Szablon dodany',

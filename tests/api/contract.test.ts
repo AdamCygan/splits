@@ -206,6 +206,7 @@ describe('API contract (frontend adapter against the real server)', () => {
       defaultDurationMinutes: 15,
       storyPoints: null,
       projectId: null,
+      askProject: false,
       hotkey: 1,
     }
     await value(data.templates.create(input))
@@ -220,6 +221,35 @@ describe('API contract (frontend adapter against the real server)', () => {
         data.projects.create({ name: 'Other', key: 'PAY', color: '#3D3BF3' }),
       ),
     ).toBe('key_taken')
+  })
+
+  it('stores an any-project template without a fixed project', async () => {
+    const type = (await value(data.taskTypes.list()))[1]!
+    const project = await value(
+      data.projects.create({ name: 'Repo A', key: null, color: '#3D3BF3' }),
+    )
+    const created = await value(
+      data.templates.create({
+        label: 'Review',
+        taskTypeId: type.id,
+        title: 'Code review',
+        defaultDurationMinutes: 20,
+        storyPoints: null,
+        projectId: project.id,
+        askProject: true,
+        hotkey: null,
+      }),
+    )
+    expect(created.askProject).toBe(true)
+    expect(created.projectId).toBeNull()
+    const fixed = await value(
+      data.templates.update(created.id, {
+        ...created,
+        projectId: project.id,
+        askProject: false,
+      }),
+    )
+    expect(fixed).toMatchObject({ askProject: false, projectId: project.id })
   })
 
   it('validates the story point scale', async () => {

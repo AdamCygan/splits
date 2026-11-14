@@ -140,6 +140,7 @@ export const toTemplate = (
   id: x.id,
   taskTypeId: x.taskTypeId,
   projectId: x.projectId,
+  askProject: x.askProject,
   label: x.label,
   title: x.title,
   storyPoints: x.storyPoints,

@@ -409,6 +409,8 @@ export const quickTemplates = pgTable(
     projectId: uuid('project_id').references(() => projects.id, {
       onDelete: 'set null',
     }),
+    /** Dowolny projekt: wybierany przy każdym użyciu szablonu (projectId jest wtedy pusty). */
+    askProject: boolean('ask_project').notNull().default(false),
     label: text('label').notNull(),
     title: text('title').notNull(),
     storyPoints: points('story_points'),

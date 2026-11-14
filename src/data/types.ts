@@ -106,6 +106,8 @@ export type QuickTemplate = {
   id: string
   taskTypeId: string
   projectId: string | null
+  /** Dowolny projekt: przy użyciu szablonu aplikacja pyta, do którego projektu zapisać. */
+  askProject: boolean
   label: string
   title: string
   storyPoints: number | null

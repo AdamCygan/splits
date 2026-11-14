@@ -201,6 +201,64 @@ test.describe('today: log time with notes', () => {
     await expectNoA11yViolations(page)
   })
 
+  test('a code review template asks for the project and the MR link', async ({
+    page,
+  }) => {
+    await page
+      .getByRole('button', { name: /^Code review \(Pick a project\)/ })
+      .click()
+    const dialog = page.getByRole('dialog', {
+      name: 'Code review: a few details',
+    })
+    await expect(dialog.getByLabel('Project')).toBeFocused()
+    await dialog.getByLabel('Project').selectOption({ label: 'Payments' })
+    await dialog.getByRole('button', { name: 'Save entry' }).click()
+    await expect(
+      dialog.getByText('Paste the link. This kind of work needs one.'),
+    ).toBeVisible()
+    await dialog
+      .getByLabel('Merge request link')
+      .fill('https://gitlab.com/acme/shop/-/merge_requests/512')
+    await expectNoA11yViolations(page)
+    await dialog.getByRole('button', { name: 'Save entry' }).click()
+    await expect(dialog).toBeHidden()
+    await expect(page.getByText('Logged “Code review”, 25m')).toBeVisible()
+
+    // Alt+2 otwiera to samo okno; Escape niczego nie zapisuje.
+    await page.keyboard.press('Alt+2')
+    await expect(dialog).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(dialog).toBeHidden()
+  })
+
+  test('an any-project template is one click per project', async ({ page }) => {
+    await page.goto('/app/settings/templates')
+    await page.getByRole('button', { name: 'Add template' }).click()
+    const form = page.getByRole('dialog', { name: 'Add template' })
+    await form.getByLabel('Button label').fill('Sync')
+    await form.getByLabel('Work type').selectOption({ label: 'Meeting' })
+    await form.getByLabel('Entry title').fill('Team sync')
+    await form.getByLabel('Duration in minutes').fill('20')
+    await form
+      .getByLabel('Project')
+      .selectOption({ label: 'Any project, pick when using' })
+    await expect(
+      form.getByText('One template for all your projects'),
+    ).toBeVisible()
+    await form.getByRole('button', { name: 'Add template' }).click()
+    await expect(page.getByText('Meeting, 20m, any project')).toBeVisible()
+
+    await page.goto('/app')
+    await page.getByRole('button', { name: /^Sync \(Pick a project\)/ }).click()
+    const dialog = page.getByRole('dialog', { name: 'Sync: which project?' })
+    await expect(
+      dialog.getByRole('button', { name: 'Mobile app' }),
+    ).toBeFocused()
+    await dialog.getByRole('button', { name: 'Payments' }).click()
+    await expect(dialog).toBeHidden()
+    await expect(page.getByText('Logged “Team sync”, 20m')).toBeVisible()
+  })
+
   test('custom summary template is used', async ({ page }) => {
     await page.goto('/app/settings/summaries')
     const field = page.getByRole('textbox', { name: 'Template' })

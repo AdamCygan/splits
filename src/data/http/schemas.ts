@@ -137,6 +137,7 @@ export const templateSchema = z.object({
   id,
   taskTypeId: id,
   projectId: id.nullable(),
+  askProject: z.boolean().default(false),
   label: z.string(),
   title: z.string(),
   storyPoints: z.number().nullable(),

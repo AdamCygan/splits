@@ -1,0 +1,1 @@
+ALTER TABLE "quick_templates" ADD COLUMN "ask_project" boolean DEFAULT false NOT NULL;

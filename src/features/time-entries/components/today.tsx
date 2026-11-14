@@ -14,7 +14,7 @@ import { Button } from '#/components/ui/button'
 import { Badge } from '#/components/ui/controls'
 import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
 import { data } from '#/data'
-import type { TaskType, TimeEntry } from '#/data/types'
+import type { QuickTemplate, TaskType, TimeEntry } from '#/data/types'
 import { nowTimeIn, todayIn } from '#/domain/dates'
 import { groupTasks, spForType, taskGroupKey, totalsOf } from '#/domain/report'
 import { maxPoints } from '#/domain/summary'
@@ -29,6 +29,8 @@ import {
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
+import { UseTemplateDialog, templateNeeds } from './use-template-dialog'
+import type { TemplateChoice } from './use-template-dialog'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { entriesQuery, entryKeys } from '../queries'
 import { EntryForm } from './entry-form'
@@ -535,26 +537,36 @@ function groupByTask(entries: ReadonlyArray<TimeEntry>) {
 
 /**
  * Szybkie szablony nad formularzem: klik albo Alt+1…9 zapisuje wpis od razu.
- * Szablon bez czasu startuje timer.
+ * Szablon bez czasu startuje timer. Gdy brakuje projektu („dowolny projekt”), linku albo
+ * notatki wymaganych przez typ pracy, najpierw pyta o nie w małym oknie.
  */
 function QuickTemplates({ workDate }: { workDate: string }) {
   const t = useMessages(entriesMessages)
   const format = useFormat()
   const templates = useQuery(templatesQuery).data ?? []
   const types = useQuery(taskTypesQuery).data ?? []
+  const projects = (useQuery(projectsQuery).data ?? []).filter(
+    (p) => !p.archivedAt,
+  )
   const timeZone = useQuery(settingsQuery).data?.timezone
+  const [picking, setPicking] = useState<QuickTemplate | null>(null)
 
   const apply = useDataMutation(
-    async (template: (typeof templates)[number]) => {
+    async ({
+      template,
+      projectId,
+      link,
+      note,
+    }: TemplateChoice & { template: QuickTemplate }) => {
       const type = types.find((x) => x.id === template.taskTypeId)
       const base = {
         taskTypeId: template.taskTypeId,
-        projectId: template.projectId,
+        projectId,
         title: template.title,
-        link: null,
+        link,
         storyPoints: spForType(type, template.storyPoints),
         workDate,
-        note: null,
+        note,
       }
       if (template.defaultDurationMinutes === null) {
         const result = await data.entries.start({
@@ -582,8 +594,22 @@ function QuickTemplates({ workDate }: { workDate: string }) {
               name: entry.title,
               time: format.minutes(entry.durationMinutes),
             }),
+      onSuccess: () => setPicking(null),
     },
   )
+
+  const use = (template: QuickTemplate) => {
+    const type = types.find((x) => x.id === template.taskTypeId)
+    const needs = templateNeeds(template, type, projects)
+    if (needs.project || needs.link || needs.note) setPicking(template)
+    else
+      apply.mutate({
+        template,
+        projectId: template.projectId,
+        link: null,
+        note: null,
+      })
+  }
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -594,11 +620,11 @@ function QuickTemplates({ workDate }: { workDate: string }) {
       )
       if (!template) return
       e.preventDefault()
-      apply.mutate(template)
+      use(template)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [templates, apply])
+  })
 
   if (templates.length === 0) return null
   return (
@@ -617,7 +643,8 @@ function QuickTemplates({ workDate }: { workDate: string }) {
               <button
                 type="button"
                 disabled={apply.isPending}
-                onClick={() => apply.mutate(template)}
+                onClick={() => use(template)}
+                aria-haspopup={template.askProject ? 'dialog' : undefined}
                 aria-keyshortcuts={
                   template.hotkey ? `Alt+${template.hotkey}` : undefined
                 }
@@ -629,6 +656,9 @@ function QuickTemplates({ workDate }: { workDate: string }) {
                   style={{ background: type?.color }}
                 />
                 {template.label}
+                {template.askProject && (
+                  <span className="sr-only">({t.templates.anyProject})</span>
+                )}
                 <span className="text-ink-soft">
                   {template.defaultDurationMinutes
                     ? format.minutes(template.defaultDurationMinutes)
@@ -644,6 +674,16 @@ function QuickTemplates({ workDate }: { workDate: string }) {
           )
         })}
       </ul>
+      {picking && (
+        <UseTemplateDialog
+          template={picking}
+          type={types.find((x) => x.id === picking.taskTypeId)}
+          projects={projects}
+          pending={apply.isPending}
+          onSubmit={(choice) => apply.mutate({ template: picking, ...choice })}
+          onClose={() => setPicking(null)}
+        />
+      )}
     </section>
   )
 }

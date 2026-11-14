@@ -182,20 +182,24 @@ export const taskRefInput = z.object({
   link: z.string().max(4096).optional(),
 })
 
-export const templateInput = z.object({
-  taskTypeId: uuid,
-  projectId: uuid.nullable(),
-  label: trimmed(1, LIMITS.templateLabel),
-  title: trimmed(1, LIMITS.templateTitle),
-  storyPoints: sp.nullable(),
-  defaultDurationMinutes: z
-    .number()
-    .int()
-    .min(LIMITS.templateDuration.min)
-    .max(LIMITS.templateDuration.max)
-    .nullable(),
-  hotkey: z.number().int().min(1).max(9).nullable(),
-})
+export const templateInput = z
+  .object({
+    taskTypeId: uuid,
+    projectId: uuid.nullable(),
+    askProject: z.boolean().default(false),
+    label: trimmed(1, LIMITS.templateLabel),
+    title: trimmed(1, LIMITS.templateTitle),
+    storyPoints: sp.nullable(),
+    defaultDurationMinutes: z
+      .number()
+      .int()
+      .min(LIMITS.templateDuration.min)
+      .max(LIMITS.templateDuration.max)
+      .nullable(),
+    hotkey: z.number().int().min(1).max(9).nullable(),
+  })
+  // Szablon „dowolny projekt” nie trzyma projektu: wybór pada przy użyciu.
+  .transform((x) => (x.askProject ? { ...x, projectId: null } : x))
 
 export const rangeQuery = z.object({ from: day, to: day })
 export const dateQuery = z.object({ date: day })

@@ -32,6 +32,9 @@ import {
   useAnnouncer,
 } from './ui'
 
+/** Wartość pola „Projekt” dla szablonu, w którym projekt wybiera się przy użyciu. */
+const ANY = '__any'
+
 function Kbd({ children }: { children: string }) {
   return (
     <kbd className="inline-grid min-w-14 place-items-center rounded-md border border-line border-b-[3px] bg-surface px-2 py-0.5 font-sans text-xs font-semibold">
@@ -45,6 +48,7 @@ export function TemplateSettings() {
   const app = useMessages(appMessages)
   const format = useFormat()
   const types = useQuery(taskTypesQuery).data ?? []
+  const projects = useQuery(projectsQuery).data ?? []
   const [editing, setEditing] = useState<QuickTemplate | 'new' | null>(null)
   const [deleting, setDeleting] = useState<QuickTemplate | null>(null)
   const [announcer, announce] = useAnnouncer()
@@ -80,6 +84,9 @@ export function TemplateSettings() {
               <ol className="divide-y divide-line">
                 {templates.map((template, index) => {
                   const type = types.find((x) => x.id === template.taskTypeId)
+                  const project = projects.find(
+                    (p) => p.id === template.projectId,
+                  )
                   const duration = template.defaultDurationMinutes
                     ? format.minutes(template.defaultDurationMinutes)
                     : '—'
@@ -127,6 +134,11 @@ export function TemplateSettings() {
                             })}
                             {template.storyPoints !== null && (
                               <>, {format.sp(template.storyPoints)}</>
+                            )}
+                            {template.askProject ? (
+                              <>, {t.anyProject}</>
+                            ) : (
+                              project && <>, {project.name}</>
                             )}
                             , “{template.title}”
                           </p>
@@ -209,7 +221,7 @@ function TemplateDialog({
     title: template?.title ?? '',
     duration: template?.defaultDurationMinutes?.toString() ?? '',
     storyPoints: template?.storyPoints?.toString() ?? '',
-    projectId: template?.projectId ?? '',
+    projectId: template?.askProject ? ANY : (template?.projectId ?? ''),
     hotkey: template?.hotkey?.toString() ?? '',
   })
   const [submitted, setSubmitted] = useState(false)
@@ -265,7 +277,8 @@ function TemplateDialog({
         selectedType?.storyPointsRequirement === 'hidden'
           ? null
           : Number(draft.storyPoints),
-      projectId: draft.projectId || null,
+      projectId: draft.projectId === ANY ? null : draft.projectId || null,
+      askProject: draft.projectId === ANY,
       hotkey: draft.hotkey === '' ? null : Number(draft.hotkey),
     })
   }
@@ -400,7 +413,12 @@ function TemplateDialog({
                 )}
               </Field>
             )}
-            <Field label={t.fields.project}>
+            <Field
+              label={t.fields.project}
+              hint={
+                draft.projectId === ANY ? t.fields.anyProjectHint : undefined
+              }
+            >
               {(a) => (
                 <Select
                   {...a}
@@ -410,6 +428,9 @@ function TemplateDialog({
                   }
                 >
                   <option value="">{t.fields.noProject}</option>
+                  {(projects.length > 1 || draft.projectId === ANY) && (
+                    <option value={ANY}>{t.fields.anyProject}</option>
+                  )}
                   {projects.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name}
