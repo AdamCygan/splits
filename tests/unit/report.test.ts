@@ -26,6 +26,9 @@ const entry = (patch: Partial<TimeEntry>): TimeEntry => ({
   note: null,
   overtimeMinutes: null,
   overtimeNote: null,
+  estimateMinutes: null,
+  extensionMinutes: null,
+  extensionNote: null,
   running: false,
   paused: false,
   startedAt: null,
@@ -92,6 +95,8 @@ describe('report', () => {
       tasks: 4,
       // (225 + 20) / 5.5
       minutesPerSp: 45,
+      extensionMinutes: 0,
+      estimated: { tasks: 0, estimateMinutes: 0, actualMinutes: 0 },
     })
     expect(totalsOf([]).minutesPerSp).toBeNull()
   })

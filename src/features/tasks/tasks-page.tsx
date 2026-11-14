@@ -156,11 +156,18 @@ export function TasksPage() {
               className="order-last lg:order-none"
             >
               <span
-                title={fmt(t.range, {
-                  sp: format.sp(row.storyPoints ?? 0),
-                  min: format.minutes(e.min),
-                  max: format.minutes(e.max),
-                })}
+                title={
+                  e.source === 'estimate'
+                    ? fmt(t.ownEstimate, {
+                        time: format.minutes(e.max),
+                        actual: format.minutes(row.minutes),
+                      })
+                    : fmt(t.range, {
+                        sp: format.sp(row.storyPoints ?? 0),
+                        min: format.minutes(e.min),
+                        max: format.minutes(e.max),
+                      })
+                }
               >
                 {e.status === 'over'
                   ? fmt(t.badge.over, { time: format.minutes(e.overBy) })

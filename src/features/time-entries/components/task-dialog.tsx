@@ -9,6 +9,7 @@ import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import { data } from '#/data'
 import type { TaskRef, TaskType, TimeEntry } from '#/data/types'
+import { ENTRY_LIMITS, parseDuration } from '#/domain/entries'
 import { maxPoints } from '#/domain/summary'
 import {
   mutationFieldError,
@@ -117,11 +118,20 @@ function TaskDetails({
   )
   const scale = useQuery(scaleQuery).data ?? []
   const sp = maxPoints(entries)
+  const estimate = entries.reduce<number | null>(
+    (max, e) =>
+      e.estimateMinutes !== null && (max === null || e.estimateMinutes > max)
+        ? e.estimateMinutes
+        : max,
+    null,
+  )
+  const actual = entries.reduce((sum, e) => sum + e.durationMinutes, 0)
   const [draft, setDraft] = useState({
     title: latest.title,
     link: latest.link ?? '',
     projectId: latest.projectId ?? '',
     storyPoints: sp === null ? '' : String(sp),
+    estimate: estimate === null ? '' : String(estimate),
   })
   const [submitted, setSubmitted] = useState(false)
   const ref: TaskRef = {
@@ -136,6 +146,7 @@ function TaskDetails({
       link: string | null
       projectId: string | null
       storyPoints: number | null
+      estimateMinutes: number | null
     }) => data.entries.updateTask(ref, input),
     {
       invalidate: [entryKeys.all],
@@ -165,7 +176,18 @@ function TaskDetails({
       spMode === 'required' && draft.storyPoints === ''
         ? t.issues.storyPoints.required
         : null,
+    estimate:
+      draft.estimate.trim() &&
+      !(
+        (parseDuration(draft.estimate) ?? 0) >= 1 &&
+        (parseDuration(draft.estimate) ?? 0) <= ENTRY_LIMITS.maxEstimate
+      )
+        ? t.issues.estimate.invalid
+        : null,
   }
+  const estimateMinutes = draft.estimate.trim()
+    ? parseDuration(draft.estimate)
+    : null
   const show = (field: keyof typeof errors) =>
     submitted ? (errors[field] ?? mutationFieldError(save.error, field)) : null
   const points = [
@@ -184,6 +206,7 @@ function TaskDetails({
         spMode === 'hidden' || draft.storyPoints === ''
           ? null
           : Number(draft.storyPoints),
+      estimateMinutes,
     })
   }
 
@@ -265,6 +288,33 @@ function TaskDetails({
               )}
             </Field>
           )}
+          {type?.kind !== 'meeting' && (
+            <Field
+              label={t.form.estimate}
+              hint={
+                estimateMinutes
+                  ? fmt(t.task.estimateVs, {
+                      actual: format.minutes(actual),
+                      estimate: format.minutes(estimateMinutes),
+                    })
+                  : t.form.estimateHint
+              }
+              error={show('estimate')}
+            >
+              {(a) => (
+                <Input
+                  {...a}
+                  inputMode="text"
+                  autoComplete="off"
+                  placeholder={t.form.estimatePlaceholder}
+                  value={draft.estimate}
+                  onChange={(e) =>
+                    setDraft({ ...draft, estimate: e.target.value })
+                  }
+                />
+              )}
+            </Field>
+          )}
         </div>
         <Button
           type="submit"
@@ -326,6 +376,13 @@ function Sessions({ entries }: { entries: Array<TimeEntry> }) {
                   <span className="text-sm font-semibold tabular-nums">
                     {format.minutes(entry.durationMinutes)}
                   </span>
+                  {entry.extensionMinutes !== null && (
+                    <Badge tone="muted">
+                      {fmt(t.extension.badge, {
+                        time: format.minutes(entry.extensionMinutes),
+                      })}
+                    </Badge>
+                  )}
                   {entry.overtimeMinutes !== null && (
                     <Badge tone="muted">
                       {fmt(t.form.overtime.badge, {

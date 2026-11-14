@@ -1,4 +1,9 @@
-import type { FieldRequirement, TaskType, TimeEntryInput } from '#/data/types'
+import type {
+  FieldRequirement,
+  TaskType,
+  TimeEntry,
+  TimeEntryInput,
+} from '#/data/types'
 import { isValidDate } from './dates'
 import { TIME_RE } from './rules'
 
@@ -8,7 +13,10 @@ export const ENTRY_LIMITS = {
   link: 2048,
   note: 2000,
   overtimeNote: 1000,
+  extensionNote: 1000,
   maxMinutes: 24 * 60,
+  /** Estymata zadania: do 1000 godzin. */
+  maxEstimate: 60_000,
 } as const
 
 const URL_RE = /^https?:\/\/\S+$/i
@@ -22,6 +30,9 @@ export type EntryField =
   | 'workDate'
   | 'overtime'
   | 'overtimeNote'
+  | 'estimate'
+  | 'extension'
+  | 'extensionNote'
 export type EntryIssueCode =
   | 'required'
   | 'too_long'
@@ -152,6 +163,31 @@ export function validateEntry(
   } else if (input.overtimeNote?.trim()) {
     issues.push({ field: 'overtime', code: 'required' })
   }
+
+  const estimate = input.estimateMinutes ?? null
+  if (
+    estimate !== null &&
+    (!Number.isInteger(estimate) ||
+      estimate < 1 ||
+      estimate > ENTRY_LIMITS.maxEstimate)
+  )
+    issues.push({ field: 'estimate', code: 'invalid' })
+
+  // Przedłużenie (np. spotkania): część czasu wpisu ponad plan, zawsze z powodem.
+  const extension = input.extensionMinutes ?? null
+  if (extension !== null) {
+    if (input.running) issues.push({ field: 'extension', code: 'running' })
+    else if (!Number.isInteger(extension) || extension < 1)
+      issues.push({ field: 'extension', code: 'invalid' })
+    else if (extension > input.durationMinutes)
+      issues.push({ field: 'extension', code: 'over_duration' })
+    const note = input.extensionNote?.trim() ?? ''
+    if (!note) issues.push({ field: 'extensionNote', code: 'required' })
+    else if (note.length > ENTRY_LIMITS.extensionNote)
+      issues.push({ field: 'extensionNote', code: 'too_long' })
+  } else if (input.extensionNote?.trim()) {
+    issues.push({ field: 'extension', code: 'required' })
+  }
   return issues
 }
 
@@ -223,4 +259,38 @@ export function elapsedSeconds(
   return startedAt
     ? Math.max(0, Math.floor((now - Date.parse(startedAt)) / 1000))
     : 0
+}
+
+/**
+ * Wpis z nowym przedłużeniem. Plan = czas bez przedłużenia; nowy czas = plan + przedłużenie.
+ * Wpis z godzinami przesuwa koniec; gdy wyszedłby poza północ, zostaje sam czas trwania.
+ */
+export function withExtension(
+  entry: TimeEntry,
+  extension: number | null,
+  reason: string | null,
+): TimeEntryInput {
+  const planned = entry.durationMinutes - (entry.extensionMinutes ?? 0)
+  const duration = planned + (extension ?? 0)
+  const start =
+    entry.startTime && entry.endTime ? toMinutes(entry.startTime) : null
+  const fits = start !== null && start + duration <= 23 * 60 + 59
+  return {
+    taskTypeId: entry.taskTypeId,
+    projectId: entry.projectId,
+    title: entry.title,
+    link: entry.link,
+    storyPoints: entry.storyPoints,
+    workDate: entry.workDate,
+    startTime: fits ? entry.startTime : null,
+    endTime: fits ? fromMinutes(start + duration) : null,
+    durationMinutes: duration,
+    note: entry.note,
+    overtimeMinutes: entry.overtimeMinutes,
+    overtimeNote: entry.overtimeNote,
+    estimateMinutes: entry.estimateMinutes,
+    extensionMinutes: extension,
+    extensionNote: extension === null ? null : reason,
+    running: false,
+  }
 }

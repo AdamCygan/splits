@@ -78,6 +78,10 @@ const en = {
     spLegend: 'Story points',
     spSuggest: 'Use {sp} (matches the time)',
     spNone: 'No SP',
+    estimate: 'Estimate for the task',
+    estimatePlaceholder: 'e.g. 4h',
+    estimateHint:
+      'How long you expect the whole task to take. Reports compare it with the real time.',
     project: 'Project',
     noProject: 'No project',
     notes: 'Notes',
@@ -122,12 +126,45 @@ const en = {
       required: 'Describe what you did in overtime.',
       too_long: 'Use up to 1,000 characters.',
     },
+    estimate: {
+      invalid: 'Enter the estimate like 90, 4h or 1h 30m (up to 1,000 hours).',
+    },
+    extension: {
+      running: 'Stop the timer first, then add the extra time.',
+      over_duration:
+        'The entry is shorter than its extension. Change the extension first.',
+      invalid: 'Enter the extra time like 15, 30 or 1h.',
+      required: 'Add how much longer it took.',
+    },
+    extensionNote: {
+      required: 'Add why it ran over.',
+      too_long: 'Use up to 1,000 characters.',
+    },
     time: {
       time_order: 'The end must be after the start, on the same day.',
       duration_range: 'Enter between 1 minute and 24 hours.',
       future: 'The start can’t be in the future.',
       invalid: 'Check the time.',
     },
+  },
+  extension: {
+    button: 'Ran over',
+    buttonLabel: 'Ran over: {name}',
+    title: '{name} ran over',
+    lead: 'Planned {planned}. Add how much longer it took and why. The extra time counts in the entry.',
+    amount: 'How much longer?',
+    amountHint: 'For example 15, 30 or 1h.',
+    reason: 'Why did it run over?',
+    reasonPlaceholder:
+      'For example: the release discussion took longer than planned.',
+    total: 'New total: {time}.',
+    save: 'Save',
+    remove: 'Remove the extension',
+    saved: 'Added {time} to “{name}”',
+    removed: 'Extension removed',
+    badge: 'Ran over by {time}',
+    listLabel: 'Why it ran over',
+    inForm: 'Includes {time} over plan: {reason}',
   },
   task: {
     title: 'Edit task',
@@ -155,6 +192,7 @@ const en = {
     empty: 'This task has no finished sessions left.',
     sp: 'Story points',
     titleField: 'Title',
+    estimateVs: 'Real time so far: {actual} of {estimate}.',
   },
   taskSummary: {
     open: 'Summary',
@@ -219,6 +257,7 @@ const en = {
     openLink: 'Open link for {name}',
     sessions: 'Sessions of {name}',
     durationOnly: 'duration only',
+    estimate: 'est. {time}',
     sessionLabel: '{name}, {interval}',
   },
 }
@@ -302,6 +341,10 @@ const pl: EntriesMessages = {
     spLegend: 'Story pointy',
     spSuggest: 'Ustaw {sp} (pasuje do czasu)',
     spNone: 'Bez SP',
+    estimate: 'Estymata zadania',
+    estimatePlaceholder: 'np. 4h',
+    estimateHint:
+      'Ile planujesz na całe zadanie. Raporty porównają to z prawdziwym czasem.',
     project: 'Projekt',
     noProject: 'Bez projektu',
     notes: 'Notatki',
@@ -347,12 +390,44 @@ const pl: EntriesMessages = {
       required: 'Opisz, co robiłeś w nadgodzinach.',
       too_long: 'Maksymalnie 1000 znaków.',
     },
+    estimate: {
+      invalid: 'Wpisz estymatę jak 90, 4h albo 1h 30m (do 1000 godzin).',
+    },
+    extension: {
+      running: 'Najpierw zatrzymaj timer, potem dopisz dodatkowy czas.',
+      over_duration:
+        'Wpis jest krótszy niż jego przedłużenie. Najpierw zmień przedłużenie.',
+      invalid: 'Wpisz dodatkowy czas jak 15, 30 albo 1h.',
+      required: 'Dopisz, ile dłużej trwało.',
+    },
+    extensionNote: {
+      required: 'Dopisz, dlaczego się przedłużyło.',
+      too_long: 'Maksymalnie 1000 znaków.',
+    },
     time: {
       time_order: 'Koniec musi być po starcie, tego samego dnia.',
       duration_range: 'Podaj od 1 minuty do 24 godzin.',
       future: 'Start nie może być w przyszłości.',
       invalid: 'Sprawdź czas.',
     },
+  },
+  extension: {
+    button: 'Przedłużyło się',
+    buttonLabel: 'Przedłużyło się: {name}',
+    title: '{name}: przedłużenie',
+    lead: 'Zaplanowane: {planned}. Dopisz, ile dłużej trwało i dlaczego. Dodatkowy czas wlicza się do wpisu.',
+    amount: 'O ile dłużej?',
+    amountHint: 'Na przykład 15, 30 albo 1h.',
+    reason: 'Dlaczego się przedłużyło?',
+    reasonPlaceholder: 'Np. dyskusja o wydaniu trwała dłużej niż planowano.',
+    total: 'Razem: {time}.',
+    save: 'Zapisz',
+    remove: 'Usuń przedłużenie',
+    saved: 'Dodano {time} do „{name}”',
+    removed: 'Przedłużenie usunięte',
+    badge: 'Przedłużone o {time}',
+    listLabel: 'Dlaczego się przedłużyło',
+    inForm: 'W tym {time} ponad plan: {reason}',
   },
   task: {
     title: 'Edytuj zadanie',
@@ -387,6 +462,7 @@ const pl: EntriesMessages = {
     empty: 'To zadanie nie ma już zakończonych sesji.',
     sp: 'Story pointy',
     titleField: 'Tytuł',
+    estimateVs: 'Prawdziwy czas do tej pory: {actual} z {estimate}.',
   },
   taskSummary: {
     open: 'Podsumowanie',
@@ -462,6 +538,7 @@ const pl: EntriesMessages = {
     openLink: 'Otwórz link: {name}',
     sessions: 'Odcinki czasu: {name}',
     durationOnly: 'sam czas',
+    estimate: 'estymata {time}',
     sessionLabel: '{name}, {interval}',
   },
 }

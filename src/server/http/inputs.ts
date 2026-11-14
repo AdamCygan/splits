@@ -161,6 +161,8 @@ const entryFields = {
   storyPoints: z.number().nullable(),
   workDate: day,
   note: z.string().max(4000).nullable(),
+  // Starsze klienty nie wysyłają estymaty: brak pola = brak estymaty.
+  estimateMinutes: z.number().int().min(1).max(60000).nullable().default(null),
 }
 
 export const entryInput = z.object({
@@ -171,6 +173,8 @@ export const entryInput = z.object({
   // Starsze klienty nie wysyłają nadgodzin: brak pola = brak nadgodzin.
   overtimeMinutes: z.number().int().min(1).max(1440).nullable().default(null),
   overtimeNote: z.string().max(4000).nullable().default(null),
+  extensionMinutes: z.number().int().min(1).max(1440).nullable().default(null),
+  extensionNote: z.string().max(4000).nullable().default(null),
   running: z.boolean(),
 })
 
@@ -187,6 +191,8 @@ export const taskUpdateInput = z.object({
   link: z.string().max(4096).nullable(),
   projectId: uuid.nullable(),
   storyPoints: z.number().nullable(),
+  /** Brak pola = estymata bez zmian (starsze klienty). */
+  estimateMinutes: z.number().int().min(1).max(60000).nullable().optional(),
 })
 
 export const taskRefInput = z.object({

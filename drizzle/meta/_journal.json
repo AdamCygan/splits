@@ -43,6 +43,13 @@
       "when": 1794672348921,
       "tag": "0005_template_any_project",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794680699698,
+      "tag": "0006_estimate_extension",
+      "breakpoints": true
     }
   ]
 }

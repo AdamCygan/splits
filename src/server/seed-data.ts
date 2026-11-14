@@ -97,6 +97,8 @@ const names = {
     ],
     overtime:
       'Certificate expired at 19:30, renewed it and redeployed staging so QA could test in the morning.',
+    ranOver:
+      'Scope of the refund epic was unclear, we split it into three tickets before closing.',
     past: [
       [
         0,
@@ -209,6 +211,8 @@ const names = {
     ],
     overtime:
       'Certyfikat wygasł o 19:30, odnowiłem go i wdrożyłem staging ponownie, żeby QA mógł rano testować.',
+    ranOver:
+      'Zakres epika zwrotów był niejasny, przed końcem podzieliliśmy go na trzy tickety.',
     past: [
       [
         0,
@@ -461,6 +465,7 @@ export function seedWorkspace(
           n.entries,
           n.past,
           n.overtime,
+          n.ranOver,
           taskTypes,
           projects,
           todayIn(settings.timezone),
@@ -475,6 +480,7 @@ function sampleEntries(
   texts: ReadonlyArray<SampleEntry>,
   past: ReadonlyArray<PastEntry>,
   overtimeNote: string,
+  ranOverNote: string,
   types: Array<TaskType>,
   projects: Array<Project>,
   workDate: string,
@@ -508,6 +514,10 @@ function sampleEntries(
     note,
     overtimeMinutes: null,
     overtimeNote: null,
+    // Estymata zadania podana przed pracą: raport pokaże, o ile zadanie ją przekroczyło.
+    estimateMinutes: 300,
+    extensionMinutes: null,
+    extensionNote: null,
     running: false,
     paused: false,
     startedAt: null,
@@ -531,6 +541,9 @@ function sampleEntries(
       // Wieczorny hotfix w przykładowych danych: pokazuje nadgodziny z opisem.
       overtimeMinutes: kind === 3 ? durationMinutes : null,
       overtimeNote: kind === 3 ? overtimeNote : null,
+      estimateMinutes: i === 0 ? 300 : null,
+      extensionMinutes: null,
+      extensionNote: null,
       running: false,
       paused: false,
       startedAt: null,
@@ -563,10 +576,14 @@ function sampleEntries(
       workDate: workdaysBack(ago),
       startTime: null,
       endTime: null,
-      durationMinutes: minutes,
+      // Planowanie sprintu na 1 h przeciągnęło się o 20 min: przedłużenie z powodem.
+      durationMinutes: kind === 4 && minutes >= 60 ? minutes + 20 : minutes,
       note,
       overtimeMinutes: null,
       overtimeNote: null,
+      estimateMinutes: null,
+      extensionMinutes: kind === 4 && minutes >= 60 ? 20 : null,
+      extensionNote: kind === 4 && minutes >= 60 ? ranOverNote : null,
       running: false,
       paused: false,
       startedAt: null,

@@ -50,6 +50,12 @@ const clean = (input: TimeEntryInput) => ({
     input.overtimeMinutes === null
       ? null
       : (input.overtimeNote?.trim() ?? null),
+  estimateMinutes: input.estimateMinutes ?? null,
+  extensionMinutes: input.extensionMinutes ?? null,
+  extensionNote:
+    (input.extensionMinutes ?? null) === null
+      ? null
+      : (input.extensionNote?.trim() ?? null),
 })
 
 /** Te same reguły co formularz (validateEntry) plus własność typu i projektu. */
@@ -332,6 +338,8 @@ export const entryRoutes = new Hono<AppEnv>()
       durationMinutes: 0,
       overtimeMinutes: null,
       overtimeNote: null,
+      extensionMinutes: null,
+      extensionNote: null,
       running: true,
     }
     const result = await db.transaction(async (tx) =>
@@ -390,6 +398,10 @@ export const entryRoutes = new Hono<AppEnv>()
           // Nowa sesja zaczyna bez nadgodzin; oznaczysz je po zatrzymaniu.
           overtimeMinutes: null,
           overtimeNote: null,
+          // Estymata należy do zadania: nowa sesja ją zachowuje.
+          estimateMinutes: entry.estimateMinutes,
+          extensionMinutes: null,
+          extensionNote: null,
           running: true,
         },
         timezone,
@@ -427,6 +439,9 @@ export const entryRoutes = new Hono<AppEnv>()
         link: input.link,
         projectId: input.projectId,
         storyPoints: input.storyPoints,
+        ...(input.estimateMinutes === undefined
+          ? {}
+          : { estimateMinutes: input.estimateMinutes }),
       }
       const updated = []
       for (const row of found) {
@@ -440,6 +455,7 @@ export const entryRoutes = new Hono<AppEnv>()
             link: cleaned.link,
             projectId: cleaned.projectId,
             storyPoints: cleaned.storyPoints,
+            estimateMinutes: cleaned.estimateMinutes,
           })
           .where(eq(t.timeEntries.id, row.id))
           .returning()

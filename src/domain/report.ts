@@ -18,6 +18,11 @@ export type TaskRow = {
   overtimeMinutes: number
   /** Opisy nadgodzin z wpisów zadania, od najstarszego. */
   overtimeNotes: Array<string>
+  /** Estymata zadania podana przed pracą (największa z wpisów); null = brak. */
+  estimateMinutes: number | null
+  /** Ile z `minutes` to przedłużenia ponad plan (0 = brak) i ich powody. */
+  extensionMinutes: number
+  extensionNotes: Array<string>
   sessions: number
   days: number
   first: string
@@ -42,6 +47,10 @@ export type ReportTotals = {
   tasks: number
   /** Średni czas na 1 SP, liczony tylko z zadań, które mają SP; null = brak takich zadań. */
   minutesPerSp: number | null
+  /** Przedłużenia w okresie (część `minutes`). */
+  extensionMinutes: number
+  /** Zadania z estymatą: ile ich jest, suma estymat i suma ich prawdziwego czasu. */
+  estimated: { tasks: number; estimateMinutes: number; actualMinutes: number }
 }
 
 /** Klucz zadania jak w `sameTask`: ten sam link, a bez linku ten sam typ i tytuł. */
@@ -110,6 +119,20 @@ export function groupTasks(
       overtimeNotes: sorted.flatMap((e) =>
         e.overtimeNote ? [e.overtimeNote] : [],
       ),
+      estimateMinutes: sorted.reduce<number | null>(
+        (max, e) =>
+          e.estimateMinutes != null && (max === null || e.estimateMinutes > max)
+            ? e.estimateMinutes
+            : max,
+        null,
+      ),
+      extensionMinutes: sorted.reduce(
+        (sum, e) => sum + (e.extensionMinutes ?? 0),
+        0,
+      ),
+      extensionNotes: sorted.flatMap((e) =>
+        e.extensionNote ? [e.extensionNote] : [],
+      ),
       sessions: sorted.length,
       days: new Set(sorted.map((e) => e.workDate)).size,
       first: sorted[0]!.workDate,
@@ -129,6 +152,18 @@ export function totalsOf(rows: ReadonlyArray<TaskRow>): ReportTotals {
     storyPoints: sp,
     tasks: rows.length,
     minutesPerSp: sp > 0 ? Math.round(spMinutes / sp) : null,
+    extensionMinutes: rows.reduce((sum, r) => sum + r.extensionMinutes, 0),
+    estimated: rows.reduce(
+      (acc, r) =>
+        r.estimateMinutes === null
+          ? acc
+          : {
+              tasks: acc.tasks + 1,
+              estimateMinutes: acc.estimateMinutes + r.estimateMinutes,
+              actualMinutes: acc.actualMinutes + r.minutes,
+            },
+      { tasks: 0, estimateMinutes: 0, actualMinutes: 0 },
+    ),
   }
 }
 
@@ -275,6 +310,10 @@ export function reportCsv(
         r.overtimeMinutes,
         (r.overtimeMinutes / 60).toFixed(2),
         r.overtimeNotes.join(' | '),
+        r.estimateMinutes ?? '',
+        r.estimateMinutes === null ? '' : r.minutes - r.estimateMinutes,
+        r.extensionMinutes,
+        r.extensionNotes.join(' | '),
       ]
         .map(csvCell)
         .join(','),

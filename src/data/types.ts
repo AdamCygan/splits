@@ -142,6 +142,17 @@ export type TimeEntry = {
    */
   overtimeMinutes: number | null
   overtimeNote: string | null
+  /**
+   * Estymata całego zadania w minutach, podana przed pracą (null = brak). Jak SP należy do
+   * zadania: raport porównuje ją z łącznym czasem wszystkich sesji.
+   */
+  estimateMinutes: number | null
+  /**
+   * Przedłużenie: ile minut z `durationMinutes` wyszło ponad plan (np. spotkanie na 1 h trwało
+   * 1 h 20 min) i dlaczego. Zawsze razem z powodem; tylko dla zakończonych wpisów.
+   */
+  extensionMinutes: number | null
+  extensionNote: string | null
   /** Timer działa: jest start, nie ma końca. Najwyżej jeden naraz. */
   running: boolean
   /** Sesja przerwana (przełączenie na inne zadanie albo „Wstrzymaj”): zadanie czeka na „Wznów”. */
@@ -178,13 +189,16 @@ export type TimerStartInput = Omit<
   | 'startTime'
   | 'overtimeMinutes'
   | 'overtimeNote'
-> & { startTime: string }
+  | 'extensionMinutes'
+  | 'extensionNote'
+  | 'estimateMinutes'
+> & { startTime: string; estimateMinutes?: number | null }
 export type TaskRef = Pick<TimeEntry, 'title' | 'link' | 'taskTypeId'>
 /** Zmiana zadania we wszystkich jego wpisach. */
 export type TaskUpdateInput = Pick<
   TimeEntry,
   'title' | 'link' | 'projectId' | 'storyPoints'
->
+> & { estimateMinutes?: number | null }
 export type TimerStartResult = { started: TimeEntry; stopped: TimeEntry | null }
 export type ProfileInput = Pick<User, 'displayName' | 'email'>
 export type PasswordChangeInput = {

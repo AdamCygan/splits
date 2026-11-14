@@ -62,6 +62,36 @@ test.describe('reports: story points and time per task', () => {
     ).toBeVisible()
   })
 
+  test('compares the estimate with the real time', async ({ page }) => {
+    await expect(page.getByText('Estimate vs. real time')).toBeVisible()
+    const row = page
+      .getByRole('table')
+      .getByRole('row')
+      .filter({ hasText: 'PAY-142 Payment gateway integration' })
+    await expect(row.getByText('est. 5h, 55m over est.')).toBeVisible()
+    const planning = page
+      .getByRole('table')
+      .getByRole('row')
+      .filter({ hasText: 'Sprint planning' })
+    await expect(planning.getByText('incl. 20m running over')).toBeVisible()
+
+    await row
+      .getByRole('button', {
+        name: 'Edit task: PAY-142 Payment gateway integration',
+      })
+      .click()
+    const dialog = page.getByRole('dialog', { name: 'Edit task' })
+    await expect(dialog.getByLabel('Estimate for the task')).toHaveValue('300')
+    await expect(
+      dialog.getByText('Real time so far: 5h 55m of 5h.'),
+    ).toBeVisible()
+    await dialog.getByLabel('Estimate for the task').fill('6h')
+    await dialog.getByRole('button', { name: 'Save task' }).click()
+    await expect(page.getByText('Task updated')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(row.getByText('est. 6h, 5m under est.')).toBeVisible()
+  })
+
   test('opens a task from the report to edit it and its time', async ({
     page,
   }) => {

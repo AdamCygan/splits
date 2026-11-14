@@ -286,6 +286,9 @@ describe('API contract (frontend adapter against the real server)', () => {
       note: null,
       overtimeMinutes: 90,
       overtimeNote: '  Rolled back the cache change.  ',
+      estimateMinutes: null,
+      extensionMinutes: null,
+      extensionNote: null,
       running: false,
     }
     const created = await value(data.entries.create(input))
@@ -346,6 +349,9 @@ describe('API contract (frontend adapter against the real server)', () => {
       note: '  ',
       overtimeMinutes: null,
       overtimeNote: null,
+      estimateMinutes: null,
+      extensionMinutes: null,
+      extensionNote: null,
       running: false,
     }
     const created = await value(data.entries.create(input))
@@ -520,6 +526,9 @@ describe('API contract (frontend adapter against the real server)', () => {
           note: null,
           overtimeMinutes: null,
           overtimeNote: null,
+          estimateMinutes: null,
+          extensionMinutes: null,
+          extensionNote: null,
           running: false,
         }),
       ),

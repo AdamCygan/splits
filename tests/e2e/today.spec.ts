@@ -325,6 +325,65 @@ test.describe('today: log time with notes', () => {
     await expect(page.getByText('Logged “Focus block”, 1h 30m')).toBeVisible()
   })
 
+  test('a meeting that ran over gets the extra time and a reason', async ({
+    page,
+  }) => {
+    await page.getByRole('button', { name: /^Stand-up/ }).click()
+    await expect(page.getByText('Logged “Daily stand-up”, 15m')).toBeVisible()
+    const list = page.getByRole('region', { name: 'Today’s entries' })
+    const item = list
+      .getByRole('listitem')
+      .filter({ hasText: 'Daily stand-up' })
+      .first()
+    await item.getByRole('button', { name: /^Ran over/ }).click()
+    const dialog = page.getByRole('dialog', {
+      name: 'Daily stand-up ran over',
+    })
+    await expect(dialog).toContainText('Planned 15m.')
+    await dialog.getByRole('button', { name: 'Save' }).click()
+    await expect(dialog.getByText('Add how much longer it took.')).toBeVisible()
+    await dialog.getByRole('button', { name: '+15m' }).click()
+    await expect(dialog.getByText(/New total: 30m\./)).toBeVisible()
+    await dialog
+      .getByLabel('Why did it run over?')
+      .fill('Release questions from the QA team.')
+    await expectNoA11yViolations(page)
+    await dialog.getByRole('button', { name: 'Save' }).click()
+    await expect(page.getByText('Added 15m to “Daily stand-up”')).toBeVisible()
+    await expect(item.getByText('Ran over by 15m')).toBeVisible()
+    await expect(
+      item.getByText('Release questions from the QA team.'),
+    ).toBeVisible()
+    await expect(item.getByText('30m', { exact: true }).first()).toBeVisible()
+  })
+
+  test('logs a task with an estimate for the whole task', async ({ page }) => {
+    const form = page.getByRole('region', { name: 'Log time' })
+    await form.getByText('Task', { exact: true }).click()
+    await form.getByLabel('Title').fill('PAY-170 Invoice numbering')
+    // Zadanie ma domyślnie godziny od–do, wypełnione ostatnimi 30 minutami.
+    await form
+      .locator('label')
+      .filter({ hasText: /^3 SP$/ })
+      .click()
+    await form.getByLabel(/Estimate for the task/).fill('abc')
+    await form.getByRole('button', { name: 'Save entry' }).click()
+    await expect(
+      form.getByText(/Enter the estimate like 90, 4h or 1h 30m/),
+    ).toBeVisible()
+    await form.getByLabel(/Estimate for the task/).fill('4h')
+    await expect(form.getByText(/^= 4h\./)).toBeVisible()
+    await form.getByRole('button', { name: 'Save entry' }).click()
+    const list = page.getByRole('region', { name: 'Today’s entries' })
+    await expect(
+      list
+        .getByRole('listitem')
+        .filter({ hasText: 'PAY-170 Invoice numbering' })
+        .first()
+        .getByText('est. 4h'),
+    ).toBeVisible()
+  })
+
   test('custom summary template is used', async ({ page }) => {
     await page.goto('/app/settings/summaries')
     const field = page.getByRole('textbox', { name: 'Template' })

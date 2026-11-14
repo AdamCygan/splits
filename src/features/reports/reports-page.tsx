@@ -169,6 +169,13 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
     toast.success(t.exported)
   }
 
+  const estimateDiff = (diff: number) =>
+    diff > 0
+      ? fmt(t.stats.over, { time: format.minutes(diff) })
+      : diff < 0
+        ? fmt(t.stats.under, { time: format.minutes(-diff) })
+        : t.stats.exact
+
   const percent = (minutes: number) =>
     allMinutes > 0 ? Math.round((minutes / allMinutes) * 100) : 0
 
@@ -305,17 +312,31 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
         </p>
       )}
 
-      <dl className="mb-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line lg:grid-cols-4">
+      <dl
+        className={cn(
+          'mb-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line',
+          totals.estimated.tasks > 0 ? 'lg:grid-cols-5' : 'lg:grid-cols-4',
+        )}
+      >
         {[
           {
             label: t.stats.time,
             value: format.minutes(totals.minutes),
             hint:
-              totals.overtimeMinutes > 0
-                ? fmt(t.stats.overtime, {
-                    time: format.minutes(totals.overtimeMinutes),
-                  })
-                : undefined,
+              [
+                totals.overtimeMinutes > 0
+                  ? fmt(t.stats.overtime, {
+                      time: format.minutes(totals.overtimeMinutes),
+                    })
+                  : null,
+                totals.extensionMinutes > 0
+                  ? fmt(t.stats.extension, {
+                      time: format.minutes(totals.extensionMinutes),
+                    })
+                  : null,
+              ]
+                .filter(Boolean)
+                .join('; ') || undefined,
           },
           { label: t.stats.sp, value: format.sp(totals.storyPoints) },
           { label: t.stats.tasks, value: format.number(totals.tasks, 0) },
@@ -327,8 +348,35 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
                 : format.minutes(totals.minutesPerSp),
             hint: t.stats.perSpHint,
           },
+          ...(totals.estimated.tasks > 0
+            ? [
+                {
+                  label: t.stats.estimate,
+                  value: fmt(t.stats.estimateValue, {
+                    actual: format.minutes(totals.estimated.actualMinutes),
+                    estimate: format.minutes(totals.estimated.estimateMinutes),
+                  }),
+                  hint: format
+                    .plural(t.stats.estimateHint, totals.estimated.tasks)
+                    .replace(
+                      '{diff}',
+                      estimateDiff(
+                        totals.estimated.actualMinutes -
+                          totals.estimated.estimateMinutes,
+                      ),
+                    ),
+                  wide: true,
+                },
+              ]
+            : []),
         ].map((s) => (
-          <div key={s.label} className="bg-surface px-4 py-3 sm:px-5">
+          <div
+            key={s.label}
+            className={cn(
+              'bg-surface px-4 py-3 sm:px-5',
+              'wide' in s && s.wide && 'col-span-2 lg:col-span-1',
+            )}
+          >
             <dt className="text-sm text-ink-soft">{s.label}</dt>
             <dd className="type-heading mt-0.5 text-2xl tabular-nums">
               {s.value}
@@ -512,6 +560,45 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
                         </td>
                         <td className="px-3 py-3 text-right font-semibold whitespace-nowrap tabular-nums">
                           {format.minutes(r.minutes)}
+                          {r.estimateMinutes !== null && (
+                            <span
+                              className={cn(
+                                'block text-xs font-medium',
+                                r.minutes > r.estimateMinutes
+                                  ? 'text-destructive'
+                                  : 'text-ink-soft',
+                              )}
+                            >
+                              {fmt(t.table.estimate, {
+                                time: format.minutes(r.estimateMinutes),
+                              })}
+                              {r.minutes !== r.estimateMinutes && (
+                                <>
+                                  {', '}
+                                  {fmt(
+                                    r.minutes > r.estimateMinutes
+                                      ? t.table.overEstimate
+                                      : t.table.underEstimate,
+                                    {
+                                      time: format.minutes(
+                                        Math.abs(r.minutes - r.estimateMinutes),
+                                      ),
+                                    },
+                                  )}
+                                </>
+                              )}
+                            </span>
+                          )}
+                          {r.extensionMinutes > 0 && (
+                            <span
+                              className="block text-xs font-medium text-ink-soft"
+                              title={r.extensionNotes.join('\n')}
+                            >
+                              {fmt(t.table.extension, {
+                                time: format.minutes(r.extensionMinutes),
+                              })}
+                            </span>
+                          )}
                           {r.overtimeMinutes > 0 && (
                             <span
                               className="block text-xs font-medium text-ink-soft"

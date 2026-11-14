@@ -361,6 +361,14 @@ export const timeEntries = pgTable(
      */
     overtimeMinutes: integer('overtime_minutes'),
     overtimeNote: text('overtime_note'),
+    /** Estymata całego zadania przed pracą (minuty); jak SP należy do zadania, null = brak. */
+    estimateMinutes: integer('estimate_minutes'),
+    /**
+     * Przedłużenie (np. spotkanie zaplanowane na 1 h trwało 1 h 20 min): ile minut z czasu wpisu
+     * to dogrywka ponad plan i dlaczego. Część durationMinutes; oba pola razem albo żadne.
+     */
+    extensionMinutes: integer('extension_minutes'),
+    extensionNote: text('extension_note'),
     running: boolean('running').notNull().default(false),
     /**
      * Wstrzymane: timer przerwany przełączeniem na inne zadanie albo przyciskiem „Wstrzymaj”.
@@ -394,6 +402,17 @@ export const timeEntries = pgTable(
         or (${t.overtimeMinutes} between 1 and ${t.durationMinutes}
           and not ${t.running}
           and char_length(${t.overtimeNote}) between 1 and 1000)`,
+    ),
+    check(
+      'time_entries_estimate',
+      sql`${t.estimateMinutes} is null or ${t.estimateMinutes} between 1 and 60000`,
+    ),
+    check(
+      'time_entries_extension',
+      sql`(${t.extensionMinutes} is null and ${t.extensionNote} is null)
+        or (${t.extensionMinutes} between 1 and ${t.durationMinutes}
+          and not ${t.running}
+          and char_length(${t.extensionNote}) between 1 and 1000)`,
     ),
   ],
 )

@@ -8,6 +8,7 @@ import {
   Pencil,
   Play,
   Square,
+  TimerReset,
   Trash2,
 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
@@ -37,6 +38,7 @@ import { entriesMessages } from '#/i18n/messages/entries'
 import { entriesQuery, entryKeys } from '../queries'
 import { DayPicker } from './day-picker'
 import { EntryForm } from './entry-form'
+import { ExtendDialog } from './extend-dialog'
 import { SummaryDialog } from './summary-dialog'
 import {
   clockTime,
@@ -227,6 +229,7 @@ function EntryList({
     notes: boolean
   } | null>(null)
   const [deleting, setDeleting] = useState<TimeEntry | null>(null)
+  const [extending, setExtending] = useState<TimeEntry | null>(null)
   const [summarizing, setSummarizing] = useState<TimeEntry | null>(null)
   const remove = useDataMutation((id: string) => data.entries.remove(id), {
     invalidate: [entryKeys.all],
@@ -256,6 +259,15 @@ function EntryList({
           const done = sessions.reduce((sum, e) => sum + e.durationMinutes, 0)
           const storyPoints = maxPoints(sessions)
           const canNote = type?.descriptionRequirement !== 'hidden'
+          const isMeeting = type?.kind === 'meeting'
+          const estimate = sessions.reduce<number | null>(
+            (max, e) =>
+              e.estimateMinutes !== null &&
+              (max === null || e.estimateMinutes > max)
+                ? e.estimateMinutes
+                : max,
+            null,
+          )
           return (
             <li key={groupKey} className="px-5 py-4 sm:px-6">
               <div className="flex items-start gap-3">
@@ -283,6 +295,16 @@ function EntryList({
                       <>
                         <span aria-hidden>·</span>
                         <span>{format.sp(storyPoints)}</span>
+                      </>
+                    )}
+                    {estimate !== null && (
+                      <>
+                        <span aria-hidden>·</span>
+                        <span>
+                          {fmt(t.list.estimate, {
+                            time: format.minutes(estimate),
+                          })}
+                        </span>
                       </>
                     )}
                     {project && (
@@ -338,7 +360,25 @@ function EntryList({
                                 })}
                               </Badge>
                             )}
+                            {entry.extensionMinutes !== null && (
+                              <Badge tone="muted">
+                                {fmt(t.extension.badge, {
+                                  time: format.minutes(entry.extensionMinutes),
+                                })}
+                              </Badge>
+                            )}
                             <span className="ml-auto flex items-center">
+                              {isMeeting && !entry.running && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setExtending(entry)}
+                                >
+                                  <TimerReset aria-hidden className="size-4" />
+                                  {t.extension.button}
+                                  <span className="sr-only">: {label}</span>
+                                </Button>
+                              )}
                               {!entry.note && canNote && (
                                 <Button
                                   variant="ghost"
@@ -381,6 +421,17 @@ function EntryList({
                               <p className="sr-only">{t.list.notesLabel}:</p>
                               <Notes
                                 text={entry.note}
+                                moreLabel={t.list.showNotes}
+                              />
+                            </div>
+                          ) : null}
+                          {entry.extensionNote ? (
+                            <div className="mt-1.5 rounded-lg border-l-4 border-wt-meeting bg-wt-meeting/10 px-3.5 py-2.5">
+                              <p className="text-sm font-semibold">
+                                {t.extension.listLabel}
+                              </p>
+                              <Notes
+                                text={entry.extensionNote}
                                 moreLabel={t.list.showNotes}
                               />
                             </div>
@@ -491,6 +542,10 @@ function EntryList({
             />
           </DialogContent>
         </Dialog>
+      )}
+
+      {extending && (
+        <ExtendDialog entry={extending} onClose={() => setExtending(null)} />
       )}
 
       {summarizing && (
@@ -648,6 +703,9 @@ function QuickTemplates({
         durationMinutes: duration,
         overtimeMinutes: null,
         overtimeNote: null,
+        estimateMinutes: null,
+        extensionMinutes: null,
+        extensionNote: null,
         running: false,
       })
     },

@@ -18,6 +18,9 @@ const base: TimeEntryInput = {
   note: null,
   overtimeMinutes: 90,
   overtimeNote: 'Rolled back the cache change after the evening release.',
+  estimateMinutes: null,
+  extensionMinutes: null,
+  extensionNote: null,
   running: false,
 }
 const type = {
@@ -77,6 +80,9 @@ const entry = (over: Partial<TimeEntry>): TimeEntry => ({
   ...base,
   overtimeMinutes: null,
   overtimeNote: null,
+  estimateMinutes: null,
+  extensionMinutes: null,
+  extensionNote: null,
   paused: false,
   startedAt: null,
   createdAt: `2026-11-12T10:00:0${n % 10}Z`,
@@ -124,9 +130,9 @@ describe('overtime in reports and summaries', () => {
       typeName: () => 'Extra work',
       projectName: () => '',
     })
-    expect(
-      csv.split('\r\n')[1]!.endsWith(',90,1.50,Rolled back the cache change.'),
-    ).toBe(true)
+    expect(csv.split('\r\n')[1]!).toContain(
+      ',90,1.50,Rolled back the cache change.,',
+    )
   })
 
   it('fills {overtime} in the task summary', () => {

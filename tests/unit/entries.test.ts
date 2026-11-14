@@ -22,6 +22,9 @@ const base: TimeEntryInput = {
   note: null,
   overtimeMinutes: null,
   overtimeNote: null,
+  estimateMinutes: null,
+  extensionMinutes: null,
+  extensionNote: null,
   running: false,
 }
 const optional = {

@@ -88,6 +88,7 @@ const en = {
       under: 'Faster than estimate',
     },
     range: '{sp}: {min} to {max}',
+    ownEstimate: 'Your estimate {time}, real time {actual}',
     sessions: { one: '{n} session', other: '{n} sessions' } as Plural,
     days: { one: '{n} day', other: '{n} days' } as Plural,
     last: 'Last worked {date}',
@@ -323,6 +324,7 @@ const pl: PanelMessages = {
       under: 'Szybciej niż wycena',
     },
     range: '{sp}: od {min} do {max}',
+    ownEstimate: 'Twoja estymata {time}, prawdziwy czas {actual}',
     sessions: {
       one: '{n} sesja',
       few: '{n} sesje',

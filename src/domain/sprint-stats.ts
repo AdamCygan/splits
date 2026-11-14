@@ -72,14 +72,34 @@ export function sprintDay(
 export type EstimateStatus = 'under' | 'within' | 'over'
 
 /**
- * Czy czas zadania zmieścił się w przedziale dla jego SP (skala z Ustawień):
- * poniżej dolnej granicy = szybciej niż wycena, powyżej górnej = dłużej.
- * null = zadanie bez SP albo SP spoza skali.
+ * Czy zadanie zmieściło się w wycenie. Własna estymata (podana przed pracą) ma pierwszeństwo:
+ * powyżej niej = dłużej, poniżej 80% = szybciej. Bez estymaty: przedział czasu dla SP ze skali
+ * w Ustawieniach. null = brak estymaty i SP albo SP spoza skali.
  */
 export function estimateOf(
-  row: Pick<TaskRow, 'storyPoints' | 'minutes'>,
+  row: Pick<TaskRow, 'storyPoints' | 'minutes'> &
+    Partial<Pick<TaskRow, 'estimateMinutes'>>,
   scale: ReadonlyArray<Pick<SpScaleStep, 'points' | 'maxMinutes'>>,
-): { status: EstimateStatus; min: number; max: number; overBy: number } | null {
+): {
+  status: EstimateStatus
+  min: number
+  max: number
+  overBy: number
+  source: 'estimate' | 'scale'
+} | null {
+  const own = row.estimateMinutes ?? null
+  if (own !== null) {
+    const min = Math.floor(own * 0.8)
+    const status: EstimateStatus =
+      row.minutes > own ? 'over' : row.minutes < min ? 'under' : 'within'
+    return {
+      status,
+      min,
+      max: own,
+      overBy: Math.max(0, row.minutes - own),
+      source: 'estimate',
+    }
+  }
   if (row.storyPoints === null) return null
   const range = rangeFor(scale, row.storyPoints)
   if (!range) return null
@@ -89,5 +109,10 @@ export function estimateOf(
       : row.minutes <= range.min
         ? 'under'
         : 'within'
-  return { status, ...range, overBy: Math.max(0, row.minutes - range.max) }
+  return {
+    status,
+    ...range,
+    overBy: Math.max(0, row.minutes - range.max),
+    source: 'scale',
+  }
 }

@@ -73,6 +73,11 @@ type Draft = {
   /** Czas nadgodzin w tych samych formatach co czas trwania ("90", "1h 30m"). */
   overtimeDuration: string
   overtimeNote: string
+  /** Estymata całego zadania w tych samych formatach co czas ("4h", "90"); '' = brak. */
+  estimate: string
+  /** Przedłużenie ustawiane przyciskiem „Przedłużyło się” na liście; formularz je zachowuje. */
+  extensionMinutes: number | null
+  extensionNote: string | null
 }
 
 const QUICK_DURATIONS = [15, 30, 45, 60, 90, 120]
@@ -102,6 +107,10 @@ function initialDraft(
       overtimeDuration:
         entry.overtimeMinutes === null ? '' : String(entry.overtimeMinutes),
       overtimeNote: entry.overtimeNote ?? '',
+      estimate:
+        entry.estimateMinutes === null ? '' : String(entry.estimateMinutes),
+      extensionMinutes: entry.extensionMinutes,
+      extensionNote: entry.extensionNote,
     }
   }
   const end = Math.max(30, nowRounded())
@@ -119,6 +128,9 @@ function initialDraft(
     overtime: false,
     overtimeDuration: '',
     overtimeNote: '',
+    estimate: '',
+    extensionMinutes: null,
+    extensionNote: null,
   }
 }
 
@@ -157,6 +169,11 @@ function toInput(
     durationMinutes: d.mode === 'timer' ? 0 : minutes,
     note: d.note.trim() ? d.note : null,
     ...overtimeOf(d),
+    estimateMinutes: d.estimate.trim()
+      ? (parseDuration(d.estimate) ?? -1)
+      : null,
+    extensionMinutes: d.mode === 'timer' ? null : d.extensionMinutes,
+    extensionNote: d.mode === 'timer' ? null : d.extensionNote,
     running: d.mode === 'timer',
   }
 }
@@ -183,6 +200,8 @@ function toTimerInput(input: TimeEntryInput): TimerStartInput {
     running: _run,
     overtimeMinutes: _overtime,
     overtimeNote: _overtimeNote,
+    extensionMinutes: _extension,
+    extensionNote: _extensionNote,
     ...rest
   } = input
   return { ...rest, startTime: input.startTime ?? '' }
@@ -732,6 +751,15 @@ function EntryFormFields({
                 </div>
               )}
               {error('time')}
+              {error('extension')}
+              {draft.extensionMinutes !== null && !issueText('extension') && (
+                <p className="mt-1.5 text-sm text-ink-soft">
+                  {fmt(t.extension.inForm, {
+                    time: format.minutes(draft.extensionMinutes),
+                    reason: draft.extensionNote ?? '',
+                  })}
+                </p>
+              )}
             </div>
           </div>
 
@@ -829,6 +857,48 @@ function EntryFormFields({
                   </option>
                 ))}
               </Select>
+            </div>
+          )}
+
+          {/* Estymata całego zadania (nie spotkania): raport porówna ją z prawdziwym czasem */}
+          {type.kind !== 'meeting' && (
+            <div>
+              <label
+                htmlFor={`${uid}-estimate`}
+                className="block text-sm font-medium"
+              >
+                {t.form.estimate}{' '}
+                <span className="font-normal text-ink-soft">
+                  {t.form.optional}
+                </span>
+              </label>
+              <Input
+                id={`${uid}-estimate`}
+                className="mt-2"
+                inputMode="text"
+                autoComplete="off"
+                placeholder={t.form.estimatePlaceholder}
+                aria-invalid={issueText('estimate') ? true : undefined}
+                aria-describedby={describedBy(
+                  'estimate',
+                  !issueText('estimate'),
+                )}
+                value={draft.estimate}
+                onChange={(e) =>
+                  setDraft({ ...draft, estimate: e.target.value })
+                }
+              />
+              {error('estimate') ?? (
+                <p
+                  id={`${uid}-estimate-hint`}
+                  className="mt-1.5 text-sm text-ink-soft"
+                >
+                  {draft.estimate.trim() && parseDuration(draft.estimate)
+                    ? `= ${format.minutes(parseDuration(draft.estimate)!)}. `
+                    : ''}
+                  {t.form.estimateHint}
+                </p>
+              )}
             </div>
           )}
 
