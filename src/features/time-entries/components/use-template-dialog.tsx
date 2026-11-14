@@ -7,6 +7,7 @@ import { Input } from '#/components/ui/input'
 import type { Project, QuickTemplate, TaskType } from '#/data/types'
 import { useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
+import { parseDuration } from '#/domain/entries'
 import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'
 
@@ -14,6 +15,8 @@ export type TemplateChoice = {
   projectId: string | null
   link: string | null
   note: string | null
+  /** Czas wpisu podany w oknie (dzień z przeszłości, a szablon nie ma czasu). */
+  minutes: number | null
 }
 
 const URL_RE = /^https?:\/\/\S+$/i
@@ -23,9 +26,12 @@ export function templateNeeds(
   template: QuickTemplate,
   type: TaskType | undefined,
   projects: Array<Project>,
+  isToday: boolean,
 ) {
   return {
     project: template.askProject && projects.length > 0,
+    // Szablon bez czasu włącza timer, a timer działa tylko dziś: wcześniej trzeba podać czas.
+    duration: !isToday && template.defaultDurationMinutes === null,
     link: type?.linkRequirement === 'required',
     note: type?.descriptionRequirement === 'required',
   }
@@ -33,12 +39,14 @@ export function templateNeeds(
 
 /**
  * Okno przed zapisem wpisu z szablonu. Sam wybór projektu: lista przycisków (klik zapisuje).
- * Gdy typ pracy wymaga linku albo notatki (np. code review i link do MR): krótki formularz.
+ * Gdy typ pracy wymaga linku albo notatki (np. code review i link do MR) albo trzeba podać czas
+ * (dzień z przeszłości, a szablon zwykle włącza timer): krótki formularz.
  */
 export function UseTemplateDialog({
   template,
   type,
   projects,
+  isToday,
   pending,
   onSubmit,
   onClose,
@@ -46,19 +54,31 @@ export function UseTemplateDialog({
   template: QuickTemplate
   type: TaskType | undefined
   projects: Array<Project>
+  isToday: boolean
   pending: boolean
   onSubmit: (choice: TemplateChoice) => void
   onClose: () => void
 }) {
   const t = useMessages(entriesMessages)
   const app = useMessages(appMessages)
-  const needs = templateNeeds(template, type, projects)
-  const onlyProject = needs.project && !needs.link && !needs.note
+  const needs = templateNeeds(template, type, projects, isToday)
+  const onlyProject =
+    needs.project && !needs.link && !needs.note && !needs.duration
+  const onlyDuration =
+    needs.duration && !needs.project && !needs.link && !needs.note
+  const first = needs.project
+    ? 'project'
+    : needs.duration
+      ? 'duration'
+      : needs.link
+        ? 'link'
+        : 'note'
   const [projectId, setProjectId] = useState(
     needs.project ? (projects[0]?.id ?? '') : (template.projectId ?? ''),
   )
   const [link, setLink] = useState('')
   const [note, setNote] = useState('')
+  const [duration, setDuration] = useState('')
   const [submitted, setSubmitted] = useState(false)
 
   const linkError = !needs.link
@@ -78,14 +98,21 @@ export function UseTemplateDialog({
         ? t.issues.note.too_long
         : null
 
+  const minutes = needs.duration ? parseDuration(duration) : null
+  const durationError =
+    needs.duration && (minutes === null || minutes < 1 || minutes > 24 * 60)
+      ? t.issues.time.duration_range
+      : null
+
   const submit = (e: FormEvent) => {
     e.preventDefault()
     setSubmitted(true)
-    if (linkError || noteError) return
+    if (linkError || noteError || durationError) return
     onSubmit({
       projectId: projectId || null,
       link: needs.link ? link.trim() : null,
       note: needs.note ? note.trim() : null,
+      minutes,
     })
   }
 
@@ -94,11 +121,19 @@ export function UseTemplateDialog({
       <DialogContent
         size="sm"
         title={fmt(
-          onlyProject ? t.templates.pickTitle : t.templates.detailsTitle,
+          onlyProject
+            ? t.templates.pickTitle
+            : onlyDuration
+              ? t.templates.pastTitle
+              : t.templates.detailsTitle,
           { name: template.label },
         )}
         description={
-          onlyProject ? t.templates.pickText : t.templates.detailsText
+          onlyProject
+            ? t.templates.pickText
+            : onlyDuration
+              ? t.templates.pastText
+              : t.templates.detailsText
         }
         closeLabel={app.actions.close}
         onOpenAutoFocus={(e) => {
@@ -122,7 +157,7 @@ export function UseTemplateDialog({
               >
                 {pending
                   ? t.form.saving
-                  : template.defaultDurationMinutes === null
+                  : template.defaultDurationMinutes === null && isToday
                     ? t.form.startTimer
                     : t.form.save}
               </Button>
@@ -143,6 +178,7 @@ export function UseTemplateDialog({
                       projectId: project?.id ?? null,
                       link: null,
                       note: null,
+                      minutes: null,
                     })
                   }
                   className="flex h-11 w-full items-center gap-3 rounded-lg border border-line bg-surface px-3.5 text-left text-sm font-medium hover:border-ink/40 disabled:opacity-60"
@@ -193,6 +229,24 @@ export function UseTemplateDialog({
                 )}
               </Field>
             )}
+            {needs.duration && (
+              <Field
+                label={t.templates.duration}
+                hint={t.templates.durationHint}
+                error={submitted ? durationError : null}
+              >
+                {(a) => (
+                  <Input
+                    {...a}
+                    data-first={first === 'duration' ? '' : undefined}
+                    inputMode="text"
+                    autoComplete="off"
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                  />
+                )}
+              </Field>
+            )}
             {needs.link && (
               <Field
                 label={type?.linkLabel || t.form.link}
@@ -201,7 +255,7 @@ export function UseTemplateDialog({
                 {(a) => (
                   <Input
                     {...a}
-                    data-first={needs.project ? undefined : ''}
+                    data-first={first === 'link' ? '' : undefined}
                     type="url"
                     inputMode="url"
                     placeholder="https://"
@@ -217,7 +271,7 @@ export function UseTemplateDialog({
                 {(a) => (
                   <Textarea
                     {...a}
-                    data-first={needs.project || needs.link ? undefined : ''}
+                    data-first={first === 'note' ? '' : undefined}
                     rows={3}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}

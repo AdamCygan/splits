@@ -37,6 +37,8 @@ const en = {
   hotkey_taken: 'Another template already uses this shortcut.',
   'plan.limit_custom_types':
     'The Free plan includes up to 3 custom work types. Archive one or upgrade to Pro.',
+  'plan.limit_history':
+    'On the Free plan you can add entries from the last 30 days. Upgrade to Pro to log older work.',
   'status.default_archive':
     'The default status can’t be archived. Make another status the default first.',
   'status.system_archive': 'Built-in statuses can be renamed but not archived.',
@@ -90,6 +92,8 @@ const pl: ErrorMessages = {
   hotkey_taken: 'Ten skrót ma już inny szablon.',
   'plan.limit_custom_types':
     'Plan Free obejmuje do 3 własnych typów pracy. Zarchiwizuj jeden albo przejdź na Pro.',
+  'plan.limit_history':
+    'W planie Free dodasz wpisy z ostatnich 30 dni. Przejdź na Pro, żeby wpisać starszą pracę.',
   'status.default_archive':
     'Nie można zarchiwizować statusu domyślnego. Najpierw ustaw inny jako domyślny.',
   'status.system_archive':

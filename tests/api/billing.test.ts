@@ -1,6 +1,9 @@
 import Stripe from 'stripe'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { sql } from 'drizzle-orm'
 import { planForPrice, setStripeClient } from '#/server/billing/stripe'
+import { db } from '#/server/db/client'
+import { users } from '#/server/db/schema'
 import { client, registered } from './helpers'
 
 /**
@@ -394,7 +397,7 @@ describe('billing (Stripe, yearly plans only)', () => {
   })
 
   it('limits Free reports to the last 30 days on the server', async () => {
-    const { c } = await registered()
+    const { c, email } = await registered()
     const types = await c.get<Array<{ id: string }>>('/task-types')
     const today = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Europe/Warsaw',
@@ -415,7 +418,17 @@ describe('billing (Stripe, yearly plans only)', () => {
       note: null,
       running: false,
     })
+    // Starszego wpisu Free nie doda (limit 30 dni), ale może go mieć z czasów Pro.
+    expect((await c.post('/time-entries', entry(old))).status).toBe(403)
+    await db
+      .update(users)
+      .set({ plan: 'pro' })
+      .where(sql`lower(${users.email}) = ${email}`)
     await c.post('/time-entries', entry(old))
+    await db
+      .update(users)
+      .set({ plan: 'free' })
+      .where(sql`lower(${users.email}) = ${email}`)
     await c.post('/time-entries', entry(today))
     const range = await c.get<Array<{ workDate: string }>>(
       `/time-entries?from=2000-01-01&to=${today}`,

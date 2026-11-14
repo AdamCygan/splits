@@ -259,6 +259,72 @@ test.describe('today: log time with notes', () => {
     await expect(page.getByText('Logged “Team sync”, 20m')).toBeVisible()
   })
 
+  test('adds a forgotten entry to yesterday', async ({ page }) => {
+    await page.getByRole('button', { name: 'Previous day' }).click()
+    await expect(page).toHaveURL(/[?&]date=\d{4}-\d{2}-\d{2}/)
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Yesterday' }),
+    ).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Next day' })).toBeEnabled()
+
+    const form = page.getByRole('region', { name: 'Log time' })
+    await expect(form.getByText(/The timer works only for today/)).toBeVisible()
+    await expect(form.getByRole('radio', { name: 'Timer' })).toHaveCount(0)
+    await form.getByText('Meeting', { exact: true }).click()
+    await form.getByLabel('Title').fill('Planning I forgot to log')
+    await form.getByRole('radio', { name: 'Duration' }).check({ force: true })
+    await form.getByRole('button', { name: '1h', exact: true }).click()
+    await form.getByRole('button', { name: 'Save entry' }).click()
+
+    const list = page.getByRole('region', { name: /^Entries on / })
+    await expect(
+      list.getByText('Planning I forgot to log', { exact: true }),
+    ).toBeVisible()
+    await expectNoA11yViolations(page)
+
+    // Dziś tego wpisu nie ma; wraca się jednym przyciskiem.
+    await page.getByRole('button', { name: 'Back to today' }).click()
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Today' }),
+    ).toBeVisible()
+    await expect(page).not.toHaveURL(/date=/)
+    await expect(
+      page
+        .getByRole('region', { name: 'Today’s entries' })
+        .getByText('Planning I forgot to log'),
+    ).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Next day' })).toBeDisabled()
+  })
+
+  test('a timer template asks for the time on a past day', async ({ page }) => {
+    await page.goto('/app/settings/templates')
+    await page.getByRole('button', { name: 'Add template' }).click()
+    const form = page.getByRole('dialog', { name: 'Add template' })
+    await form.getByLabel('Button label').fill('Focus')
+    await form.getByLabel('Work type').selectOption({ label: 'Meeting' })
+    await form.getByLabel('Entry title').fill('Focus block')
+    await form.getByRole('button', { name: 'Add template' }).click()
+    await expect(page.getByText('Template added')).toBeVisible()
+
+    await page.goto('/app')
+    await page.getByRole('button', { name: 'Previous day' }).click()
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Yesterday' }),
+    ).toBeVisible()
+    await page.getByRole('button', { name: /^Focus/ }).click()
+    const dialog = page.getByRole('dialog', {
+      name: 'Focus: how long did it take?',
+    })
+    await expect(dialog.getByLabel('Time')).toBeFocused()
+    await dialog.getByRole('button', { name: 'Save entry' }).click()
+    await expect(
+      dialog.getByText('Enter between 1 minute and 24 hours.'),
+    ).toBeVisible()
+    await dialog.getByLabel('Time').fill('1h 30m')
+    await dialog.getByRole('button', { name: 'Save entry' }).click()
+    await expect(page.getByText('Logged “Focus block”, 1h 30m')).toBeVisible()
+  })
+
   test('custom summary template is used', async ({ page }) => {
     await page.goto('/app/settings/summaries')
     const field = page.getByRole('textbox', { name: 'Template' })

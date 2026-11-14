@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Check, Clock, Link2, Play, Timer, Wand2 } from 'lucide-react'
@@ -26,7 +26,7 @@ import type {
   TimeInputMode,
   TimerStartInput,
 } from '#/data/types'
-import { nowTimeIn } from '#/domain/dates'
+import { nowTimeIn, todayIn } from '#/domain/dates'
 import {
   ENTRY_LIMITS,
   fromMinutes,
@@ -245,8 +245,15 @@ function EntryFormFields({
   const scale = useQuery(scaleQuery).data ?? []
   const timeZone = useQuery(settingsQuery).data?.timezone
   const nowTime = () => nowTimeIn(timeZone)
+  // Timer liczy czas od teraz, więc nowy wpis z timerem jest możliwy tylko dziś.
+  const timerAllowed = workDate === todayIn(timeZone)
   const [customFor, setCustomFor] = useState<TaskType | null>(null)
   const [draft, setDraft] = useState<Draft>(() => initialDraft(entry, types[0]))
+  // Zmiana dnia na przeszły w trakcie wypełniania: timer przechodzi na „czas trwania”.
+  useEffect(() => {
+    if (!timerAllowed && !entry && draft.mode === 'timer')
+      setDraft((d) => ({ ...d, mode: 'duration' }))
+  }, [timerAllowed, entry, draft.mode])
   const [submitted, setSubmitted] = useState(false)
   const titleRef = useRef<HTMLInputElement>(null)
 
@@ -386,7 +393,9 @@ function EntryFormFields({
       ? entry.running
         ? (['timer', 'range'] as const)
         : (['range', 'duration'] as const)
-      : (['range', 'duration', 'timer'] as const)
+      : timerAllowed
+        ? (['range', 'duration', 'timer'] as const)
+        : (['range', 'duration'] as const)
   ).map((value) => ({ value, label: t.form.timeModes[value] }))
 
   const onKeyDown = (e: KeyboardEvent<HTMLFormElement>) => {
@@ -478,7 +487,7 @@ function EntryFormFields({
                     <Wand2 aria-hidden />
                     {t.form.quickMenu.custom}
                   </ContextMenuItem>
-                  {!entry && (
+                  {!entry && timerAllowed && (
                     <>
                       <ContextMenuSeparator />
                       <ContextMenuItem onSelect={() => quickLog(x, 'timer')}>

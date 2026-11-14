@@ -64,6 +64,8 @@ async function check(
     throw invalid('projectId')
   const issue = validateEntry(input, type)[0]
   if (issue) throw invalid(issue.field)
+  // Wpisy dopisuje się za dziś i za dni, które minęły; przyszłość nie ma jeszcze przepracowanego czasu.
+  if (input.workDate > todayIn(timezone)) throw invalid('workDate')
   if (
     input.running &&
     input.startTime &&
@@ -73,6 +75,28 @@ async function check(
 }
 
 const mine = (userId: string) => eq(t.timeEntries.userId, userId)
+
+/**
+ * Nowy wpis: timer działa tylko dziś, a plan Free dopisuje wpisy z ostatnich 30 dni
+ * (tyle historii widać w raportach Free). Edycja starszych wpisów zostaje możliwa.
+ */
+async function checkNewEntryDate(
+  tx: Tx,
+  userId: string,
+  input: TimeEntryInput,
+  timezone: string,
+) {
+  const today = todayIn(timezone)
+  if (input.running && input.workDate !== today) throw invalid('workDate')
+  const oldest = addDays(today, -(FREE_LIMITS.historyDays - 1))
+  if (input.workDate >= oldest) return
+  const [user] = await tx
+    .select({ plan: t.users.plan, role: t.users.role })
+    .from(t.users)
+    .where(eq(t.users.id, userId))
+  if (!hasProAccess(user))
+    throw new ApiError('plan.limit_history', 403, 'workDate')
+}
 
 /** Wpisy tego samego zadania — to samo co sameTask(): ten sam link, a bez linku typ i tytuł. */
 function sameTaskAs(ref: TaskRef) {
@@ -160,6 +184,7 @@ async function startTimer(
   timezone: string,
 ) {
   await check(tx, userId, input, timezone)
+  await checkNewEntryDate(tx, userId, input, timezone)
   const stopped = await stopRunning(tx, userId, timezone)
   const values = clean(input)
   await clearPaused(tx, userId, values)
@@ -287,6 +312,7 @@ export const entryRoutes = new Hono<AppEnv>()
       if (input.running)
         return (await startTimer(tx, userId, input, timezone)).started
       await check(tx, userId, input, timezone)
+      await checkNewEntryDate(tx, userId, input, timezone)
       const [created] = await tx
         .insert(t.timeEntries)
         .values({ ...clean(input), userId, startedAt: null })

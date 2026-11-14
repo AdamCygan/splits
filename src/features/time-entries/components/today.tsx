@@ -15,7 +15,9 @@ import { Badge } from '#/components/ui/controls'
 import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
 import { data } from '#/data'
 import type { QuickTemplate, TaskType, TimeEntry } from '#/data/types'
-import { nowTimeIn, todayIn } from '#/domain/dates'
+import { addDays, nowTimeIn, todayIn } from '#/domain/dates'
+import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
+import { useCurrentUser } from '#/features/auth/session'
 import { groupTasks, spForType, taskGroupKey, totalsOf } from '#/domain/report'
 import { maxPoints } from '#/domain/summary'
 import { extractTaskKey } from '#/domain/rules'
@@ -33,6 +35,7 @@ import { UseTemplateDialog, templateNeeds } from './use-template-dialog'
 import type { TemplateChoice } from './use-template-dialog'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { entriesQuery, entryKeys } from '../queries'
+import { DayPicker } from './day-picker'
 import { EntryForm } from './entry-form'
 import { SummaryDialog } from './summary-dialog'
 import {
@@ -44,12 +47,32 @@ import {
   useStopTimer,
 } from './timer'
 
-export function TodayPage() {
+export function TodayPage({
+  date,
+  onDateChange,
+}: {
+  /** Wybrany dzień z adresu (?date=); brak = dziś. */
+  date?: string
+  onDateChange?: (date: string, today: string) => void
+}) {
   const t = useMessages(entriesMessages)
   const format = useFormat()
   const { tag } = useI18n()
   const settings = useQuery(settingsQuery).data
-  const workDate = todayIn(settings?.timezone)
+  const user = useCurrentUser()
+  const today = todayIn(settings?.timezone)
+  // Plan Free: dopisywanie wpisów z ostatnich 30 dni (tyle historii obejmuje Free).
+  const limited = !hasProAccess(user)
+  const minDate = limited
+    ? addDays(today, -(FREE_LIMITS.historyDays - 1))
+    : null
+  const workDate =
+    !date || date > today
+      ? today
+      : minDate !== null && date < minDate
+        ? minDate
+        : date
+  const isToday = workDate === today
   const entries = useQuery(entriesQuery(workDate))
   const list = entries.data ?? []
   const types = useQuery(taskTypesQuery).data ?? []
@@ -60,18 +83,45 @@ export function TodayPage() {
   const target = settings?.workdayTargetMinutes ?? 0
   const progress =
     target > 0 ? Math.min(100, Math.round((total / target) * 100)) : 0
+  const day = new Date(`${workDate}T00:00:00Z`)
+  const sameYear = workDate.slice(0, 4) === today.slice(0, 4)
   const dateLabel = new Intl.DateTimeFormat(tag, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
+    year: sameYear ? undefined : 'numeric',
     timeZone: 'UTC',
-  }).format(new Date(`${workDate}T00:00:00Z`))
+  }).format(day)
+  const shortDate = new Intl.DateTimeFormat(tag, {
+    month: 'long',
+    day: 'numeric',
+    year: sameYear ? undefined : 'numeric',
+    timeZone: 'UTC',
+  }).format(day)
+  const heading = isToday
+    ? t.pageTitle
+    : workDate === addDays(today, -1)
+      ? t.day.yesterday
+      : new Intl.DateTimeFormat(tag, {
+          weekday: 'long',
+          timeZone: 'UTC',
+        }).format(day)
+  const headingText = heading.charAt(0).toUpperCase() + heading.slice(1)
 
   return (
     <div className="mx-auto max-w-6xl">
-      <header className="mb-6">
-        <p className="text-sm font-medium text-ink-soft">{dateLabel}</p>
-        <h1 className="type-display text-4xl sm:text-5xl">{t.pageTitle}</h1>
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-ink-soft">{dateLabel}</p>
+          <h1 className="type-display text-4xl sm:text-5xl">{headingText}</h1>
+        </div>
+        <DayPicker
+          value={workDate}
+          today={today}
+          min={minDate}
+          limited={limited}
+          onChange={(next) => onDateChange?.(next, today)}
+        />
       </header>
 
       <dl className="mb-6 grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line">
@@ -111,7 +161,7 @@ export function TodayPage() {
         </div>
       </dl>
 
-      <QuickTemplates workDate={workDate} />
+      <QuickTemplates workDate={workDate} isToday={isToday} />
 
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         <section
@@ -122,7 +172,9 @@ export function TodayPage() {
             <h2 id="log-time" className="type-heading text-2xl">
               {t.form.title}
             </h2>
-            <p className="mt-1 text-sm text-ink-soft">{t.form.lead}</p>
+            <p className="mt-1 text-sm text-ink-soft">
+              {isToday ? t.form.lead : fmt(t.day.pastLead, { date: dateLabel })}
+            </p>
           </header>
           <div className="px-5 py-5 sm:px-6">
             <EntryForm workDate={workDate} />
@@ -135,12 +187,18 @@ export function TodayPage() {
         >
           <header className="border-b border-line px-5 py-4 sm:px-6">
             <h2 id="today-entries" className="type-heading text-2xl">
-              {t.list.title}
+              {isToday
+                ? t.list.title
+                : fmt(t.day.listTitle, { date: shortDate })}
             </h2>
           </header>
           {list.length === 0 ? (
             <p className="px-5 py-6 text-ink-soft sm:px-6">
-              {entries.isPending ? '…' : t.list.empty}
+              {entries.isPending
+                ? '…'
+                : isToday
+                  ? t.list.empty
+                  : t.day.listEmpty}
             </p>
           ) : (
             <EntryList entries={list} workDate={workDate} />
@@ -540,7 +598,13 @@ function groupByTask(entries: ReadonlyArray<TimeEntry>) {
  * Szablon bez czasu startuje timer. Gdy brakuje projektu („dowolny projekt”), linku albo
  * notatki wymaganych przez typ pracy, najpierw pyta o nie w małym oknie.
  */
-function QuickTemplates({ workDate }: { workDate: string }) {
+function QuickTemplates({
+  workDate,
+  isToday,
+}: {
+  workDate: string
+  isToday: boolean
+}) {
   const t = useMessages(entriesMessages)
   const format = useFormat()
   const templates = useQuery(templatesQuery).data ?? []
@@ -557,6 +621,7 @@ function QuickTemplates({ workDate }: { workDate: string }) {
       projectId,
       link,
       note,
+      minutes,
     }: TemplateChoice & { template: QuickTemplate }) => {
       const type = types.find((x) => x.id === template.taskTypeId)
       const base = {
@@ -568,7 +633,8 @@ function QuickTemplates({ workDate }: { workDate: string }) {
         workDate,
         note,
       }
-      if (template.defaultDurationMinutes === null) {
+      const duration = template.defaultDurationMinutes ?? minutes
+      if (duration === null) {
         const result = await data.entries.start({
           ...base,
           startTime: nowTimeIn(timeZone),
@@ -579,7 +645,7 @@ function QuickTemplates({ workDate }: { workDate: string }) {
         ...base,
         startTime: null,
         endTime: null,
-        durationMinutes: template.defaultDurationMinutes,
+        durationMinutes: duration,
         overtimeMinutes: null,
         overtimeNote: null,
         running: false,
@@ -600,14 +666,16 @@ function QuickTemplates({ workDate }: { workDate: string }) {
 
   const use = (template: QuickTemplate) => {
     const type = types.find((x) => x.id === template.taskTypeId)
-    const needs = templateNeeds(template, type, projects)
-    if (needs.project || needs.link || needs.note) setPicking(template)
+    const needs = templateNeeds(template, type, projects, isToday)
+    if (needs.project || needs.link || needs.note || needs.duration)
+      setPicking(template)
     else
       apply.mutate({
         template,
         projectId: template.projectId,
         link: null,
         note: null,
+        minutes: null,
       })
   }
 
@@ -662,7 +730,9 @@ function QuickTemplates({ workDate }: { workDate: string }) {
                 <span className="text-ink-soft">
                   {template.defaultDurationMinutes
                     ? format.minutes(template.defaultDurationMinutes)
-                    : t.form.timeModes.timer}
+                    : isToday
+                      ? t.form.timeModes.timer
+                      : t.templates.duration}
                 </span>
                 {template.hotkey && (
                   <kbd className="rounded-md border border-line border-b-2 px-1.5 py-0.5 font-sans text-xs text-ink-soft">
@@ -679,6 +749,7 @@ function QuickTemplates({ workDate }: { workDate: string }) {
           template={picking}
           type={types.find((x) => x.id === picking.taskTypeId)}
           projects={projects}
+          isToday={isToday}
           pending={apply.isPending}
           onSubmit={(choice) => apply.mutate({ template: picking, ...choice })}
           onClose={() => setPicking(null)}

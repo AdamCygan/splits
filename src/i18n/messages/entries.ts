@@ -3,6 +3,19 @@ import type { Plural } from '../format'
 
 const en = {
   pageTitle: 'Today',
+  day: {
+    nav: 'Choose a day',
+    previous: 'Previous day',
+    next: 'Next day',
+    date: 'Date',
+    yesterday: 'Yesterday',
+    backToToday: 'Back to today',
+    pastLead: 'Entries go to {date}. The timer works only for today.',
+    listTitle: 'Entries on {date}',
+    listEmpty: 'Nothing logged on this day yet. Add what you forgot.',
+    freeLimit: 'The Free plan lets you add entries from the last 30 days.',
+    upgrade: 'Upgrade to Pro',
+  },
   summary: {
     logged: 'Logged',
     ofTarget: '{time} of {target}',
@@ -140,6 +153,10 @@ const en = {
     anyProject: 'Pick a project',
     detailsTitle: '{name}: a few details',
     detailsText: 'This kind of work needs them before the entry is saved.',
+    pastTitle: '{name}: how long did it take?',
+    pastText: 'The timer works only for today, so enter the time for this day.',
+    duration: 'Time',
+    durationHint: 'For example 45 or 1h 20m.',
   },
   timer: {
     running: 'Running',
@@ -183,6 +200,20 @@ export type EntriesMessages = typeof en
 
 const pl: EntriesMessages = {
   pageTitle: 'Dziś',
+  day: {
+    nav: 'Wybór dnia',
+    previous: 'Poprzedni dzień',
+    next: 'Następny dzień',
+    date: 'Data',
+    yesterday: 'Wczoraj',
+    backToToday: 'Wróć do dziś',
+    pastLead: 'Wpisy trafią do dnia {date}. Timer działa tylko dla dzisiaj.',
+    listTitle: 'Wpisy z dnia {date}',
+    listEmpty:
+      'Tego dnia nic jeszcze nie zalogowano. Dopisz to, o czym zapomniałeś.',
+    freeLimit: 'W planie Free dodasz wpisy z ostatnich 30 dni.',
+    upgrade: 'Przejdź na Pro',
+  },
   summary: {
     logged: 'Zalogowane',
     ofTarget: '{time} z {target}',
@@ -331,6 +362,10 @@ const pl: EntriesMessages = {
     anyProject: 'Wybierz projekt',
     detailsTitle: '{name}: jeszcze kilka szczegółów',
     detailsText: 'Ten rodzaj pracy ich wymaga, zanim wpis zostanie zapisany.',
+    pastTitle: '{name}: ile to trwało?',
+    pastText: 'Timer działa tylko dla dzisiaj, więc podaj czas dla tego dnia.',
+    duration: 'Czas',
+    durationHint: 'Na przykład 45 albo 1h 20m.',
   },
   timer: {
     running: 'Trwa',

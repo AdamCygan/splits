@@ -1,0 +1,89 @@
+import { Link } from '@tanstack/react-router'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Button } from '#/components/ui/button'
+import { Input } from '#/components/ui/input'
+import { addDays } from '#/domain/dates'
+import { useMessages } from '#/i18n/context'
+import { entriesMessages } from '#/i18n/messages/entries'
+
+/**
+ * Wybór dnia na stronie Dziś: poprzedni / następny dzień, kalendarz i powrót do dziś.
+ * Przyszłych dni nie ma (nie ma jeszcze przepracowanego czasu), a plan Free kończy się na `min`.
+ */
+export function DayPicker({
+  value,
+  today,
+  min,
+  limited,
+  onChange,
+}: {
+  value: string
+  today: string
+  /** Najstarszy dzień, do którego można dopisać wpis; null = bez limitu. */
+  min: string | null
+  /** Limit planu Free: przy najstarszym dniu pokazujemy, skąd się bierze. */
+  limited: boolean
+  onChange: (date: string) => void
+}) {
+  const t = useMessages(entriesMessages).day
+  const isToday = value === today
+  const atMin = min !== null && value <= min
+
+  return (
+    <div className="flex flex-col items-start gap-2 sm:items-end">
+      <nav aria-label={t.nav} className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          disabled={atMin}
+          onClick={() => onChange(addDays(value, -1))}
+        >
+          <ChevronLeft aria-hidden className="size-4" />
+          <span className="sr-only">{t.previous}</span>
+        </Button>
+        <Input
+          type="date"
+          aria-label={t.date}
+          value={value}
+          max={today}
+          min={min ?? undefined}
+          required
+          onChange={(e) => {
+            const next = e.target.value
+            if (!next) return
+            onChange(
+              next > today ? today : min !== null && next < min ? min : next,
+            )
+          }}
+          className="h-9 w-auto px-3 text-sm font-medium tabular-nums"
+        />
+        <Button
+          variant="outline"
+          size="icon"
+          disabled={isToday}
+          onClick={() => onChange(addDays(value, 1))}
+        >
+          <ChevronRight aria-hidden className="size-4" />
+          <span className="sr-only">{t.next}</span>
+        </Button>
+        {!isToday && (
+          <Button variant="outline" onClick={() => onChange(today)}>
+            {t.backToToday}
+          </Button>
+        )}
+      </nav>
+      {limited && atMin && (
+        <p className="text-sm text-ink-soft">
+          {t.freeLimit}{' '}
+          <Link
+            to="/app/checkout"
+            search={{ plan: 'pro' }}
+            className="font-medium text-ink underline underline-offset-2"
+          >
+            {t.upgrade}
+          </Link>
+        </p>
+      )}
+    </div>
+  )
+}
