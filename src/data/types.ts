@@ -180,6 +180,11 @@ export type TimerStartInput = Omit<
   | 'overtimeNote'
 > & { startTime: string }
 export type TaskRef = Pick<TimeEntry, 'title' | 'link' | 'taskTypeId'>
+/** Zmiana zadania we wszystkich jego wpisach. */
+export type TaskUpdateInput = Pick<
+  TimeEntry,
+  'title' | 'link' | 'projectId' | 'storyPoints'
+>
 export type TimerStartResult = { started: TimeEntry; stopped: TimeEntry | null }
 export type ProfileInput = Pick<User, 'displayName' | 'email'>
 export type PasswordChangeInput = {

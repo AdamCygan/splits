@@ -22,6 +22,7 @@ import {
   parse,
   rangeQuery,
   taskRefInput,
+  taskUpdateInput,
   timerInput,
 } from '../http/inputs'
 import { ownProject, ownTaskType } from './config'
@@ -405,6 +406,56 @@ export const entryRoutes = new Hono<AppEnv>()
       await clearPaused(tx, userId, entry)
     })
     return c.body(null, 204)
+  })
+
+  /**
+   * Edycja zadania z raportu: tytuł, link, projekt i SP zmieniają się we wszystkich wpisach
+   * zadania naraz (zadanie = wpisy z tym samym linkiem, a bez linku z tym samym typem i tytułem).
+   */
+  .put('/task', async (c) => {
+    const userId = c.get('userId')
+    const input = await body(c, taskUpdateInput)
+    const rows = await db.transaction(async (tx) => {
+      const timezone = await userTimezone(tx, userId)
+      const found = await tx
+        .select()
+        .from(t.timeEntries)
+        .where(and(mine(userId), sameTaskAs(input.ref)))
+      if (found.length === 0) throw notFound()
+      const changes = {
+        title: input.title,
+        link: input.link,
+        projectId: input.projectId,
+        storyPoints: input.storyPoints,
+      }
+      const updated = []
+      for (const row of found) {
+        const next: TimeEntryInput = { ...toEntry(row), ...changes }
+        await check(tx, userId, next, timezone)
+        const cleaned = clean(next)
+        const [saved] = await tx
+          .update(t.timeEntries)
+          .set({
+            title: cleaned.title,
+            link: cleaned.link,
+            projectId: cleaned.projectId,
+            storyPoints: cleaned.storyPoints,
+          })
+          .where(eq(t.timeEntries.id, row.id))
+          .returning()
+        updated.push(saved!)
+      }
+      return updated
+    })
+    return c.json(
+      rows
+        .sort((a, b) =>
+          (a.workDate + (a.startTime ?? '')).localeCompare(
+            b.workDate + (b.startTime ?? ''),
+          ),
+        )
+        .map(toEntry),
+    )
   })
 
   .put('/:id', async (c) => {

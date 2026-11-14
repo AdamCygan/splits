@@ -61,6 +61,56 @@ test.describe('reports: story points and time per task', () => {
       page.getByText('Pick a start date on or before the end date'),
     ).toBeVisible()
   })
+
+  test('opens a task from the report to edit it and its time', async ({
+    page,
+  }) => {
+    await page
+      .getByRole('button', { name: 'Edit task: PAY-139 Refund API endpoint' })
+      .click()
+    const dialog = page.getByRole('dialog', { name: 'Edit task' })
+    await expect(dialog).toContainText('2 sessions, 5h 35m in total')
+    await expectNoA11yViolations(page)
+
+    // Zadanie: nowa nazwa trafia do obu sesji, czas zostaje.
+    await dialog.getByLabel('Title').fill('PAY-139 Refund API')
+    await dialog.getByRole('button', { name: 'Save task' }).click()
+    await expect(page.getByText('Task updated')).toBeVisible()
+    await expect(dialog).toContainText(
+      'PAY-139 Refund API. 2 sessions, 5h 35m in total',
+    )
+
+    // Czas: edycja jednej sesji otwiera zwykły formularz wpisu.
+    await dialog
+      .getByRole('button', { name: /^Edit session from / })
+      .first()
+      .click()
+    const edit = page.getByRole('dialog', { name: /^Edit session from / })
+    await expect(edit.getByLabel('Title')).toHaveValue('PAY-139 Refund API')
+    await edit.getByRole('button', { name: 'Cancel' }).click()
+    await expect(edit).toBeHidden()
+
+    // Usunięcie jednej sesji zmniejsza czas zadania w raporcie.
+    await dialog
+      .getByRole('button', { name: /^Delete session from / })
+      .first()
+      .click()
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'Delete' })
+      .click()
+    await expect(page.getByText('Session deleted')).toBeVisible()
+    await expect(dialog).toContainText('1 session, ')
+    await page.keyboard.press('Escape')
+    await expect(dialog).toBeHidden()
+    const row = page
+      .getByRole('table')
+      .getByRole('row')
+      .filter({ hasText: 'PAY-139 Refund API' })
+    await expect(
+      row.getByRole('cell', { name: /^(2h 30m|3h 5m)$/ }),
+    ).toBeVisible()
+  })
 })
 
 test.describe('story points per kind of work', () => {

@@ -25,6 +25,7 @@ import type {
   TimerStartInput,
   TimerStartResult,
   TaskRef,
+  TaskUpdateInput,
   User,
   UserSettings,
   BillingStatus,
@@ -132,6 +133,8 @@ export interface DataSource {
     remove: (id: string) => R<undefined>
     /** Wszystkie wpisy tego samego zadania (ten sam link, a bez linku ten sam tytuł i typ). */
     forTask: (ref: TaskRef) => R<Array<TimeEntry>>
+    /** Zmienia tytuł, link, projekt i SP we wszystkich wpisach zadania; zwraca je od najstarszego. */
+    updateTask: (ref: TaskRef, input: TaskUpdateInput) => R<Array<TimeEntry>>
     /** Działający timer albo null. */
     running: () => R<TimeEntry | null>
     /** Startuje timer; poprzedni działający zatrzymuje się automatycznie. */

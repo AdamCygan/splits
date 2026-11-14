@@ -176,6 +176,19 @@ export const entryInput = z.object({
 
 export const timerInput = z.object({ ...entryFields, startTime: time })
 
+/** Zmiana zadania we wszystkich jego wpisach (tytuł, link, projekt, SP). */
+export const taskUpdateInput = z.object({
+  ref: z.object({
+    taskTypeId: uuid,
+    title: z.string().max(400),
+    link: z.string().max(4096).nullable(),
+  }),
+  title: z.string().max(400),
+  link: z.string().max(4096).nullable(),
+  projectId: uuid.nullable(),
+  storyPoints: z.number().nullable(),
+})
+
 export const taskRefInput = z.object({
   taskTypeId: uuid,
   title: z.string().max(400),

@@ -7,12 +7,13 @@ import {
   ArrowUpDown,
   Download,
   ExternalLink,
+  Pencil,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { Badge, ColorDot, Field, Select } from '#/components/ui/controls'
 import { Input } from '#/components/ui/input'
-import type { Sprint, TimeEntry } from '#/data/types'
+import type { Sprint, TaskRef, TimeEntry } from '#/data/types'
 import { addDays, todayIn } from '#/domain/dates'
 import { elapsedSeconds } from '#/domain/entries'
 import {
@@ -33,6 +34,7 @@ import {
   sprintsQuery,
   taskTypesQuery,
 } from '#/features/settings/queries'
+import { TaskDialog } from '#/features/time-entries/components/task-dialog'
 import { rangeEntriesQuery } from '#/features/time-entries/queries'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate, formatDateRange } from '#/i18n/format'
@@ -78,6 +80,7 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
   const types = useQuery(taskTypesQuery).data ?? []
   const projects = useQuery(projectsQuery).data ?? []
   const today = todayIn(settings?.timezone)
+  const [editing, setEditing] = useState<TaskRef | null>(null)
 
   const started = startedSprints(sprints, today)
   // Sprint z linku (strona Sprinty) może być starszy niż 8 ostatnich: dokładamy go do listy.
@@ -439,7 +442,24 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
                           scope="row"
                           className="max-w-[22rem] py-3 pr-3 pl-5 font-medium sm:pl-6"
                         >
-                          <span className="block">{r.title}</span>
+                          <button
+                            type="button"
+                            aria-label={fmt(t.table.edit, { name: r.title })}
+                            onClick={() =>
+                              setEditing({
+                                title: r.title,
+                                link: r.link,
+                                taskTypeId: r.taskTypeId,
+                              })
+                            }
+                            className="group -mx-1 inline-flex max-w-full items-start gap-1.5 rounded px-1 text-left hover:text-ink hover:underline hover:underline-offset-4"
+                          >
+                            <span>{r.title}</span>
+                            <Pencil
+                              aria-hidden
+                              className="mt-0.5 size-3.5 shrink-0 text-ink-soft opacity-60 group-hover:opacity-100"
+                            />
+                          </button>
                           <span className="mt-1 flex flex-wrap items-center gap-1.5 font-normal">
                             <span className="inline-flex items-center gap-1.5 text-xs text-ink-soft sm:hidden">
                               <ColorDot
@@ -608,6 +628,9 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
             </ul>
           </section>
         </div>
+      )}
+      {editing && (
+        <TaskDialog task={editing} onClose={() => setEditing(null)} />
       )}
     </div>
   )

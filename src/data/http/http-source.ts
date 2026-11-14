@@ -148,6 +148,15 @@ export const httpSource: DataSource = {
         }).toString()}`,
         z.array(s.timeEntrySchema),
       ),
+    updateTask: (ref, input) =>
+      send('PUT', '/time-entries/task', z.array(s.timeEntrySchema), {
+        ref: {
+          taskTypeId: ref.taskTypeId,
+          title: ref.title,
+          link: ref.link,
+        },
+        ...input,
+      }),
     running: () => get('/time-entries/running', s.timeEntrySchema.nullable()),
     start: (input) =>
       send(
