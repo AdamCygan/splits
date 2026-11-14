@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# Splits na Fly.io: jedna aplikacja (strony + API), region Frankfurt, baza na Neonie.
+# Pointhours na Fly.io: jedna aplikacja (strony + API), region Frankfurt, baza na Neonie.
 #
 #   fly apps create <nazwa>                    # tylko za pierwszym razem; tę samą nazwę wpisz w `app` niżej
 #   fly secrets set DATABASE_URL="postgresql://…neon.tech/neondb?sslmode=verify-full" \
@@ -8,7 +8,7 @@
 #
 # Sekrety (hasła, klucze) tylko przez `fly secrets set`, nigdy w tym pliku.
 # ---------------------------------------------------------------------------
-app = 'splits'
+app = 'pointhours'
 primary_region = 'fra'
 
 [build]
@@ -16,12 +16,12 @@ primary_region = 'fra'
 
   [build.args]
     # Publiczne (trafiają do przeglądarki): domena strony i klucz PostHog (phc_…, pusty = bez statystyk).
-    VITE_APP_URL = 'https://splits.app'
+    VITE_APP_URL = 'https://pointhours.com'
     VITE_POSTHOG_KEY = ''
 
 [env]
-  APP_URL = 'https://splits.app'
-  EMAIL_FROM = 'Splits <no-reply@splits.app>'
+  APP_URL = 'https://pointhours.com'
+  EMAIL_FROM = 'Pointhours <no-reply@pointhours.com>'
 
 [http_service]
   internal_port = 3000

@@ -6,7 +6,7 @@ import { panelMessages } from '#/i18n/messages/panel'
 export const Route = createFileRoute('/app/sprints')({
   head: () => ({
     meta: [
-      { title: `${panelMessages[getLocale()].sprints.seoTitle} | Splits` },
+      { title: `${panelMessages[getLocale()].sprints.seoTitle} | Pointhours` },
     ],
   }),
   component: SprintsPage,

@@ -8,15 +8,18 @@ const ready = {
       address: 'ul. Prosta 1, 00-001 Warszawa, Polska',
       ids: 'NIP: 5250000000, REGON: 000000000, CEIDG',
     },
-    email: { support: 'support@splits.dev', privacy: 'privacy@splits.dev' },
+    email: {
+      support: 'support@pointhours.com',
+      privacy: 'privacy@pointhours.com',
+    },
     processors: {
       hosting: 'Fly.io, Inc. (region Frankfurt)',
       database: 'Neon, Inc. (region UE)',
       email: 'Resend, Inc.',
     },
   },
-  supportEmail: 'support@splits.dev',
-  appUrl: 'https://splits.dev',
+  supportEmail: 'support@pointhours.com',
+  appUrl: 'https://pointhours.com',
 }
 
 describe('launchProblems', () => {

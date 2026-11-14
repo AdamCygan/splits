@@ -26,14 +26,14 @@ export async function sendEmail(email: Email) {
 
 const texts = {
   en: {
-    resetSubject: 'Reset your Splits password',
+    resetSubject: 'Reset your Pointhours password',
     reset: (name: string, link: string) =>
-      `Hi ${name},\n\nSomeone (hopefully you) asked to reset the password for your Splits account. Open this link within 60 minutes to choose a new one:\n\n${link}\n\nIf it wasn’t you, ignore this email. Your password stays the same.\n\nSplits`,
+      `Hi ${name},\n\nSomeone (hopefully you) asked to reset the password for your Pointhours account. Open this link within 60 minutes to choose a new one:\n\n${link}\n\nIf it wasn’t you, ignore this email. Your password stays the same.\n\nPointhours`,
   },
   pl: {
-    resetSubject: 'Zmiana hasła w Splits',
+    resetSubject: 'Zmiana hasła w Pointhours',
     reset: (name: string, link: string) =>
-      `Cześć ${name},\n\nKtoś (mamy nadzieję, że Ty) poprosił o zmianę hasła do konta w Splits. Otwórz ten link w ciągu 60 minut i ustaw nowe hasło:\n\n${link}\n\nJeśli to nie Ty, zignoruj tę wiadomość. Hasło się nie zmieni.\n\nSplits`,
+      `Cześć ${name},\n\nKtoś (mamy nadzieję, że Ty) poprosił o zmianę hasła do konta w Pointhours. Otwórz ten link w ciągu 60 minut i ustaw nowe hasło:\n\n${link}\n\nJeśli to nie Ty, zignoruj tę wiadomość. Hasło się nie zmieni.\n\nPointhours`,
   },
 } satisfies Record<Locale, unknown>
 

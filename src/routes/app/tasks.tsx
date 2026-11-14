@@ -5,7 +5,9 @@ import { panelMessages } from '#/i18n/messages/panel'
 
 export const Route = createFileRoute('/app/tasks')({
   head: () => ({
-    meta: [{ title: `${panelMessages[getLocale()].tasks.seoTitle} | Splits` }],
+    meta: [
+      { title: `${panelMessages[getLocale()].tasks.seoTitle} | Pointhours` },
+    ],
   }),
   component: TasksPage,
 })

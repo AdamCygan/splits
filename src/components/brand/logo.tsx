@@ -4,7 +4,7 @@ import { site } from '#/config/site'
 const C = 69.115 // obwód okręgu r=11
 
 /**
- * Znak Splits: stoper, którego tarcza to międzyczasy w kolorach rodzajów pracy.
+ * Znak Pointhours: stoper, którego tarcza to międzyczasy w kolorach rodzajów pracy.
  * Ten sam znak jest w filmie, obrazie OG i ikonach (marketing/brand).
  */
 export function LogoMark({ className }: { className?: string }) {
@@ -80,7 +80,7 @@ export function Logo({ className }: { className?: string }) {
         aria-hidden
         className="font-display text-[1.375rem] leading-none font-[780] tracking-[-0.03em]"
       >
-        splits
+        pointhours
       </span>
     </span>
   )

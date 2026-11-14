@@ -2,10 +2,11 @@ import type { Dictionary } from '../context'
 
 const en = {
   seo: {
-    title: 'Splits: time tracking for developers. Tasks, code reviews, sprints',
+    title:
+      'Pointhours: time tracking for developers. Tasks, code reviews, sprints',
     description:
       'Log time on tasks, code reviews, pair programming and meetings in seconds. See story points and hours for every kind of work at the end of the sprint. Free plan, no credit card.',
-    ogAlt: 'Splits: a workday split into tasks, code reviews and meetings',
+    ogAlt: 'Pointhours: a workday split into tasks, code reviews and meetings',
   },
   nav: {
     video: 'Video',
@@ -15,7 +16,7 @@ const en = {
     faq: 'FAQ',
     login: 'Log in',
     signup: 'Sign up free',
-    home: 'Splits home page',
+    home: 'Pointhours home page',
     footer: 'Footer',
     contact: 'Contact',
   },
@@ -68,10 +69,11 @@ export type CommonMessages = typeof en
 const pl: CommonMessages = {
   seo: {
     title:
-      'Splits: time tracker dla programistów. Zadania, Code Review, sprinty',
+      'Pointhours: time tracker dla programistów. Zadania, Code Review, sprinty',
     description:
       'Notuj czas na zadaniach, Code Review, pair programmingu i spotkaniach w kilka sekund. Na koniec sprintu zobacz story pointy i godziny dla każdego rodzaju pracy. Plan Free bez karty.',
-    ogAlt: 'Splits: dzień pracy podzielony na zadania, Code Review i spotkania',
+    ogAlt:
+      'Pointhours: dzień pracy podzielony na zadania, Code Review i spotkania',
   },
   nav: {
     video: 'Film',
@@ -81,7 +83,7 @@ const pl: CommonMessages = {
     faq: 'FAQ',
     login: 'Zaloguj się',
     signup: 'Załóż konto',
-    home: 'Splits, strona główna',
+    home: 'Pointhours, strona główna',
     footer: 'Stopka',
     contact: 'Kontakt',
   },

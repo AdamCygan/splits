@@ -136,7 +136,7 @@ export async function reportError(
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-sentry-envelope',
-        'X-Sentry-Auth': `Sentry sentry_version=7, sentry_client=splits/1.0, sentry_key=${target.publicKey}`,
+        'X-Sentry-Auth': `Sentry sentry_version=7, sentry_client=pointhours/1.0, sentry_key=${target.publicKey}`,
       },
       body,
       signal: AbortSignal.timeout(3000),

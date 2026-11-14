@@ -3,7 +3,7 @@ import type { Plural } from '../format'
 
 const en = {
   title: 'Settings',
-  lead: 'Set up Splits to match how you and your team work. Changes apply right away.',
+  lead: 'Set up Pointhours to match how you and your team work. Changes apply right away.',
   sectionsLabel: 'Settings sections',
   sections: {
     overview: { title: 'Overview', text: 'Setup checklist' },
@@ -19,7 +19,7 @@ const en = {
     plan: { title: 'Plan', text: 'Free or Pro, billed yearly' },
   },
   overview: {
-    welcome: 'Welcome to Splits',
+    welcome: 'Welcome to Pointhours',
     lead: 'A few minutes of setup and your sprint reports will be accurate from day one. Everything has sensible defaults, so you can skip any step.',
     progress: '{done} of {total} steps done',
     progressLabel: 'Setup progress',
@@ -86,7 +86,7 @@ const en = {
   sprints: {
     scheduleTitle: 'Sprint schedule',
     scheduleLead:
-      'Splits creates sprints from this schedule and puts new entries into the current one.',
+      'Pointhours creates sprints from this schedule and puts new entries into the current one.',
     auto: 'Create sprints automatically',
     autoHint: 'The next sprint appears before the current one ends.',
     length: 'Sprint length',
@@ -302,7 +302,7 @@ const en = {
   },
   projects: {
     title: 'Projects',
-    lead: 'Group tasks by product or client. A project key lets Splits recognize ticket links like PAY-142.',
+    lead: 'Group tasks by product or client. A project key lets Pointhours recognize ticket links like PAY-142.',
     add: 'Add project',
     empty: 'No projects yet.',
     archivedTitle: 'Archived projects ({count})',
@@ -378,7 +378,7 @@ const en = {
   },
   summaries: {
     title: 'Task summaries',
-    lead: 'Write the summary once, the way you report work. Splits fills in the time, sessions and your notes for any task, ready to paste into Jira, Slack or a stand-up.',
+    lead: 'Write the summary once, the way you report work. Pointhours fills in the time, sessions and your notes for any task, ready to paste into Jira, Slack or a stand-up.',
     editorTitle: 'Summary template',
     editorLead: 'Click a field to insert it where your cursor is.',
     label: 'Template',
@@ -419,7 +419,8 @@ const en = {
   },
   account: {
     profileTitle: 'Profile',
-    profileLead: 'How you appear in Splits and where we send account emails.',
+    profileLead:
+      'How you appear in Pointhours and where we send account emails.',
     username: 'Username',
     usernameHint: 'Used to log in. It can’t be changed.',
     displayName: 'Display name',
@@ -491,7 +492,7 @@ export type SettingsMessages = typeof en
 
 const pl: SettingsMessages = {
   title: 'Ustawienia',
-  lead: 'Dopasuj Splits do tego, jak pracujesz Ty i Twój zespół. Zmiany działają od razu.',
+  lead: 'Dopasuj Pointhours do tego, jak pracujesz Ty i Twój zespół. Zmiany działają od razu.',
   sectionsLabel: 'Sekcje ustawień',
   sections: {
     overview: { title: 'Przegląd', text: 'Lista kroków na start' },
@@ -507,7 +508,7 @@ const pl: SettingsMessages = {
     plan: { title: 'Plan', text: 'Free albo Pro, płatne rocznie' },
   },
   overview: {
-    welcome: 'Witaj w Splits',
+    welcome: 'Witaj w Pointhours',
     lead: 'Kilka minut konfiguracji i raporty sprintów będą dokładne od pierwszego dnia. Wszystko ma rozsądne ustawienia domyślne, więc każdy krok możesz pominąć.',
     progress: 'Zrobione {done} z {total} kroków',
     progressLabel: 'Postęp konfiguracji',
@@ -575,7 +576,7 @@ const pl: SettingsMessages = {
   sprints: {
     scheduleTitle: 'Harmonogram sprintów',
     scheduleLead:
-      'Splits tworzy sprinty według tego harmonogramu i dodaje nowe wpisy do bieżącego.',
+      'Pointhours tworzy sprinty według tego harmonogramu i dodaje nowe wpisy do bieżącego.',
     auto: 'Twórz sprinty automatycznie',
     autoHint: 'Kolejny sprint pojawia się przed końcem bieżącego.',
     length: 'Długość sprintu',
@@ -872,7 +873,7 @@ const pl: SettingsMessages = {
   },
   summaries: {
     title: 'Podsumowania zadań',
-    lead: 'Napisz podsumowanie raz, tak jak raportujesz pracę. Splits wstawi czas, sesje i Twoje notatki dla dowolnego zadania, gotowe do wklejenia w Jirę, Slacka albo na daily.',
+    lead: 'Napisz podsumowanie raz, tak jak raportujesz pracę. Pointhours wstawi czas, sesje i Twoje notatki dla dowolnego zadania, gotowe do wklejenia w Jirę, Slacka albo na daily.',
     editorTitle: 'Szablon podsumowania',
     editorLead: 'Kliknij pole, żeby wstawić je w miejscu kursora.',
     label: 'Szablon',
@@ -913,7 +914,7 @@ const pl: SettingsMessages = {
   },
   account: {
     profileTitle: 'Profil',
-    profileLead: 'Jak widzi Cię Splits i dokąd wysyłamy e-maile o koncie.',
+    profileLead: 'Jak widzi Cię Pointhours i dokąd wysyłamy e-maile o koncie.',
     username: 'Login',
     usernameHint: 'Służy do logowania. Nie można go zmienić.',
     displayName: 'Wyświetlana nazwa',

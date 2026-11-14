@@ -1,7 +1,7 @@
 import { cn } from '#/lib/utils'
 
 /**
- * Czas HH:MM:SS. Font Splits ma cyfry proporcjonalne, więc każda cyfra
+ * Czas HH:MM:SS. Font Pointhours ma cyfry proporcjonalne, więc każda cyfra
  * dostaje pole o stałej szerokości: tykający timer nie "skacze".
  */
 export function TickingTime({

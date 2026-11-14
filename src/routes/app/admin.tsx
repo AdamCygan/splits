@@ -13,7 +13,9 @@ export const Route = createFileRoute('/app/admin')({
     if (getCurrentUser()?.role !== 'admin') throw redirect({ to: '/app' })
   },
   head: () => ({
-    meta: [{ title: `${panelMessages[getLocale()].admin.seoTitle} | Splits` }],
+    meta: [
+      { title: `${panelMessages[getLocale()].admin.seoTitle} | Pointhours` },
+    ],
   }),
   component: AdminPage,
 })

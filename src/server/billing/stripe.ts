@@ -14,7 +14,7 @@ export function stripe(): Stripe {
   client = new Stripe(serverEnv.stripe.secretKey, {
     maxNetworkRetries: 2,
     timeout: 20_000,
-    appInfo: { name: 'Splits' },
+    appInfo: { name: 'Pointhours' },
   })
   return client
 }

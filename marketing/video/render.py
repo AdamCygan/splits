@@ -1,9 +1,9 @@
 """
-Renderuje film promocyjny Splits klatka po klatce (deterministycznie) i składa MP4 przez ffmpeg.
+Renderuje film promocyjny Pointhours klatka po klatce (deterministycznie) i składa MP4 przez ffmpeg.
 
     pip install playwright && playwright install chromium     # + ffmpeg w PATH
     python marketing/video/render.py                           # wszystkie formaty, EN i PL
-    python marketing/video/render.py --langs en --formats 9x16 --url splits.app
+    python marketing/video/render.py --langs en --formats 9x16 --url pointhours.com
     python marketing/video/render.py --stills 2,7.6,11.2,15.6,20.8,24.5   # tylko podgląd klatek
 
 Formaty:
@@ -106,7 +106,7 @@ def main() -> None:
     ap.add_argument("--formats", default="16x9,9x16,1x1")
     ap.add_argument("--langs", default="en,pl", help="języki napisów: en, pl")
     ap.add_argument("--fps", type=int, default=30)
-    ap.add_argument("--url", default=None, help="adres na planszy końcowej, np. splits.app")
+    ap.add_argument("--url", default=None, help="adres na planszy końcowej, np. pointhours.com")
     ap.add_argument("--out", default=str(HERE / "out"))
     ap.add_argument("--stills", default=None, help="lista czasów (s) do podglądu, bez renderu wideo")
     args = ap.parse_args()

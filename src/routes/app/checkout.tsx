@@ -16,7 +16,9 @@ export const Route = createFileRoute('/app/checkout')({
   }),
   head: () => ({
     meta: [
-      { title: `${billingMessages[getLocale()].checkout.seoTitle} | Splits` },
+      {
+        title: `${billingMessages[getLocale()].checkout.seoTitle} | Pointhours`,
+      },
     ],
   }),
   component: CheckoutRoute,

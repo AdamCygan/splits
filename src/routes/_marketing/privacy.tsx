@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_marketing/privacy')({
   head: () => {
     const doc = legalDocs.privacy[getLocale()]
     return seo({
-      title: `${doc.title} | Splits`,
+      title: `${doc.title} | Pointhours`,
       description: fillLegal(doc.summary, ''),
       path: '/privacy',
     })

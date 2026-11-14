@@ -1,6 +1,6 @@
 {
-  "name": "Splits: time tracking for developers",
-  "short_name": "Splits",
+  "name": "Pointhours: time tracking for developers",
+  "short_name": "Pointhours",
   "description": "Time on tasks, code reviews and sprints in one place.",
   "lang": "en",
   "start_url": "/app",

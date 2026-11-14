@@ -7,7 +7,7 @@ export const Route = createFileRoute('/app/settings/templates')({
   head: () => ({
     meta: [
       {
-        title: `${settingsMessages[getLocale()].sections.templates.title} | Splits`,
+        title: `${settingsMessages[getLocale()].sections.templates.title} | Pointhours`,
       },
     ],
   }),

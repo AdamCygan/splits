@@ -7,7 +7,7 @@ export const Route = createFileRoute('/app/settings/workday')({
   head: () => ({
     meta: [
       {
-        title: `${settingsMessages[getLocale()].sections.workday.title} | Splits`,
+        title: `${settingsMessages[getLocale()].sections.workday.title} | Pointhours`,
       },
     ],
   }),

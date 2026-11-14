@@ -67,7 +67,7 @@ export const serverEnv = {
   sentryDsn: env.SENTRY_DSN ?? null,
   /** Wersja aplikacji w zgłoszeniach błędów (Fly ustawia FLY_IMAGE_REF przy każdym deployu). */
   release: env.APP_RELEASE ?? env.FLY_IMAGE_REF ?? null,
-  emailFrom: env.EMAIL_FROM ?? 'Splits <no-reply@splits.app>',
+  emailFrom: env.EMAIL_FROM ?? 'Pointhours <no-reply@pointhours.com>',
   /** Limity prób logowania/rejestracji w pamięci; RATE_LIMITS=off tylko w testach. */
   /**
    * Właściciele aplikacji (ADMIN_EMAILS, po przecinku): konto z takim potwierdzonym adresem

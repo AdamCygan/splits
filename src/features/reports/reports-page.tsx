@@ -163,7 +163,7 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `splits-report-${range.from}_${range.to}.csv`
+    a.download = `pointhours-report-${range.from}_${range.to}.csv`
     a.click()
     URL.revokeObjectURL(url)
     toast.success(t.exported)

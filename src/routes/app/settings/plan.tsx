@@ -16,7 +16,7 @@ export const Route = createFileRoute('/app/settings/plan')({
   head: () => ({
     meta: [
       {
-        title: `${settingsMessages[getLocale()].sections.plan.title} | Splits`,
+        title: `${settingsMessages[getLocale()].sections.plan.title} | Pointhours`,
       },
     ],
   }),

@@ -9,7 +9,7 @@ const en = {
   googleUnavailable:
     'Signing in with Google isn’t set up yet. Use your email instead.',
   login: {
-    seoTitle: 'Log in | Splits',
+    seoTitle: 'Log in | Pointhours',
     title: 'Log in',
     noAccount: 'No account yet?',
     createOne: 'Create one for free',
@@ -20,9 +20,9 @@ const en = {
     submitting: 'Logging in…',
   },
   register: {
-    seoTitle: 'Create a free account | Splits',
+    seoTitle: 'Create a free account | Pointhours',
     seoDescription:
-      'Create a free Splits account and start logging time on tasks, code reviews and meetings. No credit card needed.',
+      'Create a free Pointhours account and start logging time on tasks, code reviews and meetings. No credit card needed.',
     title: 'Create your account',
     haveAccount: 'Already have an account?',
     logIn: 'Log in',
@@ -41,7 +41,7 @@ const en = {
     },
   },
   forgot: {
-    seoTitle: 'Reset your password | Splits',
+    seoTitle: 'Reset your password | Pointhours',
     title: 'Reset your password',
     lead: 'Enter the email for your account and we’ll send you a link to set a new password.',
     email: 'Email',
@@ -53,7 +53,7 @@ const en = {
     back: 'Back to log in',
   },
   reset: {
-    seoTitle: 'Choose a new password | Splits',
+    seoTitle: 'Choose a new password | Pointhours',
     title: 'Choose a new password',
     lead: 'Pick a password you don’t use anywhere else.',
     password: 'New password',
@@ -91,7 +91,7 @@ const pl: AuthMessages = {
     'Logowanie przez Google nie jest jeszcze włączone. Użyj e-maila.',
   or: 'albo',
   login: {
-    seoTitle: 'Logowanie | Splits',
+    seoTitle: 'Logowanie | Pointhours',
     title: 'Zaloguj się',
     noAccount: 'Nie masz konta?',
     createOne: 'Załóż je za darmo',
@@ -102,9 +102,9 @@ const pl: AuthMessages = {
     submitting: 'Logowanie…',
   },
   register: {
-    seoTitle: 'Załóż darmowe konto | Splits',
+    seoTitle: 'Załóż darmowe konto | Pointhours',
     seoDescription:
-      'Załóż darmowe konto Splits i zacznij notować czas pracy na zadaniach, Code Review i spotkaniach. Bez karty.',
+      'Załóż darmowe konto Pointhours i zacznij notować czas pracy na zadaniach, Code Review i spotkaniach. Bez karty.',
     title: 'Załóż konto',
     haveAccount: 'Masz już konto?',
     logIn: 'Zaloguj się',
@@ -123,7 +123,7 @@ const pl: AuthMessages = {
     },
   },
   forgot: {
-    seoTitle: 'Reset hasła | Splits',
+    seoTitle: 'Reset hasła | Pointhours',
     title: 'Reset hasła',
     lead: 'Podaj e-mail konta, a wyślemy link do ustawienia nowego hasła.',
     email: 'E-mail',
@@ -135,7 +135,7 @@ const pl: AuthMessages = {
     back: 'Wróć do logowania',
   },
   reset: {
-    seoTitle: 'Nowe hasło | Splits',
+    seoTitle: 'Nowe hasło | Pointhours',
     title: 'Ustaw nowe hasło',
     lead: 'Wybierz hasło, którego nie używasz nigdzie indziej.',
     password: 'Nowe hasło',

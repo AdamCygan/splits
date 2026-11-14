@@ -16,8 +16,8 @@ export const REFRESH_COOKIE_PATH = '/api/v1/auth'
 export const REFRESH_REUSE_GRACE_MS = 30_000
 
 const secret = new TextEncoder().encode(serverEnv.jwtSecret)
-const ISSUER = 'splits'
-const AUDIENCE = 'splits-web'
+const ISSUER = 'pointhours'
+const AUDIENCE = 'pointhours-web'
 
 export async function signAccessToken(userId: string) {
   const expiresAt = new Date(Date.now() + ACCESS_TOKEN_MINUTES * 60_000)

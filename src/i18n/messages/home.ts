@@ -5,14 +5,14 @@ const en = {
   nav: { demo: 'Live demo', start: 'Start free' },
   hero: {
     title: 'See where your sprint really went.',
-    lead: 'Splits is a time tracker for developers. Log tasks, code reviews, pairing and meetings in seconds, then see the hours and story points behind every sprint.',
+    lead: 'Pointhours is a time tracker for developers. Log tasks, code reviews, pairing and meetings in seconds, then see the hours and story points behind every sprint.',
     primary: 'Start free',
     demo: 'Try the live demo',
     note: 'Free forever, no card needed. The demo opens without signing up.',
   },
   split: {
     label:
-      'One sprint, 80 hours. A regular tracker shows a single block called Development. Splits shows 38 hours of tasks, 17 of code review, 11 of pairing, 9 of meetings and 5 of extra work, which is 2.4 hours per story point.',
+      'One sprint, 80 hours. A regular tracker shows a single block called Development. Pointhours shows 38 hours of tasks, 17 of code review, 11 of pairing, 9 of meetings and 5 of extra work, which is 2.4 hours per story point.',
     sprint: 'Sprint 14',
     total: '80 h, 34 story points',
     before: 'Development, 80 h',
@@ -27,7 +27,7 @@ const en = {
     ],
   },
   how: {
-    title: 'Three things Splits does for you',
+    title: 'Three things Pointhours does for you',
     steps: [
       {
         title: 'Log work in seconds',
@@ -40,7 +40,7 @@ const en = {
       },
       {
         title: 'Get interrupted without losing the thread',
-        text: 'Production is down in the middle of a ticket. Pause, fix it, come back. Splits keeps both stretches of the task and the hotfix between them.',
+        text: 'Production is down in the middle of a ticket. Pause, fix it, come back. Pointhours keeps both stretches of the task and the hotfix between them.',
         points: [
           'Pause and resume from any page',
           'Every interval saved with its start and end',
@@ -107,14 +107,14 @@ const pl: HomeMessages = {
   nav: { demo: 'Demo na żywo', start: 'Zacznij za darmo' },
   hero: {
     title: 'Zobacz, gdzie naprawdę poszedł sprint.',
-    lead: 'Splits to tracker czasu dla programistów. Wpisuj taski, code review, pairing i spotkania w kilka sekund, a potem zobacz godziny i story pointy każdego sprintu.',
+    lead: 'Pointhours to tracker czasu dla programistów. Wpisuj taski, code review, pairing i spotkania w kilka sekund, a potem zobacz godziny i story pointy każdego sprintu.',
     primary: 'Zacznij za darmo',
     demo: 'Wypróbuj demo',
     note: 'Za darmo na zawsze, bez karty. Demo otwiera się bez rejestracji.',
   },
   split: {
     label:
-      'Jeden sprint, 80 godzin. Zwykły tracker pokazuje jeden blok „Programowanie”. Splits pokazuje 38 godzin tasków, 17 code review, 11 pair programmingu, 9 spotkań i 5 pracy extra, czyli 2,4 godziny na story point.',
+      'Jeden sprint, 80 godzin. Zwykły tracker pokazuje jeden blok „Programowanie”. Pointhours pokazuje 38 godzin tasków, 17 code review, 11 pair programmingu, 9 spotkań i 5 pracy extra, czyli 2,4 godziny na story point.',
     sprint: 'Sprint 14',
     total: '80 h, 34 story pointy',
     before: 'Programowanie, 80 h',
@@ -129,7 +129,7 @@ const pl: HomeMessages = {
     ],
   },
   how: {
-    title: 'Trzy rzeczy, które Splits robi za Ciebie',
+    title: 'Trzy rzeczy, które Pointhours robi za Ciebie',
     steps: [
       {
         title: 'Wpis w kilka sekund',
@@ -142,7 +142,7 @@ const pl: HomeMessages = {
       },
       {
         title: 'Przerwane zadanie niczego nie gubi',
-        text: 'Produkcja leży w środku ticketu. Pauza, hotfix, powrót. Splits zapisuje oba odcinki zadania i hotfix pomiędzy nimi.',
+        text: 'Produkcja leży w środku ticketu. Pauza, hotfix, powrót. Pointhours zapisuje oba odcinki zadania i hotfix pomiędzy nimi.',
         points: [
           'Pauza i wznowienie z każdej strony',
           'Każdy interwał zapisany z godziną startu i końca',

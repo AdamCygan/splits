@@ -98,7 +98,7 @@ export const accountRoutes = new Hono<AppEnv>()
     ])
     c.header(
       'Content-Disposition',
-      `attachment; filename="splits-export-${new Date().toISOString().slice(0, 10)}.json"`,
+      `attachment; filename="pointhours-export-${new Date().toISOString().slice(0, 10)}.json"`,
     )
     return c.json({
       format: 'splits-export',

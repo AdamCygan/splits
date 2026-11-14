@@ -73,7 +73,7 @@ function ExportData() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `splits-export-${new Date().toISOString().slice(0, 10)}.json`
+      a.download = `pointhours-export-${new Date().toISOString().slice(0, 10)}.json`
       a.click()
       URL.revokeObjectURL(url)
     },

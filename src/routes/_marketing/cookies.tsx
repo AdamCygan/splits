@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_marketing/cookies')({
   head: () => {
     const doc = legalDocs.cookies[getLocale()]
     return seo({
-      title: `${doc.title} | Splits`,
+      title: `${doc.title} | Pointhours`,
       description: fillLegal(doc.summary, ''),
       path: '/cookies',
     })

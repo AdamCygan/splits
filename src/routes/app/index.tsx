@@ -13,7 +13,7 @@ export const Route = createFileRoute('/app/')({
       ? { date: search.date }
       : {},
   head: () => ({
-    meta: [{ title: `${entriesMessages[getLocale()].pageTitle} | Splits` }],
+    meta: [{ title: `${entriesMessages[getLocale()].pageTitle} | Pointhours` }],
   }),
   component: TodayRoute,
 })
