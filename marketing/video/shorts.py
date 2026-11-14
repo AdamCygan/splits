@@ -1,12 +1,13 @@
 """
-Renderuje trzy pionowe shorty Pointhours (1080x1920, 30 kl./s) w dwóch językach.
+Renderuje pionowe shorty Pointhours (1080x1920, 30 kl./s) w dwóch językach.
 
     python marketing/video/shorts.py                                # 6 plików: out/short-{historia}-{en,pl}.mp4
     python marketing/video/shorts.py --stories pause --langs pl     # wybrane
     python marketing/video/shorts.py --url pointhours.com               # adres zamiast „Link w bio”
     python marketing/video/shorts.py --stills 1.5,5,10,14,19        # tylko klatki kontrolne (PNG)
 
-Historie: sprint, pause, invoice, review, pairing, meetings, extra, estimate, forgot, templates, summary
+Historie: sprint, pause, invoice, review, pairing, meetings, extra, estimate, forgot, templates, summary,
+overrun, estvsreal, pastday, anyproject, overtime, taskedit, yearreview, jiralink, switching, demo
 (opis każdej w nagłówku shorts.html i w marketing/README.md).
 Wymagania jak dla render.py: playwright z chromium i ffmpeg.
 """
@@ -43,7 +44,7 @@ def open_page(browser, story: str, lang: str, url: str | None):
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stories", default="sprint,pause,invoice,review,pairing,meetings,extra,estimate,forgot,templates,summary")
+    ap.add_argument("--stories", default="sprint,pause,invoice,review,pairing,meetings,extra,estimate,forgot,templates,summary,overrun,estvsreal,pastday,anyproject,overtime,taskedit,yearreview,jiralink,switching,demo")
     ap.add_argument("--langs", default="en,pl")
     ap.add_argument("--fps", type=int, default=30)
     ap.add_argument("--url", default=None)

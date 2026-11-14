@@ -10,6 +10,8 @@
     ?story=invoice  koniec miesiąca na B2B (raport godzin do faktury)
     ?story=review | pairing | meetings | extra | estimate | forgot | templates | summary
                     8 kolejnych historii we wspólnym schemacie (funkcja generic)
+    ?story=overrun | estvsreal | pastday | anyproject | overtime | taskedit | yearreview | jiralink | switching | demo
+                    10 historii o nowszych funkcjach (ten sam schemat)
   Język: ?lang=en (domyślnie) albo ?lang=pl. Adres na planszy końcowej: ?url=pointhours.com
   (bez niego: „Link w bio”). Podgląd w przeglądarce: dodaj &play.
   Animacja jest deterministyczna: window.render(t) ustawia klatkę dla czasu t (s), shorts.py zapisuje MP4.
@@ -104,7 +106,8 @@
 (() => {
   const params = new URLSearchParams(location.search);
   const LANG = params.get('lang') === 'pl' ? 'pl' : 'en';
-  const STORIES = ['sprint', 'pause', 'invoice', 'review', 'pairing', 'meetings', 'extra', 'estimate', 'forgot', 'templates', 'summary'];
+  const STORIES = ['sprint', 'pause', 'invoice', 'review', 'pairing', 'meetings', 'extra', 'estimate', 'forgot', 'templates', 'summary',
+    'overrun', 'estvsreal', 'pastday', 'anyproject', 'overtime', 'taskedit', 'yearreview', 'jiralink', 'switching', 'demo'];
   const STORY = STORIES.includes(params.get('story')) ? params.get('story') : 'sprint';
   const URL_TEXT = params.get('url');
 
@@ -289,6 +292,101 @@
         copy: 'Copy', copied: 'Copied to clipboard',
         outro: 'Paste it into Jira. Done.', punch: 'Task summaries in one click.',
       },
+      overrun: {
+        kicker: 'Sprint planning · 10:00', hook1: 'Booked for 1 hour.', hook2: 'Ended at 11:40.',
+        booked: ['Sprint planning', '10:00–11:00'], lost: '11:00–11:40 · not in any report',
+        p1: 'The extra 40 minutes vanish…', p2: '…and your day doesn’t add up.',
+        caption: 'Tap “Ran over”.', head: 'Sprint planning ran over', meta: 'planned 1 h',
+        amounts: ['+15m', '+30m', '+40m', '+1h'], reasonLabel: 'Why did it run over?', reason: 'Refund epic was unclear, we split it into 3 tickets.',
+        save: 'Save', saved: 'Ran over by 40 min',
+        stat: '3 h 10 min', statLabel: 'of meetings over plan this sprint',
+        outro: 'Bring the reason to the retro.', punch: 'Meetings that ran over, on the record.',
+      },
+      estvsreal: {
+        kicker: 'Refinement', hook1: '“How long will it take?”', hook2: '“4 hours, tops.”',
+        estimate: 'Your estimate', estValue: '4 h', real: 'Real time', realValue: '?',
+        p1: 'Two days later you have no idea…', p2: '…if 4 hours was true.',
+        caption: 'Estimate. Then compare.', head: 'Estimate vs. real time', meta: 'Sprint 15',
+        rows: [['PAY-151 Invoice PDF · est. 4 h', '6 h 30 min'], ['PAY-142 Payment gateway · est. 5 h', '5 h 55 min'], ['PAY-139 Refund API · est. 6 h', '5 h 35 min'], ['3 tasks · est. 15 h', '18 h']],
+        stat: '+20%', statLabel: 'over your estimates. Now you know.',
+        outro: 'Next refinement, add 20%.', punch: 'Your estimates, checked against reality.',
+      },
+      pastday: {
+        kicker: 'Monday, 9:05', hook1: 'Friday?', hook2: 'Not a single minute logged.',
+        week: [['Mon', '7 h 40 min'], ['Tue', '8 h 05 min'], ['Wed', '7 h 30 min'], ['Thu', '8 h']], empty: 'Fri · 0 min',
+        p1: 'You try to remember Friday…', p2: '…and the timesheet stays empty.',
+        caption: 'Go back a day. Add it.', head: 'Friday, Nov 13', meta: '‹ day picker ›',
+        rows: [['PAY-160 Invoice export', '3 h 30 min'], ['CR !512 Refund emails', '1 h'], ['Sprint review', '1 h 30 min'], ['Pairing with Kate', '1 h 30 min'], ['Friday total', '7 h 30 min']],
+        stat: '7 h 30 min', statLabel: 'of Friday back on the record',
+        outro: 'Forgot a day? It takes a minute.', punch: 'Forgot to log? Go back and add it.',
+      },
+      anyproject: {
+        kicker: 'Code review', hook1: '5 repos.', hook2: '5 identical templates?',
+        repos: ['web', 'api', 'mobile', 'payments', 'admin'], tpl: 'Code review',
+        p1: 'One template per repo…', p2: '…and the toolbar is full.',
+        caption: 'One template. Any project.', head: 'Code review: which project?', meta: 'any project',
+        projects: [['Web app', 'WEB'], ['API', 'API'], ['Mobile', 'MOB'], ['Payments', 'PAY'], ['Admin', 'ADM']],
+        toast: 'Logged “Code review”, 25 min · Payments',
+        stat: '1 template', statLabel: 'for every repo you have',
+        outro: 'New repo? It’s on the list already.', punch: 'One code review template for all repos.',
+      },
+      overtime: {
+        kicker: 'Thursday, 19:30', hook1: 'Production is down.', hook2: 'You fix it after hours.',
+        alertFrom: 'On-call · #incidents', alert: 'Checkout returns 500', hotfix: ['Hotfix: checkout 500', '19:30–21:00'],
+        p1: 'Next month nobody remembers…', p2: '…that evening ever happened.',
+        caption: 'Mark it as overtime.', head: 'Overtime', meta: 'November',
+        rows: [['Hotfix: checkout 500 · cache rollback', '1 h 30 min'], ['Release support · v2.14', '2 h'], ['On-call: database failover', '2 h 30 min'], ['Overtime, each with a reason', '6 h']],
+        stat: '6 h', statLabel: 'after hours, with what you did',
+        outro: 'Show it when you talk about pay.', punch: 'Overtime with proof.',
+      },
+      taskedit: {
+        kicker: 'Ticket renamed', hook1: 'PAY-151 is now PAY-160.', hook2: '4 entries to fix by hand?',
+        sessions: [['Mon · PAY-151 Invoice PDF', '2 h'], ['Tue · PAY-151 Invoice PDF', '3 h'], ['Wed · PAY-151 Invoice PDF', '1 h 30 min'], ['Thu · PAY-151 Invoice PDF', '45 min']],
+        p1: 'You fix one entry…', p2: '…and the task splits in two.',
+        caption: 'Edit the task once.', head: 'Edit task', meta: '4 sessions · 7 h 15 min',
+        fields: [['Title', 'PAY-160 Invoice PDF export'], ['Link', 'jira.acme.com/browse/PAY-160']], estimate: ['Estimate', '6 h'], sp: ['Story points', '5 SP'],
+        save: 'Save task', saved: 'Updated in all 4 sessions',
+        stat: '1 save', statLabel: 'all 4 sessions updated',
+        outro: 'Straight from the report.', punch: 'One task, edited in one place.',
+      },
+      yearreview: {
+        kicker: 'Annual review', hook1: '“What did you deliver this year?”', hook2: '“Uh… a lot?”',
+        doc: 'Self-assessment', bullets: ['• worked on payments', '• did code reviews', '• helped the team'],
+        p1: 'A year of work…', p2: '…squeezed into three vague bullets.',
+        caption: 'Bring the year in numbers.', head: 'Last 12 months', meta: 'report',
+        rows: [['Tasks · 214', '1 020 h'], ['Code review · 380 MRs', '310 h'], ['Pairing', '120 h'], ['Meetings', '260 h'], ['Story points delivered', '412 SP']],
+        stat: '2.5 h', statLabel: 'per story point, steady all year',
+        outro: 'Walk into the review with facts.', punch: 'Your year, in numbers.',
+      },
+      jiralink: {
+        kicker: 'Logging work', hook1: 'Copy the ticket key.', hook2: 'Paste. Type. Repeat.',
+        steps: [['1. Open Jira', 'PAY-142'], ['2. Copy the key', 'Ctrl+C'], ['3. Paste in the timesheet', 'PAY-14?'], ['4. Type the title', 'Payment gatew…']],
+        p1: '20 times a week…', p2: '…and half of them with typos.',
+        caption: 'Paste the link. That’s it.', head: 'New entry', meta: 'Code review',
+        link: ['Merge request link', 'gitlab.com/acme/shop/-/merge_requests/486'], detected: 'Detected !486', title: ['Title', 'CR !486 Webhook retries'],
+        save: 'Save', saved: 'Saved · 30 min on !486',
+        stat: '0', statLabel: 'ticket keys typed by hand',
+        outro: 'Jira, GitLab, GitHub, Linear.', punch: 'Paste a link, get the ticket.',
+      },
+      switching: {
+        kicker: 'Before lunch', hook1: '7 tasks.', hook2: '0 finished.',
+        timeline: [['9:00', 'PAY-142 Payment gateway'], ['9:20', 'Slack: “quick prod question”'], ['9:35', 'CR !486 Webhook retries'], ['9:50', 'PAY-142 again'], ['10:10', 'Standup'], ['10:25', 'Hotfix: login loop'], ['11:00', 'PAY-142, finally']],
+        p1: 'Busy all morning…', p2: '…and nothing to show for it.',
+        caption: 'See every switch.', head: 'PAY-142 Payment gateway', meta: 'today',
+        rows: [['9:00–9:20', '20 min'], ['9:50–10:10', '20 min'], ['11:00–12:30', '1 h 30 min'], ['3 sessions · 4 interruptions', '2 h 10 min']],
+        stat: '4', statLabel: 'interruptions on one task before lunch',
+        outro: 'Show it before the next “quick question”.', punch: 'See what interruptions cost.',
+      },
+      demo: {
+        kicker: 'Trying a new tool', hook1: 'Sign up. Confirm email.', hook2: 'Just to look around?',
+        form: [['Work email', '…'], ['Password', '••••••••'], ['Company size', '▾'], ['Credit card', '•••• •••• ••••']],
+        p1: 'Five screens before you see anything…', p2: '…so you close the tab.',
+        caption: 'Open the demo. No signup.', head: 'Live demo', meta: 'ready in 1 s',
+        rows: [['Sprint 14 · 80 h · 34 SP', 'sample'], ['Today · 5 entries · 1 timer', 'sample'], ['Reports · estimate vs. real', 'sample']],
+        open: 'Try the live demo', opened: 'Demo open · no account needed',
+        stat: '0', statLabel: 'forms to fill in',
+        outro: 'Like it? Then create an account.', punch: 'Try it before you sign up.',
+      },
     },
     pl: {
       review: {
@@ -365,6 +463,101 @@
         lines: ['Razem: 7 h 10 min · 5 SP', 'Sesje: 4 w ciągu 3 dni', 'Task 5 h 20 min · Code review 1 h 10 min · Pairing 40 min', 'Interwały: 6:40–7:20, 9:00–10:00, …'],
         copy: 'Kopiuj', copied: 'Skopiowano do schowka',
         outro: 'Wklej do Jiry. Gotowe.', punch: 'Podsumowanie zadania jednym kliknięciem.',
+      },
+      overrun: {
+        kicker: 'Planowanie sprintu · 10:00', hook1: 'Zaplanowane na godzinę.', hook2: 'Skończyło się o 11:40.',
+        booked: ['Planowanie sprintu', '10:00–11:00'], lost: '11:00–11:40 · nie ma tego w raporcie',
+        p1: 'Dodatkowe 40 minut znika…', p2: '…a dzień się nie sumuje.',
+        caption: 'Kliknij „Przedłużyło się”.', head: 'Planowanie: przedłużenie', meta: 'plan 1 h',
+        amounts: ['+15m', '+30m', '+40m', '+1h'], reasonLabel: 'Dlaczego się przedłużyło?', reason: 'Epik zwrotów był niejasny, podzieliliśmy go na 3 tickety.',
+        save: 'Zapisz', saved: 'Przedłużone o 40 min',
+        stat: '3 h 10 min', statLabel: 'spotkań ponad plan w tym sprincie',
+        outro: 'Powód weź na retro.', punch: 'Przedłużone spotkania czarno na białym.',
+      },
+      estvsreal: {
+        kicker: 'Refinement', hook1: '„Ile to zajmie?”', hook2: '„Max 4 godziny.”',
+        estimate: 'Twoja estymata', estValue: '4 h', real: 'Prawdziwy czas', realValue: '?',
+        p1: 'Dwa dni później nie wiesz…', p2: '…czy te 4 godziny były prawdą.',
+        caption: 'Estymuj. Potem porównaj.', head: 'Estymata a prawdziwy czas', meta: 'Sprint 15',
+        rows: [['PAY-151 Faktura PDF · est. 4 h', '6 h 30 min'], ['PAY-142 Bramka płatności · est. 5 h', '5 h 55 min'], ['PAY-139 API zwrotów · est. 6 h', '5 h 35 min'], ['3 zadania · est. 15 h', '18 h']],
+        stat: '+20%', statLabel: 'ponad Twoje estymaty. Teraz to wiesz.',
+        outro: 'Na kolejnym refinemencie dodaj 20%.', punch: 'Twoje estymaty sprawdzone w praktyce.',
+      },
+      pastday: {
+        kicker: 'Poniedziałek, 9:05', hook1: 'Piątek?', hook2: 'Ani minuty wpisanej.',
+        week: [['Pn', '7 h 40 min'], ['Wt', '8 h 05 min'], ['Śr', '7 h 30 min'], ['Cz', '8 h']], empty: 'Pt · 0 min',
+        p1: 'Próbujesz przypomnieć sobie piątek…', p2: '…a timesheet zostaje pusty.',
+        caption: 'Cofnij się o dzień. Dopisz.', head: 'Piątek, 13 listopada', meta: '‹ wybór dnia ›',
+        rows: [['PAY-160 Eksport faktur', '3 h 30 min'], ['CR !512 Maile o zwrotach', '1 h'], ['Review sprintu', '1 h 30 min'], ['Pairing z Kasią', '1 h 30 min'], ['Piątek razem', '7 h 30 min']],
+        stat: '7 h 30 min', statLabel: 'z piątku z powrotem w raporcie',
+        outro: 'Zapomniany dzień? Minuta roboty.', punch: 'Zapomniałeś wpisać? Wróć i dopisz.',
+      },
+      anyproject: {
+        kicker: 'Code review', hook1: '5 repozytoriów.', hook2: '5 takich samych szablonów?',
+        repos: ['web', 'api', 'mobile', 'payments', 'admin'], tpl: 'Code review',
+        p1: 'Szablon na każde repo…', p2: '…i pasek pełny przycisków.',
+        caption: 'Jeden szablon. Dowolny projekt.', head: 'Code review: który projekt?', meta: 'dowolny projekt',
+        projects: [['Aplikacja web', 'WEB'], ['API', 'API'], ['Mobile', 'MOB'], ['Płatności', 'PAY'], ['Admin', 'ADM']],
+        toast: 'Zapisano „Code review”, 25 min · Płatności',
+        stat: '1 szablon', statLabel: 'na wszystkie Twoje repozytoria',
+        outro: 'Nowe repo? Już jest na liście.', punch: 'Jeden szablon code review na wszystkie repo.',
+      },
+      overtime: {
+        kicker: 'Czwartek, 19:30', hook1: 'Produkcja leży.', hook2: 'Naprawiasz po godzinach.',
+        alertFrom: 'Dyżur · #incydenty', alert: 'Checkout zwraca 500', hotfix: ['Hotfix: checkout 500', '19:30–21:00'],
+        p1: 'Za miesiąc nikt nie pamięta…', p2: '…że ten wieczór w ogóle był.',
+        caption: 'Oznacz to jako nadgodziny.', head: 'Nadgodziny', meta: 'listopad',
+        rows: [['Hotfix: checkout 500 · cofnięcie cache', '1 h 30 min'], ['Wsparcie wydania · v2.14', '2 h'], ['Dyżur: przełączenie bazy', '2 h 30 min'], ['Nadgodziny, każda z opisem', '6 h']],
+        stat: '6 h', statLabel: 'po godzinach, z opisem, co robiłeś',
+        outro: 'Pokaż to przy rozmowie o stawce.', punch: 'Nadgodziny z dowodem.',
+      },
+      taskedit: {
+        kicker: 'Ticket zmienił nazwę', hook1: 'PAY-151 to teraz PAY-160.', hook2: '4 wpisy do poprawienia ręcznie?',
+        sessions: [['Pn · PAY-151 Faktura PDF', '2 h'], ['Wt · PAY-151 Faktura PDF', '3 h'], ['Śr · PAY-151 Faktura PDF', '1 h 30 min'], ['Cz · PAY-151 Faktura PDF', '45 min']],
+        p1: 'Poprawiasz jeden wpis…', p2: '…i zadanie rozpada się na dwa.',
+        caption: 'Edytuj zadanie raz.', head: 'Edytuj zadanie', meta: '4 sesje · 7 h 15 min',
+        fields: [['Tytuł', 'PAY-160 Eksport faktury PDF'], ['Link', 'jira.firma.pl/browse/PAY-160']], estimate: ['Estymata', '6 h'], sp: ['Story pointy', '5 SP'],
+        save: 'Zapisz zadanie', saved: 'Zmienione we wszystkich 4 sesjach',
+        stat: '1 zapis', statLabel: 'wszystkie 4 sesje poprawione',
+        outro: 'Prosto z raportu.', punch: 'Jedno zadanie, poprawione w jednym miejscu.',
+      },
+      yearreview: {
+        kicker: 'Ocena roczna', hook1: '„Co dowiozłeś w tym roku?”', hook2: '„Eee… dużo?”',
+        doc: 'Samoocena', bullets: ['• robiłem płatności', '• robiłem code review', '• pomagałem zespołowi'],
+        p1: 'Rok pracy…', p2: '…ściśnięty w trzy ogólniki.',
+        caption: 'Przynieś rok w liczbach.', head: 'Ostatnie 12 miesięcy', meta: 'raport',
+        rows: [['Taski · 214', '1 020 h'], ['Code review · 380 MR', '310 h'], ['Pair programming', '120 h'], ['Spotkania', '260 h'], ['Dowiezione story pointy', '412 SP']],
+        stat: '2,5 h', statLabel: 'na story point, równo przez cały rok',
+        outro: 'Idź na ocenę z faktami.', punch: 'Twój rok w liczbach.',
+      },
+      jiralink: {
+        kicker: 'Wpisywanie czasu', hook1: 'Skopiuj klucz ticketu.', hook2: 'Wklej. Przepisz. Powtórz.',
+        steps: [['1. Otwórz Jirę', 'PAY-142'], ['2. Skopiuj klucz', 'Ctrl+C'], ['3. Wklej w timesheet', 'PAY-14?'], ['4. Przepisz tytuł', 'Bramka płatn…']],
+        p1: '20 razy w tygodniu…', p2: '…i w połowie z literówką.',
+        caption: 'Wklej link. Tyle.', head: 'Nowy wpis', meta: 'Code review',
+        link: ['Link do merge requesta', 'gitlab.com/acme/shop/-/merge_requests/486'], detected: 'Rozpoznano !486', title: ['Tytuł', 'CR !486 Retry webhooków'],
+        save: 'Zapisz', saved: 'Zapisane · 30 min na !486',
+        stat: '0', statLabel: 'kluczy ticketów przepisanych ręcznie',
+        outro: 'Jira, GitLab, GitHub, Linear.', punch: 'Wklejasz link, masz ticket.',
+      },
+      switching: {
+        kicker: 'Przed obiadem', hook1: '7 zadań.', hook2: '0 skończonych.',
+        timeline: [['9:00', 'PAY-142 Bramka płatności'], ['9:20', 'Slack: „szybkie pytanie o proda”'], ['9:35', 'CR !486 Retry webhooków'], ['9:50', 'Znowu PAY-142'], ['10:10', 'Daily'], ['10:25', 'Hotfix: pętla logowania'], ['11:00', 'PAY-142, w końcu']],
+        p1: 'Całe przedpołudnie zajęte…', p2: '…i nic do pokazania.',
+        caption: 'Zobacz każde przełączenie.', head: 'PAY-142 Bramka płatności', meta: 'dziś',
+        rows: [['9:00–9:20', '20 min'], ['9:50–10:10', '20 min'], ['11:00–12:30', '1 h 30 min'], ['3 sesje · 4 przerwania', '2 h 10 min']],
+        stat: '4', statLabel: 'przerwania jednego zadania przed obiadem',
+        outro: 'Pokaż to przed kolejnym „szybkim pytaniem”.', punch: 'Zobacz, ile kosztują przerwania.',
+      },
+      demo: {
+        kicker: 'Testujesz nowe narzędzie', hook1: 'Rejestracja. Potwierdź maila.', hook2: 'Żeby się tylko rozejrzeć?',
+        form: [['Mail firmowy', '…'], ['Hasło', '••••••••'], ['Wielkość firmy', '▾'], ['Karta płatnicza', '•••• •••• ••••']],
+        p1: 'Pięć ekranów, zanim cokolwiek zobaczysz…', p2: '…więc zamykasz kartę.',
+        caption: 'Otwórz demo. Bez rejestracji.', head: 'Demo na żywo', meta: 'gotowe w 1 s',
+        rows: [['Sprint 14 · 80 h · 34 SP', 'przykład'], ['Dziś · 5 wpisów · 1 timer', 'przykład'], ['Raporty · estymata a czas', 'przykład']],
+        open: 'Wypróbuj demo', opened: 'Demo otwarte · bez konta',
+        stat: '0', statLabel: 'formularzy do wypełnienia',
+        outro: 'Podoba się? Wtedy załóż konto.', punch: 'Sprawdź, zanim się zarejestrujesz.',
       },
     },
   };
@@ -723,6 +916,63 @@
         + S.notes.map((n, i) => `<div class="pv" style="align-self:flex-start;background:#ffe58a;color:#3b2f00;border-radius:12px;padding:16px 24px;font-size:32px;font-family:'Comic Sans MS',cursive;rotate:${[-3, 2, -1][i]}deg;margin-left:${[0, 120, 40][i]}px">${n}</div>`).join(''),
       solution: solCard(S.head, S.meta, `<div style="display:flex;flex-direction:column;gap:12px;border-left:6px solid var(--task);padding:6px 0 6px 22px;margin:8px 0 22px">${S.lines.map(l => `<div class="rv" style="font-size:31px;line-height:1.3">${l.replace(/(\d) (h|min|SP)/g, '$1\u00a0$2')}</div>`).join('')}</div>
           <div class="rv" style="display:flex;justify-content:space-between;align-items:center;gap:16px"><span class="chip after" style="font-size:26px;padding:10px 22px 10px 12px"><i style="background:var(--pair)">✓</i>${S.copied}</span><span class="btn" id="click" style="background:var(--ink);color:#fff">⧉ ${S.copy}</span></div>`),
+      click: true,
+    }),
+    overrun: S => ({
+      problem: whiteRow(S.booked[0], S.booked[1]) + `<div class="pv" style="height:110px;border-radius:22px;border:3px dashed #ff7aa8;display:grid;place-items:center;font-size:32px;font-weight:800;color:#ff7aa8">${S.lost}</div>`,
+      solution: solCard(S.head, S.meta, `<div style="display:flex;flex-direction:column;gap:20px">
+          <div class="rv" style="display:flex;gap:12px">${S.amounts.map((a, i) => `<span class="btn" style="padding:12px 22px;${i === 2 ? 'background:var(--ink);color:#fff' : 'border:2px solid var(--line);color:var(--text)'}">${a}</span>`).join('')}</div>
+          <div class="rv"><div style="font-size:24px;font-weight:650;margin-bottom:8px">${S.reasonLabel}</div><div style="border:2px solid #cfd3e1;border-radius:14px;padding:14px 18px;font-size:30px;line-height:1.3">${S.reason}</div></div>
+          <div class="rv" style="display:flex;justify-content:space-between;align-items:center;gap:16px"><span class="chip after" style="font-size:26px;padding:10px 22px 10px 12px"><i style="background:var(--meeting)">+</i>${S.saved}</span><span class="btn" id="click" style="background:var(--ink);color:#fff">${S.save}</span></div></div>`),
+      click: true,
+    }),
+    estvsreal: S => ({
+      problem: `<div class="pv" style="display:grid;grid-template-columns:1fr 1fr;gap:18px">${[[S.estimate, S.estValue, '#fff'], [S.real, S.realValue, '#ff7aa8']].map(([l, v, c]) => `<div class="dark-card" style="padding:30px 34px"><div style="font-size:28px;color:var(--on-ink-soft)">${l}</div><div class="display" style="font-size:130px;margin-top:6px;color:${c}">${v}</div></div>`).join('')}</div>`,
+      solution: solCard(S.head, S.meta, S.rows.map((r, i) => solRow(C.task, r[0], i === 0 ? `<span style="color:var(--alert)">${r[1]}</span>` : r[1], i === S.rows.length - 1 ? 'rv hlrow' : 'rv')).join('')),
+    }),
+    pastday: S => ({
+      problem: S.week.map(([d, h]) => whiteRow(d, h, 'padding:18px 28px')).join('') + `<div class="pv" style="border-radius:22px;padding:18px 28px;border:3px dashed #ff7aa8;font-size:32px;font-weight:800;color:#ff7aa8">${S.empty}</div>`,
+      solution: solCard(S.head, S.meta, rowsOf(S.rows, [C.task, C.review, C.meeting, C.pair])),
+    }),
+    anyproject: S => ({
+      problem: `<div class="pv" style="display:flex;flex-wrap:wrap;gap:14px">${S.repos.map(r => `<span class="chip" style="font-size:28px"><i style="background:var(--review)">+</i>${S.tpl} · ${r}</span>`).join('')}</div>`,
+      solution: solCard(S.head, S.meta, `<div style="display:flex;flex-direction:column;gap:12px;padding-bottom:16px">${S.projects.map(([n, k], i) => `<div class="rv" ${i === 3 ? 'id="click"' : ''} style="display:flex;align-items:center;gap:18px;border:2px solid var(--line);border-radius:18px;padding:16px 22px;font-size:31px;font-weight:650"><span class="dot" style="background:${[C.task, C.pair, C.extra, C.review, C.meeting][i]}"></span><span style="flex:1">${n}</span><span class="muted" style="font-size:24px">${k}</span></div>`).join('')}</div>
+          <div class="after"><span class="chip" style="font-size:25px;padding:10px 22px 10px 12px"><i style="background:var(--pair)">✓</i>${S.toast}</span></div>`),
+      click: true,
+    }),
+    overtime: S => ({
+      problem: `<div class="pv" style="background:#fff;color:var(--text);border-radius:30px;padding:28px 32px;display:flex;gap:24px;align-items:flex-start"><span class="dot" style="background:var(--alert);width:30px;height:30px;margin-top:8px"></span><div><div style="font-size:26px;color:var(--soft);font-weight:600">${S.alertFrom}</div><div style="font-size:40px;font-weight:750;margin-top:6px">${S.alert}</div></div></div>` + whiteRow(S.hotfix[0], S.hotfix[1]),
+      solution: solCard(S.head, S.meta, rowsOf(S.rows, [C.extra])),
+    }),
+    taskedit: S => ({
+      problem: S.sessions.map(([l, r]) => whiteRow(l, r, 'padding:18px 28px')).join(''),
+      solution: solCard(S.head, S.meta, `<div style="display:flex;flex-direction:column;gap:18px">
+          ${S.fields.map(f => field(f[0], f[1])).join('')}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">${field(S.estimate[0], S.estimate[1])}${field(S.sp[0], S.sp[1])}</div>
+          <div class="rv" style="display:flex;justify-content:space-between;align-items:center;gap:16px"><span class="chip after" style="font-size:25px;padding:10px 22px 10px 12px"><i style="background:var(--pair)">✓</i>${S.saved}</span><span class="btn" id="click" style="background:var(--ink);color:#fff;white-space:nowrap">${S.save}</span></div></div>`),
+      click: true,
+    }),
+    yearreview: S => ({
+      problem: `<div class="pv" style="background:#fff;color:var(--text);border-radius:24px;padding:30px 34px;min-height:360px"><div class="h" style="font-size:44px">${S.doc}</div><div style="margin-top:20px;display:flex;flex-direction:column;gap:14px;font-size:34px;color:var(--soft)">${S.bullets.map(b => `<div>${b}</div>`).join('')}<div style="width:4px;height:40px;background:var(--text)"></div></div></div>`,
+      solution: solCard(S.head, S.meta, rowsOf(S.rows, [C.task, C.review, C.pair, C.meeting, C.task])),
+    }),
+    jiralink: S => ({
+      problem: S.steps.map(([l, r], i) => whiteRow(l, i === 2 ? `<span style="color:var(--alert);font-weight:800">${r}</span>` : r, 'padding:18px 28px')).join(''),
+      solution: solCard(S.head, S.meta, `<div style="display:flex;flex-direction:column;gap:18px">
+          ${field(S.link[0], S.link[1])}
+          <div class="rv"><span class="chip" style="font-size:26px;padding:10px 22px 10px 12px;border-color:var(--review)"><i style="background:var(--review)">✓</i>${S.detected}</span></div>
+          ${field(S.title[0], S.title[1])}
+          <div class="rv" style="display:flex;justify-content:space-between;align-items:center;gap:16px"><span class="chip after" style="font-size:25px;padding:10px 22px 10px 12px"><i style="background:var(--pair)">✓</i>${S.saved}</span><span class="btn" id="click" style="background:var(--ink);color:#fff">${S.save}</span></div></div>`),
+      click: true,
+    }),
+    switching: S => ({
+      problem: S.timeline.map(([h, l], i) => `<div class="pv" style="display:flex;gap:22px;align-items:center;font-size:30px;font-weight:650"><span style="width:96px;color:var(--on-ink-soft);font-variant-numeric:tabular-nums">${h}</span><span style="flex:1;background:${l.startsWith('PAY') || l.includes('PAY-142') ? 'var(--task)' : '#4a4e69'};border-radius:16px;padding:12px 20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l}</span></div>`).join(''),
+      solution: solCard(S.head, S.meta, rowsOf(S.rows, [C.task])),
+    }),
+    demo: S => ({
+      problem: inkCard(S.form.map(([l, v]) => `<div style="margin-bottom:16px"><div style="font-size:24px;color:var(--on-ink-soft);margin-bottom:8px">${l}</div><div style="border:2px solid #4a4e69;border-radius:14px;padding:14px 18px;font-size:30px;color:#7d81a0">${v}</div></div>`).join('')),
+      solution: solCard(S.head, S.meta, `${S.rows.map((r, i) => solRow([C.task, C.pair, C.review][i], r[0], `<span class="muted" style="font-weight:500">${r[1]}</span>`)).join('')}
+          <div class="rv" style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding-top:20px"><span class="chip after" style="font-size:25px;padding:10px 22px 10px 12px"><i style="background:var(--pair)">✓</i>${S.opened}</span><span class="btn" id="click" style="background:var(--task);color:#fff;white-space:nowrap">${S.open}</span></div>`),
       click: true,
     }),
   };
