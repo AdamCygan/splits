@@ -50,6 +50,13 @@
       "when": 1794680699698,
       "tag": "0006_estimate_extension",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794725095185,
+      "tag": "0007_days_off",
+      "breakpoints": true
     }
   ]
 }

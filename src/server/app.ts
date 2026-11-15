@@ -26,6 +26,7 @@ import {
   templateRoutes,
 } from './features/config'
 import { entryRoutes } from './features/entries'
+import { dayOffRoutes } from './features/days-off'
 import { sprintRoutes } from './features/sprints'
 import type { AppEnv } from './http/context'
 import { ApiError, fromDatabaseError, problem } from './http/errors'
@@ -112,6 +113,7 @@ const protectedRoutes = {
   '/task-types': taskTypeRoutes,
   '/task-statuses': statusRoutes,
   '/sprints': sprintRoutes,
+  '/days-off': dayOffRoutes,
   '/projects': projectRoutes,
   '/tags': tagRoutes,
   '/time-entries': entryRoutes,

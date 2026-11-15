@@ -27,6 +27,27 @@ export type User = {
 
 export type AuthSession = { accessToken: string; expiresAt: string; user: User }
 
+/** Rodzaj dnia wolnego: urlop, zwolnienie lekarskie (L4), święto, inne wolne. */
+export type DayOffKind = 'vacation' | 'sick' | 'holiday' | 'other'
+export const DAY_OFF_KINDS: ReadonlyArray<DayOffKind> = [
+  'vacation',
+  'sick',
+  'holiday',
+  'other',
+]
+export type DayOff = {
+  date: string
+  kind: DayOffKind
+  note: string | null
+}
+/** Zakres dni wolnych: dni pracy z ustawień w tym zakresie dostają ten sam rodzaj. */
+export type DayOffInput = {
+  from: string
+  to: string
+  kind: DayOffKind
+  note: string | null
+}
+
 export type UserSettings = {
   workdayTargetMinutes: number
   /** 0 = niedziela … 6 = sobota (jak .NET DayOfWeek). */

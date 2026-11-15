@@ -96,6 +96,21 @@ export const httpSource: DataSource = {
       archive('task-statuses', id, archived, s.statusSchema),
   },
 
+  daysOff: {
+    list: (from, to) =>
+      get(
+        `/days-off?${new URLSearchParams({ from, to })}`,
+        z.array(s.dayOffSchema),
+      ),
+    set: (input) => send('PUT', '/days-off', z.array(s.dayOffSchema), input),
+    remove: (from, to) =>
+      send(
+        'DELETE',
+        `/days-off?${new URLSearchParams({ from, to })}`,
+        emptyResponse,
+      ),
+  },
+
   sprints: {
     getCadence: () => get('/sprints/cadence', s.cadenceSchema),
     setCadence: (input) =>

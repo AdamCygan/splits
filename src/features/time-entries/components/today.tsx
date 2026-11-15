@@ -36,6 +36,7 @@ import { UseTemplateDialog, templateNeeds } from './use-template-dialog'
 import type { TemplateChoice } from './use-template-dialog'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { entriesQuery, entryKeys } from '../queries'
+import { DayOffBanner, DayOffButton } from '#/features/days-off/day-off-today'
 import { DayPicker } from './day-picker'
 import { EntryForm } from './entry-form'
 import { ExtendDialog } from './extend-dialog'
@@ -117,14 +118,19 @@ export function TodayPage({
           <p className="text-sm font-medium text-ink-soft">{dateLabel}</p>
           <h1 className="type-display text-4xl sm:text-5xl">{headingText}</h1>
         </div>
-        <DayPicker
-          value={workDate}
-          today={today}
-          min={minDate}
-          limited={limited}
-          onChange={(next) => onDateChange?.(next, today)}
-        />
+        <div className="flex flex-wrap items-start gap-2 sm:justify-end">
+          <DayOffButton date={workDate} />
+          <DayPicker
+            value={workDate}
+            today={today}
+            min={minDate}
+            limited={limited}
+            onChange={(next) => onDateChange?.(next, today)}
+          />
+        </div>
       </header>
+
+      <DayOffBanner date={workDate} />
 
       <dl className="mb-6 grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line">
         <div className="bg-surface px-4 py-3 sm:px-5">

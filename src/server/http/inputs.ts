@@ -221,6 +221,13 @@ export const templateInput = z
   .transform((x) => (x.askProject ? { ...x, projectId: null } : x))
 
 export const rangeQuery = z.object({ from: day, to: day })
+
+export const dayOffInput = z.object({
+  from: day,
+  to: day,
+  kind: z.enum(['vacation', 'sick', 'holiday', 'other']),
+  note: z.string().max(200).nullable().default(null),
+})
 export const dateQuery = z.object({ date: day })
 
 /** Ciało żądania JSON zwalidowane schematem; błąd = 400 z nazwą pierwszego złego pola. */

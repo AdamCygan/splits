@@ -298,6 +298,33 @@ export const sprints = pgTable(
   ],
 )
 
+/**
+ * Dzień wolny: urlop, zwolnienie lekarskie, święto albo inne wolne. Jeden wiersz na dzień
+ * (zakres urlopu to kilka wierszy), dzięki temu sprint liczy dostępne dni prostym zapytaniem.
+ */
+export const daysOff = pgTable(
+  'days_off',
+  {
+    id: id(),
+    userId: userId(),
+    date: date('date', { mode: 'string' }).notNull(),
+    kind: text('kind').notNull(),
+    note: text('note'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('days_off_user_date').on(t.userId, t.date),
+    check(
+      'days_off_kind',
+      sql`${t.kind} in ('vacation', 'sick', 'holiday', 'other')`,
+    ),
+    check(
+      'days_off_note',
+      sql`${t.note} is null or char_length(${t.note}) between 1 and 200`,
+    ),
+  ],
+)
+
 export const projects = pgTable(
   'projects',
   {

@@ -232,3 +232,9 @@ export const adminActionSchema = z.object({
   detail: z.string().nullable(),
   createdAt: z.string(),
 })
+
+export const dayOffSchema = z.object({
+  date: z.string(),
+  kind: z.enum(['vacation', 'sick', 'holiday', 'other']),
+  note: z.string().nullable(),
+})

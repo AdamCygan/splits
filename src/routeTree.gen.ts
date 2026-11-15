@@ -34,6 +34,7 @@ import { Route as AppTasksRouteImport } from './routes/app/tasks'
 import { Route as ApiV1SplatRouteImport } from './routes/api/v1/$'
 import { Route as AppSettingsIndexRouteImport } from './routes/app/settings/index'
 import { Route as AppSettingsAccountRouteImport } from './routes/app/settings/account'
+import { Route as AppSettingsDaysOffRouteImport } from './routes/app/settings/days-off'
 import { Route as AppSettingsPlanRouteImport } from './routes/app/settings/plan'
 import { Route as AppSettingsProjectsRouteImport } from './routes/app/settings/projects'
 import { Route as AppSettingsSprintsRouteImport } from './routes/app/settings/sprints'
@@ -167,6 +168,11 @@ const AppSettingsAccountRoute = AppSettingsAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AppSettingsRouteRoute,
 } as any)
+const AppSettingsDaysOffRoute = AppSettingsDaysOffRouteImport.update({
+  id: '/days-off',
+  path: '/days-off',
+  getParentRoute: () => AppSettingsRouteRoute,
+} as any)
 const AppSettingsPlanRoute = AppSettingsPlanRouteImport.update({
   id: '/plan',
   path: '/plan',
@@ -236,6 +242,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AppIndexRoute
   '/api/v1/$': typeof ApiV1SplatRoute
   '/app/settings/account': typeof AppSettingsAccountRoute
+  '/app/settings/days-off': typeof AppSettingsDaysOffRoute
   '/app/settings/plan': typeof AppSettingsPlanRoute
   '/app/settings/projects': typeof AppSettingsProjectsRoute
   '/app/settings/sprints': typeof AppSettingsSprintsRoute
@@ -268,6 +275,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppIndexRoute
   '/api/v1/$': typeof ApiV1SplatRoute
   '/app/settings/account': typeof AppSettingsAccountRoute
+  '/app/settings/days-off': typeof AppSettingsDaysOffRoute
   '/app/settings/plan': typeof AppSettingsPlanRoute
   '/app/settings/projects': typeof AppSettingsProjectsRoute
   '/app/settings/sprints': typeof AppSettingsSprintsRoute
@@ -305,6 +313,7 @@ export interface FileRoutesById {
   '/app/': typeof AppIndexRoute
   '/api/v1/$': typeof ApiV1SplatRoute
   '/app/settings/account': typeof AppSettingsAccountRoute
+  '/app/settings/days-off': typeof AppSettingsDaysOffRoute
   '/app/settings/plan': typeof AppSettingsPlanRoute
   '/app/settings/projects': typeof AppSettingsProjectsRoute
   '/app/settings/sprints': typeof AppSettingsSprintsRoute
@@ -341,6 +350,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/api/v1/$'
     | '/app/settings/account'
+    | '/app/settings/days-off'
     | '/app/settings/plan'
     | '/app/settings/projects'
     | '/app/settings/sprints'
@@ -373,6 +383,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/api/v1/$'
     | '/app/settings/account'
+    | '/app/settings/days-off'
     | '/app/settings/plan'
     | '/app/settings/projects'
     | '/app/settings/sprints'
@@ -409,6 +420,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/api/v1/$'
     | '/app/settings/account'
+    | '/app/settings/days-off'
     | '/app/settings/plan'
     | '/app/settings/projects'
     | '/app/settings/sprints'
@@ -608,6 +620,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsAccountRouteImport
       parentRoute: typeof AppSettingsRouteRoute
     }
+    '/app/settings/days-off': {
+      id: '/app/settings/days-off'
+      path: '/days-off'
+      fullPath: '/app/settings/days-off'
+      preLoaderRoute: typeof AppSettingsDaysOffRouteImport
+      parentRoute: typeof AppSettingsRouteRoute
+    }
     '/app/settings/plan': {
       id: '/app/settings/plan'
       path: '/plan'
@@ -676,6 +695,7 @@ declare module '@tanstack/react-router' {
 
 interface AppSettingsRouteRouteChildren {
   AppSettingsAccountRoute: typeof AppSettingsAccountRoute
+  AppSettingsDaysOffRoute: typeof AppSettingsDaysOffRoute
   AppSettingsPlanRoute: typeof AppSettingsPlanRoute
   AppSettingsProjectsRoute: typeof AppSettingsProjectsRoute
   AppSettingsSprintsRoute: typeof AppSettingsSprintsRoute
@@ -690,6 +710,7 @@ interface AppSettingsRouteRouteChildren {
 
 const AppSettingsRouteRouteChildren: AppSettingsRouteRouteChildren = {
   AppSettingsAccountRoute: AppSettingsAccountRoute,
+  AppSettingsDaysOffRoute: AppSettingsDaysOffRoute,
   AppSettingsPlanRoute: AppSettingsPlanRoute,
   AppSettingsProjectsRoute: AppSettingsProjectsRoute,
   AppSettingsSprintsRoute: AppSettingsSprintsRoute,

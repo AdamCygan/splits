@@ -57,6 +57,7 @@ export const accountRoutes = new Hono<AppEnv>()
       templates,
       entries,
       subs,
+      daysOff,
     ] = await Promise.all([
       db.select().from(t.userSettings).where(eq(t.userSettings.userId, userId)),
       db
@@ -95,6 +96,11 @@ export const accountRoutes = new Hono<AppEnv>()
         })
         .from(t.subscriptions)
         .where(eq(t.subscriptions.userId, userId)),
+      db
+        .select()
+        .from(t.daysOff)
+        .where(eq(t.daysOff.userId, userId))
+        .orderBy(asc(t.daysOff.date)),
     ])
     c.header(
       'Content-Disposition',
@@ -122,6 +128,7 @@ export const accountRoutes = new Hono<AppEnv>()
       tags: own(tags),
       quickTemplates: own(templates),
       timeEntries: own(entries),
+      daysOff: own(daysOff),
       subscriptions: subs,
     })
   })

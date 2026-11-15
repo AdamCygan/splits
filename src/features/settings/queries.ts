@@ -22,6 +22,7 @@ export const keys = {
   projects: ['projects'],
   tags: ['tags'],
   templates: ['quick-templates'],
+  daysOff: ['days-off'],
 } as const satisfies Record<string, QueryKey>
 
 export const meQuery = queryOptions({
@@ -52,6 +53,12 @@ export const sprintsQuery = queryOptions({
   queryKey: keys.sprints,
   queryFn: () => unwrap(data.sprints.list()),
 })
+/** Dni wolne w zakresie dat (urlop, L4, święta). */
+export const daysOffQuery = (from: string, to: string) =>
+  queryOptions({
+    queryKey: [...keys.daysOff, from, to],
+    queryFn: () => unwrap(data.daysOff.list(from, to)),
+  })
 export const projectsQuery = queryOptions({
   queryKey: keys.projects,
   queryFn: () => unwrap(data.projects.list()),

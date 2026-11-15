@@ -4,7 +4,9 @@ import { Link } from '@tanstack/react-router'
 import { ArrowRight, Settings2 } from 'lucide-react'
 import { buttonVariants } from '#/components/ui/button'
 import { ColorDot } from '#/components/ui/controls'
+import { DAY_OFF_KINDS } from '#/data/types'
 import type { TaskType } from '#/data/types'
+import { sprintAvailability } from '#/domain/days-off'
 import { addDays, todayIn } from '#/domain/dates'
 import type { TypeRow } from '#/domain/report'
 import {
@@ -15,6 +17,7 @@ import {
 import type { SprintStats } from '#/domain/sprint-stats'
 import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
 import {
+  daysOffQuery,
   meQuery,
   settingsQuery,
   sprintsQuery,
@@ -24,6 +27,7 @@ import { SectionHeader } from '#/features/settings/components/ui'
 import { rangeEntriesQuery } from '#/features/time-entries/queries'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate, formatDateRange } from '#/i18n/format'
+import { daysOffMessages } from '#/i18n/messages/days-off'
 import { panelMessages } from '#/i18n/messages/panel'
 import { cn } from '#/lib/utils'
 
@@ -70,13 +74,15 @@ function Tile({
   label,
   value,
   hint,
+  className,
 }: {
   label: string
   value: string
   hint?: string
+  className?: string
 }) {
   return (
-    <div className="bg-surface px-4 py-3 sm:px-5">
+    <div className={cn('bg-surface px-4 py-3 sm:px-5', className)}>
       <dt className="text-sm text-ink-soft">{label}</dt>
       <dd className="type-heading mt-0.5 text-xl tabular-nums sm:text-2xl">
         {value}
@@ -88,6 +94,7 @@ function Tile({
 
 export function SprintsPage() {
   const t = useMessages(panelMessages).sprints
+  const off = useMessages(daysOffMessages)
   const tasks = useMessages(panelMessages).tasks
   const format = useFormat()
   const { locale } = useI18n()
@@ -128,6 +135,24 @@ export function SprintsPage() {
   const averaged = (pastStats.length ? pastStats : stats).filter(
     (s) => s.minutesPerSp !== null,
   ).length
+  const lastDay = [current, ...past, upcoming]
+    .filter((x) => x !== undefined)
+    .reduce((max, x) => (x.endsOn > max ? x.endsOn : max), today)
+  const daysOff =
+    useQuery({
+      ...daysOffQuery(from, lastDay),
+      enabled: shown.length > 0,
+    }).data ?? []
+  const availability = (sprint: { startsOn: string; endsOn: string }) =>
+    sprintAvailability(
+      sprint,
+      settings?.workingDays ?? [1, 2, 3, 4, 5],
+      daysOff,
+    )
+  const offSummary = (byKind: ReturnType<typeof availability>['byKind']) =>
+    DAY_OFF_KINDS.filter((k) => byKind[k])
+      .map((k) => `${off.kinds[k]} ${byKind[k]}`)
+      .join(', ')
   const isFree = !hasProAccess(user)
   const clamped =
     isFree && from < addDays(today, -(FREE_LIMITS.historyDays - 1))
@@ -212,7 +237,7 @@ export function SprintsPage() {
               )
             })()}
 
-            <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-4">
+            <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-5">
               <Tile
                 label={t.logged}
                 value={format.minutes(currentStats.minutes)}
@@ -241,6 +266,26 @@ export function SprintsPage() {
                 hint={currentStats.minutesPerSp === null ? t.noSp : undefined}
               />
               <Tile label={t.tasks} value={String(currentStats.tasks)} />
+              {(() => {
+                const a = availability(current)
+                return (
+                  <Tile
+                    className="col-span-2 lg:col-span-1"
+                    label={off.sprint.available}
+                    value={fmt(off.sprint.availableValue, {
+                      available: a.available,
+                      working: a.working,
+                    })}
+                    hint={
+                      a.off === 0
+                        ? off.sprint.none
+                        : format
+                            .plural(off.sprint.off, a.off)
+                            .replace('{kinds}', offSummary(a.byKind))
+                    }
+                  />
+                )
+              })()}
             </dl>
 
             {currentStats.minutes === 0 ? (
@@ -401,6 +446,12 @@ export function SprintsPage() {
                           s.sprint.startsOn,
                           s.sprint.endsOn,
                         )}
+                        {(() => {
+                          const a = availability(s.sprint)
+                          return a.off > 0
+                            ? `, ${format.plural(off.sprint.short, a.off)}`
+                            : ''
+                        })()}
                       </span>
                     </th>
                     <td className="px-3 py-3 text-right tabular-nums">

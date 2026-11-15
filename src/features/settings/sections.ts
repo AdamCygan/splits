@@ -1,4 +1,5 @@
 import {
+  CalendarOff,
   CalendarRange,
   Clock3,
   CreditCard,
@@ -20,6 +21,12 @@ export const settingsSections = [
     to: '/app/settings/sprints',
     key: 'sprints',
     icon: CalendarRange,
+    exact: false,
+  },
+  {
+    to: '/app/settings/days-off',
+    key: 'daysOff',
+    icon: CalendarOff,
     exact: false,
   },
   {

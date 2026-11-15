@@ -58,7 +58,8 @@ describe('entry dates', () => {
     const { c, today, entry } = await account()
     const past = await c.post<Problem>('/time-entries/timer', {
       ...entry(addDays(today, -1)),
-      startTime: '09:00',
+      // Północ nigdy nie jest „w przyszłości”, więc test nie zależy od pory dnia.
+      startTime: '00:00',
     })
     expect(past.status).toBe(400)
     expect(Object.keys(past.body.errors ?? {})).toContain('workDate')

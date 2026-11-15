@@ -25,6 +25,8 @@ import type {
   TimerStartInput,
   TimerStartResult,
   TaskRef,
+  DayOff,
+  DayOffInput,
   TaskUpdateInput,
   User,
   UserSettings,
@@ -98,6 +100,14 @@ export interface DataSource {
     reorder: (ids: Array<string>) => R<Array<TaskStatus>>
     setDefault: (id: string) => R<Array<TaskStatus>>
     setArchived: (id: string, archived: boolean) => R<TaskStatus>
+  }
+
+  /** Dni wolne: urlop, L4, święta. */
+  daysOff: {
+    list: (from: string, to: string) => R<Array<DayOff>>
+    /** Zaznacza zakres (dni pracy z ustawień; jeden dzień zawsze), zwraca zapisane dni. */
+    set: (input: DayOffInput) => R<Array<DayOff>>
+    remove: (from: string, to: string) => R<undefined>
   }
 
   sprints: {
