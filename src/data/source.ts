@@ -27,6 +27,8 @@ import type {
   TaskRef,
   DayOff,
   DayOffInput,
+  WorkBreak,
+  WorkBreakInput,
   TaskUpdateInput,
   User,
   UserSettings,
@@ -100,6 +102,21 @@ export interface DataSource {
     reorder: (ids: Array<string>) => R<Array<TaskStatus>>
     setDefault: (id: string) => R<Array<TaskStatus>>
     setArchived: (id: string, archived: boolean) => R<TaskStatus>
+  }
+
+  /** Przerwy w pracy (nie są czasem pracy). */
+  breaks: {
+    list: (date: string) => R<Array<WorkBreak>>
+    running: () => R<WorkBreak | null>
+    /** Start przerwy; działający timer zadania zostaje wstrzymany. */
+    start: () => R<{ break: WorkBreak; paused: TimeEntry | null }>
+    /** Koniec przerwy; `resume` wznawia zadanie wstrzymane na jej czas. */
+    end: (
+      id: string,
+      resume: boolean,
+    ) => R<{ break: WorkBreak; resumed: TimeEntry | null }>
+    add: (input: WorkBreakInput) => R<WorkBreak>
+    remove: (id: string) => R<undefined>
   }
 
   /** Dni wolne: urlop, L4, święta. */

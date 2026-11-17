@@ -40,6 +40,7 @@ export const toSettings = (
   locale: s.locale as Locale,
   dailyReminderAt: s.dailyReminderAt,
   summaryTemplate: s.summaryTemplate,
+  breakMinutes: s.breakMinutes,
 })
 
 export const toScaleStep = (

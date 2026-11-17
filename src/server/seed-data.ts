@@ -376,6 +376,7 @@ export function seedWorkspace(
     locale,
     dailyReminderAt: null,
     summaryTemplate: null,
+    breakMinutes: 30,
   }
 
   const projects: Array<Project> = withSamples

@@ -46,6 +46,7 @@ export const settingsSchema = z.object({
   ]),
   timezone: z.string(),
   summaryTemplate: z.string().nullable().default(null),
+  breakMinutes: z.number().int().default(30),
   locale: z.enum(['en', 'pl']),
   dailyReminderAt: z.string().nullable(),
 })
@@ -237,4 +238,15 @@ export const dayOffSchema = z.object({
   date: z.string(),
   kind: z.enum(['vacation', 'sick', 'holiday', 'other']),
   note: z.string().nullable(),
+})
+
+export const workBreakSchema = z.object({
+  id: z.string(),
+  workDate: z.string(),
+  startTime: z.string().nullable(),
+  endTime: z.string().nullable(),
+  durationMinutes: z.number().int(),
+  running: z.boolean(),
+  startedAt: z.string().nullable(),
+  resumeEntryId: z.string().nullable(),
 })

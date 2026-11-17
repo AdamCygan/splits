@@ -71,6 +71,10 @@ const en = {
       'Applies to new entries. Rounding to the nearest value, never down to zero.',
     roundingOff: 'No rounding',
     roundingValue: '{n} min',
+    breakLabel: 'Breaks per day',
+    breakHint:
+      'How much break time you have each day. Today shows how much is left.',
+    breakOff: 'No limit',
     timezone: 'Time zone',
     timezoneHint: 'Current time there: {time}',
     reminder: 'Daily reminder',
@@ -561,6 +565,10 @@ const pl: SettingsMessages = {
       'Dotyczy nowych wpisów. Do najbliższej wartości, nigdy w dół do zera.',
     roundingOff: 'Bez zaokrąglania',
     roundingValue: '{n} min',
+    breakLabel: 'Przerwy dziennie',
+    breakHint:
+      'Ile przerwy masz każdego dnia. Ekran Dziś pokazuje, ile zostało.',
+    breakOff: 'Bez limitu',
     timezone: 'Strefa czasowa',
     timezoneHint: 'Teraz w tej strefie: {time}',
     reminder: 'Codzienne przypomnienie',

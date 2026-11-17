@@ -60,6 +60,27 @@ export type UserSettings = {
   dailyReminderAt: string | null
   /** Własny szablon podsumowania zadania; null = domyślny w języku użytkownika. */
   summaryTemplate: string | null
+  /** Ile minut przerwy dziennie przysługuje; 0 = bez limitu. */
+  breakMinutes: number
+}
+
+/** Przerwa w pracy: nie jest czasem pracy, liczy się względem dziennego limitu. */
+export type WorkBreak = {
+  id: string
+  workDate: string
+  startTime: string | null
+  endTime: string | null
+  durationMinutes: number
+  running: boolean
+  startedAt: string | null
+  /** Zadanie wstrzymane na czas przerwy. */
+  resumeEntryId: string | null
+}
+export type WorkBreakInput = {
+  workDate: string
+  startTime: string | null
+  endTime: string | null
+  durationMinutes: number
 }
 
 export type SpScaleStep = { id: string; points: number; maxMinutes: number }

@@ -96,6 +96,36 @@ export const httpSource: DataSource = {
       archive('task-statuses', id, archived, s.statusSchema),
   },
 
+  breaks: {
+    list: (date) =>
+      get(
+        `/breaks?${new URLSearchParams({ date })}`,
+        z.array(s.workBreakSchema),
+      ),
+    running: () => get('/breaks/running', s.workBreakSchema.nullable()),
+    start: () =>
+      send(
+        'POST',
+        '/breaks/start',
+        z.object({
+          break: s.workBreakSchema,
+          paused: s.timeEntrySchema.nullable(),
+        }),
+      ),
+    end: (id, resume) =>
+      send(
+        'POST',
+        `/breaks/${id}/end`,
+        z.object({
+          break: s.workBreakSchema,
+          resumed: s.timeEntrySchema.nullable(),
+        }),
+        { resume },
+      ),
+    add: (input) => send('POST', '/breaks', s.workBreakSchema, input),
+    remove: (id) => send('DELETE', `/breaks/${id}`, emptyResponse),
+  },
+
   daysOff: {
     list: (from, to) =>
       get(

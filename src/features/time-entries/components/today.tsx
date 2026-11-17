@@ -37,6 +37,7 @@ import type { TemplateChoice } from './use-template-dialog'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { entriesQuery, entryKeys } from '../queries'
 import { DayOffBanner, DayOffButton } from '#/features/days-off/day-off-today'
+import { BreakTile } from './breaks'
 import { DayPicker } from './day-picker'
 import { EntryForm } from './entry-form'
 import { ExtendDialog } from './extend-dialog'
@@ -132,7 +133,7 @@ export function TodayPage({
 
       <DayOffBanner date={workDate} />
 
-      <dl className="mb-6 grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line">
+      <dl className="mb-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line lg:grid-cols-4">
         <div className="bg-surface px-4 py-3 sm:px-5">
           <dt className="text-sm text-ink-soft">{t.summary.logged}</dt>
           <dd className="type-heading mt-0.5 text-xl tabular-nums sm:text-2xl">
@@ -167,6 +168,7 @@ export function TodayPage({
             {list.length}
           </dd>
         </div>
+        <BreakTile date={workDate} isToday={isToday} />
       </dl>
 
       <QuickTemplates workDate={workDate} isToday={isToday} />

@@ -30,6 +30,9 @@ function timeZones(current: string) {
   return [...new Set(['UTC', current, ...list])].sort()
 }
 
+/** Dzienny limit przerw do wyboru (minuty); 0 = bez limitu. */
+const BREAK_OPTIONS = [0, 10, 15, 20, 30, 45, 60, 90, 120]
+
 export function WorkdaySettings() {
   const t = useMessages(settingsMessages)
   return (
@@ -95,6 +98,7 @@ function WorkdayForm({ settings }: { settings: UserSettings }) {
     locale: settings.locale,
     dailyReminderAt: draft.reminderOn ? draft.reminderTime : null,
     summaryTemplate: settings.summaryTemplate,
+    breakMinutes: draft.breakMinutes,
   }
   const dirty =
     JSON.stringify(next) !==
@@ -179,6 +183,25 @@ function WorkdayForm({ settings }: { settings: UserSettings }) {
                     {n === 0 ? t.roundingOff : fmt(t.roundingValue, { n })}
                   </option>
                 ))}
+              </Select>
+            )}
+          </Field>
+          <Field label={t.breakLabel} hint={t.breakHint}>
+            {(a) => (
+              <Select
+                {...a}
+                value={draft.breakMinutes}
+                onChange={(e) =>
+                  setDraft({ ...draft, breakMinutes: Number(e.target.value) })
+                }
+              >
+                {[...new Set([...BREAK_OPTIONS, draft.breakMinutes])]
+                  .sort((x, y) => x - y)
+                  .map((n) => (
+                    <option key={n} value={n}>
+                      {n === 0 ? t.breakOff : fmt(t.roundingValue, { n })}
+                    </option>
+                  ))}
               </Select>
             )}
           </Field>

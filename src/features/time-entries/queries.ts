@@ -33,3 +33,15 @@ export const runningQuery = queryOptions({
   queryKey: entryKeys.running,
   queryFn: () => unwrap(data.entries.running()),
 })
+
+/** Przerwy w pracy: lista z dnia i trwająca przerwa. */
+export const breakKeys = { all: ['breaks'] as const }
+export const breaksQuery = (date: string) =>
+  queryOptions({
+    queryKey: [...breakKeys.all, 'day', date],
+    queryFn: () => unwrap(data.breaks.list(date)),
+  })
+export const runningBreakQuery = queryOptions({
+  queryKey: [...breakKeys.all, 'running'],
+  queryFn: () => unwrap(data.breaks.running()),
+})

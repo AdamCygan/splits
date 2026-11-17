@@ -97,7 +97,17 @@ export const settingsInput = z.object({
   locale,
   dailyReminderAt: time.nullable(),
   summaryTemplate: z.string().max(SUMMARY_TEMPLATE_MAX).nullable(),
+  // Starsze klienty nie wysyłają limitu przerw: zostaje domyślne 30 minut.
+  breakMinutes: z.number().int().min(0).max(240).default(30),
 })
+
+export const breakInput = z.object({
+  workDate: day,
+  startTime: time.nullable(),
+  endTime: time.nullable(),
+  durationMinutes: z.number().int().min(1).max(1440),
+})
+export const breakEndInput = z.object({ resume: z.boolean().default(true) })
 
 export const scaleInput = z.object({
   steps: z

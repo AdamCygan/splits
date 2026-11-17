@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Check, Pause, Play, Square } from 'lucide-react'
+import { Check, Coffee, Pause, Play, Square } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '#/components/ui/button'
 import { data } from '#/data'
@@ -17,7 +17,14 @@ import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { cn } from '#/lib/utils'
-import { entriesQuery, entryKeys, pausedQuery, runningQuery } from '../queries'
+import {
+  entriesQuery,
+  entryKeys,
+  pausedQuery,
+  runningBreakQuery,
+  runningQuery,
+} from '../queries'
+import { BreakBar, useStartBreak } from './breaks'
 
 /** Licznik sekund od startu, odświeżany co sekundę tylko gdy timer działa. */
 export function useElapsed(entry: TimeEntry | null | undefined) {
@@ -112,7 +119,13 @@ export function TimerBar() {
   const stop = useStopTimer()
   const pause = usePauseTimer()
   const resume = useResumeTask()
-  const busy = stop.isPending || pause.isPending || resume.isPending
+  const runningBreak = useQuery(runningBreakQuery).data
+  const startBreak = useStartBreak()
+  const busy =
+    stop.isPending ||
+    pause.isPending ||
+    resume.isPending ||
+    startBreak.isPending
 
   useEffect(() => {
     if (!running) return
@@ -123,6 +136,8 @@ export function TimerBar() {
     }
   }, [running, seconds])
 
+  // Trwająca przerwa ma pierwszeństwo: timer zadania jest na jej czas wstrzymany.
+  if (runningBreak) return <BreakBar running={runningBreak} />
   if (!running) return paused.length > 0 ? <PausedBar paused={paused} /> : null
 
   const waiting = paused.filter(
@@ -160,6 +175,15 @@ export function TimerBar() {
           {formatClock(seconds)}
         </span>
         <div className="flex shrink-0 gap-2">
+          <Button
+            variant="outline"
+            onClick={() => startBreak.mutate()}
+            disabled={busy}
+            className="h-10 border-white/30 bg-transparent px-3 text-white hover:bg-white/10 hover:text-white"
+          >
+            <Coffee aria-hidden className="size-3.5" />
+            {t.breaks.start}
+          </Button>
           <Button
             variant="outline"
             onClick={() => pause.mutate(running.id)}

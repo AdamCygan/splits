@@ -26,6 +26,7 @@ import {
   templateRoutes,
 } from './features/config'
 import { entryRoutes } from './features/entries'
+import { breakRoutes } from './features/breaks'
 import { dayOffRoutes } from './features/days-off'
 import { sprintRoutes } from './features/sprints'
 import type { AppEnv } from './http/context'
@@ -114,6 +115,7 @@ const protectedRoutes = {
   '/task-statuses': statusRoutes,
   '/sprints': sprintRoutes,
   '/days-off': dayOffRoutes,
+  '/breaks': breakRoutes,
   '/projects': projectRoutes,
   '/tags': tagRoutes,
   '/time-entries': entryRoutes,

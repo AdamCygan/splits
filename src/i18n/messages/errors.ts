@@ -39,6 +39,7 @@ const en = {
     'The Free plan includes up to 3 custom work types. Archive one or upgrade to Pro.',
   'plan.limit_history':
     'On the Free plan you can add entries from the last 30 days. Upgrade to Pro to log older work.',
+  'break.running': 'A break is already running. End it first.',
   'status.default_archive':
     'The default status can’t be archived. Make another status the default first.',
   'status.system_archive': 'Built-in statuses can be renamed but not archived.',
@@ -94,6 +95,7 @@ const pl: ErrorMessages = {
     'Plan Free obejmuje do 3 własnych typów pracy. Zarchiwizuj jeden albo przejdź na Pro.',
   'plan.limit_history':
     'W planie Free dodasz wpisy z ostatnich 30 dni. Przejdź na Pro, żeby wpisać starszą pracę.',
+  'break.running': 'Przerwa już trwa. Najpierw ją zakończ.',
   'status.default_archive':
     'Nie można zarchiwizować statusu domyślnego. Najpierw ustaw inny jako domyślny.',
   'status.system_archive':

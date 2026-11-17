@@ -31,7 +31,7 @@ import { toEntry } from './dto'
 type Row = typeof t.timeEntries.$inferSelect
 type TaskRef = { link: string | null; taskTypeId: string; title: string }
 
-async function userTimezone(tx: Tx, userId: string) {
+export async function userTimezone(tx: Tx, userId: string) {
   const [s] = await tx
     .select({ timezone: t.userSettings.timezone })
     .from(t.userSettings)
@@ -124,7 +124,7 @@ function sameTaskAs(ref: TaskRef) {
  * Zatrzymuje działający timer (poza `exceptId`); w bazie pilnuje tego unikalny indeks.
  * Start innego zadania przerywa bieżące, więc zostaje ono wstrzymane i czeka na „Wznów”.
  */
-async function stopRunning(
+export async function stopRunning(
   tx: Tx,
   userId: string,
   timezone: string,
@@ -242,6 +242,42 @@ export async function pausedOn(tx: Tx, userId: string, date: string) {
       return true
     })
     .slice(0, 5)
+}
+
+/**
+ * Wznów: nowa sesja (nowy odcinek czasu) z tym samym tytułem, linkiem, typem, projektem i SP.
+ * Działający timer innego zadania zostaje wstrzymany. Używa tego też koniec przerwy.
+ */
+export async function resumeEntry(tx: Tx, userId: string, id: string) {
+  const entry = await ownEntry(tx, userId, id)
+  if (entry.running) return { started: entry, stopped: null }
+  const timezone = await userTimezone(tx, userId)
+  const type = await ownTaskType(tx, userId, entry.taskTypeId)
+  return startTimer(
+    tx,
+    userId,
+    {
+      taskTypeId: entry.taskTypeId,
+      projectId: entry.projectId,
+      title: entry.title,
+      link: entry.link,
+      storyPoints: spForType(type, entry.storyPoints),
+      workDate: todayIn(timezone),
+      startTime: nowTimeIn(timezone),
+      endTime: null,
+      durationMinutes: 0,
+      note: null,
+      // Nowa sesja zaczyna bez nadgodzin; oznaczysz je po zatrzymaniu.
+      overtimeMinutes: null,
+      overtimeNote: null,
+      // Estymata należy do zadania: nowa sesja ją zachowuje.
+      estimateMinutes: entry.estimateMinutes,
+      extensionMinutes: null,
+      extensionNote: null,
+      running: true,
+    },
+    timezone,
+  )
 }
 
 export const entryRoutes = new Hono<AppEnv>()
@@ -376,37 +412,9 @@ export const entryRoutes = new Hono<AppEnv>()
    */
   .post('/:id/resume', async (c) => {
     const userId = c.get('userId')
-    const result = await db.transaction(async (tx) => {
-      const entry = await ownEntry(tx, userId, c.req.param('id'))
-      if (entry.running) return { started: entry, stopped: null }
-      const timezone = await userTimezone(tx, userId)
-      const type = await ownTaskType(tx, userId, entry.taskTypeId)
-      return startTimer(
-        tx,
-        userId,
-        {
-          taskTypeId: entry.taskTypeId,
-          projectId: entry.projectId,
-          title: entry.title,
-          link: entry.link,
-          storyPoints: spForType(type, entry.storyPoints),
-          workDate: todayIn(timezone),
-          startTime: nowTimeIn(timezone),
-          endTime: null,
-          durationMinutes: 0,
-          note: null,
-          // Nowa sesja zaczyna bez nadgodzin; oznaczysz je po zatrzymaniu.
-          overtimeMinutes: null,
-          overtimeNote: null,
-          // Estymata należy do zadania: nowa sesja ją zachowuje.
-          estimateMinutes: entry.estimateMinutes,
-          extensionMinutes: null,
-          extensionNote: null,
-          running: true,
-        },
-        timezone,
-      )
-    })
+    const result = await db.transaction((tx) =>
+      resumeEntry(tx, userId, c.req.param('id')),
+    )
     return c.json(timerResult(result), 201)
   })
 

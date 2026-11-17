@@ -57,6 +57,13 @@
       "when": 1794725095185,
       "tag": "0007_days_off",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794895434018,
+      "tag": "0008_breaks",
+      "breakpoints": true
     }
   ]
 }

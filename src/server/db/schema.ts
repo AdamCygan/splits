@@ -172,9 +172,12 @@ export const userSettings = pgTable(
     /** 'HH:MM' albo null = przypomnienie wyłączone. */
     dailyReminderAt: text('daily_reminder_at'),
     summaryTemplate: text('summary_template'),
+    /** Ile minut przerwy dziennie przysługuje (0 = bez limitu na przerwy). */
+    breakMinutes: smallint('break_minutes').notNull().default(30),
     updatedAt: updatedAt(),
   },
   (t) => [
+    check('user_settings_break', sql`${t.breakMinutes} between 0 and 240`),
     check(
       'user_settings_target',
       sql`${t.workdayTargetMinutes} between 0 and 1440`,
@@ -295,6 +298,42 @@ export const sprints = pgTable(
   (t) => [
     index('sprints_user_start_idx').on(t.userId, t.startsOn),
     check('sprints_dates', sql`${t.endsOn} >= ${t.startsOn}`),
+  ],
+)
+
+/**
+ * Przerwa w pracy (kawa, obiad). Nie jest czasem pracy, więc nie trafia do wpisów ani raportów
+ * zadań; liczy się względem dziennego limitu z ustawień. Najwyżej jedna trwająca przerwa naraz.
+ */
+export const breaks = pgTable(
+  'breaks',
+  {
+    id: id(),
+    userId: userId(),
+    workDate: date('work_date', { mode: 'string' }).notNull(),
+    /** 'HH:MM'; null = przerwa dopisana tylko jako czas trwania. */
+    startTime: text('start_time'),
+    endTime: text('end_time'),
+    /** 0, dopóki przerwa trwa. */
+    durationMinutes: smallint('duration_minutes').notNull().default(0),
+    running: boolean('running').notNull().default(false),
+    startedAt: timestamp('started_at', { withTimezone: true }),
+    /** Zadanie wstrzymane na czas przerwy; „Koniec przerwy” może je wznowić. */
+    resumeEntryId: uuid('resume_entry_id').references(() => timeEntries.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('breaks_user_date').on(t.userId, t.workDate),
+    uniqueIndex('breaks_one_running')
+      .on(t.userId)
+      .where(sql`${t.running}`),
+    check(
+      'breaks_duration',
+      sql`${t.durationMinutes} between 0 and 1440
+        and (${t.running} or ${t.durationMinutes} >= 1)`,
+    ),
   ],
 )
 
