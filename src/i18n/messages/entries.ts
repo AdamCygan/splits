@@ -147,6 +147,35 @@ const en = {
       invalid: 'Check the time.',
     },
   },
+  deleteTask: {
+    day: 'Delete task',
+    dayLabel: 'Delete {name} from this day',
+    all: 'Delete task',
+    allLabel: 'Delete the whole task {name}',
+    titleDay: 'Delete “{name}” from this day?',
+    titleAll: 'Delete the whole task “{name}”?',
+    textDay: {
+      one: 'Its only session from this day ({time}) will be deleted. This can’t be undone.',
+      other:
+        'All {n} sessions from this day ({time}) will be deleted. This can’t be undone.',
+    } as Plural,
+    textAll: {
+      one: 'Its only session ({time}) will be deleted, also from reports and sprints. This can’t be undone.',
+      other:
+        'All {n} sessions from every day ({time}) will be deleted, also from reports and sprints. This can’t be undone.',
+    } as Plural,
+    confirm: 'Delete',
+    deleted: 'Deleted “{name}”',
+  },
+  progress: {
+    label: 'Story points done so far',
+    text: '≈ {earned} of {sp} done ({worked} of {budget})',
+    left: '{time} left',
+    over: '{time} over budget',
+    fromEstimate: 'from your estimate',
+    fromScale: 'from the SP scale',
+    short: '≈ {earned} of {sp}',
+  },
   breaks: {
     start: 'Break',
     startLabel: 'Start a break',
@@ -447,6 +476,39 @@ const pl: EntriesMessages = {
       future: 'Start nie może być w przyszłości.',
       invalid: 'Sprawdź czas.',
     },
+  },
+  deleteTask: {
+    day: 'Usuń zadanie',
+    dayLabel: 'Usuń {name} z tego dnia',
+    all: 'Usuń zadanie',
+    allLabel: 'Usuń całe zadanie {name}',
+    titleDay: 'Usunąć „{name}” z tego dnia?',
+    titleAll: 'Usunąć całe zadanie „{name}”?',
+    textDay: {
+      one: 'Usuniesz jedyną sesję z tego dnia ({time}). Tego nie da się cofnąć.',
+      few: 'Usuniesz wszystkie {n} sesje z tego dnia ({time}). Tego nie da się cofnąć.',
+      many: 'Usuniesz wszystkie {n} sesji z tego dnia ({time}). Tego nie da się cofnąć.',
+      other:
+        'Usuniesz wszystkie {n} sesji z tego dnia ({time}). Tego nie da się cofnąć.',
+    },
+    textAll: {
+      one: 'Usuniesz jego jedyną sesję ({time}), także z raportów i sprintów. Tego nie da się cofnąć.',
+      few: 'Usuniesz wszystkie {n} sesje ze wszystkich dni ({time}), także z raportów i sprintów. Tego nie da się cofnąć.',
+      many: 'Usuniesz wszystkie {n} sesji ze wszystkich dni ({time}), także z raportów i sprintów. Tego nie da się cofnąć.',
+      other:
+        'Usuniesz wszystkie {n} sesji ze wszystkich dni ({time}), także z raportów i sprintów. Tego nie da się cofnąć.',
+    },
+    confirm: 'Usuń',
+    deleted: 'Usunięto „{name}”',
+  },
+  progress: {
+    label: 'Ile story pointów już zrobione',
+    text: '≈ {earned} z {sp} zrobione ({worked} z {budget})',
+    left: 'zostało {time}',
+    over: '{time} ponad budżet',
+    fromEstimate: 'wg Twojej estymaty',
+    fromScale: 'wg skali SP',
+    short: '≈ {earned} z {sp}',
   },
   breaks: {
     start: 'Przerwa',

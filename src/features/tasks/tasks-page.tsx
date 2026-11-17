@@ -1,7 +1,7 @@
 import { useDeferredValue, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { ExternalLink, Play, ScrollText, Search } from 'lucide-react'
+import { ExternalLink, Play, ScrollText, Search, Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Badge, ColorDot, Field, Select } from '#/components/ui/controls'
 import { Input } from '#/components/ui/input'
@@ -16,6 +16,7 @@ import { SectionHeader } from '#/features/settings/components/ui'
 import {
   meQuery,
   scaleQuery,
+  sprintsQuery,
   settingsQuery,
   taskTypesQuery,
 } from '#/features/settings/queries'
@@ -23,8 +24,10 @@ import { SummaryDialog } from '#/features/time-entries/components/summary-dialog
 import { useResumeTask } from '#/features/time-entries/components/timer'
 import { rangeEntriesQuery } from '#/features/time-entries/queries'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
-import { fmt, formatDate } from '#/i18n/format'
+import { fmt, formatDate, formatDateRange } from '#/i18n/format'
+import { entriesMessages } from '#/i18n/messages/entries'
 import { panelMessages } from '#/i18n/messages/panel'
+import { DeleteTaskDialog } from './delete-task-dialog'
 import { TaskLink } from './task-link'
 
 const PERIODS = { d30: 30, d90: 90, d365: 365 } as const
@@ -38,8 +41,17 @@ const badgeTone = {
   under: 'success',
 } as const
 
-export function TasksPage() {
+export function TasksPage({
+  sprint: initialSprint,
+  onSprintChange,
+}: {
+  /** Sprint z adresu (?sprint=): od razu pokazuje jego zadania. */
+  sprint?: string
+  onSprintChange?: (sprintId: string | undefined) => void
+} = {}) {
   const t = useMessages(panelMessages).tasks
+  const te = useMessages(entriesMessages)
+  const [deletingTask, setDeletingTask] = useState<TaskRow | null>(null)
   const format = useFormat()
   const { locale } = useI18n()
   const settings = useQuery(settingsQuery).data
@@ -49,7 +61,19 @@ export function TasksPage() {
   const today = todayIn(settings?.timezone)
   const isFree = !hasProAccess(user)
 
-  const [periodId, setPeriodId] = useState<PeriodId>('d30')
+  const [periodId, setPeriodId] = useState<PeriodId | `sprint:${string}`>(
+    initialSprint ? `sprint:${initialSprint}` : 'd30',
+  )
+  const allSprints = useQuery(sprintsQuery).data ?? []
+  const oldest = isFree ? addDays(today, -(FREE_LIMITS.historyDays - 1)) : null
+  // Sprinty, które już się zaczęły (najnowsze pierwsze); w Free tylko te z ostatnich 30 dni.
+  const sprintOptions = allSprints
+    .filter((s) => s.startsOn <= today && (!oldest || s.endsOn >= oldest))
+    .sort((a, b) => b.startsOn.localeCompare(a.startsOn))
+    .slice(0, 26)
+  const sprint = periodId.startsWith('sprint:')
+    ? allSprints.find((s) => `sprint:${s.id}` === periodId)
+    : undefined
   const [search, setSearch] = useState('')
   const [typeId, setTypeId] = useState('')
   const [estimate, setEstimate] = useState<EstimateFilter>('all')
@@ -58,10 +82,18 @@ export function TasksPage() {
   const query = useDeferredValue(search).trim().toLocaleLowerCase()
   const resume = useResumeTask()
 
-  const days = isFree ? FREE_LIMITS.historyDays : PERIODS[periodId]
-  const entries = useQuery(
-    rangeEntriesQuery(addDays(today, -(days - 1)), today),
-  )
+  const days = isFree
+    ? FREE_LIMITS.historyDays
+    : periodId in PERIODS
+      ? PERIODS[periodId as PeriodId]
+      : PERIODS.d30
+  const from = sprint
+    ? oldest && sprint.startsOn < oldest
+      ? oldest
+      : sprint.startsOn
+    : addDays(today, -(days - 1))
+  const to = sprint ? (sprint.endsOn < today ? sprint.endsOn : today) : today
+  const entries = useQuery(rangeEntriesQuery(from, to))
 
   const { rows, latest } = useMemo(() => {
     const list = entries.data ?? []
@@ -215,6 +247,16 @@ export function TasksPage() {
                 <ScrollText aria-hidden />
                 <span className="hidden xl:inline">{t.summaryButton}</span>
               </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-ink-soft hover:text-destructive"
+                aria-label={fmt(te.deleteTask.allLabel, { name: row.title })}
+                title={te.deleteTask.all}
+                onClick={() => setDeletingTask(row)}
+              >
+                <Trash2 aria-hidden />
+              </Button>
             </span>
           )}
         </div>
@@ -315,23 +357,51 @@ export function TasksPage() {
           {(control) => (
             <Select
               {...control}
-              value={isFree ? 'd30' : periodId}
-              disabled={isFree}
+              value={isFree && !sprint ? 'd30' : periodId}
               onChange={(e) => {
-                setPeriodId(e.target.value as PeriodId)
+                const next = e.target.value as typeof periodId
+                setPeriodId(next)
                 setLimit(PAGE)
+                onSprintChange?.(
+                  next.startsWith('sprint:') ? next.slice(7) : undefined,
+                )
               }}
             >
-              {(Object.keys(PERIODS) as Array<PeriodId>).map((id) => (
-                <option key={id} value={id}>
-                  {t.periods[id]}
-                </option>
-              ))}
+              <optgroup label={t.periodGroup}>
+                {(isFree
+                  ? (['d30'] as Array<PeriodId>)
+                  : (Object.keys(PERIODS) as Array<PeriodId>)
+                ).map((id) => (
+                  <option key={id} value={id}>
+                    {t.periods[id]}
+                  </option>
+                ))}
+              </optgroup>
+              {sprintOptions.length > 0 && (
+                <optgroup label={t.sprintGroup}>
+                  {sprintOptions.map((s) => (
+                    <option key={s.id} value={`sprint:${s.id}`}>
+                      {s.endsOn >= today
+                        ? fmt(t.currentSprint, { name: s.name })
+                        : s.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </Select>
           )}
         </Field>
       </div>
 
+      {sprint && (
+        <p className="mb-4 text-sm text-ink-soft">
+          {fmt(t.sprintRange, {
+            name: sprint.name,
+            dates: formatDateRange(locale, sprint.startsOn, sprint.endsOn),
+          })}
+          {sprint.goal && ` · ${sprint.goal}`}
+        </p>
+      )}
       {isFree && (
         <p className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-soft">
           {t.freeNote}
@@ -390,6 +460,13 @@ export function TasksPage() {
         )}
       </section>
 
+      <DeleteTaskDialog
+        task={deletingTask}
+        date={null}
+        sessions={deletingTask?.sessions ?? 0}
+        minutes={deletingTask?.minutes ?? 0}
+        onClose={() => setDeletingTask(null)}
+      />
       {summarizing && (
         <SummaryDialog
           entry={summarizing}

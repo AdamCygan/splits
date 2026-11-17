@@ -2,6 +2,43 @@ import type { Dictionary } from '../context'
 import type { Plural } from '../format'
 
 const en = {
+  charts: {
+    title: 'Analysis',
+    showTable: 'Show as a table',
+    total: 'Total',
+    week: '{from} – {to}',
+    daily: {
+      title: 'Time day by day',
+      titleWeekly: 'Time week by week',
+      lead: 'Hours logged, split by the kind of work. Hover or focus a column for details.',
+      when: 'When',
+      keys: 'Chart: use the left and right arrow keys to move between columns',
+    },
+    hours: {
+      title: 'When you work',
+      lead: 'Weekday and hour of the entries with a start and end time.',
+      empty: 'No entries with a start and end time in this period.',
+      less: 'Less',
+      more: 'More',
+      cell: '{day}, {hour}: {time}',
+    },
+    estimates: {
+      title: 'Estimate accuracy',
+      lead: 'Tasks with an estimate, biggest misses first.',
+      empty:
+        'No tasks with an estimate in this period. Add one in the entry form.',
+      over: 'Took longer',
+      under: 'Took less',
+      exact: 'right on',
+      row: '{time} of {estimate}',
+    },
+    sprints: {
+      sp: 'Story points per sprint',
+      spLead: 'Points of the tasks you worked on in each sprint.',
+      perSp: 'Hours per story point',
+      perSpLead: 'Lower means points cost you less time.',
+    },
+  },
   pageTitle: 'Reports',
   lead: 'Story points and time spent on every task, for a sprint or any period.',
   filters: 'Report filters',
@@ -106,6 +143,43 @@ const en = {
 export type ReportsMessages = typeof en
 
 const pl: ReportsMessages = {
+  charts: {
+    title: 'Analiza',
+    showTable: 'Pokaż jako tabelę',
+    total: 'Razem',
+    week: '{from} – {to}',
+    daily: {
+      title: 'Czas dzień po dniu',
+      titleWeekly: 'Czas tydzień po tygodniu',
+      lead: 'Wpisane godziny z podziałem na rodzaj pracy. Najedź albo przejdź klawiaturą na kolumnę, żeby zobaczyć szczegóły.',
+      when: 'Kiedy',
+      keys: 'Wykres: strzałki w lewo i w prawo przechodzą między kolumnami',
+    },
+    hours: {
+      title: 'Kiedy pracujesz',
+      lead: 'Dzień tygodnia i godzina wpisów z godzinami od–do.',
+      empty: 'W tym okresie nie ma wpisów z godzinami od–do.',
+      less: 'Mniej',
+      more: 'Więcej',
+      cell: '{day}, {hour}: {time}',
+    },
+    estimates: {
+      title: 'Trafność estymat',
+      lead: 'Zadania z estymatą, od największego rozjazdu.',
+      empty:
+        'W tym okresie nie ma zadań z estymatą. Dodasz ją w formularzu wpisu.',
+      over: 'Trwało dłużej',
+      under: 'Trwało krócej',
+      exact: 'dokładnie',
+      row: '{time} z {estimate}',
+    },
+    sprints: {
+      sp: 'Story pointy na sprint',
+      spLead: 'Punkty zadań, nad którymi pracowałeś w danym sprincie.',
+      perSp: 'Godziny na story point',
+      perSpLead: 'Mniej znaczy, że punkt kosztuje Cię mniej czasu.',
+    },
+  },
   pageTitle: 'Raporty',
   lead: 'Story pointy i czas spędzony na każdym zadaniu, za sprint albo dowolny okres.',
   filters: 'Filtry raportu',

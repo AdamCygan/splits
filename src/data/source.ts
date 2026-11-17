@@ -162,6 +162,8 @@ export interface DataSource {
     forTask: (ref: TaskRef) => R<Array<TimeEntry>>
     /** Zmienia tytuł, link, projekt i SP we wszystkich wpisach zadania; zwraca je od najstarszego. */
     updateTask: (ref: TaskRef, input: TaskUpdateInput) => R<Array<TimeEntry>>
+    /** Usuwa wszystkie sesje zadania (albo tylko z `date`); zwraca ich liczbę. */
+    removeTask: (ref: TaskRef, date: string | null) => R<{ deleted: number }>
     /** Działający timer albo null. */
     running: () => R<TimeEntry | null>
     /** Startuje timer; poprzedni działający zatrzymuje się automatycznie. */

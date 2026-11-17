@@ -205,6 +205,16 @@ export const taskUpdateInput = z.object({
   estimateMinutes: z.number().int().min(1).max(60000).nullable().optional(),
 })
 
+/** Usunięcie całego zadania: wszystkie sesje albo tylko te z jednego dnia. */
+export const taskDeleteInput = z.object({
+  ref: z.object({
+    taskTypeId: uuid,
+    title: z.string().max(400),
+    link: z.string().max(4096).nullable(),
+  }),
+  date: day.nullable().default(null),
+})
+
 export const taskRefInput = z.object({
   taskTypeId: uuid,
   title: z.string().max(400),

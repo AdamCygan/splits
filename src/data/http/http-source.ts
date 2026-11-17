@@ -202,6 +202,16 @@ export const httpSource: DataSource = {
         },
         ...input,
       }),
+    removeTask: (ref, date) =>
+      send(
+        'POST',
+        '/time-entries/task/delete',
+        z.object({ deleted: z.number() }),
+        {
+          ref: { taskTypeId: ref.taskTypeId, title: ref.title, link: ref.link },
+          date,
+        },
+      ),
     running: () => get('/time-entries/running', s.timeEntrySchema.nullable()),
     start: (input) =>
       send(

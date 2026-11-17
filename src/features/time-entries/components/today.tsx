@@ -37,9 +37,11 @@ import type { TemplateChoice } from './use-template-dialog'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { entriesQuery, entryKeys } from '../queries'
 import { DayOffBanner, DayOffButton } from '#/features/days-off/day-off-today'
+import { DeleteTaskDialog } from '#/features/tasks/delete-task-dialog'
 import { TaskLink } from '#/features/tasks/task-link'
 import { BreakTile } from './breaks'
 import { DayPicker } from './day-picker'
+import { TaskProgress } from './task-progress'
 import { EntryForm } from './entry-form'
 import { ExtendDialog } from './extend-dialog'
 import { SummaryDialog } from './summary-dialog'
@@ -239,6 +241,11 @@ function EntryList({
   } | null>(null)
   const [deleting, setDeleting] = useState<TimeEntry | null>(null)
   const [extending, setExtending] = useState<TimeEntry | null>(null)
+  const [deletingTask, setDeletingTask] = useState<{
+    task: TimeEntry
+    sessions: number
+    minutes: number
+  } | null>(null)
   const [summarizing, setSummarizing] = useState<TimeEntry | null>(null)
   const remove = useDataMutation((id: string) => data.entries.remove(id), {
     invalidate: [entryKeys.all],
@@ -296,6 +303,24 @@ function EntryList({
                       )}
                       {paused && <Badge tone="warning">{t.timer.paused}</Badge>}
                       <TaskTotal done={done} running={running} />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-ink-soft hover:text-destructive"
+                        title={t.deleteTask.day}
+                        aria-label={fmt(t.deleteTask.dayLabel, {
+                          name: latest.title,
+                        })}
+                        onClick={() =>
+                          setDeletingTask({
+                            task: latest,
+                            sessions: sessions.length,
+                            minutes: done,
+                          })
+                        }
+                      >
+                        <Trash2 aria-hidden className="size-4" />
+                      </Button>
                     </p>
                   </div>
                   <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
@@ -334,6 +359,9 @@ function EntryList({
                       </a>
                     )}
                   </p>
+                  {!isMeeting && storyPoints !== null && (
+                    <TaskProgress entry={running ?? latest} />
+                  )}
 
                   {/* Odcinki czasu tego zadania, od najwcześniejszego: np. 6:40–7:20, potem 9:00–10:00 */}
                   <ol
@@ -564,6 +592,14 @@ function EntryList({
           onClose={() => setSummarizing(null)}
         />
       )}
+
+      <DeleteTaskDialog
+        task={deletingTask?.task ?? null}
+        date={deletingTask?.task.workDate ?? null}
+        sessions={deletingTask?.sessions ?? 0}
+        minutes={deletingTask?.minutes ?? 0}
+        onClose={() => setDeletingTask(null)}
+      />
 
       <ConfirmDialog
         open={deleting !== null}

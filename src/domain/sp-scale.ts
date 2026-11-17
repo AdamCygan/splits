@@ -111,3 +111,31 @@ export function suggestPoints(
 ) {
   return sortScale(steps).find((s) => minutes <= s.maxMinutes)?.points ?? null
 }
+
+/**
+ * Budżet czasu zadania: własna estymata, a bez niej górny limit czasu dla tych SP w skali
+ * (np. 5 SP = do 8 h). null = bez SP i bez estymaty albo SP spoza skali.
+ */
+export function taskBudget(
+  storyPoints: number | null,
+  estimateMinutes: number | null,
+  scale: ReadonlyArray<Pick<ScaleStepDraft, 'points' | 'maxMinutes'>>,
+): number | null {
+  if (estimateMinutes !== null) return estimateMinutes
+  if (storyPoints === null) return null
+  return scale.find((s) => s.points === storyPoints)?.maxMinutes ?? null
+}
+
+/**
+ * Ile SP „zrobił” przepracowany czas: część budżetu przeliczona na punkty (z dokładnością
+ * do 0,1), najwyżej pełne SP zadania. 3 h z 8 h przy 5 SP = 1,9 SP.
+ */
+export function earnedPoints(
+  storyPoints: number,
+  workedMinutes: number,
+  budgetMinutes: number,
+): number {
+  if (budgetMinutes <= 0) return 0
+  const share = Math.min(1, workedMinutes / budgetMinutes)
+  return Math.round(storyPoints * share * 10) / 10
+}

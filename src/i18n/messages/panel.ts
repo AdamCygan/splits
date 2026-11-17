@@ -32,6 +32,7 @@ const en = {
     goal: 'Goal',
     breakdown: 'Where the time went',
     openReport: 'Open report',
+    openTasks: 'Sprint tasks',
     history: 'Past sprints',
     historyLead:
       'Compare sprints to see whether a story point costs the same every time.',
@@ -61,7 +62,11 @@ const en = {
     searchPlaceholder: 'Title, ticket key or link',
     type: 'Type of work',
     allTypes: 'All types',
-    period: 'Period',
+    period: 'Period or sprint',
+    periodGroup: 'Period',
+    sprintGroup: 'Sprint',
+    currentSprint: '{name} (current)',
+    sprintRange: '{name}: {dates}',
     periods: {
       d30: 'Last 30 days',
       d90: 'Last 90 days',
@@ -268,6 +273,7 @@ const pl: PanelMessages = {
     goal: 'Cel',
     breakdown: 'Na co poszedł czas',
     openReport: 'Otwórz raport',
+    openTasks: 'Zadania sprintu',
     history: 'Poprzednie sprinty',
     historyLead:
       'Porównaj sprinty i sprawdź, czy story point za każdym razem kosztuje tyle samo.',
@@ -297,7 +303,11 @@ const pl: PanelMessages = {
     searchPlaceholder: 'Tytuł, numer ticketu albo link',
     type: 'Typ pracy',
     allTypes: 'Wszystkie typy',
-    period: 'Okres',
+    period: 'Okres albo sprint',
+    periodGroup: 'Okres',
+    sprintGroup: 'Sprint',
+    currentSprint: '{name} (bieżący)',
+    sprintRange: '{name}: {dates}',
     periods: {
       d30: 'Ostatnie 30 dni',
       d90: 'Ostatnie 90 dni',

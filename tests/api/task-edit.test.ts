@@ -107,3 +107,34 @@ describe('task edit from the report', () => {
     expect(res.status).toBe(404)
   })
 })
+
+describe('task delete', () => {
+  it('deletes a task from one day or from every day', async () => {
+    const { c, ref } = await task()
+    const today = todayIn('Europe/Warsaw')
+    const day = await c.post<{ deleted: number }>('/time-entries/task/delete', {
+      ref,
+      date: today,
+    })
+    expect(day.body).toEqual({ deleted: 1 })
+    const left = await c.get<Array<Entry>>(
+      `/time-entries/by-task?${new URLSearchParams(ref).toString()}`,
+    )
+    expect(left.body).toHaveLength(1)
+
+    const { c: other } = await registered()
+    expect(
+      (await other.post('/time-entries/task/delete', { ref, date: null }))
+        .status,
+    ).toBe(404)
+
+    const all = await c.post<{ deleted: number }>('/time-entries/task/delete', {
+      ref,
+      date: null,
+    })
+    expect(all.body).toEqual({ deleted: 1 })
+    expect(
+      (await c.post('/time-entries/task/delete', { ref, date: null })).status,
+    ).toBe(404)
+  })
+})

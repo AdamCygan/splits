@@ -25,6 +25,7 @@ import {
   runningQuery,
 } from '../queries'
 import { BreakBar, useStartBreak } from './breaks'
+import { useTaskProgress } from './task-progress'
 
 /** Licznik sekund od startu, odświeżany co sekundę tylko gdy timer działa. */
 export function useElapsed(entry: TimeEntry | null | undefined) {
@@ -165,6 +166,7 @@ export function TimerBar() {
             {type?.name}
             {running.startTime &&
               ` · ${fmt(t.timer.since, { time: clockTime(tag, running.startTime) })}`}
+            <RunningProgress entry={running} />
           </p>
         </div>
         <span
@@ -301,5 +303,21 @@ function PausedBar({ paused }: { paused: Array<TimeEntry> }) {
         })}
       </ul>
     </section>
+  )
+}
+
+/** „≈ 1,9 z 5 SP” na pasku timera: ile zadania już zrobione wg przepracowanego czasu. */
+function RunningProgress({ entry }: { entry: TimeEntry }) {
+  const t = useMessages(entriesMessages).progress
+  const format = useFormat()
+  const p = useTaskProgress(entry)
+  if (!p) return null
+  return (
+    <>
+      {' · '}
+      <span className="font-semibold text-white">
+        {fmt(t.short, { earned: format.number(p.earned), sp: format.sp(p.sp) })}
+      </span>
+    </>
   )
 }

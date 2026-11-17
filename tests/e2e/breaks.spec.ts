@@ -59,8 +59,8 @@ test.describe('breaks', () => {
     await page.keyboard.press('Escape')
 
     // 40 z 30 minut: ponad limit.
-    await expect(page.getByText('40m of 30m')).toBeVisible()
-    await expect(page.getByText('10m over')).toBeVisible()
+    await expect(page.getByText('40m of 30m', { exact: true })).toBeVisible()
+    await expect(page.getByText('10m over', { exact: true })).toBeVisible()
 
     await page.getByRole('button', { name: 'Manage breaks' }).click()
     await dialog.getByRole('button', { name: /^Delete break / }).click()

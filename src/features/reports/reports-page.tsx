@@ -35,6 +35,7 @@ import {
   taskTypesQuery,
 } from '#/features/settings/queries'
 import { TaskLink } from '#/features/tasks/task-link'
+import { EstimateChart, HourHeatmap, TimeChart } from './charts'
 import { TaskDialog } from '#/features/time-entries/components/task-dialog'
 import { rangeEntriesQuery } from '#/features/time-entries/queries'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
@@ -136,6 +137,10 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
   )
   const rows = typeId ? allRows.filter((r) => r.taskTypeId === typeId) : allRows
   const sorted = sortRows(rows, sort.by, sort.dir)
+  // Wykresy liczą się z tych samych danych co tabela: filtr typu zawęża wszystko.
+  const chartEntries = (entries.data ?? []).filter(
+    (e) => !typeId || e.taskTypeId === typeId,
+  )
   const totals = totalsOf(rows)
   const typeRows = byType(
     allRows,
@@ -409,320 +414,348 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
-          <section
-            aria-labelledby="report-tasks"
-            className="order-2 min-w-0 rounded-2xl border border-line bg-surface xl:order-1"
-          >
-            <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line px-5 py-4 sm:px-6">
-              <h2 id="report-tasks" className="type-heading text-2xl">
-                {t.table.title}
-              </h2>
-              <p className="text-sm text-ink-soft">{periodLabel}</p>
-            </header>
-            <div
-              className="overflow-x-auto"
-              tabIndex={0}
-              role="region"
-              aria-label={t.table.region}
+        <>
+          <section aria-labelledby="report-charts" className="mb-6">
+            <h2 id="report-charts" className="sr-only">
+              {t.charts.title}
+            </h2>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <TimeChart
+                className="lg:col-span-2"
+                entries={chartEntries}
+                from={range.from}
+                to={range.to}
+                types={types}
+              />
+              <HourHeatmap entries={chartEntries} />
+              <EstimateChart rows={rows} />
+            </div>
+          </section>
+          <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+            <section
+              aria-labelledby="report-tasks"
+              className="order-2 min-w-0 rounded-2xl border border-line bg-surface xl:order-1"
             >
-              <table className="w-full text-left text-sm sm:min-w-[40rem]">
-                <caption className="sr-only">
-                  {fmt(t.table.caption, { period: periodLabel })}
-                </caption>
-                <thead className="bg-muted/50 text-ink-soft">
-                  <tr>
-                    <SortHeader
-                      column="title"
-                      label={t.table.columns.title}
-                      sort={sort}
-                      onSort={toggleSort}
-                      sortLabel={t.table.sortBy}
-                      className="pl-5 sm:pl-6"
-                    />
-                    <th
-                      scope="col"
-                      className="hidden px-3 py-2.5 font-medium sm:table-cell"
-                    >
-                      {t.table.columns.type}
-                    </th>
-                    <SortHeader
-                      column="storyPoints"
-                      label={t.table.columns.storyPoints}
-                      sort={sort}
-                      onSort={toggleSort}
-                      sortLabel={t.table.sortBy}
-                      numeric
-                    />
-                    <SortHeader
-                      column="minutes"
-                      label={t.table.columns.minutes}
-                      sort={sort}
-                      onSort={toggleSort}
-                      sortLabel={t.table.sortBy}
-                      numeric
-                    />
-                    <th
-                      scope="col"
-                      className="hidden px-3 py-2.5 text-right font-medium sm:table-cell"
-                    >
-                      {t.table.columns.sessions}
-                    </th>
-                    <SortHeader
-                      column="last"
-                      label={t.table.columns.last}
-                      sort={sort}
-                      onSort={toggleSort}
-                      sortLabel={t.table.sortBy}
-                      className="hidden pr-5 sm:table-cell sm:pr-6"
-                    />
-                  </tr>
-                </thead>
-                <tbody>
-                  {sorted.map((r) => {
-                    const type = typeOf(r.taskTypeId)
-                    const project = projectOf(r.projectId)
-                    return (
-                      <tr
-                        key={r.key}
-                        className="border-t border-line align-top"
+              <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line px-5 py-4 sm:px-6">
+                <h2 id="report-tasks" className="type-heading text-2xl">
+                  {t.table.title}
+                </h2>
+                <p className="text-sm text-ink-soft">{periodLabel}</p>
+              </header>
+              <div
+                className="overflow-x-auto"
+                tabIndex={0}
+                role="region"
+                aria-label={t.table.region}
+              >
+                <table className="w-full text-left text-sm sm:min-w-[40rem]">
+                  <caption className="sr-only">
+                    {fmt(t.table.caption, { period: periodLabel })}
+                  </caption>
+                  <thead className="bg-muted/50 text-ink-soft">
+                    <tr>
+                      <SortHeader
+                        column="title"
+                        label={t.table.columns.title}
+                        sort={sort}
+                        onSort={toggleSort}
+                        sortLabel={t.table.sortBy}
+                        className="pl-5 sm:pl-6"
+                      />
+                      <th
+                        scope="col"
+                        className="hidden px-3 py-2.5 font-medium sm:table-cell"
                       >
-                        <th
-                          scope="row"
-                          className="max-w-[22rem] py-3 pr-3 pl-5 font-medium sm:pl-6"
+                        {t.table.columns.type}
+                      </th>
+                      <SortHeader
+                        column="storyPoints"
+                        label={t.table.columns.storyPoints}
+                        sort={sort}
+                        onSort={toggleSort}
+                        sortLabel={t.table.sortBy}
+                        numeric
+                      />
+                      <SortHeader
+                        column="minutes"
+                        label={t.table.columns.minutes}
+                        sort={sort}
+                        onSort={toggleSort}
+                        sortLabel={t.table.sortBy}
+                        numeric
+                      />
+                      <th
+                        scope="col"
+                        className="hidden px-3 py-2.5 text-right font-medium sm:table-cell"
+                      >
+                        {t.table.columns.sessions}
+                      </th>
+                      <SortHeader
+                        column="last"
+                        label={t.table.columns.last}
+                        sort={sort}
+                        onSort={toggleSort}
+                        sortLabel={t.table.sortBy}
+                        className="hidden pr-5 sm:table-cell sm:pr-6"
+                      />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sorted.map((r) => {
+                      const type = typeOf(r.taskTypeId)
+                      const project = projectOf(r.projectId)
+                      return (
+                        <tr
+                          key={r.key}
+                          className="border-t border-line align-top"
                         >
-                          <span className="inline-flex max-w-full items-start gap-1.5">
-                            <TaskLink
-                              task={{
-                                title: r.title,
-                                link: r.link,
-                                taskTypeId: r.taskTypeId,
-                              }}
-                            >
-                              {r.title}
-                            </TaskLink>
-                            <button
-                              type="button"
-                              aria-label={fmt(t.table.edit, { name: r.title })}
-                              onClick={() =>
-                                setEditing({
+                          <th
+                            scope="row"
+                            className="max-w-[22rem] py-3 pr-3 pl-5 font-medium sm:pl-6"
+                          >
+                            <span className="inline-flex max-w-full items-start gap-1.5">
+                              <TaskLink
+                                task={{
                                   title: r.title,
                                   link: r.link,
                                   taskTypeId: r.taskTypeId,
-                                })
-                              }
-                              className="mt-0.5 shrink-0 rounded text-ink-soft opacity-60 hover:opacity-100 focus-visible:opacity-100"
-                            >
-                              <Pencil aria-hidden className="size-3.5" />
-                            </button>
-                          </span>
-                          <span className="mt-1 flex flex-wrap items-center gap-1.5 font-normal">
-                            <span className="inline-flex items-center gap-1.5 text-xs text-ink-soft sm:hidden">
-                              <ColorDot
-                                color={type?.color ?? 'var(--line)'}
-                                className="size-2.5"
-                              />
+                                }}
+                              >
+                                {r.title}
+                              </TaskLink>
+                              <button
+                                type="button"
+                                aria-label={fmt(t.table.edit, {
+                                  name: r.title,
+                                })}
+                                onClick={() =>
+                                  setEditing({
+                                    title: r.title,
+                                    link: r.link,
+                                    taskTypeId: r.taskTypeId,
+                                  })
+                                }
+                                className="mt-0.5 shrink-0 rounded text-ink-soft opacity-60 hover:opacity-100 focus-visible:opacity-100"
+                              >
+                                <Pencil aria-hidden className="size-3.5" />
+                              </button>
+                            </span>
+                            <span className="mt-1 flex flex-wrap items-center gap-1.5 font-normal">
+                              <span className="inline-flex items-center gap-1.5 text-xs text-ink-soft sm:hidden">
+                                <ColorDot
+                                  color={type?.color ?? 'var(--line)'}
+                                  className="size-2.5"
+                                />
+                                {type?.name}
+                              </span>
+                              {project && (
+                                <Badge tone="muted">
+                                  {project.key ?? project.name}
+                                </Badge>
+                              )}
+                              {r.running && (
+                                <Badge tone="success">{t.table.running}</Badge>
+                              )}
+                              {r.link && (
+                                <a
+                                  href={r.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-xs text-ink-soft underline-offset-4 hover:text-ink hover:underline"
+                                >
+                                  {r.taskKey ?? new URL(r.link).hostname}
+                                  <ExternalLink
+                                    aria-hidden
+                                    className="size-3"
+                                  />
+                                  <span className="sr-only">
+                                    {' '}
+                                    {fmt(t.table.open, { name: r.title })}
+                                  </span>
+                                </a>
+                              )}
+                            </span>
+                          </th>
+                          <td className="hidden px-3 py-3 sm:table-cell">
+                            <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                              <ColorDot color={type?.color ?? 'var(--line)'} />
                               {type?.name}
                             </span>
-                            {project && (
-                              <Badge tone="muted">
-                                {project.key ?? project.name}
-                              </Badge>
+                          </td>
+                          <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums">
+                            {r.storyPoints === null ? (
+                              <span className="text-ink-soft">
+                                {t.table.noSp}
+                              </span>
+                            ) : (
+                              <span className="font-semibold">
+                                {format.number(r.storyPoints)}
+                              </span>
                             )}
-                            {r.running && (
-                              <Badge tone="success">{t.table.running}</Badge>
-                            )}
-                            {r.link && (
-                              <a
-                                href={r.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-xs text-ink-soft underline-offset-4 hover:text-ink hover:underline"
+                          </td>
+                          <td className="px-3 py-3 text-right font-semibold whitespace-nowrap tabular-nums">
+                            {format.minutes(r.minutes)}
+                            {r.estimateMinutes !== null && (
+                              <span
+                                className={cn(
+                                  'block text-xs font-medium',
+                                  r.minutes > r.estimateMinutes
+                                    ? 'text-destructive'
+                                    : 'text-ink-soft',
+                                )}
                               >
-                                {r.taskKey ?? new URL(r.link).hostname}
-                                <ExternalLink aria-hidden className="size-3" />
-                                <span className="sr-only">
-                                  {' '}
-                                  {fmt(t.table.open, { name: r.title })}
-                                </span>
-                              </a>
+                                {fmt(t.table.estimate, {
+                                  time: format.minutes(r.estimateMinutes),
+                                })}
+                                {r.minutes !== r.estimateMinutes && (
+                                  <>
+                                    {', '}
+                                    {fmt(
+                                      r.minutes > r.estimateMinutes
+                                        ? t.table.overEstimate
+                                        : t.table.underEstimate,
+                                      {
+                                        time: format.minutes(
+                                          Math.abs(
+                                            r.minutes - r.estimateMinutes,
+                                          ),
+                                        ),
+                                      },
+                                    )}
+                                  </>
+                                )}
+                              </span>
                             )}
-                          </span>
-                        </th>
-                        <td className="hidden px-3 py-3 sm:table-cell">
-                          <span className="inline-flex items-center gap-2 whitespace-nowrap">
-                            <ColorDot color={type?.color ?? 'var(--line)'} />
-                            {type?.name}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums">
-                          {r.storyPoints === null ? (
-                            <span className="text-ink-soft">
-                              {t.table.noSp}
-                            </span>
-                          ) : (
-                            <span className="font-semibold">
-                              {format.number(r.storyPoints)}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-3 py-3 text-right font-semibold whitespace-nowrap tabular-nums">
-                          {format.minutes(r.minutes)}
-                          {r.estimateMinutes !== null && (
-                            <span
-                              className={cn(
-                                'block text-xs font-medium',
-                                r.minutes > r.estimateMinutes
-                                  ? 'text-destructive'
-                                  : 'text-ink-soft',
-                              )}
-                            >
-                              {fmt(t.table.estimate, {
-                                time: format.minutes(r.estimateMinutes),
-                              })}
-                              {r.minutes !== r.estimateMinutes && (
-                                <>
-                                  {', '}
-                                  {fmt(
-                                    r.minutes > r.estimateMinutes
-                                      ? t.table.overEstimate
-                                      : t.table.underEstimate,
-                                    {
-                                      time: format.minutes(
-                                        Math.abs(r.minutes - r.estimateMinutes),
-                                      ),
-                                    },
-                                  )}
-                                </>
-                              )}
-                            </span>
-                          )}
-                          {r.extensionMinutes > 0 && (
-                            <span
-                              className="block text-xs font-medium text-ink-soft"
-                              title={r.extensionNotes.join('\n')}
-                            >
-                              {fmt(t.table.extension, {
-                                time: format.minutes(r.extensionMinutes),
-                              })}
-                            </span>
-                          )}
-                          {r.overtimeMinutes > 0 && (
-                            <span
-                              className="block text-xs font-medium text-ink-soft"
-                              title={r.overtimeNotes.join('\n')}
-                            >
-                              {fmt(t.stats.overtime, {
-                                time: format.minutes(r.overtimeMinutes),
-                              })}
-                            </span>
-                          )}
-                        </td>
-                        <td className="hidden px-3 py-3 text-right tabular-nums sm:table-cell">
-                          {r.sessions}
-                        </td>
-                        <td className="hidden py-3 pr-5 pl-3 whitespace-nowrap text-ink-soft sm:table-cell sm:pr-6">
-                          {formatDate(locale, r.last, {
-                            day: 'numeric',
-                            month: 'short',
-                          })}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-line font-semibold">
-                    <th scope="row" className="py-3 pr-3 pl-5 sm:pl-6">
-                      {t.table.total}
-                    </th>
-                    <td className="hidden px-3 py-3 font-normal text-ink-soft sm:table-cell">
-                      {format.plural(t.byType.tasks, totals.tasks)}
-                    </td>
-                    <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums">
-                      {format.number(totals.storyPoints)}
-                    </td>
-                    <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums">
-                      {format.minutes(totals.minutes)}
-                    </td>
-                    <td className="hidden px-3 py-3 text-right tabular-nums sm:table-cell">
-                      {rows.reduce((sum, r) => sum + r.sessions, 0)}
-                    </td>
-                    <td className="hidden pr-5 sm:table-cell sm:pr-6" />
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </section>
+                            {r.extensionMinutes > 0 && (
+                              <span
+                                className="block text-xs font-medium text-ink-soft"
+                                title={r.extensionNotes.join('\n')}
+                              >
+                                {fmt(t.table.extension, {
+                                  time: format.minutes(r.extensionMinutes),
+                                })}
+                              </span>
+                            )}
+                            {r.overtimeMinutes > 0 && (
+                              <span
+                                className="block text-xs font-medium text-ink-soft"
+                                title={r.overtimeNotes.join('\n')}
+                              >
+                                {fmt(t.stats.overtime, {
+                                  time: format.minutes(r.overtimeMinutes),
+                                })}
+                              </span>
+                            )}
+                          </td>
+                          <td className="hidden px-3 py-3 text-right tabular-nums sm:table-cell">
+                            {r.sessions}
+                          </td>
+                          <td className="hidden py-3 pr-5 pl-3 whitespace-nowrap text-ink-soft sm:table-cell sm:pr-6">
+                            {formatDate(locale, r.last, {
+                              day: 'numeric',
+                              month: 'short',
+                            })}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-line font-semibold">
+                      <th scope="row" className="py-3 pr-3 pl-5 sm:pl-6">
+                        {t.table.total}
+                      </th>
+                      <td className="hidden px-3 py-3 font-normal text-ink-soft sm:table-cell">
+                        {format.plural(t.byType.tasks, totals.tasks)}
+                      </td>
+                      <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums">
+                        {format.number(totals.storyPoints)}
+                      </td>
+                      <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums">
+                        {format.minutes(totals.minutes)}
+                      </td>
+                      <td className="hidden px-3 py-3 text-right tabular-nums sm:table-cell">
+                        {rows.reduce((sum, r) => sum + r.sessions, 0)}
+                      </td>
+                      <td className="hidden pr-5 sm:table-cell sm:pr-6" />
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </section>
 
-          <section
-            aria-labelledby="report-types"
-            className="order-1 rounded-2xl border border-line bg-surface p-5 xl:order-2"
-          >
-            <h2 id="report-types" className="type-heading text-2xl">
-              {t.byType.title}
-            </h2>
-            <div
-              role="img"
-              aria-label={fmt(t.byType.chart, {
-                list: typeRows
-                  .map(
-                    (r) =>
-                      `${typeOf(r.taskTypeId)?.name ?? ''} ${percent(r.minutes)}%`,
-                  )
-                  .join(', '),
-              })}
-              className="mt-4 flex h-3 gap-[3px] overflow-hidden rounded-full"
+            <section
+              aria-labelledby="report-types"
+              className="order-1 rounded-2xl border border-line bg-surface p-5 xl:order-2"
             >
-              {typeRows.map((r) => (
-                <div
-                  key={r.taskTypeId}
-                  style={{
-                    flexGrow: r.minutes,
-                    background: typeOf(r.taskTypeId)?.color,
-                  }}
-                />
-              ))}
-            </div>
-            <ul className="mt-4 divide-y divide-line">
-              {typeRows.map((r) => {
-                const type = typeOf(r.taskTypeId)
-                return (
-                  <li key={r.taskTypeId} className="py-3">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <button
-                        type="button"
-                        aria-pressed={typeId === r.taskTypeId}
-                        onClick={() =>
-                          setTypeId((v) =>
-                            v === r.taskTypeId ? '' : r.taskTypeId,
-                          )
-                        }
-                        className="inline-flex min-h-6 items-center gap-2 rounded text-left font-medium underline-offset-4 hover:underline aria-pressed:underline"
-                      >
-                        <ColorDot color={type?.color ?? 'var(--line)'} />
-                        {type?.name}
-                      </button>
-                      <span className="font-semibold tabular-nums">
-                        {format.minutes(r.minutes)}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 pl-5 text-sm text-ink-soft">
-                      {fmt(t.byType.share, { pct: percent(r.minutes) })} ·{' '}
-                      {r.withoutSp === r.tasks
-                        ? t.table.noSp
-                        : format.sp(r.storyPoints)}{' '}
-                      · {format.plural(t.byType.tasks, r.tasks)}
-                      {r.withoutSp > 0 && r.withoutSp < r.tasks && (
-                        <> ({format.plural(t.byType.withoutSp, r.withoutSp)})</>
-                      )}
-                    </p>
-                  </li>
-                )
-              })}
-            </ul>
-          </section>
-        </div>
+              <h2 id="report-types" className="type-heading text-2xl">
+                {t.byType.title}
+              </h2>
+              <div
+                role="img"
+                aria-label={fmt(t.byType.chart, {
+                  list: typeRows
+                    .map(
+                      (r) =>
+                        `${typeOf(r.taskTypeId)?.name ?? ''} ${percent(r.minutes)}%`,
+                    )
+                    .join(', '),
+                })}
+                className="mt-4 flex h-3 gap-[3px] overflow-hidden rounded-full"
+              >
+                {typeRows.map((r) => (
+                  <div
+                    key={r.taskTypeId}
+                    style={{
+                      flexGrow: r.minutes,
+                      background: typeOf(r.taskTypeId)?.color,
+                    }}
+                  />
+                ))}
+              </div>
+              <ul className="mt-4 divide-y divide-line">
+                {typeRows.map((r) => {
+                  const type = typeOf(r.taskTypeId)
+                  return (
+                    <li key={r.taskTypeId} className="py-3">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <button
+                          type="button"
+                          aria-pressed={typeId === r.taskTypeId}
+                          onClick={() =>
+                            setTypeId((v) =>
+                              v === r.taskTypeId ? '' : r.taskTypeId,
+                            )
+                          }
+                          className="inline-flex min-h-6 items-center gap-2 rounded text-left font-medium underline-offset-4 hover:underline aria-pressed:underline"
+                        >
+                          <ColorDot color={type?.color ?? 'var(--line)'} />
+                          {type?.name}
+                        </button>
+                        <span className="font-semibold tabular-nums">
+                          {format.minutes(r.minutes)}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 pl-5 text-sm text-ink-soft">
+                        {fmt(t.byType.share, { pct: percent(r.minutes) })} ·{' '}
+                        {r.withoutSp === r.tasks
+                          ? t.table.noSp
+                          : format.sp(r.storyPoints)}{' '}
+                        · {format.plural(t.byType.tasks, r.tasks)}
+                        {r.withoutSp > 0 && r.withoutSp < r.tasks && (
+                          <>
+                            {' '}
+                            ({format.plural(t.byType.withoutSp, r.withoutSp)})
+                          </>
+                        )}
+                      </p>
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
+          </div>
+        </>
       )}
       {editing && (
         <TaskDialog task={editing} onClose={() => setEditing(null)} />

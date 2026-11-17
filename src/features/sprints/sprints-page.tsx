@@ -28,6 +28,8 @@ import { rangeEntriesQuery } from '#/features/time-entries/queries'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate, formatDateRange } from '#/i18n/format'
 import { daysOffMessages } from '#/i18n/messages/days-off'
+import { reportsMessages } from '#/i18n/messages/reports'
+import { ColumnChart } from '#/features/reports/charts'
 import { panelMessages } from '#/i18n/messages/panel'
 import { cn } from '#/lib/utils'
 
@@ -95,6 +97,7 @@ function Tile({
 export function SprintsPage() {
   const t = useMessages(panelMessages).sprints
   const off = useMessages(daysOffMessages)
+  const charts = useMessages(reportsMessages).charts
   const tasks = useMessages(panelMessages).tasks
   const format = useFormat()
   const { locale } = useI18n()
@@ -337,14 +340,23 @@ export function SprintsPage() {
                     }),
                   })}
               </p>
-              <Link
-                to="/app/analytics"
-                search={{ sprint: current.id }}
-                className={buttonVariants({ variant: 'outline', size: 'sm' })}
-              >
-                {t.openReport}
-                <ArrowRight aria-hidden />
-              </Link>
+              <span className="flex flex-wrap gap-2">
+                <Link
+                  to="/app/tasks"
+                  search={{ sprint: current.id }}
+                  className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                >
+                  {t.openTasks}
+                </Link>
+                <Link
+                  to="/app/analytics"
+                  search={{ sprint: current.id }}
+                  className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                >
+                  {t.openReport}
+                  <ArrowRight aria-hidden />
+                </Link>
+              </span>
             </div>
           </div>
         ) : (
@@ -365,6 +377,34 @@ export function SprintsPage() {
           </div>
         )}
       </section>
+
+      {/* TREND: SP i godziny na SP sprint po sprincie (dwie skale, więc dwa wykresy) */}
+      {stats.length >= 2 && (
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <ColumnChart
+            title={charts.sprints.sp}
+            lead={charts.sprints.spLead}
+            items={[...stats].reverse().map((x) => ({
+              key: x.sprint.id,
+              label: x.sprint.name,
+              value: x.storyPoints,
+              display: format.number(x.storyPoints),
+            }))}
+          />
+          <ColumnChart
+            title={charts.sprints.perSp}
+            lead={charts.sprints.perSpLead}
+            color="var(--wt-pair)"
+            items={[...stats].reverse().map((x) => ({
+              key: x.sprint.id,
+              label: x.sprint.name,
+              value: x.minutesPerSp ?? 0,
+              display:
+                x.minutesPerSp === null ? '–' : format.minutes(x.minutesPerSp),
+            }))}
+          />
+        </div>
+      )}
 
       {/* HISTORIA */}
       <section

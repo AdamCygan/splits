@@ -23,6 +23,7 @@ import {
   rangeQuery,
   taskRefInput,
   taskUpdateInput,
+  taskDeleteInput,
   timerInput,
 } from '../http/inputs'
 import { ownProject, ownTaskType } from './config'
@@ -432,6 +433,24 @@ export const entryRoutes = new Hono<AppEnv>()
    * Edycja zadania z raportu: tytuł, link, projekt i SP zmieniają się we wszystkich wpisach
    * zadania naraz (zadanie = wpisy z tym samym linkiem, a bez linku z tym samym typem i tytułem).
    */
+  /** Usuwa zadanie: wszystkie jego sesje (także trwający timer) albo tylko te z `date`. */
+  .post('/task/delete', async (c) => {
+    const userId = c.get('userId')
+    const input = await body(c, taskDeleteInput)
+    const deleted = await db
+      .delete(t.timeEntries)
+      .where(
+        and(
+          mine(userId),
+          sameTaskAs(input.ref),
+          ...(input.date ? [eq(t.timeEntries.workDate, input.date)] : []),
+        ),
+      )
+      .returning({ id: t.timeEntries.id })
+    if (deleted.length === 0) throw notFound()
+    return c.json({ deleted: deleted.length })
+  })
+
   .put('/task', async (c) => {
     const userId = c.get('userId')
     const input = await body(c, taskUpdateInput)
