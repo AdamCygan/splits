@@ -25,6 +25,7 @@ import { rangeEntriesQuery } from '#/features/time-entries/queries'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
 import { panelMessages } from '#/i18n/messages/panel'
+import { TaskLink } from './task-link'
 
 const PERIODS = { d30: 30, d90: 90, d365: 365 } as const
 type PeriodId = keyof typeof PERIODS
@@ -124,7 +125,9 @@ export function TasksPage() {
             {row.running && <Badge tone="info">{t.running}</Badge>}
           </p>
           <p className="mt-0.5 flex items-center gap-2 font-semibold">
-            <span className="truncate">{row.title}</span>
+            <TaskLink task={row} className="truncate">
+              {row.title}
+            </TaskLink>
             {row.link && (
               <a
                 href={row.link}

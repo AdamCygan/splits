@@ -37,6 +37,7 @@ import type { TemplateChoice } from './use-template-dialog'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { entriesQuery, entryKeys } from '../queries'
 import { DayOffBanner, DayOffButton } from '#/features/days-off/day-off-today'
+import { TaskLink } from '#/features/tasks/task-link'
 import { BreakTile } from './breaks'
 import { DayPicker } from './day-picker'
 import { EntryForm } from './entry-form'
@@ -287,7 +288,7 @@ function EntryList({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                     <h3 className="min-w-0 font-semibold break-words">
-                      {latest.title}
+                      <TaskLink task={latest}>{latest.title}</TaskLink>
                     </h3>
                     <p className="flex shrink-0 items-center gap-2 text-sm font-semibold tabular-nums">
                       {running && (

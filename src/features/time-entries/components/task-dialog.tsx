@@ -29,7 +29,7 @@ import { clockTime } from './timer'
 
 const URL_RE = /^https?:\/\/\S+$/i
 
-const taskQueryKey = (ref: TaskRef) =>
+export const taskQueryKey = (ref: TaskRef) =>
   [...entryKeys.all, 'task', ref.taskTypeId, ref.link ?? '', ref.title] as const
 
 /**
@@ -101,7 +101,7 @@ export function TaskDialog({
   )
 }
 
-function TaskDetails({
+export function TaskDetails({
   entries,
   type,
   onSaved,
@@ -328,7 +328,7 @@ function TaskDetails({
   )
 }
 
-function Sessions({ entries }: { entries: Array<TimeEntry> }) {
+export function Sessions({ entries }: { entries: Array<TimeEntry> }) {
   const t = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   const format = useFormat()

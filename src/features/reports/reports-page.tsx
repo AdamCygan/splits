@@ -34,6 +34,7 @@ import {
   sprintsQuery,
   taskTypesQuery,
 } from '#/features/settings/queries'
+import { TaskLink } from '#/features/tasks/task-link'
 import { TaskDialog } from '#/features/time-entries/components/task-dialog'
 import { rangeEntriesQuery } from '#/features/time-entries/queries'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
@@ -490,24 +491,31 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
                           scope="row"
                           className="max-w-[22rem] py-3 pr-3 pl-5 font-medium sm:pl-6"
                         >
-                          <button
-                            type="button"
-                            aria-label={fmt(t.table.edit, { name: r.title })}
-                            onClick={() =>
-                              setEditing({
+                          <span className="inline-flex max-w-full items-start gap-1.5">
+                            <TaskLink
+                              task={{
                                 title: r.title,
                                 link: r.link,
                                 taskTypeId: r.taskTypeId,
-                              })
-                            }
-                            className="group -mx-1 inline-flex max-w-full items-start gap-1.5 rounded px-1 text-left hover:text-ink hover:underline hover:underline-offset-4"
-                          >
-                            <span>{r.title}</span>
-                            <Pencil
-                              aria-hidden
-                              className="mt-0.5 size-3.5 shrink-0 text-ink-soft opacity-60 group-hover:opacity-100"
-                            />
-                          </button>
+                              }}
+                            >
+                              {r.title}
+                            </TaskLink>
+                            <button
+                              type="button"
+                              aria-label={fmt(t.table.edit, { name: r.title })}
+                              onClick={() =>
+                                setEditing({
+                                  title: r.title,
+                                  link: r.link,
+                                  taskTypeId: r.taskTypeId,
+                                })
+                              }
+                              className="mt-0.5 shrink-0 rounded text-ink-soft opacity-60 hover:opacity-100 focus-visible:opacity-100"
+                            >
+                              <Pencil aria-hidden className="size-3.5" />
+                            </button>
+                          </span>
                           <span className="mt-1 flex flex-wrap items-center gap-1.5 font-normal">
                             <span className="inline-flex items-center gap-1.5 text-xs text-ink-soft sm:hidden">
                               <ColorDot

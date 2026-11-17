@@ -30,6 +30,7 @@ import { Route as AppAnalyticsRouteImport } from './routes/app/analytics'
 import { Route as AppCheckoutRouteImport } from './routes/app/checkout'
 import { Route as AppSettingsRouteRouteImport } from './routes/app/settings/route'
 import { Route as AppSprintsRouteImport } from './routes/app/sprints'
+import { Route as AppTaskRouteImport } from './routes/app/task'
 import { Route as AppTasksRouteImport } from './routes/app/tasks'
 import { Route as ApiV1SplatRouteImport } from './routes/api/v1/$'
 import { Route as AppSettingsIndexRouteImport } from './routes/app/settings/index'
@@ -148,6 +149,11 @@ const AppSprintsRoute = AppSprintsRouteImport.update({
   path: '/sprints',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppTaskRoute = AppTaskRouteImport.update({
+  id: '/task',
+  path: '/task',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppTasksRoute = AppTasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
@@ -238,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/checkout': typeof AppCheckoutRoute
   '/app/sprints': typeof AppSprintsRoute
+  '/app/task': typeof AppTaskRoute
   '/app/tasks': typeof AppTasksRoute
   '/app/': typeof AppIndexRoute
   '/api/v1/$': typeof ApiV1SplatRoute
@@ -271,6 +278,7 @@ export interface FileRoutesByTo {
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/checkout': typeof AppCheckoutRoute
   '/app/sprints': typeof AppSprintsRoute
+  '/app/task': typeof AppTaskRoute
   '/app/tasks': typeof AppTasksRoute
   '/app': typeof AppIndexRoute
   '/api/v1/$': typeof ApiV1SplatRoute
@@ -308,6 +316,7 @@ export interface FileRoutesById {
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/checkout': typeof AppCheckoutRoute
   '/app/sprints': typeof AppSprintsRoute
+  '/app/task': typeof AppTaskRoute
   '/app/tasks': typeof AppTasksRoute
   '/_marketing/': typeof MarketingIndexRoute
   '/app/': typeof AppIndexRoute
@@ -346,6 +355,7 @@ export interface FileRouteTypes {
     | '/app/analytics'
     | '/app/checkout'
     | '/app/sprints'
+    | '/app/task'
     | '/app/tasks'
     | '/app/'
     | '/api/v1/$'
@@ -379,6 +389,7 @@ export interface FileRouteTypes {
     | '/app/analytics'
     | '/app/checkout'
     | '/app/sprints'
+    | '/app/task'
     | '/app/tasks'
     | '/app'
     | '/api/v1/$'
@@ -415,6 +426,7 @@ export interface FileRouteTypes {
     | '/app/analytics'
     | '/app/checkout'
     | '/app/sprints'
+    | '/app/task'
     | '/app/tasks'
     | '/_marketing/'
     | '/app/'
@@ -592,6 +604,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSprintsRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/task': {
+      id: '/app/task'
+      path: '/task'
+      fullPath: '/app/task'
+      preLoaderRoute: typeof AppTaskRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/tasks': {
       id: '/app/tasks'
       path: '/tasks'
@@ -732,6 +751,7 @@ interface AppRouteRouteChildren {
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppCheckoutRoute: typeof AppCheckoutRoute
   AppSprintsRoute: typeof AppSprintsRoute
+  AppTaskRoute: typeof AppTaskRoute
   AppTasksRoute: typeof AppTasksRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -742,6 +762,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppCheckoutRoute: AppCheckoutRoute,
   AppSprintsRoute: AppSprintsRoute,
+  AppTaskRoute: AppTaskRoute,
   AppTasksRoute: AppTasksRoute,
   AppIndexRoute: AppIndexRoute,
 }
