@@ -132,6 +132,7 @@ export const toEntry = (x: typeof t.timeEntries.$inferSelect): TimeEntry => ({
   estimateMinutes: x.estimateMinutes,
   extensionMinutes: x.extensionMinutes,
   extensionNote: x.extensionNote,
+  finishedAt: x.finishedAt?.toISOString() ?? null,
   running: x.running,
   paused: x.paused,
   startedAt: iso(x.startedAt),

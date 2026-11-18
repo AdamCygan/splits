@@ -5,6 +5,7 @@ import { taskInsights } from '#/domain/task-insights'
 let n = 0
 const e = (over: Partial<TimeEntry>): TimeEntry => ({
   id: `e${++n}`,
+  finishedAt: null,
   taskTypeId: 'task',
   projectId: null,
   title: 'PAY-142 Gateway',

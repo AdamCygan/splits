@@ -14,6 +14,7 @@ import {
 let n = 0
 const entry = (patch: Partial<TimeEntry>): TimeEntry => ({
   id: String(++n),
+  finishedAt: null,
   taskTypeId: 'task',
   projectId: null,
   title: 'PAY-142 Payment gateway',

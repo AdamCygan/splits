@@ -24,6 +24,7 @@ import type {
   TimeEntryInput,
   TimerStartInput,
   TimerStartResult,
+  UnfinishedTask,
   TaskRef,
   DayOff,
   DayOffInput,
@@ -162,6 +163,10 @@ export interface DataSource {
     forTask: (ref: TaskRef) => R<Array<TimeEntry>>
     /** Zmienia tytuł, link, projekt i SP we wszystkich wpisach zadania; zwraca je od najstarszego. */
     updateTask: (ref: TaskRef, input: TaskUpdateInput) => R<Array<TimeEntry>>
+    /** Zadanie zakończone albo z powrotem w toku (wszystkie sesje); zwraca liczbę sesji. */
+    finishTask: (ref: TaskRef, finished: boolean) => R<{ updated: number }>
+    /** Niezakończone zadania z poprzednich dni, najświeższe najpierw. */
+    unfinished: () => R<Array<UnfinishedTask>>
     /** Usuwa wszystkie sesje zadania (albo tylko z `date`); zwraca ich liczbę. */
     removeTask: (ref: TaskRef, date: string | null) => R<{ deleted: number }>
     /** Działający timer albo null. */

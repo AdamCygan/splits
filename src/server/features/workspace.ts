@@ -48,6 +48,7 @@ export async function createWorkspace(
         ...e,
         startedAt: e.startedAt ? new Date(e.startedAt) : null,
         createdAt: new Date(e.createdAt),
+        finishedAt: e.finishedAt ? new Date(e.finishedAt) : null,
       })),
     )
 }

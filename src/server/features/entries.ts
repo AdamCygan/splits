@@ -9,6 +9,7 @@ import {
   validateEntry,
 } from '#/domain/entries'
 import { spForType, taskGroupKey } from '#/domain/report'
+import { UNFINISHED_LOOKBACK_DAYS, unfinishedTasks } from '#/domain/unfinished'
 import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
 import { db } from '../db/client'
 import type { Tx } from '../db/client'
@@ -24,6 +25,7 @@ import {
   taskRefInput,
   taskUpdateInput,
   taskDeleteInput,
+  taskFinishInput,
   timerInput,
 } from '../http/inputs'
 import { ownProject, ownTaskType } from './config'
@@ -154,6 +156,22 @@ async function stop(tx: Tx, entry: Row, timezone: string, paused = false) {
   return stopped!
 }
 
+/** Oznacza zadanie (wszystkie sesje) jako zakończone albo otwiera je z powrotem. */
+async function setFinished(
+  tx: Tx,
+  userId: string,
+  ref: TaskRef,
+  finished: boolean,
+) {
+  const rows = await tx
+    .update(t.timeEntries)
+    .set({ finishedAt: finished ? new Date() : null })
+    .where(and(mine(userId), sameTaskAs(ref)))
+    .returning({ id: t.timeEntries.id })
+  if (finished) await clearPaused(tx, userId, ref)
+  return rows.length
+}
+
 /** Zadanie znowu ruszyło albo jest skończone: znika z listy wstrzymanych. */
 async function clearPaused(tx: Tx, userId: string, ref: TaskRef) {
   await tx
@@ -196,6 +214,8 @@ async function startTimer(
   const stopped = await stopRunning(tx, userId, timezone)
   const values = clean(input)
   await clearPaused(tx, userId, values)
+  // Nowa sesja = praca trwa dalej, więc zakończone zadanie znów jest w toku.
+  await setFinished(tx, userId, values, false)
   const [started] = await tx
     .insert(t.timeEntries)
     .values({
@@ -332,6 +352,61 @@ export const entryRoutes = new Hono<AppEnv>()
     return c.json((await pausedOn(db, userId, today)).map(toEntry))
   })
 
+  /** Zadania z poprzednich dni, których nie zakończono — do kontynuacji na „Dziś”. */
+  .get('/unfinished', async (c) => {
+    const userId = c.get('userId')
+    const today = todayIn(await userTimezone(db, userId))
+    const recent = await db
+      .selectDistinct({
+        link: t.timeEntries.link,
+        title: t.timeEntries.title,
+        taskTypeId: t.timeEntries.taskTypeId,
+      })
+      .from(t.timeEntries)
+      .where(
+        and(
+          mine(userId),
+          gte(
+            t.timeEntries.workDate,
+            addDays(today, -UNFINISHED_LOOKBACK_DAYS),
+          ),
+        ),
+      )
+    if (recent.length === 0) return c.json([])
+    // Całe zadania (także sesje sprzed okna), żeby suma czasu i znacznik „zakończone” były pełne.
+    const rows = await db
+      .select()
+      .from(t.timeEntries)
+      .where(
+        and(
+          mine(userId),
+          sql`(${sql.join(
+            recent.map((r) => sql`(${sameTaskAs(r)})`),
+            sql` or `,
+          )})`,
+        ),
+      )
+    const types = await db
+      .select({ id: t.taskTypes.id, kind: t.taskTypes.kind })
+      .from(t.taskTypes)
+      .where(eq(t.taskTypes.userId, userId))
+    const kinds = new Map(types.map((x) => [x.id, x.kind]))
+    return c.json(
+      unfinishedTasks(rows.map(toEntry), today, (id) => kinds.get(id)),
+    )
+  })
+
+  /** Zadanie zakończone (`finished: true`) albo z powrotem w toku. */
+  .post('/task/finish', async (c) => {
+    const userId = c.get('userId')
+    const input = await body(c, taskFinishInput)
+    const updated = await db.transaction((tx) =>
+      setFinished(tx, userId, input.ref, input.finished),
+    )
+    if (updated === 0) throw notFound()
+    return c.json({ updated })
+  })
+
   .get('/by-task', async (c) => {
     const ref = parse(taskRefInput, c.req.query())
     const rows = await db
@@ -424,7 +499,7 @@ export const entryRoutes = new Hono<AppEnv>()
     const userId = c.get('userId')
     await db.transaction(async (tx) => {
       const entry = await ownEntry(tx, userId, c.req.param('id'))
-      await clearPaused(tx, userId, entry)
+      await setFinished(tx, userId, entry, true)
     })
     return c.body(null, 204)
   })

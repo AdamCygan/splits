@@ -78,6 +78,7 @@ let n = 0
 const entry = (over: Partial<TimeEntry>): TimeEntry => ({
   id: `e${n++}`,
   ...base,
+  finishedAt: null,
   overtimeMinutes: null,
   overtimeNote: null,
   estimateMinutes: null,

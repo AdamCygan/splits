@@ -195,6 +195,8 @@ export type TimeEntry = {
    */
   extensionMinutes: number | null
   extensionNote: string | null
+  /** Kiedy zadanie oznaczono jako zakończone (ISO); null = w toku. */
+  finishedAt: string | null
   /** Timer działa: jest start, nie ma końca. Najwyżej jeden naraz. */
   running: boolean
   /** Sesja przerwana (przełączenie na inne zadanie albo „Wstrzymaj”): zadanie czeka na „Wznów”. */
@@ -220,7 +222,7 @@ export type TagInput = Pick<Tag, 'name' | 'color'>
 export type QuickTemplateInput = Omit<QuickTemplate, 'id' | 'sortOrder'>
 export type TimeEntryInput = Omit<
   TimeEntry,
-  'id' | 'createdAt' | 'startedAt' | 'paused'
+  'id' | 'createdAt' | 'startedAt' | 'paused' | 'finishedAt'
 >
 /** Start timera: wszystko jak we wpisie, ale tylko godzina startu (domyślnie „teraz”). */
 export type TimerStartInput = Omit<
@@ -242,6 +244,17 @@ export type TaskUpdateInput = Pick<
   'title' | 'link' | 'projectId' | 'storyPoints'
 > & { estimateMinutes?: number | null }
 export type TimerStartResult = { started: TimeEntry; stopped: TimeEntry | null }
+
+/** Zadanie z poprzednich dni, którego nie zakończono (lista „Do dokończenia”). */
+export type UnfinishedTask = {
+  /** Najświeższa sesja zadania (z niej „Kontynuuj” startuje nową sesję). */
+  entry: TimeEntry
+  /** Cały przepracowany czas zadania (wszystkie sesje). */
+  workedMinutes: number
+  sessions: number
+  /** Ostatni dzień pracy nad zadaniem (YYYY-MM-DD). */
+  lastDate: string
+}
 export type ProfileInput = Pick<User, 'displayName' | 'email'>
 export type PasswordChangeInput = {
   currentPassword: string

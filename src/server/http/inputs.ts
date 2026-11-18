@@ -215,6 +215,11 @@ export const taskDeleteInput = z.object({
   date: day.nullable().default(null),
 })
 
+export const taskFinishInput = z.object({
+  ref: taskDeleteInput.shape.ref,
+  finished: z.boolean(),
+})
+
 export const taskRefInput = z.object({
   taskTypeId: uuid,
   title: z.string().max(400),

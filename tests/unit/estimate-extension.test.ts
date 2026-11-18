@@ -33,6 +33,7 @@ const fields = (input: TimeEntryInput) =>
 const entry = (over: Partial<TimeEntry>): TimeEntry => ({
   ...meeting,
   id: crypto.randomUUID(),
+  finishedAt: null,
   paused: false,
   startedAt: null,
   createdAt: '2026-11-12T10:00:00Z',

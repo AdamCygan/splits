@@ -107,6 +107,7 @@ export function sampleValues(locale: Locale): SummaryValues {
     estimateMinutes: null,
     extensionMinutes: null,
     extensionNote: null,
+    finishedAt: null,
     running: false,
     paused: false,
     startedAt: null,

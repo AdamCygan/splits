@@ -435,6 +435,11 @@ export const timeEntries = pgTable(
      */
     extensionMinutes: integer('extension_minutes'),
     extensionNote: text('extension_note'),
+    /**
+     * Kiedy zadanie oznaczono jako zakończone (wszystkie jego sesje dostają tę samą datę);
+     * null = w toku. Nowa sesja zadania otwiera je z powrotem.
+     */
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
     running: boolean('running').notNull().default(false),
     /**
      * Wstrzymane: timer przerwany przełączeniem na inne zadanie albo przyciskiem „Wstrzymaj”.

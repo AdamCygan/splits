@@ -7,6 +7,7 @@ export const entryKeys = {
   day: (workDate: string) => ['time-entries', 'day', workDate] as const,
   running: ['time-entries', 'running'] as const,
   paused: ['time-entries', 'paused'] as const,
+  unfinished: ['time-entries', 'unfinished'] as const,
   range: (from: string, to: string) =>
     ['time-entries', 'range', from, to] as const,
 }
@@ -27,6 +28,11 @@ export const entriesQuery = (workDate: string) =>
 export const pausedQuery = queryOptions({
   queryKey: entryKeys.paused,
   queryFn: () => unwrap(data.entries.paused()),
+})
+
+export const unfinishedQuery = queryOptions({
+  queryKey: entryKeys.unfinished,
+  queryFn: () => unwrap(data.entries.unfinished()),
 })
 
 export const runningQuery = queryOptions({

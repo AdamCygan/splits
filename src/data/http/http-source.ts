@@ -202,6 +202,28 @@ export const httpSource: DataSource = {
         },
         ...input,
       }),
+    finishTask: (ref, finished) =>
+      send(
+        'POST',
+        '/time-entries/task/finish',
+        z.object({ updated: z.number() }),
+        {
+          ref: { taskTypeId: ref.taskTypeId, title: ref.title, link: ref.link },
+          finished,
+        },
+      ),
+    unfinished: () =>
+      get(
+        '/time-entries/unfinished',
+        z.array(
+          z.object({
+            entry: s.timeEntrySchema,
+            workedMinutes: z.number(),
+            sessions: z.number(),
+            lastDate: z.string(),
+          }),
+        ),
+      ),
     removeTask: (ref, date) =>
       send(
         'POST',

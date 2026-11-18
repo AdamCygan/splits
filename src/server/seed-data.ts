@@ -519,6 +519,7 @@ function sampleEntries(
     estimateMinutes: 300,
     extensionMinutes: null,
     extensionNote: null,
+    finishedAt: null,
     running: false,
     paused: false,
     startedAt: null,
@@ -545,6 +546,7 @@ function sampleEntries(
       estimateMinutes: i === 0 ? 300 : null,
       extensionMinutes: null,
       extensionNote: null,
+      finishedAt: null,
       running: false,
       paused: false,
       startedAt: null,
@@ -585,6 +587,10 @@ function sampleEntries(
       estimateMinutes: null,
       extensionMinutes: kind === 4 && minutes >= 60 ? 20 : null,
       extensionNote: kind === 4 && minutes >= 60 ? ranOverNote : null,
+      // Zadania sprintu są zakończone; MOB-77 czeka na dokończenie (sekcja na Dziś).
+      finishedAt: link?.includes('MOB-77')
+        ? null
+        : new Date(Date.now() - (ago - 1) * 86_400_000).toISOString(),
       running: false,
       paused: false,
       startedAt: null,

@@ -131,6 +131,7 @@ export const timeEntrySchema = z.object({
   estimateMinutes: z.number().int().nullable().default(null),
   extensionMinutes: z.number().int().nullable().default(null),
   extensionNote: z.string().nullable().default(null),
+  finishedAt: z.string().nullable().default(null),
   running: z.boolean(),
   paused: z.boolean(),
   startedAt: z.string().nullable(),

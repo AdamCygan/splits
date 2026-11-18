@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { ChevronLeft, ClipboardCopy, ExternalLink, Play } from 'lucide-react'
+import {
+  Check,
+  ChevronLeft,
+  ClipboardCopy,
+  ExternalLink,
+  Play,
+  RotateCcw,
+} from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Badge, ColorDot } from '#/components/ui/controls'
 import { data } from '#/data'
@@ -21,9 +28,11 @@ import {
   clockTime,
   useResumeTask,
 } from '#/features/time-entries/components/timer'
+import { useFinishTask } from '#/features/time-entries/components/unfinished'
 import { rangeEntriesQuery } from '#/features/time-entries/queries'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
+import { entriesMessages } from '#/i18n/messages/entries'
 import { taskViewMessages } from '#/i18n/messages/task-view'
 import { unwrap } from '#/lib/api-client'
 import { cn } from '#/lib/utils'
@@ -41,6 +50,8 @@ export function TaskPage({
   onRename: (ref: TaskRef) => void
 }) {
   const t = useMessages(taskViewMessages)
+  const tu = useMessages(entriesMessages).unfinished
+  const finish = useFinishTask()
   const format = useFormat()
   const { locale } = useI18n()
   const types = useQuery(taskTypesQuery).data ?? []
@@ -59,6 +70,7 @@ export function TaskPage({
   }).data
   const insights = taskInsights(list, sameDays ?? list)
   const latest = list.at(-1)
+  const finishedAt = list.find((e) => e.finishedAt)?.finishedAt ?? null
   const project = projects.find((p) => p.id === latest?.projectId)
   const sp = maxPoints(list)
   const estimate = list.reduce<number | null>(
@@ -125,6 +137,18 @@ export function TaskPage({
                 {format.sp(sp)}
               </>
             )}
+            {finishedAt ? (
+              <Badge tone="success">
+                {fmt(tu.finishedOn, {
+                  date: formatDate(locale, new Date(finishedAt), {
+                    day: 'numeric',
+                    month: 'short',
+                  }),
+                })}
+              </Badge>
+            ) : (
+              <Badge tone="muted">{tu.statusOpen}</Badge>
+            )}
           </p>
           <h1 className="type-display mt-1 text-3xl break-words sm:text-4xl">
             {latest.title}
@@ -142,7 +166,17 @@ export function TaskPage({
             </a>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            disabled={finish.isPending}
+            onClick={() =>
+              finish.mutate({ ref: task, finished: finishedAt === null })
+            }
+          >
+            {finishedAt ? <RotateCcw aria-hidden /> : <Check aria-hidden />}
+            {finishedAt ? tu.reopen : tu.finish}
+          </Button>
           <Button variant="outline" onClick={() => setSummarizing(true)}>
             <ClipboardCopy aria-hidden />
             {t.summary}

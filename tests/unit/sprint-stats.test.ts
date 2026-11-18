@@ -24,6 +24,7 @@ const sprint: Sprint = {
 let n = 0
 const entry = (over: Partial<TimeEntry>): TimeEntry => ({
   id: `e${n++}`,
+  finishedAt: null,
   taskTypeId: 'task',
   projectId: null,
   title: 'PAY-142',

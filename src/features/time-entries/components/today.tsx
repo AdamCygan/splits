@@ -42,6 +42,7 @@ import { TaskLink } from '#/features/tasks/task-link'
 import { BreakTile } from './breaks'
 import { DayPicker } from './day-picker'
 import { TaskProgress } from './task-progress'
+import { UnfinishedTasks } from './unfinished'
 import { EntryForm } from './entry-form'
 import { ExtendDialog } from './extend-dialog'
 import { SummaryDialog } from './summary-dialog'
@@ -175,6 +176,8 @@ export function TodayPage({
       </dl>
 
       <QuickTemplates workDate={workDate} isToday={isToday} />
+
+      {isToday && <UnfinishedTasks today={today} />}
 
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         <section
