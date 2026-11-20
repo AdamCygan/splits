@@ -11,7 +11,8 @@ import { TIME_RE } from './rules'
 export const ENTRY_LIMITS = {
   title: 200,
   link: 2048,
-  note: 2000,
+  /** Notatka w Markdown (stare notatki miały limit 2000). */
+  note: 20_000,
   overtimeNote: 1000,
   extensionNote: 1000,
   maxMinutes: 24 * 60,

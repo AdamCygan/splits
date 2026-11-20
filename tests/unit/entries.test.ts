@@ -70,9 +70,12 @@ describe('entries', () => {
       ),
     ).toEqual([])
   })
-  it('limits notes to 2000 characters and checks links and time', () => {
+  it('limits notes to 20 000 characters and checks links and time', () => {
     expect(
-      validateEntry({ ...base, note: 'x'.repeat(2001) }, optional),
+      validateEntry({ ...base, note: 'x'.repeat(20_000) }, optional),
+    ).not.toContainEqual({ field: 'note', code: 'too_long' })
+    expect(
+      validateEntry({ ...base, note: 'x'.repeat(20_001) }, optional),
     ).toContainEqual({ field: 'note', code: 'too_long' })
     expect(
       validateEntry({ ...base, link: 'gitlab.com/x' }, optional),

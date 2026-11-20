@@ -170,7 +170,7 @@ const entryFields = {
   link: z.string().max(4096).nullable(),
   storyPoints: z.number().nullable(),
   workDate: day,
-  note: z.string().max(4000).nullable(),
+  note: z.string().max(40_000).nullable(),
   // Starsze klienty nie wysyłają estymaty: brak pola = brak estymaty.
   estimateMinutes: z.number().int().min(1).max(60000).nullable().default(null),
 }
@@ -214,6 +214,8 @@ export const taskDeleteInput = z.object({
   }),
   date: day.nullable().default(null),
 })
+
+export const noteInput = z.object({ note: z.string().max(40_000).nullable() })
 
 export const taskFinishInput = z.object({
   ref: taskDeleteInput.shape.ref,

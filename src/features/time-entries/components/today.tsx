@@ -41,6 +41,8 @@ import { DeleteTaskDialog } from '#/features/tasks/delete-task-dialog'
 import { TaskLink } from '#/features/tasks/task-link'
 import { BreakTile } from './breaks'
 import { DayPicker } from './day-picker'
+import { CheckableNote } from '#/components/note/note-markdown'
+import { useUpdateNote } from '../use-update-note'
 import { TaskProgress } from './task-progress'
 import { UnfinishedTasks } from './unfinished'
 import { EntryForm } from './entry-form'
@@ -256,6 +258,7 @@ function EntryList({
     onSuccess: () => setDeleting(null),
   })
 
+  const updateNote = useUpdateNote()
   const clock = (time: string) => clockTime(tag, time)
   const stop = useStopTimer()
   const pause = usePauseTimer()
@@ -462,6 +465,9 @@ function EntryList({
                               <Notes
                                 text={entry.note}
                                 moreLabel={t.list.showNotes}
+                                onSave={(note) =>
+                                  updateNote.mutateAsync({ id: entry.id, note })
+                                }
                               />
                             </div>
                           ) : null}
@@ -619,22 +625,34 @@ function EntryList({
   )
 }
 
-/** Notatka z zachowanymi akapitami; długa zwija się do 4 linii z przyciskiem „pokaż całość”. */
-function Notes({ text, moreLabel }: { text: string; moreLabel: string }) {
+/** Notatka w Markdown; długa zwija się z przyciskiem „pokaż całość”. Checkboxy odhacza się w miejscu. */
+function Notes({
+  text,
+  moreLabel,
+  onSave,
+}: {
+  text: string
+  moreLabel: string
+  onSave?: (next: string) => Promise<unknown>
+}) {
   const [open, setOpen] = useState(false)
-  const long = text.length > 220 || text.split('\n').length > 4
+  // Krótka lista kontrolna mieści się bez zwijania, żeby dało się ją odhaczać od razu.
+  const long = text.length > 500 || text.split('\n').length > 8
+  const folded = long && !open
   return (
     <>
-      <p
+      <div
+        // Zwinięta notatka jest nieaktywna (bez ukrytych linków i checkboxów pod Tabem), aż do „pokaż całość”.
+        inert={folded}
         className={
-          long && !open
-            ? 'line-clamp-4 text-sm leading-relaxed whitespace-pre-wrap'
-            : 'text-sm leading-relaxed whitespace-pre-wrap'
+          folded
+            ? 'max-h-40 overflow-hidden [mask-image:linear-gradient(to_bottom,black_60%,transparent)]'
+            : undefined
         }
       >
-        {text}
-      </p>
-      {long && !open && (
+        <CheckableNote text={text} headingLevel={4} onSave={onSave} />
+      </div>
+      {folded && (
         <button
           type="button"
           onClick={() => setOpen(true)}

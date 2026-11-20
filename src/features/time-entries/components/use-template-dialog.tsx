@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Button } from '#/components/ui/button'
-import { Field, Select, Textarea } from '#/components/ui/controls'
+import { NoteEditor } from '#/components/note/note-editor'
+import { Field, Select } from '#/components/ui/controls'
 import { Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import type { Project, QuickTemplate, TaskType } from '#/data/types'
@@ -269,12 +270,12 @@ export function UseTemplateDialog({
             {needs.note && (
               <Field label={t.form.notes} error={submitted ? noteError : null}>
                 {(a) => (
-                  <Textarea
+                  <NoteEditor
                     {...a}
                     data-first={first === 'note' ? '' : undefined}
                     rows={3}
                     value={note}
-                    onChange={(e) => setNote(e.target.value)}
+                    onValueChange={setNote}
                   />
                 )}
               </Field>

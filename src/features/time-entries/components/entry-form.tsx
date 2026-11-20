@@ -51,6 +51,7 @@ import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'
+import { NoteEditor } from '#/components/note/note-editor'
 import { cn } from '#/lib/utils'
 import { entryKeys } from '../queries'
 
@@ -927,17 +928,17 @@ function EntryFormFields({
                   {noteLength}/{ENTRY_LIMITS.note}
                 </span>
               </div>
-              <Textarea
+              <NoteEditor
                 id={`${uid}-note`}
-                rows={4}
+                rows={5}
                 autoFocus={focusNotes}
                 maxLength={ENTRY_LIMITS.note}
                 placeholder={t.form.notesPlaceholder}
-                className="mt-2 resize-y leading-relaxed"
+                className="mt-2"
                 aria-invalid={issueText('note') ? true : undefined}
                 aria-describedby={describedBy('note', true)}
                 value={draft.note}
-                onChange={(e) => setDraft({ ...draft, note: e.target.value })}
+                onValueChange={(note) => setDraft((d) => ({ ...d, note }))}
               />
               <p
                 id={`${uid}-note-hint`}

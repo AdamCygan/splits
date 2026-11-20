@@ -167,6 +167,8 @@ export interface DataSource {
     finishTask: (ref: TaskRef, finished: boolean) => R<{ updated: number }>
     /** Niezakończone zadania z poprzednich dni, najświeższe najpierw. */
     unfinished: () => R<Array<UnfinishedTask>>
+    /** Zmienia samą notatkę wpisu (np. odhaczony checkbox). */
+    updateNote: (id: string, note: string | null) => R<TimeEntry>
     /** Usuwa wszystkie sesje zadania (albo tylko z `date`); zwraca ich liczbę. */
     removeTask: (ref: TaskRef, date: string | null) => R<{ deleted: number }>
     /** Działający timer albo null. */

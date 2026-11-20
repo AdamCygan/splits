@@ -86,7 +86,7 @@ const en = {
     noProject: 'No project',
     notes: 'Notes',
     notesHint:
-      'What you did, decisions, blockers, follow-ups. Only you can see your notes.',
+      'What you did, decisions, blockers, follow-ups. Format with the toolbar or Markdown. Only you can see your notes.',
     notesPlaceholder: 'Fixed the retry logic. Waiting for QA on the edge case.',
     notesCount: '{count} of {max} characters',
     optional: '(optional)',
@@ -110,7 +110,7 @@ const en = {
     },
     note: {
       required: 'Add a note. This kind of work needs one.',
-      too_long: 'Notes can have up to 2,000 characters.',
+      too_long: 'Notes can have up to 20,000 characters.',
     },
     storyPoints: {
       required: 'Pick story points. Tasks of this kind need them.',
@@ -289,6 +289,23 @@ const en = {
     duration: 'Time',
     durationHint: 'For example 45 or 1h 20m.',
   },
+  noteEditor: {
+    toolbar: 'Formatting',
+    heading: 'Heading',
+    bold: 'Bold',
+    boldText: 'bold text',
+    italic: 'Italic',
+    italicText: 'italic text',
+    bullets: 'Bulleted list',
+    numbers: 'Numbered list',
+    checklist: 'Checklist',
+    code: 'Inline code',
+    codeText: 'code',
+    codeBlock: 'Code block',
+    preview: 'Preview',
+    previewLabel: 'Note preview',
+    empty: 'Nothing to preview yet.',
+  },
   unfinished: {
     title: 'Pick up where you left off',
     lead: 'Unfinished tasks from previous days. Continue one to start a new session on it.',
@@ -431,7 +448,7 @@ const pl: EntriesMessages = {
     noProject: 'Bez projektu',
     notes: 'Notatki',
     notesHint:
-      'Co zrobiłeś, decyzje, blokery, dalsze kroki. Notatki widzisz tylko ty.',
+      'Co zrobiłeś, decyzje, blokery, dalsze kroki. Formatuj paskiem albo Markdownem. Notatki widzisz tylko ty.',
     notesPlaceholder:
       'Poprawiona logika ponowień. Czekam na QA w przypadku brzegowym.',
     notesCount: '{count} z {max} znaków',
@@ -456,7 +473,7 @@ const pl: EntriesMessages = {
     },
     note: {
       required: 'Dodaj notatkę. Ten rodzaj pracy jej wymaga.',
-      too_long: 'Notatka może mieć do 2000 znaków.',
+      too_long: 'Notatka może mieć do 20 000 znaków.',
     },
     storyPoints: {
       required: 'Wybierz story pointy. Ten rodzaj pracy ich wymaga.',
@@ -656,6 +673,23 @@ const pl: EntriesMessages = {
     pastText: 'Timer działa tylko dla dzisiaj, więc podaj czas dla tego dnia.',
     duration: 'Czas',
     durationHint: 'Na przykład 45 albo 1h 20m.',
+  },
+  noteEditor: {
+    toolbar: 'Formatowanie',
+    heading: 'Nagłówek',
+    bold: 'Pogrubienie',
+    boldText: 'pogrubiony tekst',
+    italic: 'Kursywa',
+    italicText: 'kursywa',
+    bullets: 'Lista punktowana',
+    numbers: 'Lista numerowana',
+    checklist: 'Lista zadań',
+    code: 'Kod w tekście',
+    codeText: 'kod',
+    codeBlock: 'Blok kodu',
+    preview: 'Podgląd',
+    previewLabel: 'Podgląd notatki',
+    empty: 'Na razie nie ma czego pokazać.',
   },
   unfinished: {
     title: 'Dokończ to, co zacząłeś',

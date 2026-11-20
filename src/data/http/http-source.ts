@@ -202,6 +202,8 @@ export const httpSource: DataSource = {
         },
         ...input,
       }),
+    updateNote: (id, note) =>
+      send('PATCH', `/time-entries/${id}/note`, s.timeEntrySchema, { note }),
     finishTask: (ref, finished) =>
       send(
         'POST',

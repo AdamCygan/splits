@@ -30,6 +30,8 @@ import {
 } from '#/features/time-entries/components/timer'
 import { useFinishTask } from '#/features/time-entries/components/unfinished'
 import { rangeEntriesQuery } from '#/features/time-entries/queries'
+import { useUpdateNote } from '#/features/time-entries/use-update-note'
+import { CheckableNote } from '#/components/note/note-markdown'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
 import { entriesMessages } from '#/i18n/messages/entries'
@@ -555,12 +557,15 @@ function Interrupted({
 function Notes({ sessions }: { sessions: Array<TimeEntry> }) {
   const t = useMessages(taskViewMessages)
   const { locale } = useI18n()
+  const updateNote = useUpdateNote()
   const notes = sessions.flatMap((s) =>
     [
-      s.note ? { label: null, text: s.note } : null,
-      s.overtimeNote ? { label: t.notes.overtime, text: s.overtimeNote } : null,
+      s.note ? { label: null, text: s.note, entryId: s.id } : null,
+      s.overtimeNote
+        ? { label: t.notes.overtime, text: s.overtimeNote, entryId: null }
+        : null,
       s.extensionNote
-        ? { label: t.notes.extension, text: s.extensionNote }
+        ? { label: t.notes.extension, text: s.extensionNote, entryId: null }
         : null,
     ]
       .filter((x) => x !== null)
@@ -584,7 +589,16 @@ function Notes({ sessions }: { sessions: Array<TimeEntry> }) {
             })}
             {n.label && <Badge tone="muted">{n.label}</Badge>}
           </p>
-          <p className="mt-0.5 whitespace-pre-line">{n.text}</p>
+          {n.entryId ? (
+            <CheckableNote
+              className="mt-0.5"
+              text={n.text}
+              headingLevel={3}
+              onSave={(note) => updateNote.mutateAsync({ id: n.entryId, note })}
+            />
+          ) : (
+            <p className="mt-0.5 whitespace-pre-line">{n.text}</p>
+          )}
         </li>
       ))}
     </ol>

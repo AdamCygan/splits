@@ -464,7 +464,7 @@ export const timeEntries = pgTable(
       'time_entries_limits',
       sql`char_length(${t.title}) between 1 and 200
         and (${t.link} is null or char_length(${t.link}) <= 2048)
-        and (${t.note} is null or char_length(${t.note}) <= 2000)
+        and (${t.note} is null or char_length(${t.note}) <= 20000)
         and ${t.durationMinutes} between 0 and 1440`,
     ),
     check(

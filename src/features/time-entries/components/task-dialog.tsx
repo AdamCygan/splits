@@ -1,3 +1,4 @@
+import { notePlainText } from '#/domain/markdown'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -392,8 +393,8 @@ export function Sessions({ entries }: { entries: Array<TimeEntry> }) {
                   )}
                 </p>
                 {entry.note && (
-                  <p className="mt-1 line-clamp-2 text-sm text-ink-soft">
-                    {entry.note}
+                  <p className="mt-1 line-clamp-2 text-sm whitespace-pre-line text-ink-soft">
+                    {notePlainText(entry.note)}
                   </p>
                 )}
               </div>

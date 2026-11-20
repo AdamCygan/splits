@@ -7,6 +7,7 @@ import {
   startedAtFor,
   stoppedValues,
   validateEntry,
+  ENTRY_LIMITS,
 } from '#/domain/entries'
 import { spForType, taskGroupKey } from '#/domain/report'
 import { UNFINISHED_LOOKBACK_DAYS, unfinishedTasks } from '#/domain/unfinished'
@@ -25,6 +26,7 @@ import {
   taskRefInput,
   taskUpdateInput,
   taskDeleteInput,
+  noteInput,
   taskFinishInput,
   timerInput,
 } from '../http/inputs'
@@ -574,6 +576,31 @@ export const entryRoutes = new Hono<AppEnv>()
         )
         .map(toEntry),
     )
+  })
+
+  /** Sama notatka (np. odhaczony checkbox na liście), bez walidacji całego wpisu. */
+  .patch('/:id/note', async (c) => {
+    const userId = c.get('userId')
+    const input = await body(c, noteInput)
+    const note = input.note?.trim() ? input.note : null
+    if ((note?.length ?? 0) > ENTRY_LIMITS.note) throw invalid('note')
+    const row = await db.transaction(async (tx) => {
+      const entry = await ownEntry(tx, userId, c.req.param('id'))
+      if (!note) {
+        const [type] = await tx
+          .select({ req: t.taskTypes.descriptionRequirement })
+          .from(t.taskTypes)
+          .where(eq(t.taskTypes.id, entry.taskTypeId))
+        if (type?.req === 'required') throw invalid('note')
+      }
+      const [updated] = await tx
+        .update(t.timeEntries)
+        .set({ note })
+        .where(eq(t.timeEntries.id, entry.id))
+        .returning()
+      return updated!
+    })
+    return c.json(toEntry(row))
   })
 
   .put('/:id', async (c) => {
