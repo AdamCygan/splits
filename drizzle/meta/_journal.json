@@ -78,6 +78,13 @@
       "when": 1795179648338,
       "tag": "0010_longer_notes",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795380343425,
+      "tag": "0011_template_schedule",
+      "breakpoints": true
     }
   ]
 }

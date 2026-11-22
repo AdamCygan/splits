@@ -152,4 +152,5 @@ export const toTemplate = (
   defaultDurationMinutes: x.defaultDurationMinutes,
   hotkey: x.hotkey,
   sortOrder: x.sortOrder,
+  schedule: x.schedule,
 })

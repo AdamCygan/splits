@@ -149,6 +149,9 @@ export const templateSchema = z.object({
   defaultDurationMinutes: z.number().int().nullable(),
   hotkey: z.number().int().nullable(),
   sortOrder: z.number().int(),
+  schedule: z
+    .array(z.object({ day: z.number().int(), time: z.string() }))
+    .default([]),
 })
 
 export const billingSchema = z.object({

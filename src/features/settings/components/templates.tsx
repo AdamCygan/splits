@@ -9,8 +9,10 @@ import { Input } from '#/components/ui/input'
 import { data } from '#/data'
 import type { QuickTemplate, QuickTemplateInput } from '#/data/types'
 import { LIMITS } from '#/domain/rules'
-import { useFormat, useMessages } from '#/i18n/context'
-import { fmt } from '#/i18n/format'
+import { clockTime } from '#/features/time-entries/components/timer'
+import { scheduleRuns } from '#/domain/schedule'
+import { useFormat, useI18n, useMessages } from '#/i18n/context'
+import { fmt, weekdayNames } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { settingsMessages } from '#/i18n/messages/settings'
 import {
@@ -18,11 +20,18 @@ import {
   mutationFieldError,
   projectsQuery,
   scaleQuery,
+  settingsQuery,
   taskTypesQuery,
   templatesQuery,
   useDataMutation,
 } from '../queries'
 import { markSetupStep } from '../setup-progress'
+import {
+  ScheduleFields,
+  scheduleDraft,
+  scheduleErrors,
+  scheduleFromDraft,
+} from './template-schedule'
 import {
   QueryView,
   ReorderButtons,
@@ -52,6 +61,17 @@ export function TemplateSettings() {
   const [editing, setEditing] = useState<QuickTemplate | 'new' | null>(null)
   const [deleting, setDeleting] = useState<QuickTemplate | null>(null)
   const [announcer, announce] = useAnnouncer()
+  const { locale, tag } = useI18n()
+  const weekStartsOn = useQuery(settingsQuery).data?.weekStartsOn ?? 1
+  const shortDays = weekdayNames(locale, 'short')
+  /** „pn 10:00, wt–pt 9:30” */
+  const describeSchedule = (schedule: QuickTemplate['schedule']) =>
+    scheduleRuns(schedule, weekStartsOn)
+      .map(
+        (r) =>
+          `${shortDays[r.from]}${r.to !== r.from ? `–${shortDays[r.to]}` : ''} ${clockTime(tag, r.time)}`,
+      )
+      .join(', ')
 
   const reorder = useDataMutation(
     (ids: Array<string>) => data.templates.reorder(ids),
@@ -142,6 +162,13 @@ export function TemplateSettings() {
                             )}
                             , “{template.title}”
                           </p>
+                          {template.schedule.length > 0 && (
+                            <p className="text-sm text-ink-soft">
+                              {fmt(t.schedule.summary, {
+                                when: describeSchedule(template.schedule),
+                              })}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="col-start-2 -ml-3 flex gap-1 sm:col-start-3 sm:row-start-1 sm:ml-0">
@@ -224,6 +251,10 @@ function TemplateDialog({
     projectId: template?.askProject ? ANY : (template?.projectId ?? ''),
     hotkey: template?.hotkey?.toString() ?? '',
   })
+  const [schedule, setSchedule] = useState(() =>
+    scheduleDraft(template?.schedule ?? []),
+  )
+  const weekStartsOn = useQuery(settingsQuery).data?.weekStartsOn ?? 1
   const [submitted, setSubmitted] = useState(false)
 
   const save = useDataMutation(
@@ -259,7 +290,16 @@ function TemplateDialog({
         ? null
         : t.durationError,
   }
-  const invalid = Object.values(errors).some(Boolean) || !draft.taskTypeId
+  const scheduleIssues = scheduleErrors(schedule, t.schedule)
+  const durationMissing =
+    schedule.enabled && duration === null ? t.schedule.durationNeeded : null
+  const invalid =
+    Object.values(errors).some(Boolean) ||
+    !draft.taskTypeId ||
+    !!durationMissing ||
+    !!scheduleIssues.days ||
+    !!scheduleIssues.time ||
+    Object.keys(scheduleIssues.dayTimes).length > 0
   const selectedType = types.find((x) => x.id === draft.taskTypeId)
   const show = (e: string | null) => (submitted ? e : null)
 
@@ -280,6 +320,7 @@ function TemplateDialog({
       projectId: draft.projectId === ANY ? null : draft.projectId || null,
       askProject: draft.projectId === ANY,
       hotkey: draft.hotkey === '' ? null : Number(draft.hotkey),
+      schedule: scheduleFromDraft(schedule),
     })
   }
 
@@ -369,7 +410,7 @@ function TemplateDialog({
             <Field
               label={t.fields.duration}
               hint={t.fields.durationHint}
-              error={show(errors.duration)}
+              error={show(errors.duration ?? durationMissing)}
             >
               {(a) => (
                 <Input
@@ -468,6 +509,13 @@ function TemplateDialog({
               )}
             </Field>
           </div>
+          <ScheduleFields
+            value={schedule}
+            onChange={setSchedule}
+            weekStartsOn={weekStartsOn}
+            errors={submitted ? scheduleIssues : null}
+            durationMissing={submitted ? durationMissing : null}
+          />
         </form>
       </DialogContent>
     </Dialog>

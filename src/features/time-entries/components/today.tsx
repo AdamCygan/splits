@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
+  Check,
   ExternalLink,
   NotebookPen,
   Pause,
   ScrollText,
   Pencil,
   Play,
+  Plus,
   Square,
   TimerReset,
   Trash2,
@@ -21,8 +23,12 @@ import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
 import { useCurrentUser } from '#/features/auth/session'
 import { groupTasks, spForType, taskGroupKey, totalsOf } from '#/domain/report'
 import { maxPoints } from '#/domain/summary'
+import { minutesBetween } from '#/domain/entries'
+import { isLogged, scheduledOn } from '#/domain/schedule'
+import type { ScheduledMeeting } from '#/domain/schedule'
 import { extractTaskKey } from '#/domain/rules'
 import {
+  daysOffQuery,
   projectsQuery,
   settingsQuery,
   taskTypesQuery,
@@ -734,7 +740,10 @@ function QuickTemplates({
     (p) => !p.archivedAt,
   )
   const timeZone = useQuery(settingsQuery).data?.timezone
-  const [picking, setPicking] = useState<QuickTemplate | null>(null)
+  const [picking, setPicking] = useState<{
+    template: QuickTemplate
+    at?: ScheduledMeeting
+  } | null>(null)
 
   const apply = useDataMutation(
     async ({
@@ -743,7 +752,8 @@ function QuickTemplates({
       link,
       note,
       minutes,
-    }: TemplateChoice & { template: QuickTemplate }) => {
+      at,
+    }: TemplateChoice & { template: QuickTemplate; at?: ScheduledMeeting }) => {
       const type = types.find((x) => x.id === template.taskTypeId)
       const base = {
         taskTypeId: template.taskTypeId,
@@ -755,6 +765,22 @@ function QuickTemplates({
         note,
       }
       const duration = template.defaultDurationMinutes ?? minutes
+      if (at) {
+        // Spotkanie z harmonogramu: wpis od razu z godzinami od–do.
+        const length = minutesBetween(at.start, at.end) ?? duration ?? 0
+        return data.entries.create({
+          ...base,
+          startTime: at.start,
+          endTime: at.end,
+          durationMinutes: length,
+          overtimeMinutes: null,
+          overtimeNote: null,
+          estimateMinutes: null,
+          extensionMinutes: null,
+          extensionNote: null,
+          running: false,
+        })
+      }
       if (duration === null) {
         const result = await data.entries.start({
           ...base,
@@ -788,11 +814,11 @@ function QuickTemplates({
     },
   )
 
-  const use = (template: QuickTemplate) => {
+  const use = (template: QuickTemplate, at?: ScheduledMeeting) => {
     const type = types.find((x) => x.id === template.taskTypeId)
     const needs = templateNeeds(template, type, projects, isToday)
-    if (needs.project || needs.link || needs.note || needs.duration)
-      setPicking(template)
+    if (needs.project || needs.link || needs.note || (needs.duration && !at))
+      setPicking({ template, at })
     else
       apply.mutate({
         template,
@@ -800,6 +826,7 @@ function QuickTemplates({
         link: null,
         note: null,
         minutes: null,
+        at,
       })
   }
 
@@ -820,65 +847,189 @@ function QuickTemplates({
 
   if (templates.length === 0) return null
   return (
-    <section aria-labelledby="quick-templates" className="mb-6">
-      <h2
-        id="quick-templates"
-        className="mb-2 text-sm font-medium text-ink-soft"
-      >
-        {t.templates.title}
-      </h2>
-      <ul className="flex flex-wrap gap-2">
-        {templates.map((template) => {
-          const type = types.find((x) => x.id === template.taskTypeId)
+    <>
+      <ScheduledToday
+        workDate={workDate}
+        isToday={isToday}
+        templates={templates}
+        types={types}
+        busy={apply.isPending}
+        onLog={(meeting) => use(meeting.template, meeting)}
+        onLogAll={(meetings) => {
+          for (const m of meetings) use(m.template, m)
+        }}
+      />
+      <section aria-labelledby="quick-templates" className="mb-6">
+        <h2
+          id="quick-templates"
+          className="mb-2 text-sm font-medium text-ink-soft"
+        >
+          {t.templates.title}
+        </h2>
+        <ul className="flex flex-wrap gap-2">
+          {templates.map((template) => {
+            const type = types.find((x) => x.id === template.taskTypeId)
+            return (
+              <li key={template.id}>
+                <button
+                  type="button"
+                  disabled={apply.isPending}
+                  onClick={() => use(template)}
+                  aria-haspopup={template.askProject ? 'dialog' : undefined}
+                  aria-keyshortcuts={
+                    template.hotkey ? `Alt+${template.hotkey}` : undefined
+                  }
+                  className="inline-flex h-10 items-center gap-2 rounded-full border border-line bg-surface pr-2 pl-3.5 text-sm font-medium hover:border-ink/40 disabled:opacity-60"
+                >
+                  <span
+                    aria-hidden
+                    className="size-2.5 rounded-full"
+                    style={{ background: type?.color }}
+                  />
+                  {template.label}
+                  {template.askProject && (
+                    <span className="sr-only">({t.templates.anyProject})</span>
+                  )}
+                  <span className="text-ink-soft">
+                    {template.defaultDurationMinutes
+                      ? format.minutes(template.defaultDurationMinutes)
+                      : isToday
+                        ? t.form.timeModes.timer
+                        : t.templates.duration}
+                  </span>
+                  {template.hotkey && (
+                    <kbd className="rounded-md border border-line border-b-2 px-1.5 py-0.5 font-sans text-xs text-ink-soft">
+                      Alt+{template.hotkey}
+                    </kbd>
+                  )}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+        {picking && (
+          <UseTemplateDialog
+            template={picking.template}
+            type={types.find((x) => x.id === picking.template.taskTypeId)}
+            projects={projects}
+            isToday={isToday}
+            pending={apply.isPending}
+            onSubmit={(choice) =>
+              apply.mutate({
+                template: picking.template,
+                ...choice,
+                at: picking.at,
+              })
+            }
+            onClose={() => setPicking(null)}
+          />
+        )}
+      </section>
+    </>
+  )
+}
+
+/**
+ * Spotkania z harmonogramu na ten dzień (np. daily o 9:30, a w poniedziałki o 10:00):
+ * już wpisane mają znacznik, te, które się zaczęły, wpisuje się jednym kliknięciem
+ * z godzinami od–do. W dzień wolny lista się nie pokazuje.
+ */
+function ScheduledToday({
+  workDate,
+  isToday,
+  templates,
+  types,
+  busy,
+  onLog,
+  onLogAll,
+}: {
+  workDate: string
+  isToday: boolean
+  templates: ReadonlyArray<QuickTemplate>
+  types: ReadonlyArray<TaskType>
+  busy: boolean
+  onLog: (meeting: ScheduledMeeting) => void
+  onLogAll: (meetings: Array<ScheduledMeeting>) => void
+}) {
+  const t = useMessages(entriesMessages).scheduled
+  const { tag } = useI18n()
+  const timeZone = useQuery(settingsQuery).data?.timezone
+  const entries = useQuery(entriesQuery(workDate)).data ?? []
+  const dayOff = useQuery(daysOffQuery(workDate, workDate)).data?.[0]
+  const meetings = scheduledOn(templates, workDate)
+  if (meetings.length === 0 || dayOff) return null
+  const now = isToday ? nowTimeIn(timeZone) : '24:00'
+  const rows = meetings.map((m) => ({
+    ...m,
+    logged: isLogged(entries, m.template),
+    started: m.start <= now,
+  }))
+  const open = rows.filter((r) => !r.logged && r.started)
+  return (
+    <section
+      aria-labelledby="scheduled-today"
+      className="mb-6 rounded-2xl border border-line bg-surface px-5 py-4 sm:px-6"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 id="scheduled-today" className="font-semibold">
+          {isToday ? t.titleToday : t.title}
+        </h2>
+        {open.length > 1 && (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => onLogAll(open)}
+          >
+            {fmt(t.logAll, { n: open.length })}
+          </Button>
+        )}
+      </div>
+      <ul className="mt-2 divide-y divide-line">
+        {rows.map((r) => {
+          const type = types.find((x) => x.id === r.template.taskTypeId)
+          const when = `${clockTime(tag, r.start)}–${clockTime(tag, r.end)}`
           return (
-            <li key={template.id}>
-              <button
-                type="button"
-                disabled={apply.isPending}
-                onClick={() => use(template)}
-                aria-haspopup={template.askProject ? 'dialog' : undefined}
-                aria-keyshortcuts={
-                  template.hotkey ? `Alt+${template.hotkey}` : undefined
-                }
-                className="inline-flex h-10 items-center gap-2 rounded-full border border-line bg-surface pr-2 pl-3.5 text-sm font-medium hover:border-ink/40 disabled:opacity-60"
-              >
-                <span
-                  aria-hidden
-                  className="size-2.5 rounded-full"
-                  style={{ background: type?.color }}
-                />
-                {template.label}
-                {template.askProject && (
-                  <span className="sr-only">({t.templates.anyProject})</span>
-                )}
-                <span className="text-ink-soft">
-                  {template.defaultDurationMinutes
-                    ? format.minutes(template.defaultDurationMinutes)
-                    : isToday
-                      ? t.form.timeModes.timer
-                      : t.templates.duration}
+            <li
+              key={r.template.id}
+              className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5"
+            >
+              <span
+                aria-hidden
+                className="size-2.5 shrink-0 rounded-full"
+                style={{ background: type?.color }}
+              />
+              <span className="min-w-0 flex-1">
+                <span className="font-medium">{r.template.label}</span>{' '}
+                <span className="text-sm text-ink-soft tabular-nums">
+                  {when}
                 </span>
-                {template.hotkey && (
-                  <kbd className="rounded-md border border-line border-b-2 px-1.5 py-0.5 font-sans text-xs text-ink-soft">
-                    Alt+{template.hotkey}
-                  </kbd>
-                )}
-              </button>
+              </span>
+              {r.logged ? (
+                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[#0b6b5b]">
+                  <Check aria-hidden className="size-4" />
+                  {t.logged}
+                </span>
+              ) : r.started ? (
+                <Button
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => onLog(r)}
+                  aria-label={fmt(t.logNamed, {
+                    name: r.template.label,
+                    time: when,
+                  })}
+                >
+                  <Plus aria-hidden className="size-4" />
+                  {t.log}
+                </Button>
+              ) : (
+                <span className="text-sm text-ink-soft">{t.upcoming}</span>
+              )}
             </li>
           )
         })}
       </ul>
-      {picking && (
-        <UseTemplateDialog
-          template={picking}
-          type={types.find((x) => x.id === picking.taskTypeId)}
-          projects={projects}
-          isToday={isToday}
-          pending={apply.isPending}
-          onSubmit={(choice) => apply.mutate({ template: picking, ...choice })}
-          onClose={() => setPicking(null)}
-        />
-      )}
     </section>
   )
 }

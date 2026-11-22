@@ -289,6 +289,15 @@ const en = {
     duration: 'Time',
     durationHint: 'For example 45 or 1h 20m.',
   },
+  scheduled: {
+    title: 'Planned meetings',
+    titleToday: 'Planned meetings today',
+    log: 'Log',
+    logNamed: 'Log {name}, {time}',
+    logAll: 'Log all {n}',
+    logged: 'Logged',
+    upcoming: 'Upcoming',
+  },
   noteEditor: {
     toolbar: 'Formatting',
     heading: 'Heading',
@@ -673,6 +682,15 @@ const pl: EntriesMessages = {
     pastText: 'Timer działa tylko dla dzisiaj, więc podaj czas dla tego dnia.',
     duration: 'Czas',
     durationHint: 'Na przykład 45 albo 1h 20m.',
+  },
+  scheduled: {
+    title: 'Zaplanowane spotkania',
+    titleToday: 'Zaplanowane spotkania na dziś',
+    log: 'Wpisz',
+    logNamed: 'Wpisz {name}, {time}',
+    logAll: 'Wpisz wszystkie ({n})',
+    logged: 'Wpisane',
+    upcoming: 'Jeszcze przed tobą',
   },
   noteEditor: {
     toolbar: 'Formatowanie',

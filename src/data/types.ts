@@ -156,7 +156,15 @@ export type QuickTemplate = {
   defaultDurationMinutes: number | null
   hotkey: number | null
   sortOrder: number
+  /**
+   * Powtarzanie (np. daily): dni tygodnia z godziną startu, każdy dzień może mieć swoją.
+   * Pusta lista = szablon bez harmonogramu.
+   */
+  schedule: TemplateSchedule
 }
+
+/** Dzień tygodnia (0 = niedziela … 6 = sobota) i godzina startu 'HH:MM'. */
+export type TemplateSchedule = Array<{ day: number; time: string }>
 
 /**
  * Wpis czasu. Tytuł, link i SP opisują zadanie (w API: tabela tasks, wpis wskazuje task_id),

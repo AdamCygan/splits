@@ -421,6 +421,14 @@ export function seedWorkspace(
           defaultDurationMinutes: 15,
           hotkey: 1,
           sortOrder: 0,
+          // Daily: w poniedziałki później (po planowaniu tygodnia), w pozostałe dni rano.
+          schedule: [
+            { day: 1, time: '10:00' },
+            { day: 2, time: '09:30' },
+            { day: 3, time: '09:30' },
+            { day: 4, time: '09:30' },
+            { day: 5, time: '09:30' },
+          ],
         },
         {
           id: newId(),
@@ -434,6 +442,7 @@ export function seedWorkspace(
           defaultDurationMinutes: 25,
           hotkey: 2,
           sortOrder: 1,
+          schedule: [],
         },
         {
           id: newId(),
@@ -446,6 +455,7 @@ export function seedWorkspace(
           defaultDurationMinutes: 60,
           hotkey: 3,
           sortOrder: 2,
+          schedule: [],
         },
       ]
     : []

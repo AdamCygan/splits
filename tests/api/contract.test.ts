@@ -208,6 +208,7 @@ describe('API contract (frontend adapter against the real server)', () => {
       projectId: null,
       askProject: false,
       hotkey: 1,
+      schedule: [],
     }
     await value(data.templates.create(input))
     expect(
@@ -221,6 +222,49 @@ describe('API contract (frontend adapter against the real server)', () => {
         data.projects.create({ name: 'Other', key: 'PAY', color: '#3D3BF3' }),
       ),
     ).toBe('key_taken')
+  })
+
+  it('stores a recurring template with its own time per day', async () => {
+    const type = (await value(data.taskTypes.list()))[0]!
+    const input = {
+      label: 'Daily',
+      taskTypeId: type.id,
+      title: 'Daily stand-up',
+      defaultDurationMinutes: 15,
+      storyPoints: null,
+      projectId: null,
+      askProject: false,
+      hotkey: null,
+      schedule: [
+        { day: 2, time: '09:30' },
+        { day: 1, time: '10:00' },
+      ],
+    }
+    const created = await value(data.templates.create(input))
+    // Zapisane w kolejności dni tygodnia.
+    expect(created.schedule).toEqual([
+      { day: 1, time: '10:00' },
+      { day: 2, time: '09:30' },
+    ])
+    const listed = await value(data.templates.list())
+    expect(listed.find((x) => x.id === created.id)!.schedule).toHaveLength(2)
+
+    // Powtarzane spotkanie bez czasu trwania, dzień dwa razy, zła godzina: odrzucone.
+    for (const bad of [
+      { ...input, defaultDurationMinutes: null },
+      {
+        ...input,
+        schedule: [
+          { day: 1, time: '10:00' },
+          { day: 1, time: '11:00' },
+        ],
+      },
+      { ...input, schedule: [{ day: 7, time: '10:00' }] },
+      { ...input, schedule: [{ day: 1, time: '25:00' }] },
+    ])
+      expect(await errorCode(data.templates.create(bad))).toBe(
+        'validation.invalid',
+      )
   })
 
   it('stores an any-project template without a fixed project', async () => {
@@ -238,6 +282,7 @@ describe('API contract (frontend adapter against the real server)', () => {
         projectId: project.id,
         askProject: true,
         hotkey: null,
+        schedule: [],
       }),
     )
     expect(created.askProject).toBe(true)

@@ -1,0 +1,1 @@
+ALTER TABLE "quick_templates" ADD COLUMN "schedule" jsonb DEFAULT '[]'::jsonb NOT NULL;

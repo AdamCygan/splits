@@ -243,9 +243,21 @@ export const templateInput = z
       .max(LIMITS.templateDuration.max)
       .nullable(),
     hotkey: z.number().int().min(1).max(9).nullable(),
+    schedule: z
+      .array(z.object({ day: z.number().int().min(0).max(6), time }))
+      .max(7)
+      .default([])
+      .refine((list) => new Set(list.map((x) => x.day)).size === list.length),
+  })
+  // Powtarzane spotkanie wpisuje się od razu z godzinami, więc potrzebuje czasu trwania.
+  .refine((x) => x.schedule.length === 0 || x.defaultDurationMinutes !== null, {
+    path: ['schedule'],
   })
   // Szablon „dowolny projekt” nie trzyma projektu: wybór pada przy użyciu.
-  .transform((x) => (x.askProject ? { ...x, projectId: null } : x))
+  .transform((x) => ({
+    ...(x.askProject ? { ...x, projectId: null } : x),
+    schedule: [...x.schedule].sort((a, b) => a.day - b.day),
+  }))
 
 export const rangeQuery = z.object({ from: day, to: day })
 

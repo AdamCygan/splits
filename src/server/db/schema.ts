@@ -4,12 +4,14 @@
  * Reguły (długości, formaty) są też w src/domain/* i walidacji API.
  */
 import { sql } from 'drizzle-orm'
+import type { TemplateSchedule } from '#/data/types'
 import {
   boolean,
   check,
   date,
   index,
   integer,
+  jsonb,
   numeric,
   pgEnum,
   pgTable,
@@ -507,6 +509,11 @@ export const quickTemplates = pgTable(
     defaultDurationMinutes: integer('default_duration_minutes'),
     hotkey: smallint('hotkey'),
     sortOrder: integer('sort_order').notNull().default(0),
+    /** Powtarzanie: [{ day: 0–6, time: 'HH:MM' }]; pusta lista = bez harmonogramu. */
+    schedule: jsonb('schedule')
+      .$type<TemplateSchedule>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
   },
   (t) => [
     uniqueIndex('quick_templates_hotkey_key')
