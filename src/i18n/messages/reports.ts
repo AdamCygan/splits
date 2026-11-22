@@ -13,6 +13,10 @@ const en = {
       lead: 'Hours logged, split by the kind of work. Hover or focus a column for details.',
       when: 'When',
       keys: 'Chart: use the left and right arrow keys to move between columns',
+      keysOpen:
+        'Chart: use the left and right arrow keys to move between columns, Enter opens the details',
+      openDay: 'Click to see this day',
+      openWeek: 'Click to report on this week',
     },
     hours: {
       title: 'When you work',
@@ -154,6 +158,10 @@ const pl: ReportsMessages = {
       lead: 'Wpisane godziny z podziałem na rodzaj pracy. Najedź albo przejdź klawiaturą na kolumnę, żeby zobaczyć szczegóły.',
       when: 'Kiedy',
       keys: 'Wykres: strzałki w lewo i w prawo przechodzą między kolumnami',
+      keysOpen:
+        'Wykres: strzałki w lewo i w prawo przechodzą między kolumnami, Enter otwiera szczegóły',
+      openDay: 'Kliknij, żeby zobaczyć ten dzień',
+      openWeek: 'Kliknij, żeby zobaczyć raport z tego tygodnia',
     },
     hours: {
       title: 'Kiedy pracujesz',

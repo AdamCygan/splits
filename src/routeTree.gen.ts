@@ -28,6 +28,7 @@ import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppAdminRouteImport } from './routes/app/admin'
 import { Route as AppAnalyticsRouteImport } from './routes/app/analytics'
 import { Route as AppCheckoutRouteImport } from './routes/app/checkout'
+import { Route as AppDayRouteImport } from './routes/app/day'
 import { Route as AppSettingsRouteRouteImport } from './routes/app/settings/route'
 import { Route as AppSprintsRouteImport } from './routes/app/sprints'
 import { Route as AppTaskRouteImport } from './routes/app/task'
@@ -139,6 +140,11 @@ const AppCheckoutRoute = AppCheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppDayRoute = AppDayRouteImport.update({
+  id: '/day',
+  path: '/day',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppSettingsRouteRoute = AppSettingsRouteRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -243,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/checkout': typeof AppCheckoutRoute
+  '/app/day': typeof AppDayRoute
   '/app/sprints': typeof AppSprintsRoute
   '/app/task': typeof AppTaskRoute
   '/app/tasks': typeof AppTasksRoute
@@ -277,6 +284,7 @@ export interface FileRoutesByTo {
   '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/checkout': typeof AppCheckoutRoute
+  '/app/day': typeof AppDayRoute
   '/app/sprints': typeof AppSprintsRoute
   '/app/task': typeof AppTaskRoute
   '/app/tasks': typeof AppTasksRoute
@@ -315,6 +323,7 @@ export interface FileRoutesById {
   '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/checkout': typeof AppCheckoutRoute
+  '/app/day': typeof AppDayRoute
   '/app/sprints': typeof AppSprintsRoute
   '/app/task': typeof AppTaskRoute
   '/app/tasks': typeof AppTasksRoute
@@ -354,6 +363,7 @@ export interface FileRouteTypes {
     | '/app/admin'
     | '/app/analytics'
     | '/app/checkout'
+    | '/app/day'
     | '/app/sprints'
     | '/app/task'
     | '/app/tasks'
@@ -388,6 +398,7 @@ export interface FileRouteTypes {
     | '/app/admin'
     | '/app/analytics'
     | '/app/checkout'
+    | '/app/day'
     | '/app/sprints'
     | '/app/task'
     | '/app/tasks'
@@ -425,6 +436,7 @@ export interface FileRouteTypes {
     | '/app/admin'
     | '/app/analytics'
     | '/app/checkout'
+    | '/app/day'
     | '/app/sprints'
     | '/app/task'
     | '/app/tasks'
@@ -590,6 +602,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCheckoutRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/day': {
+      id: '/app/day'
+      path: '/day'
+      fullPath: '/app/day'
+      preLoaderRoute: typeof AppDayRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/settings': {
       id: '/app/settings'
       path: '/settings'
@@ -750,6 +769,7 @@ interface AppRouteRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppCheckoutRoute: typeof AppCheckoutRoute
+  AppDayRoute: typeof AppDayRoute
   AppSprintsRoute: typeof AppSprintsRoute
   AppTaskRoute: typeof AppTaskRoute
   AppTasksRoute: typeof AppTasksRoute
@@ -761,6 +781,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAdminRoute: AppAdminRoute,
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppCheckoutRoute: AppCheckoutRoute,
+  AppDayRoute: AppDayRoute,
   AppSprintsRoute: AppSprintsRoute,
   AppTaskRoute: AppTaskRoute,
   AppTasksRoute: AppTasksRoute,

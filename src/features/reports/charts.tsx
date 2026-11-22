@@ -91,10 +91,12 @@ function Tooltip({
   left,
   title,
   rows,
+  hint,
 }: {
   left: number
   title: string
   rows: Array<{ key: string; color?: string; label: string; value: string }>
+  hint?: string
 }) {
   return (
     <div
@@ -121,6 +123,7 @@ function Tooltip({
           </li>
         ))}
       </ul>
+      {hint && <p className="mt-1.5 text-ink-soft">{hint}</p>}
     </div>
   )
 }
@@ -135,12 +138,15 @@ export function TimeChart({
   to,
   types,
   className,
+  onOpen,
 }: {
   entries: ReadonlyArray<TimeEntry>
   from: string
   to: string
   types: ReadonlyArray<TaskType>
   className?: string
+  /** Kliknięcie albo Enter na kolumnie: dzień (albo tydzień) do otwarcia ze szczegółami. */
+  onOpen?: (bucket: { from: string; to: string; unit: 'day' | 'week' }) => void
 }) {
   const t = useMessages(reportsMessages).charts
   const format = useFormat()
@@ -270,9 +276,22 @@ export function TimeChart({
             <div
               role="group"
               tabIndex={0}
-              aria-label={t.daily.keys}
+              aria-label={onOpen ? t.daily.keysOpen : t.daily.keys}
               aria-describedby={liveId}
-              className="absolute inset-0 rounded-sm outline-offset-4"
+              className={cn(
+                'absolute inset-0 rounded-sm outline-offset-4',
+                onOpen && 'cursor-pointer',
+              )}
+              onClick={(e) => {
+                // Kolumna pod kursorem (także przy dotyku, gdzie nie ma najechania).
+                const box = e.currentTarget.getBoundingClientRect()
+                const i = Math.floor(
+                  ((e.clientX - box.left) / box.width) * buckets.length,
+                )
+                const b = buckets[Math.min(buckets.length - 1, Math.max(0, i))]
+                if (onOpen && b && b.minutes > 0)
+                  onOpen({ from: b.from, to: b.to, unit })
+              }}
               onPointerMove={(e) => {
                 const box = e.currentTarget.getBoundingClientRect()
                 const i = Math.floor(
@@ -286,6 +305,12 @@ export function TimeChart({
               onKeyDown={(e) => {
                 const step =
                   e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
+                const b = active !== null ? buckets[active] : undefined
+                if ((e.key === 'Enter' || e.key === ' ') && onOpen && b) {
+                  e.preventDefault()
+                  onOpen({ from: b.from, to: b.to, unit })
+                  return
+                }
                 if (e.key === 'Home') setActive(0)
                 else if (e.key === 'End') setActive(buckets.length - 1)
                 else if (step)
@@ -337,6 +362,13 @@ export function TimeChart({
                 left={((active + 0.5) / buckets.length) * 100}
                 title={`${label(buckets[active]!)} · ${format.minutes(buckets[active]!.minutes)}`}
                 rows={breakdown(buckets[active]!)}
+                hint={
+                  onOpen
+                    ? unit === 'day'
+                      ? t.daily.openDay
+                      : t.daily.openWeek
+                    : undefined
+                }
               />
             )}
           </div>

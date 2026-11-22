@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import {
   ArrowDown,
   ArrowUp,
@@ -83,6 +83,7 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
   const projects = useQuery(projectsQuery).data ?? []
   const today = todayIn(settings?.timezone)
   const [editing, setEditing] = useState<TaskRef | null>(null)
+  const navigate = useNavigate()
 
   const started = startedSprints(sprints, today)
   // Sprint z linku (strona Sprinty) może być starszy niż 8 ostatnich: dokładamy go do listy.
@@ -426,6 +427,14 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
                 from={range.from}
                 to={range.to}
                 types={types}
+                onOpen={(b) => {
+                  if (b.unit === 'day')
+                    void navigate({ to: '/app/day', search: { date: b.from } })
+                  else {
+                    setCustom({ from: b.from, to: b.to })
+                    setChosen('custom')
+                  }
+                }}
               />
               <HourHeatmap entries={chartEntries} />
               <EstimateChart rows={rows} />
