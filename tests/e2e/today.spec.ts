@@ -103,6 +103,34 @@ test.describe('today: log time with notes', () => {
     await expect(page.getByText(/timer stopped/i)).toBeVisible()
   })
 
+  test('edits the running task from the timer bar', async ({ page }) => {
+    const form = page.getByRole('region', { name: 'Log time' })
+    await form
+      .locator('label')
+      .filter({ hasText: /^Timer$/ })
+      .click()
+    await form.getByLabel('Title').fill('PAY-152 Refund mails')
+    await form.getByRole('button', { name: 'Start timer' }).click()
+    const bar = page.getByRole('region', { name: 'Running' })
+    await bar.getByRole('button', { name: 'Edit PAY-152 Refund mails' }).click()
+
+    const dialog = page.getByRole('dialog', { name: 'Edit entry' })
+    await dialog.getByLabel('Title').fill('PAY-152 Refund e-mails')
+    await dialog.getByLabel('Notes').fill('Template copy from support')
+    await dialog.getByRole('button', { name: 'Save' }).click()
+    await expect(dialog).toBeHidden()
+
+    // Zmienia się wpis, a timer biegnie dalej.
+    await expect(
+      bar.getByText('PAY-152 Refund e-mails', { exact: true }),
+    ).toBeVisible()
+    await expect(bar.getByRole('timer')).toBeVisible()
+    await expect(
+      page.getByRole('region', { name: 'Today’s entries' }),
+    ).toContainText('Template copy from support')
+    await expectNoA11yViolations(page)
+  })
+
   test('switches to an urgent task and comes back as a new interval', async ({
     page,
   }) => {

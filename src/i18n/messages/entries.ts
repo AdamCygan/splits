@@ -333,6 +333,8 @@ const en = {
   },
   timer: {
     running: 'Running',
+    edit: 'Edit the running task',
+    editNamed: 'Edit {name}',
     since: 'since {time}',
     stop: 'Stop',
     stopNamed: 'Stop timer: {name}',
@@ -732,6 +734,8 @@ const pl: EntriesMessages = {
   },
   timer: {
     running: 'Trwa',
+    edit: 'Edytuj trwające zadanie',
+    editNamed: 'Edytuj {name}',
     since: 'od {time}',
     stop: 'Stop',
     stopNamed: 'Zatrzymaj timer: {name}',

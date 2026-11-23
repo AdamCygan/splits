@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Badge } from '#/components/ui/controls'
-import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
+import { ConfirmDialog } from '#/components/ui/dialog'
 import { data } from '#/data'
 import type { QuickTemplate, TaskType, TimeEntry } from '#/data/types'
 import { addDays, nowTimeIn, todayIn } from '#/domain/dates'
@@ -52,6 +52,7 @@ import { useUpdateNote } from '../use-update-note'
 import { TaskProgress } from './task-progress'
 import { UnfinishedTasks } from './unfinished'
 import { EntryForm } from './entry-form'
+import { EditEntryDialog } from './edit-entry-dialog'
 import { ExtendDialog } from './extend-dialog'
 import { SummaryDialog } from './summary-dialog'
 import {
@@ -225,7 +226,7 @@ export function TodayPage({
                   : t.day.listEmpty}
             </p>
           ) : (
-            <EntryList entries={list} workDate={workDate} />
+            <EntryList entries={list} />
           )}
         </section>
       </div>
@@ -233,13 +234,7 @@ export function TodayPage({
   )
 }
 
-function EntryList({
-  entries,
-  workDate,
-}: {
-  entries: Array<TimeEntry>
-  workDate: string
-}) {
+function EntryList({ entries }: { entries: Array<TimeEntry> }) {
   const t = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   const format = useFormat()
@@ -567,33 +562,11 @@ function EntryList({
       </ul>
 
       {editing && (
-        <Dialog open onOpenChange={(open) => !open && setEditing(null)}>
-          <DialogContent
-            size="lg"
-            title={t.form.editTitle}
-            description={editing.entry.title}
-            closeLabel={app.actions.close}
-            footer={
-              <>
-                <Button variant="outline" onClick={() => setEditing(null)}>
-                  {app.actions.cancel}
-                </Button>
-                <Button type="submit" form="edit-entry-form">
-                  {app.actions.save}
-                </Button>
-              </>
-            }
-          >
-            <EntryForm
-              formId="edit-entry-form"
-              hideSubmit
-              workDate={workDate}
-              entry={editing.entry}
-              focusNotes={editing.notes}
-              onSaved={() => setEditing(null)}
-            />
-          </DialogContent>
-        </Dialog>
+        <EditEntryDialog
+          entry={editing.entry}
+          focusNotes={editing.notes}
+          onClose={() => setEditing(null)}
+        />
       )}
 
       {extending && (

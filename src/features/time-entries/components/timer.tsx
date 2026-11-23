@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Check, Coffee, Pause, Play, Square } from 'lucide-react'
+import { Check, Coffee, Pause, Pencil, Play, Square } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '#/components/ui/button'
 import { data } from '#/data'
@@ -25,6 +25,7 @@ import {
   runningQuery,
 } from '../queries'
 import { BreakBar, useStartBreak } from './breaks'
+import { EditEntryDialog } from './edit-entry-dialog'
 import { useTaskProgress } from './task-progress'
 
 /** Licznik sekund od startu, odświeżany co sekundę tylko gdy timer działa. */
@@ -122,6 +123,7 @@ export function TimerBar() {
   const resume = useResumeTask()
   const runningBreak = useQuery(runningBreakQuery).data
   const startBreak = useStartBreak()
+  const [editing, setEditing] = useState(false)
   const busy =
     stop.isPending ||
     pause.isPending ||
@@ -161,7 +163,19 @@ export function TimerBar() {
           />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">{running.title}</p>
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            title={t.timer.edit}
+            aria-label={fmt(t.timer.editNamed, { name: running.title })}
+            className="group/title -mx-1 flex max-w-full items-center gap-1.5 rounded px-1 text-left text-sm font-semibold hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
+          >
+            <span className="truncate">{running.title}</span>
+            <Pencil
+              aria-hidden
+              className="size-3.5 shrink-0 opacity-60 group-hover/title:opacity-100"
+            />
+          </button>
           <p className="truncate text-xs text-white/70">
             {type?.name}
             {running.startTime &&
@@ -233,6 +247,9 @@ export function TimerBar() {
           </ul>
         )}
       </div>
+      {editing && (
+        <EditEntryDialog entry={running} onClose={() => setEditing(false)} />
+      )}
     </section>
   )
 }
