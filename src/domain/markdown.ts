@@ -147,6 +147,8 @@ export function continueList(s: TextState): TextState | null {
     line.length === whole.length &&
     value.slice(start).split('\n')[0]!.trim() === ''
   ) {
+    // Pusta pozycja zagnieżdżona: wraca poziom wyżej (jak w edytorach tekstu).
+    if (indent!.length > 0) return indentList(s, -1)
     // Pusta pozycja: koniec listy. Zostaje pusta linia, żeby dalszy tekst nie dokleił się
     // do ostatniej pozycji (w Markdown linia tuż pod listą jest jej częścią).
     const blank = from > 0 && value[from - 2] !== '\n' ? '\n' : ''
@@ -166,6 +168,67 @@ export function continueList(s: TextState): TextState | null {
     start: start + insert.length,
     end: start + insert.length,
   }
+}
+
+const LIST_ITEM = /^( *)([-*+]|\d+[.)]) /
+
+/** Szerokość znacznika z odstępem: zagnieżdżona pozycja zaczyna się pod tekstem rodzica. */
+const markerWidth = (marker: string) => marker.length + 1
+
+/**
+ * Tab / Shift+Tab w liście: pozycja schodzi poziom niżej (pod poprzednią pozycję) albo
+ * wraca poziom wyżej. Wcięcie liczy się od znacznika rodzica (`- ` = 2, `1. ` = 3 spacje),
+ * tak jak wymaga Markdown. `null` = w zaznaczeniu nie ma pozycji listy (Tab przenosi fokus).
+ */
+export function indentList(s: TextState, direction: 1 | -1): TextState | null {
+  const { value } = s
+  const { from, to } = lineRange(value, s.start, s.end)
+  const before = value.slice(0, from).split('\n')
+  before.pop() // pusty fragment po ostatnim \n (albo cały tekst przed pierwszą linią)
+  const lines = value.slice(from, to).split('\n')
+  if (!lines.some((l) => LIST_ITEM.test(l))) return null
+
+  // Poprzednie pozycje listy (z już zmienionymi liniami zaznaczenia), najbliższe najpierw.
+  const previous = (upTo: Array<string>) => {
+    const items: Array<{ indent: number; marker: string }> = []
+    for (let i = upTo.length - 1; i >= 0; i--) {
+      const line = upTo[i]!
+      const m = LIST_ITEM.exec(line)
+      if (m) items.push({ indent: m[1]!.length, marker: m[2]! })
+      else if (line.trim() !== '' && !/^\s/.test(line)) break
+    }
+    return items
+  }
+
+  const done: Array<string> = []
+  let caretShift = 0
+  for (const [i, line] of lines.entries()) {
+    const m = LIST_ITEM.exec(line)
+    if (!m) {
+      done.push(line)
+      continue
+    }
+    const indent = m[1]!.length
+    const items = previous([...before, ...done])
+    let next = indent
+    if (direction === 1) {
+      // Schodzi pod poprzednią pozycję z tego samego poziomu; pierwsza pozycja zostaje.
+      const sibling = items.find((x) => x.indent <= indent)
+      if (sibling && sibling.indent === indent)
+        next = indent + markerWidth(sibling.marker)
+    } else if (indent > 0) {
+      next = items.find((x) => x.indent < indent)?.indent ?? 0
+    }
+    if (i === 0) caretShift = next - indent
+    done.push(' '.repeat(next) + line.slice(indent))
+  }
+  const replaced = done.join('\n')
+  const result = value.slice(0, from) + replaced + value.slice(to)
+  if (s.start === s.end && lines.length === 1) {
+    const pos = Math.max(from, s.start + caretShift)
+    return { value: result, start: pos, end: pos }
+  }
+  return { value: result, start: from, end: from + replaced.length }
 }
 
 /**

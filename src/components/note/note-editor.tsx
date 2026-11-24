@@ -3,6 +3,8 @@ import {
   Code,
   Eye,
   Heading,
+  IndentDecrease,
+  IndentIncrease,
   Italic,
   List,
   ListChecks,
@@ -15,6 +17,7 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import type { ComponentProps, KeyboardEvent } from 'react'
 import {
   continueList,
+  indentList,
   insertCodeBlock,
   toggleLinePrefix,
   toggleWrap,
@@ -22,6 +25,8 @@ import {
 import type { TextState } from '#/domain/markdown'
 import { useMessages } from '#/i18n/context'
 import { entriesMessages } from '#/i18n/messages/entries'
+import { markdownLines } from '#/domain/highlight'
+import type { MarkdownLine, Part } from '#/domain/highlight'
 import { cn } from '#/lib/utils'
 import { NoteMarkdown } from './note-markdown'
 
@@ -149,6 +154,18 @@ export function NoteEditor({
       run: (s) => toggleLinePrefix(s, '- [ ] '),
     },
     {
+      id: 'indent',
+      icon: IndentIncrease,
+      label: t.indent,
+      run: (s) => indentList(s, 1) ?? s,
+    },
+    {
+      id: 'outdent',
+      icon: IndentDecrease,
+      label: t.outdent,
+      run: (s) => indentList(s, -1) ?? s,
+    },
+    {
       id: 'code',
       icon: Code,
       label: t.code,
@@ -171,6 +188,15 @@ export function NoteEditor({
       value: el.value,
       start: el.selectionStart,
       end: el.selectionEnd,
+    }
+    // Tab w liście zmienia poziom pozycji; poza listą przenosi fokus jak zwykle.
+    if (e.key === 'Tab' && !e.altKey && !e.ctrlKey && !e.metaKey) {
+      const next = indentList(state, e.shiftKey ? -1 : 1)
+      if (next) {
+        e.preventDefault()
+        apply(next)
+      }
+      return
     }
     if (
       e.key === 'Enter' &&
@@ -314,15 +340,76 @@ export function NoteEditor({
           )}
         </div>
       ) : (
-        <textarea
-          {...textarea}
-          ref={ref}
-          value={value}
-          onChange={(e) => onValueChange(e.target.value)}
-          onKeyDown={onKeyDown}
-          className="block min-h-36 w-full resize-y bg-transparent px-3.5 py-2.5 text-base leading-relaxed outline-none"
-        />
+        // Pole tekstowe ma przezroczysty tekst nad warstwą z podświetleniem; obie mają ten sam
+        // font (stałej szerokości), odstępy i zawijanie, więc znaki leżą dokładnie na sobie.
+        // Pole rośnie razem z warstwą, więc nie ma własnego przewijania do zsynchronizowania.
+        <div className="grid">
+          <div
+            aria-hidden
+            className={cn(EDITOR_TEXT, 'pointer-events-none text-ink')}
+          >
+            {markdownLines(value).map((line, i) => (
+              <EditorLine key={i} line={line} />
+            ))}
+          </div>
+          <textarea
+            {...textarea}
+            ref={ref}
+            value={value}
+            onChange={(e) => onValueChange(e.target.value)}
+            onKeyDown={onKeyDown}
+            className={cn(
+              EDITOR_TEXT,
+              'min-h-36 resize-none overflow-hidden bg-transparent text-transparent caret-ink outline-none placeholder:text-ink-faint selection:bg-ring/30 selection:text-transparent',
+            )}
+          />
+        </div>
       )}
     </div>
+  )
+}
+
+/** Wspólne dla pola i warstwy podświetlenia: każda różnica rozjedzie znaki. */
+const EDITOR_TEXT =
+  '[grid-area:1/1] m-0 block w-full border-0 px-3.5 py-2.5 font-mono text-[0.875rem] leading-relaxed tracking-normal whitespace-pre-wrap break-words [tab-size:4]'
+
+const PART_CLASS: Record<NonNullable<Part['kind']>, string> = {
+  marker: 'text-ink-faint',
+  bold: 'font-bold',
+  italic: 'italic',
+  code: 'rounded-sm bg-ink/10',
+  link: 'text-[var(--tok-type)] underline underline-offset-2',
+  heading: 'font-bold',
+  done: 'text-ink-soft line-through',
+  checkbox: 'font-bold text-ink-soft',
+  quote: 'text-ink-soft',
+  keyword: 'tok-keyword',
+  string: 'tok-string',
+  comment: 'tok-comment',
+  number: 'tok-number',
+  type: 'tok-type',
+}
+
+/** Jedna linia warstwy podświetlenia; pusta linia dostaje znak zerowej szerokości (wysokość). */
+function EditorLine({ line }: { line: MarkdownLine }) {
+  const empty = line.parts.every((p) => p.text === '')
+  return (
+    <span
+      className={cn(
+        'block',
+        line.kind !== 'text' && '-mx-3.5 bg-ink/[0.06] px-3.5',
+      )}
+    >
+      {line.parts.map((p, i) =>
+        p.kind ? (
+          <span key={i} className={PART_CLASS[p.kind]}>
+            {p.text}
+          </span>
+        ) : (
+          p.text
+        ),
+      )}
+      {empty && '\u200b'}
+    </span>
   )
 }

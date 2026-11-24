@@ -79,6 +79,63 @@ test.describe('notes: formatting', () => {
     ).toBeChecked()
   })
 
+  test('nests list items with Tab and colours code while typing', async ({
+    page,
+  }) => {
+    const form = page.getByRole('region', { name: 'Log time' })
+    await form.getByText('Task', { exact: true }).click()
+    await form.getByLabel('Title').fill('PAY-181 Nested notes')
+    await form
+      .locator('label')
+      .filter({ hasText: /^2 SP$/ })
+      .click()
+    const notes = form.getByLabel('Notes')
+    await notes.click()
+    await page.keyboard.type('- Backend')
+    await notes.press('Enter')
+    await notes.press('Tab')
+    await page.keyboard.type('[ ] migration')
+    await notes.press('Enter')
+    // Enter w checkliście dodaje kolejny checkbox na tym samym poziomie.
+    await page.keyboard.type('rollback')
+    await notes.press('Enter')
+    // Pusta zagnieżdżona pozycja: Enter wraca poziom wyżej.
+    await notes.press('Enter')
+    await page.keyboard.type('Frontend')
+    await notes.press('Enter')
+    await notes.press('Enter')
+    await page.keyboard.type('```sql\nSELECT 1\n```')
+    await expect(notes).toHaveValue(
+      '- Backend\n  - [ ] migration\n  - [ ] rollback\n- [ ] Frontend\n\n```sql\nSELECT 1\n```',
+    )
+    // Pole notatki od razu koloruje składnię kodu.
+    await expect(
+      form.locator('.tok-keyword', { hasText: 'SELECT' }),
+    ).toBeVisible()
+    // Tab poza listą przenosi fokus dalej (nie łapie klawiatury).
+    await notes.press('Tab')
+    await expect(notes).not.toBeFocused()
+
+    await form.getByRole('button', { name: 'Save entry' }).click()
+    const item = page
+      .getByRole('region', { name: 'Today’s entries' })
+      .getByRole('listitem')
+      .filter({ hasText: 'PAY-181 Nested notes' })
+      .first()
+    await expect(item.getByRole('checkbox', { name: 'rollback' })).toBeVisible()
+    // Pozycje z checkboxami siedzą w liście zagnieżdżonej pod „Backend”.
+    const parentText = await item
+      .getByRole('checkbox', { name: 'migration' })
+      .evaluate(
+        (box) =>
+          box.closest('ul')?.parentElement?.closest('li')?.firstChild
+            ?.textContent ?? '',
+      )
+    expect(parentText.trim()).toBe('Backend')
+    await expect(item.locator('pre .tok-keyword')).toHaveText('SELECT')
+    await expectNoA11yViolations(page)
+  })
+
   test('plain notes written before markdown look the same', async ({
     page,
   }) => {

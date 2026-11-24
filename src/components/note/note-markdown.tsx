@@ -6,6 +6,7 @@ import remarkBreaks from 'remark-breaks'
 import remarkGfm from 'remark-gfm'
 import type { PluggableList, Plugin } from 'unified'
 import { cn } from '#/lib/utils'
+import { highlightCodeLine } from '#/domain/highlight'
 import { toggleTaskAt } from '#/domain/markdown'
 
 type HastNode = {
@@ -103,18 +104,17 @@ export function NoteMarkdown({
         {alt || (typeof src === 'string' ? src : '')}
       </a>
     ),
-    ul: ({ className: cls, children }) => (
-      <ul
-        className={cn(
-          'my-1.5 space-y-0.5 pl-5',
-          cls?.includes('contains-task-list') ? 'list-none pl-0' : 'list-disc',
-        )}
-      >
+    // Zagnieżdżone listy wcinają się o szerokość znacznika; checkbox stoi w miejscu kropki.
+    ul: ({ children }) => (
+      <ul className="my-1.5 list-disc space-y-0.5 pl-5 [&_ol]:my-0.5 [&_ul]:my-0.5">
         {children}
       </ul>
     ),
     ol: ({ children, start }) => (
-      <ol start={start} className="my-1.5 list-decimal space-y-0.5 pl-5">
+      <ol
+        start={start}
+        className="my-1.5 list-decimal space-y-0.5 pl-5 [&_ol]:my-0.5 [&_ul]:my-0.5"
+      >
         {children}
       </ol>
     ),
@@ -129,7 +129,9 @@ export function NoteMarkdown({
     ),
     code: ({ className: cls, children }) =>
       cls?.startsWith('language-') || String(children).includes('\n') ? (
-        <code className="font-mono text-[0.8125rem]">{children}</code>
+        <code className="font-mono text-[0.8125rem]">
+          {highlighted(String(children), cls?.slice('language-'.length))}
+        </code>
       ) : (
         <code className="rounded bg-ink/8 px-1 py-0.5 font-mono text-[0.8125em]">
           {children}
@@ -139,7 +141,7 @@ export function NoteMarkdown({
       <pre
         // Długie linie kodu przewijają się w poziomie; region musi być osiągalny z klawiatury.
         tabIndex={0}
-        className="my-2 overflow-x-auto rounded-lg bg-ink px-3.5 py-3 leading-relaxed text-white focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="code-dark my-2 overflow-x-auto rounded-lg bg-[var(--code-block-bg)] px-3.5 py-3 leading-relaxed text-[var(--code-block-ink)] focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         {children}
       </pre>
@@ -193,7 +195,7 @@ function ListItem({
         }
       : undefined
   return (
-    <li className="flex items-start gap-2">
+    <li className="-ml-5 flex list-none items-start gap-2">
       <input
         type="checkbox"
         checked={checked}
@@ -238,4 +240,23 @@ export function CheckableNote({
       }
     />
   )
+}
+
+/** Blok kodu z kolorowaniem składni (linia po linii, bez końcowej pustej linii). */
+function highlighted(code: string, language = '') {
+  const lines = code.replace(/\n$/, '').split('\n')
+  return lines.map((line, i) => (
+    <span key={i}>
+      {highlightCodeLine(line, language).map((p, j) =>
+        p.kind ? (
+          <span key={j} className={`tok-${p.kind}`}>
+            {p.text}
+          </span>
+        ) : (
+          p.text
+        ),
+      )}
+      {i < lines.length - 1 && '\n'}
+    </span>
+  ))
 }
