@@ -48,9 +48,17 @@ export function summaryValues(
     link: entry.link ?? '',
     first: stats.first ? dayLabel(locale, stats.first) : '',
     last: stats.last ? dayLabel(locale, stats.last) : '',
+    // Każda notatka z dniem i godzinami sesji, w której powstała.
     notes: stats.notes.length
       ? stats.notes
-          .map(({ note }) => `- ${note.replace(/\n+/g, ' ').trim()}`)
+          .map(
+            ({ date, start, end, minutes, note }) =>
+              `- ${dayLabel(locale, date)}, ${
+                start && end
+                  ? `${clock(locale, start)}–${clock(locale, end)}`
+                  : formatMinutes(locale, minutes)
+              }: ${note.replace(/\n+/g, ' ').trim()}`,
+          )
           .join('\n')
       : t.noNotes,
     intervals: stats.days

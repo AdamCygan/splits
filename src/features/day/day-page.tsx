@@ -572,14 +572,21 @@ function Tasks({
                   {sessions.map((s) => (
                     <div key={s.id} className="contents">
                       {s.note && (
-                        <CheckableNote
-                          className="mt-2 rounded-lg bg-muted/60 px-3 py-2"
-                          text={s.note}
-                          headingLevel={4}
-                          onSave={(note) =>
-                            updateNote.mutateAsync({ id: s.id, note })
-                          }
-                        />
+                        <div className="mt-2 rounded-lg bg-muted/60 px-3 py-2">
+                          {/* Godziny sesji, w której powstała notatka. */}
+                          <p className="mb-1 text-xs text-ink-soft tabular-nums">
+                            {s.startTime && s.endTime
+                              ? `${clockTime(tag, s.startTime)}–${clockTime(tag, s.endTime)}, ${format.minutes(s.durationMinutes)}`
+                              : format.minutes(s.durationMinutes)}
+                          </p>
+                          <CheckableNote
+                            text={s.note}
+                            headingLevel={4}
+                            onSave={(note) =>
+                              updateNote.mutateAsync({ id: s.id, note })
+                            }
+                          />
+                        </div>
                       )}
                       {s.overtimeNote && (
                         <p className="mt-2 text-sm">

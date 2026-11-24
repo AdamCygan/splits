@@ -556,7 +556,8 @@ function Interrupted({
 /** Notatki z sesji, z nadgodzinami i przedłużeniami, od najstarszej. */
 function Notes({ sessions }: { sessions: Array<TimeEntry> }) {
   const t = useMessages(taskViewMessages)
-  const { locale } = useI18n()
+  const { locale, tag } = useI18n()
+  const format = useFormat()
   const updateNote = useUpdateNote()
   const notes = sessions.flatMap((s) =>
     [
@@ -573,6 +574,9 @@ function Notes({ sessions }: { sessions: Array<TimeEntry> }) {
         ...x,
         id: `${s.id}-${x.label ?? 'note'}`,
         date: s.workDate,
+        start: s.startTime,
+        end: s.endTime,
+        minutes: s.durationMinutes,
       })),
   )
   if (notes.length === 0)
@@ -581,12 +585,20 @@ function Notes({ sessions }: { sessions: Array<TimeEntry> }) {
     <ol className="space-y-3">
       {notes.map((n) => (
         <li key={n.id} className="text-sm">
-          <p className="flex items-center gap-2 text-xs text-ink-soft">
-            {formatDate(locale, n.date, {
-              weekday: 'short',
-              day: 'numeric',
-              month: 'short',
-            })}
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-soft tabular-nums">
+            <span>
+              {formatDate(locale, n.date, {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+              })}
+            </span>
+            {/* Godziny sesji, w której powstała notatka. */}
+            <span>
+              {n.start && n.end
+                ? `${clockTime(tag, n.start)}–${clockTime(tag, n.end)}, ${format.minutes(n.minutes)}`
+                : format.minutes(n.minutes)}
+            </span>
             {n.label && <Badge tone="muted">{n.label}</Badge>}
           </p>
           {n.entryId ? (

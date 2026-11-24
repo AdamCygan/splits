@@ -49,7 +49,14 @@ export type TaskStats = {
   }>
   /** Największa wartość SP z wpisów (SP opisuje zadanie, nie sesję); null = zadanie bez SP. */
   storyPoints: number | null
-  notes: Array<{ date: string; note: string }>
+  /** Notatki z sesji, od najstarszej, z godzinami sesji (null dla wpisów „sam czas”). */
+  notes: Array<{
+    date: string
+    start: string | null
+    end: string | null
+    minutes: number
+    note: string
+  }>
   /** Nadgodziny zadania: łączny czas i opisy z wpisów, od najstarszego. */
   overtimeMinutes: number
   overtimeNotes: Array<{ date: string; minutes: number; note: string }>
@@ -89,7 +96,13 @@ export function taskStats(entries: ReadonlyArray<TimeEntry>): TaskStats {
     storyPoints: maxPoints(sorted),
     notes: sorted
       .filter((e) => e.note?.trim())
-      .map((e) => ({ date: e.workDate, note: e.note!.trim() })),
+      .map((e) => ({
+        date: e.workDate,
+        start: e.startTime,
+        end: e.endTime,
+        minutes: e.durationMinutes,
+        note: e.note!.trim(),
+      })),
     overtimeMinutes: sorted.reduce(
       (sum, e) => sum + (e.overtimeMinutes ?? 0),
       0,

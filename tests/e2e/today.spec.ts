@@ -225,7 +225,10 @@ test.describe('today: log time with notes', () => {
     await expect(text).toHaveValue(
       /Total time on PAY-142 Payment gateway integration: 5h 55m \(3 sessions, 3 days, 3 SP\)/,
     )
-    await expect(text).toHaveValue(/- Built the signature check/)
+    // Każda notatka z dniem i godzinami sesji.
+    await expect(text).toHaveValue(
+      /- [^\n]+, [^\n]+: Built the signature check/,
+    )
     await expectNoA11yViolations(page)
   })
 
