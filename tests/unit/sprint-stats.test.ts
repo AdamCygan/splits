@@ -5,6 +5,7 @@ import {
   estimateOf,
   sprintDay,
   sprintStats,
+  timeGoalProgress,
 } from '#/domain/sprint-stats'
 
 const types = [
@@ -20,6 +21,7 @@ const sprint: Sprint = {
   endsOn: '2026-11-15',
   capacityStoryPoints: 30,
   fromCadence: true,
+  timeGoals: [],
 }
 let n = 0
 const entry = (over: Partial<TimeEntry>): TimeEntry => ({
@@ -141,5 +143,62 @@ describe('estimateOf', () => {
   it('has no verdict without story points or outside the scale', () => {
     expect(estimateOf({ storyPoints: null, minutes: 300 }, scale)).toBeNull()
     expect(estimateOf({ storyPoints: 8, minutes: 300 }, scale)).toBeNull()
+  })
+})
+
+describe('sprint time goals', () => {
+  it('compares time per kind of work with the goal and the pace', () => {
+    const progress = timeGoalProgress(
+      [
+        { taskTypeId: 'review', minutes: 360 },
+        { taskTypeId: 'meeting', minutes: 300 },
+        { taskTypeId: 'pair', minutes: 120 },
+      ],
+      [
+        { taskTypeId: 'review', minutes: 150 },
+        { taskTypeId: 'meeting', minutes: 60 },
+        { taskTypeId: 'pair', minutes: 150 },
+      ],
+      5,
+      10,
+    )
+    expect(progress).toEqual([
+      // Połowa sprintu, cel 6h: oczekiwane 3h, jest 2h 30m (mniej niż 90%) → w tyle.
+      {
+        taskTypeId: 'review',
+        goal: 360,
+        minutes: 150,
+        left: 210,
+        expected: 180,
+        status: 'behind',
+      },
+      {
+        taskTypeId: 'meeting',
+        goal: 300,
+        minutes: 60,
+        left: 240,
+        expected: 150,
+        status: 'behind',
+      },
+      {
+        taskTypeId: 'pair',
+        goal: 120,
+        minutes: 150,
+        left: 0,
+        expected: 60,
+        status: 'done',
+      },
+    ])
+    expect(
+      timeGoalProgress([{ taskTypeId: 'review', minutes: 360 }], [], 1, 10)[0],
+    ).toMatchObject({ minutes: 0, expected: 36, status: 'behind' })
+    expect(
+      timeGoalProgress(
+        [{ taskTypeId: 'review', minutes: 360 }],
+        [{ taskTypeId: 'review', minutes: 170 }],
+        5,
+        10,
+      )[0]!.status,
+    ).toBe('onTrack')
   })
 })

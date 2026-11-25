@@ -132,7 +132,11 @@ export type Sprint = {
   endsOn: string
   capacityStoryPoints: number | null
   fromCadence: boolean
+  /** Ile czasu chcesz poświęcić w sprincie na dany rodzaj pracy (np. Code Review 6h). */
+  timeGoals: Array<SprintTimeGoal>
 }
+
+export type SprintTimeGoal = { taskTypeId: string; minutes: number }
 
 export type Project = {
   id: string
@@ -223,7 +227,7 @@ export type TaskTypeInput = Omit<
 export type TaskStatusInput = Pick<TaskStatus, 'name' | 'category' | 'color'>
 export type SprintInput = Pick<
   Sprint,
-  'name' | 'goal' | 'startsOn' | 'endsOn' | 'capacityStoryPoints'
+  'name' | 'goal' | 'startsOn' | 'endsOn' | 'capacityStoryPoints' | 'timeGoals'
 >
 export type ProjectInput = Pick<Project, 'name' | 'key' | 'color'>
 export type TagInput = Pick<Tag, 'name' | 'color'>
@@ -252,6 +256,12 @@ export type TaskUpdateInput = Pick<
   'title' | 'link' | 'projectId' | 'storyPoints'
 > & { estimateMinutes?: number | null }
 export type TimerStartResult = { started: TimeEntry; stopped: TimeEntry | null }
+
+/** Zadanie z wyszukiwarki: najświeższa sesja, sumy i stan (zakończone / trwa). */
+export type TaskSearchResult = UnfinishedTask & {
+  finished: boolean
+  running: boolean
+}
 
 /** Zadanie z poprzednich dni, którego nie zakończono (lista „Do dokończenia”). */
 export type UnfinishedTask = {

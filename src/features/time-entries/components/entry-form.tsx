@@ -216,6 +216,8 @@ type EntryFormProps = {
   hideSubmit?: boolean
   focusNotes?: boolean
   onSaved?: (entry: TimeEntry) => void
+  /** Zadanie z wyszukiwarki do wpisania w formularz (`key` zmienia się przy każdym wyborze). */
+  prefill?: { entry: TimeEntry; key: number } | null
 }
 
 /**
@@ -252,6 +254,7 @@ function EntryFormFields({
   hideSubmit,
   focusNotes,
   onSaved,
+  prefill,
 }: EntryFormProps) {
   const t = useMessages(entriesMessages)
   const format = useFormat()
@@ -276,6 +279,23 @@ function EntryFormFields({
   }, [timerAllowed, entry, draft.mode])
   const [submitted, setSubmitted] = useState(false)
   const titleRef = useRef<HTMLInputElement>(null)
+  // Zadanie wybrane w wyszukiwarce: tytuł, typ, link, projekt, SP i estymata; czas zostaje.
+  const prefillKey = prefill?.key
+  useEffect(() => {
+    if (!prefill) return
+    const e = prefill.entry
+    setDraft((d) => ({
+      ...d,
+      taskTypeId: e.taskTypeId,
+      title: e.title,
+      link: e.link ?? '',
+      projectId: e.projectId ?? '',
+      storyPoints: e.storyPoints === null ? '' : String(e.storyPoints),
+      estimate: e.estimateMinutes === null ? '' : String(e.estimateMinutes),
+    }))
+    titleRef.current?.focus()
+    // Tylko przy nowym wyborze (zmienia się klucz), nie przy każdym renderze.
+  }, [prefillKey])
 
   const type = types.find((x) => x.id === draft.taskTypeId) ?? types[0]
   const save = useDataMutation(

@@ -153,6 +153,18 @@ export const sprintInput = z.object({
   startsOn: day,
   endsOn: day,
   capacityStoryPoints: z.number().min(0).max(1000).nullable(),
+  timeGoals: z
+    .array(
+      z.object({
+        taskTypeId: z.string().uuid(),
+        minutes: z.number().int().min(1).max(100_000),
+      }),
+    )
+    .max(20)
+    .default([])
+    .refine(
+      (list) => new Set(list.map((g) => g.taskTypeId)).size === list.length,
+    ),
 })
 
 export const projectInput = z.object({

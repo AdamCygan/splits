@@ -1,0 +1,1 @@
+ALTER TABLE "sprints" ADD COLUMN "time_goals" jsonb DEFAULT '[]'::jsonb NOT NULL;

@@ -1,4 +1,10 @@
-import type { SpScaleStep, Sprint, TaskType, TimeEntry } from '#/data/types'
+import type {
+  SpScaleStep,
+  Sprint,
+  SprintTimeGoal,
+  TaskType,
+  TimeEntry,
+} from '#/data/types'
 import { diffDays } from './dates'
 import { byType, groupTasks, totalsOf } from './report'
 import type { TaskRow, TypeRow } from './report'
@@ -115,4 +121,44 @@ export function estimateOf(
     overBy: Math.max(0, row.minutes - range.max),
     source: 'scale',
   }
+}
+
+export type GoalProgress = {
+  taskTypeId: string
+  goal: number
+  minutes: number
+  left: number
+  /** Ile powinno już być przy równym tempie (do `day` z `total` dni sprintu). */
+  expected: number
+  status: 'done' | 'onTrack' | 'behind'
+}
+
+/**
+ * Postęp celów czasowych sprintu: przepracowany czas danego rodzaju pracy względem celu
+ * i tempa (cel rozłożony równo na dni sprintu). Mniej niż 90% oczekiwanego = „w tyle”.
+ */
+export function timeGoalProgress(
+  goals: ReadonlyArray<SprintTimeGoal>,
+  types: ReadonlyArray<Pick<TypeRow, 'taskTypeId' | 'minutes'>>,
+  day: number,
+  total: number,
+): Array<GoalProgress> {
+  return goals.map((g) => {
+    const minutes =
+      types.find((r) => r.taskTypeId === g.taskTypeId)?.minutes ?? 0
+    const expected = Math.round((g.minutes * day) / Math.max(1, total))
+    return {
+      taskTypeId: g.taskTypeId,
+      goal: g.minutes,
+      minutes,
+      left: Math.max(0, g.minutes - minutes),
+      expected,
+      status:
+        minutes >= g.minutes
+          ? 'done'
+          : minutes >= expected * 0.9
+            ? 'onTrack'
+            : 'behind',
+    }
+  })
 }

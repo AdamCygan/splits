@@ -43,12 +43,34 @@ export async function syncCadenceSprints(tx: Tx, userId: string) {
     existing,
     await userToday(tx, userId),
   )
-  if (missing.length)
-    await tx
-      .insert(t.sprints)
-      .values(
-        missing.map((s) => ({ ...s, userId, goal: null, fromCadence: true })),
-      )
+  if (!missing.length) return
+  // Nowe sprinty z kadencji dziedziczą cele czasowe po ostatnim sprincie (zwykle się powtarzają).
+  const timeGoals = existing.at(-1)?.timeGoals ?? []
+  await tx.insert(t.sprints).values(
+    missing.map((s) => ({
+      ...s,
+      userId,
+      goal: null,
+      fromCadence: true,
+      timeGoals,
+    })),
+  )
+}
+
+/** Cele czasowe mogą dotyczyć tylko własnych rodzajów pracy. */
+async function assertOwnTypes(
+  tx: Tx,
+  userId: string,
+  goals: ReadonlyArray<{ taskTypeId: string }>,
+) {
+  if (goals.length === 0) return
+  const own = await tx
+    .select({ id: t.taskTypes.id })
+    .from(t.taskTypes)
+    .where(eq(t.taskTypes.userId, userId))
+  const ids = new Set(own.map((x) => x.id))
+  if (goals.some((g) => !ids.has(g.taskTypeId)))
+    throw new ApiError('validation.invalid', 400, 'timeGoals')
 }
 
 async function assertNoOverlap(
@@ -123,6 +145,7 @@ export const sprintRoutes = new Hono<AppEnv>()
     const input = await body(c, sprintInput)
     const row = await db.transaction(async (tx) => {
       await assertNoOverlap(tx, userId, input)
+      await assertOwnTypes(tx, userId, input.timeGoals)
       const [created] = await tx
         .insert(t.sprints)
         .values({ ...input, userId, number: null, fromCadence: false })
@@ -137,6 +160,7 @@ export const sprintRoutes = new Hono<AppEnv>()
     const input = await body(c, sprintInput)
     const row = await db.transaction(async (tx) => {
       await assertNoOverlap(tx, userId, input, id)
+      await assertOwnTypes(tx, userId, input.timeGoals)
       const [updated] = await tx
         .update(t.sprints)
         .set(input)

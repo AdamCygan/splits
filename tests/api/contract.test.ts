@@ -158,6 +158,7 @@ describe('API contract (frontend adapter against the real server)', () => {
       startsOn: '2030-01-01',
       endsOn: '2030-01-14',
       capacityStoryPoints: null,
+      timeGoals: [],
     }
     await value(data.sprints.create(input))
     expect(
@@ -178,6 +179,40 @@ describe('API contract (frontend adapter against the real server)', () => {
         }),
       ),
     ).toBe('sprint.dates')
+  })
+
+  it('stores time goals per kind of work on a sprint', async () => {
+    await value(data.sprints.setCadence(null))
+    const [type] = await value(data.taskTypes.list())
+    const input = {
+      name: 'Goals',
+      goal: null,
+      startsOn: '2031-03-01',
+      endsOn: '2031-03-14',
+      capacityStoryPoints: null,
+      timeGoals: [{ taskTypeId: type!.id, minutes: 360 }],
+    }
+    const created = await value(data.sprints.create(input))
+    expect(created.timeGoals).toEqual([{ taskTypeId: type!.id, minutes: 360 }])
+    const updated = await value(
+      data.sprints.update(created.id, { ...input, timeGoals: [] }),
+    )
+    expect(updated.timeGoals).toEqual([])
+
+    // Cudzy albo nieistniejący rodzaj pracy, ten sam rodzaj dwa razy, zero minut: odrzucone.
+    for (const timeGoals of [
+      [{ taskTypeId: crypto.randomUUID(), minutes: 60 }],
+      [
+        { taskTypeId: type!.id, minutes: 60 },
+        { taskTypeId: type!.id, minutes: 90 },
+      ],
+      [{ taskTypeId: type!.id, minutes: 0 }],
+    ])
+      expect(
+        await errorCode(
+          data.sprints.update(created.id, { ...input, timeGoals }),
+        ),
+      ).toBe('validation.invalid')
   })
 
   it('does not delete sprints that the cadence recreates', async () => {

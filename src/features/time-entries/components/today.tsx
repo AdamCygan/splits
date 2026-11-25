@@ -53,6 +53,7 @@ import { TaskProgress } from './task-progress'
 import { UnfinishedTasks } from './unfinished'
 import { EntryForm } from './entry-form'
 import { EditEntryDialog } from './edit-entry-dialog'
+import { TaskSearch } from './task-search'
 import { ExtendDialog } from './extend-dialog'
 import { SummaryDialog } from './summary-dialog'
 import {
@@ -77,6 +78,11 @@ export function TodayPage({
   const { tag } = useI18n()
   const settings = useQuery(settingsQuery).data
   const user = useCurrentUser()
+  // Zadanie z wyszukiwarki do wpisania w formularz.
+  const [prefill, setPrefill] = useState<{
+    entry: TimeEntry
+    key: number
+  } | null>(null)
   const today = todayIn(settings?.timezone)
   // Plan Free: dopisywanie wpisów z ostatnich 30 dni (tyle historii obejmuje Free).
   const limited = !hasProAccess(user)
@@ -202,7 +208,13 @@ export function TodayPage({
             </p>
           </header>
           <div className="px-5 py-5 sm:px-6">
-            <EntryForm workDate={workDate} />
+            <TaskSearch
+              isToday={isToday}
+              onUse={(entry) =>
+                setPrefill((p) => ({ entry, key: (p?.key ?? 0) + 1 }))
+              }
+            />
+            <EntryForm workDate={workDate} prefill={prefill} />
           </div>
         </section>
 

@@ -1,4 +1,15 @@
-import { and, asc, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm'
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  ilike,
+  isNull,
+  lte,
+  or,
+  sql,
+} from 'drizzle-orm'
 import { Hono } from 'hono'
 import type { TimeEntryInput } from '#/data/types'
 import { addDays, nowTimeIn, todayIn } from '#/domain/dates'
@@ -11,6 +22,7 @@ import {
 } from '#/domain/entries'
 import { spForType, taskGroupKey } from '#/domain/report'
 import { UNFINISHED_LOOKBACK_DAYS, unfinishedTasks } from '#/domain/unfinished'
+import { groupSearchResults, likePattern } from '#/domain/task-search'
 import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
 import { db } from '../db/client'
 import type { Tx } from '../db/client'
@@ -355,6 +367,29 @@ export const entryRoutes = new Hono<AppEnv>()
   })
 
   /** Zadania z poprzednich dni, których nie zakończono — do kontynuacji na „Dziś”. */
+  /** Wyszukiwarka zadań (także zakończonych) po tytule albo linku, do kontynuacji pracy. */
+  .get('/search', async (c) => {
+    const userId = c.get('userId')
+    const q = (c.req.query('q') ?? '').trim().slice(0, 200)
+    if (q.length < 2) return c.json([])
+    const pattern = likePattern(q)
+    const rows = await db
+      .select()
+      .from(t.timeEntries)
+      .where(
+        and(
+          mine(userId),
+          or(
+            ilike(t.timeEntries.title, pattern),
+            ilike(t.timeEntries.link, pattern),
+          ),
+        ),
+      )
+      .orderBy(desc(t.timeEntries.workDate), desc(t.timeEntries.createdAt))
+      .limit(500)
+    return c.json(groupSearchResults(rows.map(toEntry)))
+  })
+
   .get('/unfinished', async (c) => {
     const userId = c.get('userId')
     const today = todayIn(await userTimezone(db, userId))

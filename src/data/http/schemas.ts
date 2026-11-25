@@ -101,6 +101,9 @@ export const sprintSchema = z.object({
   startsOn: date,
   endsOn: date,
   capacityStoryPoints: z.number().nullable(),
+  timeGoals: z
+    .array(z.object({ taskTypeId: z.string(), minutes: z.number() }))
+    .default([]),
   fromCadence: z.boolean(),
 })
 

@@ -4,7 +4,7 @@
  * Reguły (długości, formaty) są też w src/domain/* i walidacji API.
  */
 import { sql } from 'drizzle-orm'
-import type { TemplateSchedule } from '#/data/types'
+import type { SprintTimeGoal, TemplateSchedule } from '#/data/types'
 import {
   boolean,
   check,
@@ -296,6 +296,11 @@ export const sprints = pgTable(
     endsOn: date('ends_on', { mode: 'string' }).notNull(),
     capacityStoryPoints: points('capacity_story_points'),
     fromCadence: boolean('from_cadence').notNull().default(false),
+    /** Cele czasowe na rodzaje pracy: [{ taskTypeId, minutes }]. */
+    timeGoals: jsonb('time_goals')
+      .$type<Array<SprintTimeGoal>>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
   },
   (t) => [
     index('sprints_user_start_idx').on(t.userId, t.startsOn),

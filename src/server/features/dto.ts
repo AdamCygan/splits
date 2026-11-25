@@ -98,6 +98,7 @@ export const toSprint = (x: typeof t.sprints.$inferSelect): Sprint => ({
   startsOn: x.startsOn,
   endsOn: x.endsOn,
   capacityStoryPoints: x.capacityStoryPoints,
+  timeGoals: x.timeGoals,
   fromCadence: x.fromCadence,
 })
 

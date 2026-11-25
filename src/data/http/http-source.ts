@@ -214,6 +214,20 @@ export const httpSource: DataSource = {
           finished,
         },
       ),
+    search: (q) =>
+      get(
+        `/time-entries/search?${new URLSearchParams({ q }).toString()}`,
+        z.array(
+          z.object({
+            entry: s.timeEntrySchema,
+            workedMinutes: z.number(),
+            sessions: z.number(),
+            lastDate: z.string(),
+            finished: z.boolean(),
+            running: z.boolean(),
+          }),
+        ),
+      ),
     unfinished: () =>
       get(
         '/time-entries/unfinished',

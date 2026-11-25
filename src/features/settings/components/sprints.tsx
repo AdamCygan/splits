@@ -26,9 +26,15 @@ import {
   mutationFieldError,
   settingsQuery,
   sprintsQuery,
+  taskTypesQuery,
   useDataMutation,
 } from '../queries'
 import { markSetupStep } from '../setup-progress'
+import {
+  TimeGoalsField,
+  goalDrafts,
+  goalsFromDrafts,
+} from './sprint-time-goals'
 import { QueryView, SaveBar, SectionHeader, SettingsCard } from './ui'
 
 const PRESETS = [7, 14, 21, 28] as const
@@ -304,6 +310,9 @@ function SprintList() {
   const app = useMessages(appMessages)
   const { locale } = useI18n()
   const format = useFormat()
+  const taskTypes = useQuery(taskTypesQuery).data ?? []
+  const typeName = (id: string) =>
+    taskTypes.find((x) => x.id === id)?.name ?? '?'
   const settings = useQuery(settingsQuery).data
   const [showPast, setShowPast] = useState(false)
   const [editing, setEditing] = useState<Sprint | 'new' | null>(null)
@@ -389,6 +398,18 @@ function SprintList() {
                         {sprint.goal && (
                           <p className="mt-1 text-sm">{sprint.goal}</p>
                         )}
+                        {sprint.timeGoals.length > 0 && (
+                          <p className="mt-1 text-sm text-ink-soft">
+                            {fmt(t.timeGoals.summary, {
+                              goals: sprint.timeGoals
+                                .map(
+                                  (g) =>
+                                    `${typeName(g.taskTypeId)} ${format.minutes(g.minutes)}`,
+                                )
+                                .join(', '),
+                            })}
+                          </p>
+                        )}
                       </div>
                       <div className="flex gap-1">
                         <Button
@@ -464,7 +485,12 @@ function SprintDialog({
 }) {
   const t = useMessages(settingsMessages).sprints
   const app = useMessages(appMessages)
+  const format = useFormat()
   const today = todayIn()
+  const [goals, setGoals] = useState(() =>
+    goalDrafts(sprint?.timeGoals ?? [], format.minutes),
+  )
+  const timeGoals = goalsFromDrafts(goals)
   const [draft, setDraft] = useState({
     name: sprint?.name ?? '',
     startsOn: sprint?.startsOn ?? today,
@@ -513,7 +539,8 @@ function SprintDialog({
     !isValidDate(draft.startsOn) ||
     !isValidDate(draft.endsOn) ||
     draft.endsOn < draft.startsOn ||
-    errors.capacity !== null
+    errors.capacity !== null ||
+    timeGoals === null
   const show = (e: string | null) => (submitted ? e : null)
 
   const onSubmit = (e: FormEvent) => {
@@ -526,6 +553,7 @@ function SprintDialog({
       endsOn: draft.endsOn,
       goal: draft.goal.trim() || null,
       capacityStoryPoints: capacity,
+      timeGoals,
     })
   }
 
@@ -630,6 +658,11 @@ function SprintDialog({
               />
             )}
           </Field>
+          <TimeGoalsField
+            rows={goals}
+            onChange={setGoals}
+            showErrors={submitted}
+          />
         </form>
       </DialogContent>
     </Dialog>
