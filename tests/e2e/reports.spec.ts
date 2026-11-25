@@ -192,12 +192,15 @@ test('tasks and sprints pages show real numbers and link to reports', async ({
   await expect(
     page.getByRole('heading', { level: 1, name: 'Tasks' }),
   ).toBeVisible()
-  const tasks = page.getByRole('region', { name: 'Tasks' })
+  const tasks = page.getByRole('main')
   await expect(
-    tasks.getByText('PAY-142 Payment gateway integration'),
+    tasks.getByRole('link', {
+      name: 'PAY-142 Payment gateway integration',
+      exact: true,
+    }),
   ).toBeVisible()
   await page.getByRole('searchbox', { name: 'Search tasks' }).fill('PAY-142')
-  await expect(tasks.getByRole('status')).toHaveText('1 task')
+  await expect(tasks.getByText(/^1 task$/)).toBeVisible()
   await expectNoA11yViolations(page)
 
   await page.getByRole('link', { name: 'Sprints', exact: true }).first().click()

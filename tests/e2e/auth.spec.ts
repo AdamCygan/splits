@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { expectNoA11yViolations } from './helpers'
+import { expectNoA11yViolations, signInWithSamples } from './helpers'
 
 const unique = () =>
   `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
@@ -86,5 +86,35 @@ test.describe('accounts on the real server', () => {
     ).toHaveCount(0)
     await page.goto('/login?error=google_unavailable')
     await expect(page.getByRole('alert')).toContainText('Google')
+  })
+})
+
+test.describe('session expiry', () => {
+  test('an expired session signs you out and sends you to log in', async ({
+    page,
+  }) => {
+    await signInWithSamples(page)
+    await page.goto('/app/tasks')
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Tasks' }),
+    ).toBeVisible()
+
+    // Sesja wygasa: nie ma ciasteczka odświeżania, a API odrzuca dotychczasowy token.
+    await page.context().clearCookies()
+    await page.route('**/api/v1/time-entries**', (route) =>
+      route.fulfill({
+        status: 401,
+        contentType: 'application/problem+json',
+        body: JSON.stringify({ status: 401, code: 'auth.invalid_token' }),
+      }),
+    )
+    await page.getByRole('link', { name: 'Today' }).click()
+
+    await expect(page).toHaveURL(/\/login\?/)
+    const url = new URL(page.url())
+    expect(url.searchParams.get('expired')).toBe('true')
+    expect(url.searchParams.get('redirect')).toMatch(/^\/app/)
+    await expect(page.getByText(/Your session expired/)).toBeVisible()
+    await expectNoA11yViolations(page)
   })
 })

@@ -11,6 +11,8 @@ const en = {
   login: {
     seoTitle: 'Log in | Pointhours',
     title: 'Log in',
+    expired:
+      'Your session expired, so we signed you out. Log in again to pick up where you left off. Everything you saved is safe, and a running timer keeps running.',
     noAccount: 'No account yet?',
     createOne: 'Create one for free',
     loginLabel: 'Username or email',
@@ -93,6 +95,8 @@ const pl: AuthMessages = {
   login: {
     seoTitle: 'Logowanie | Pointhours',
     title: 'Zaloguj się',
+    expired:
+      'Twoja sesja wygasła, więc wylogowaliśmy cię. Zaloguj się ponownie, żeby wrócić tam, gdzie skończyłeś. Wszystko, co zapisałeś, jest bezpieczne, a włączony timer liczy dalej.',
     noAccount: 'Nie masz konta?',
     createOne: 'Załóż je za darmo',
     loginLabel: 'Login lub e-mail',

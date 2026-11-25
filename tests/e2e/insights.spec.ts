@@ -53,7 +53,11 @@ test.describe('progress, quick delete, sprint tasks and charts', () => {
     await page.getByRole('link', { name: 'Sprint tasks' }).click()
     await expect(page).toHaveURL(/\/app\/tasks\?sprint=/)
     await expect(page.getByLabel('Period or sprint')).toHaveValue(/^sprint:/)
-    await expect(page.getByText(/^Sprint \d+: /)).toBeVisible()
+    // Nagłówek sprintu: nazwa, daty i dzień sprintu.
+    await expect(
+      page.locator('p').filter({ hasText: /^Sprint \d+$/ }),
+    ).toBeVisible()
+    await expect(page.getByText(/Day \d+ of \d+|Ended/)).toBeVisible()
     await expect(
       page
         .getByRole('link', { name: 'PAY-142 Payment gateway integration' })
@@ -66,11 +70,13 @@ test.describe('progress, quick delete, sprint tasks and charts', () => {
 
   test('deletes a whole task from the Tasks page', async ({ page }) => {
     await page.goto('/app/tasks')
+    // Usuwanie siedzi w menu „Więcej akcji” wiersza.
     await page
       .getByRole('button', {
-        name: 'Delete the whole task PAY-139 Refund API endpoint',
+        name: 'More actions for PAY-139 Refund API endpoint',
       })
       .click()
+    await page.getByRole('menuitem', { name: 'Delete task' }).click()
     const dialog = page.getByRole('alertdialog')
     await expect(dialog).toContainText('All 2 sessions from every day')
     await dialog.getByRole('button', { name: 'Delete' }).click()
@@ -78,7 +84,10 @@ test.describe('progress, quick delete, sprint tasks and charts', () => {
       page.getByText('Deleted “PAY-139 Refund API endpoint”'),
     ).toBeVisible()
     await expect(
-      page.getByRole('link', { name: 'PAY-139 Refund API endpoint' }),
+      page.getByRole('link', {
+        name: 'PAY-139 Refund API endpoint',
+        exact: true,
+      }),
     ).toHaveCount(0)
   })
 
@@ -108,5 +117,60 @@ test.describe('progress, quick delete, sprint tasks and charts', () => {
       charts.getByRole('columnheader', { name: 'Total' }),
     ).toBeVisible()
     await expectNoA11yViolations(page)
+  })
+})
+
+test.describe('tasks list', () => {
+  test.beforeEach(async ({ page }) => {
+    await signInWithSamples(page)
+  })
+
+  test('groups a sprint’s tasks by kind of work and filters by status', async ({
+    page,
+  }) => {
+    await page.goto('/app/sprints')
+    await page
+      .getByRole('link', { name: /Sprint tasks/ })
+      .first()
+      .click()
+    await expect(page).toHaveURL(/\/app\/tasks\?sprint=/)
+
+    const taskGroup = page.getByRole('region', { name: 'Task', exact: true })
+    await expect(taskGroup).toContainText(/3 tasks/)
+    await expect(
+      taskGroup.getByRole('link', {
+        name: 'MOB-77 Push notification settings',
+        exact: true,
+      }),
+    ).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Meeting' })).toBeVisible()
+    await expectNoA11yViolations(page)
+
+    // Tylko zadania w toku: zakończony PAY-139 znika, MOB-77 zostaje.
+    await page
+      .locator('label')
+      .filter({ hasText: /^In progress$/ })
+      .click()
+    await expect(
+      page.getByRole('link', {
+        name: 'PAY-139 Refund API endpoint',
+        exact: true,
+      }),
+    ).toHaveCount(0)
+    await expect(
+      page.getByRole('link', {
+        name: 'MOB-77 Push notification settings',
+        exact: true,
+      }),
+    ).toBeVisible()
+
+    // Grupowanie po dniu: nagłówki to daty.
+    await page.locator('label').filter({ hasText: /^Day$/ }).click()
+    await expect(
+      page.getByRole('region', { name: 'Task', exact: true }),
+    ).toHaveCount(0)
+    await expect(
+      page.getByRole('heading', { level: 2, name: /day, / }).first(),
+    ).toBeVisible()
   })
 })

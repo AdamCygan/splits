@@ -15,11 +15,17 @@ import {
   Settings,
   ShieldCheck,
 } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { Toaster } from 'sonner'
 import { Logo } from '#/components/brand/logo'
 import { LanguageSwitcher } from '#/components/layout/language-switcher'
 import { useBootstrap } from '#/features/app/bootstrap'
-import { signOut, useCurrentUser } from '#/features/auth/session'
+import {
+  onSessionExpired,
+  signOut,
+  useCurrentUser,
+} from '#/features/auth/session'
 import { useMessages } from '#/i18n/context'
 import { appMessages } from '#/i18n/messages/app'
 import { commonMessages } from '#/i18n/messages/common'
@@ -111,6 +117,26 @@ function AppShell() {
   const panel = useMessages(panelMessages)
   // Konto, konfiguracja i dzisiejszy dzień jednym żądaniem, zanim ekrany zaczną pytać osobno.
   const boot = useBootstrap()
+
+  const queryClient = useQueryClient()
+  // Sesja wygasła w trakcie pracy: czyścimy dane z pamięci i wracamy na logowanie,
+  // a po zalogowaniu na tę samą stronę.
+  useEffect(
+    () =>
+      onSessionExpired(() => {
+        queryClient.clear()
+        const here = `${window.location.pathname}${window.location.search}`
+        void navigate({
+          to: '/login',
+          search: {
+            ...(here.startsWith('/app') ? { redirect: here } : {}),
+            expired: true,
+          },
+          replace: true,
+        })
+      }),
+    [navigate, queryClient],
+  )
 
   const handleSignOut = async () => {
     await signOut()

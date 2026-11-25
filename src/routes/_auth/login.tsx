@@ -13,6 +13,8 @@ type LoginSearch = {
   error?: 'google' | 'google_unavailable' | 'disabled'
   /** Po ustawieniu nowego hasła z linku w e-mailu. */
   reset?: boolean
+  /** Sesja wygasła w trakcie pracy w panelu. */
+  expired?: boolean
 }
 
 /**
@@ -35,6 +37,9 @@ const validateSearch = (search: Record<string, unknown>): LoginSearch => {
     ...(search.reset === true || search.reset === 'true'
       ? { reset: true }
       : {}),
+    ...(search.expired === true || search.expired === 'true'
+      ? { expired: true }
+      : {}),
   }
 }
 
@@ -50,7 +55,7 @@ export const Route = createFileRoute('/_auth/login')({
 })
 
 function LoginPage() {
-  const { redirect, error, reset } = Route.useSearch()
+  const { redirect, error, reset, expired } = Route.useSearch()
   const t = useMessages(authMessages)
   const errors = useMessages(errorMessages)
 
@@ -66,6 +71,14 @@ function LoginPage() {
           {t.login.createOne}
         </Link>
       </p>
+      {expired && (
+        <p
+          role="status"
+          className="mb-6 rounded-lg border border-line bg-surface px-3.5 py-3 text-sm"
+        >
+          {t.login.expired}
+        </p>
+      )}
       {reset && (
         <p
           role="status"

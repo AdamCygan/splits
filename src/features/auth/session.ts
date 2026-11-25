@@ -14,6 +14,18 @@ import { onAccessTokenChange, setAccessToken } from '#/lib/auth-token'
 let currentUser: User | null = null
 let refreshing: Promise<boolean> | null = null
 const userListeners = new Set<() => void>()
+const expiredListeners = new Set<() => void>()
+
+/**
+ * Sesja wygasła w trakcie pracy (odświeżenie po 401 się nie udało, a użytkownik był
+ * zalogowany). Panel na to wylogowuje i przekierowuje na logowanie.
+ */
+export function onSessionExpired(listener: () => void) {
+  expiredListeners.add(listener)
+  return () => {
+    expiredListeners.delete(listener)
+  }
+}
 
 function notify() {
   userListeners.forEach((listener) => listener())
@@ -49,7 +61,9 @@ export function refreshSession(): Promise<boolean> {
         startSession(result.value)
         return true
       }
+      const wasSignedIn = currentUser !== null
       clearSession()
+      if (wasSignedIn) expiredListeners.forEach((listener) => listener())
       return false
     })
     .finally(() => {
