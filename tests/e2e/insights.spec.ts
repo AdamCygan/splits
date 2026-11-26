@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test'
-import { expectNoA11yViolations, signInWithSamples } from './helpers'
+import {
+  expectNoA11yViolations,
+  openTaskFilters,
+  signInWithSamples,
+} from './helpers'
 
 test.describe('progress, quick delete, sprint tasks and charts', () => {
   test.beforeEach(async ({ page }) => signInWithSamples(page))
@@ -69,6 +73,7 @@ test.describe('progress, quick delete, sprint tasks and charts', () => {
         .first(),
     ).toBeVisible()
 
+    await openTaskFilters(page)
     await page.getByLabel('Period or sprint').selectOption('d30')
     await expect(page).not.toHaveURL(/sprint=/)
   })
@@ -152,6 +157,7 @@ test.describe('tasks list', () => {
     await expectNoA11yViolations(page)
 
     // Tylko zadania w toku: zakończony PAY-139 znika, MOB-77 zostaje.
+    await openTaskFilters(page)
     await page
       .locator('label')
       .filter({ hasText: /^In progress$/ })

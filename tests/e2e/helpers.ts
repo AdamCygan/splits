@@ -31,3 +31,9 @@ export async function expectNoA11yViolations(page: Page) {
   )
   expect(summary).toEqual([])
 }
+
+/** Na telefonie filtry zadań są zwinięte pod przyciskiem „Filters”: rozwija go, jeśli jest. */
+export async function openTaskFilters(page: Page) {
+  const toggle = page.getByRole('button', { name: /^Filters/ })
+  if (await toggle.isVisible()) await toggle.click()
+}

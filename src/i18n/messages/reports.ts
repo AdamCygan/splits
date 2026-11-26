@@ -35,6 +35,7 @@ const en = {
       under: 'Took less',
       exact: 'right on',
       row: '{time} of {estimate}',
+      few: 'Add an estimate when you log a task to see how your guesses hold up over time.',
     },
     sprints: {
       sp: 'Story points per sprint',
@@ -180,6 +181,7 @@ const pl: ReportsMessages = {
       under: 'Trwało krócej',
       exact: 'dokładnie',
       row: '{time} z {estimate}',
+      few: 'Dodawaj estymatę przy wpisie zadania, a zobaczysz, jak trafne są Twoje szacunki w czasie.',
     },
     sprints: {
       sp: 'Story pointy na sprint',

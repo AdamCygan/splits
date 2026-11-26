@@ -5,7 +5,9 @@ import {
   Check,
   Circle,
   CircleCheck,
+  ChevronDown,
   ExternalLink,
+  SlidersHorizontal,
   MoreHorizontal,
   Play,
   ScrollText,
@@ -55,6 +57,14 @@ import { panelMessages } from '#/i18n/messages/panel'
 import { cn } from '#/lib/utils'
 import { DeleteTaskDialog } from './delete-task-dialog'
 import { TaskLink } from './task-link'
+
+const hostOf = (link: string) => {
+  try {
+    return new URL(link).hostname
+  } catch {
+    return 'Link'
+  }
+}
 
 const PERIODS = { d30: 30, d90: 90, d365: 365 } as const
 type PeriodId = keyof typeof PERIODS
@@ -162,6 +172,15 @@ export function TasksPage({
     rows.some((r) => r.row.taskTypeId === x.id),
   )
 
+  // Na telefonie filtry są zwinięte pod jednym przyciskiem z liczbą aktywnych.
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const activeFilters = [
+    typeId !== '',
+    estimate !== 'all',
+    status !== 'all',
+    periodId !== 'd30',
+  ].filter(Boolean).length
+
   const clear = () => {
     setSearch('')
     setTypeId('')
@@ -202,9 +221,6 @@ export function TasksPage({
     const type = typeOf(row.taskTypeId)
     const entry = latest.get(row.key)
     const state = taskStatus(row, finished)
-    const showKey =
-      row.taskKey &&
-      !row.title.toLocaleLowerCase().includes(row.taskKey.toLocaleLowerCase())
     return (
       <li
         key={row.key}
@@ -222,24 +238,26 @@ export function TasksPage({
             >
               {row.title}
             </TaskLink>
-            {showKey && (
-              <span className="mr-2 inline-block rounded bg-muted px-1.5 py-0.5 align-middle font-mono text-xs text-ink-soft">
-                {row.taskKey}
-              </span>
-            )}
-            {row.link && (
-              <a
-                href={row.link}
-                target="_blank"
-                rel="noreferrer noopener"
-                aria-label={fmt(t.open, { name: row.title })}
-                className="-my-1 inline-flex size-6 items-center justify-center rounded-sm align-middle text-ink-faint hover:text-ink"
-              >
-                <ExternalLink aria-hidden className="size-3.5" />
-              </a>
-            )}
           </p>
           <p className="mt-0.5 text-sm text-ink-soft">
+            {row.link && (
+              <>
+                <a
+                  href={row.link}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="inline-flex items-center gap-1 rounded-sm font-medium text-ink underline-offset-4 hover:underline"
+                >
+                  <ExternalLink aria-hidden className="size-3.5" />
+                  {row.taskKey ?? hostOf(row.link)}
+                  <span className="sr-only">
+                    {': '}
+                    {fmt(t.open, { name: row.title })}
+                  </span>
+                </a>
+                <span aria-hidden> · </span>
+              </>
+            )}
             {grouping !== 'kind' && (
               <span className="mr-1.5 inline-flex items-center gap-1.5 align-middle">
                 <ColorDot color={type?.color ?? 'var(--wt-custom)'} />
@@ -303,16 +321,18 @@ export function TasksPage({
           <EstimateCell row={row} estimate={e} />
           {entry && (
             <div className="flex items-center gap-1 max-lg:ml-auto lg:justify-end">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={resume.isPending || row.running}
-                aria-label={fmt(t.continueLabel, { name: row.title })}
-                onClick={() => resume.mutate(entry.id)}
-              >
-                <Play aria-hidden fill="currentColor" className="size-3.5" />
-                {t.continue}
-              </Button>
+              {state !== 'done' && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={resume.isPending || row.running}
+                  aria-label={fmt(t.continueLabel, { name: row.title })}
+                  onClick={() => resume.mutate(entry.id)}
+                >
+                  <Play aria-hidden fill="currentColor" className="size-3.5" />
+                  {t.continue}
+                </Button>
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -325,6 +345,15 @@ export function TasksPage({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
+                  {state === 'done' && (
+                    <DropdownMenuItem
+                      disabled={resume.isPending}
+                      onSelect={() => resume.mutate(entry.id)}
+                    >
+                      <Play aria-hidden />
+                      {t.continue}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onSelect={() => setSummarizing(entry)}>
                     <ScrollText aria-hidden />
                     {t.summaryButton}
@@ -449,84 +478,115 @@ export function TasksPage({
             </div>
           )}
         </Field>
-        <Field label={t.type}>
-          {(control) => (
-            <Select
-              {...control}
-              value={typeId}
-              onChange={(e) => {
-                setTypeId(e.target.value)
-                setLimit(PAGE)
-              }}
-            >
-              <option value="">{t.allTypes}</option>
-              {usedTypes.map((x) => (
-                <option key={x.id} value={x.id}>
-                  {x.name}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-        <Field label={t.estimate}>
-          {(control) => (
-            <Select
-              {...control}
-              value={estimate}
-              onChange={(e) => {
-                setEstimate(e.target.value as EstimateFilter)
-                setLimit(PAGE)
-              }}
-            >
-              {(['all', 'over', 'within', 'under'] as const).map((id) => (
-                <option key={id} value={id}>
-                  {t.estimates[id]}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-        <Field label={t.period}>
-          {(control) => (
-            <Select
-              {...control}
-              value={isFree && !sprint ? 'd30' : periodId}
-              onChange={(e) => {
-                const next = e.target.value as typeof periodId
-                setPeriodId(next)
-                setLimit(PAGE)
-                onSprintChange?.(
-                  next.startsWith('sprint:') ? next.slice(7) : undefined,
-                )
-              }}
-            >
-              <optgroup label={t.periodGroup}>
-                {(isFree
-                  ? (['d30'] as Array<PeriodId>)
-                  : (Object.keys(PERIODS) as Array<PeriodId>)
-                ).map((id) => (
-                  <option key={id} value={id}>
-                    {t.periods[id]}
+        <div
+          id="task-filters"
+          className={cn('contents', !filtersOpen && 'max-sm:hidden')}
+        >
+          <Field label={t.type}>
+            {(control) => (
+              <Select
+                {...control}
+                value={typeId}
+                onChange={(e) => {
+                  setTypeId(e.target.value)
+                  setLimit(PAGE)
+                }}
+              >
+                <option value="">{t.allTypes}</option>
+                {usedTypes.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.name}
                   </option>
                 ))}
-              </optgroup>
-              {sprintOptions.length > 0 && (
-                <optgroup label={t.sprintGroup}>
-                  {sprintOptions.map((s) => (
-                    <option key={s.id} value={`sprint:${s.id}`}>
-                      {s.endsOn >= today
-                        ? fmt(t.currentSprint, { name: s.name })
-                        : s.name}
+              </Select>
+            )}
+          </Field>
+          <Field label={t.estimate}>
+            {(control) => (
+              <Select
+                {...control}
+                value={estimate}
+                onChange={(e) => {
+                  setEstimate(e.target.value as EstimateFilter)
+                  setLimit(PAGE)
+                }}
+              >
+                {(['all', 'over', 'within', 'under'] as const).map((id) => (
+                  <option key={id} value={id}>
+                    {t.estimates[id]}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+          <Field label={t.period}>
+            {(control) => (
+              <Select
+                {...control}
+                value={isFree && !sprint ? 'd30' : periodId}
+                onChange={(e) => {
+                  const next = e.target.value as typeof periodId
+                  setPeriodId(next)
+                  setLimit(PAGE)
+                  onSprintChange?.(
+                    next.startsWith('sprint:') ? next.slice(7) : undefined,
+                  )
+                }}
+              >
+                <optgroup label={t.periodGroup}>
+                  {(isFree
+                    ? (['d30'] as Array<PeriodId>)
+                    : (Object.keys(PERIODS) as Array<PeriodId>)
+                  ).map((id) => (
+                    <option key={id} value={id}>
+                      {t.periods[id]}
                     </option>
                   ))}
                 </optgroup>
-              )}
-            </Select>
-          )}
-        </Field>
+                {sprintOptions.length > 0 && (
+                  <optgroup label={t.sprintGroup}>
+                    {sprintOptions.map((s) => (
+                      <option key={s.id} value={`sprint:${s.id}`}>
+                        {s.endsOn >= today
+                          ? fmt(t.currentSprint, { name: s.name })
+                          : s.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </Select>
+            )}
+          </Field>
+        </div>
       </div>
 
-      <div className="mb-5 flex flex-wrap items-end gap-x-6 gap-y-3">
+      <Button
+        variant="outline"
+        className="mb-4 w-full sm:hidden"
+        aria-expanded={filtersOpen}
+        aria-controls="task-filters task-view"
+        onClick={() => setFiltersOpen((v) => !v)}
+      >
+        <SlidersHorizontal aria-hidden />
+        {activeFilters > 0
+          ? fmt(t.filtersCount, { n: activeFilters })
+          : t.filters}
+        <ChevronDown
+          aria-hidden
+          className={cn(
+            'ml-auto transition-transform',
+            filtersOpen && 'rotate-180',
+          )}
+        />
+      </Button>
+
+      <div
+        id="task-view"
+        className={cn(
+          'mb-5 flex flex-wrap items-end gap-x-6 gap-y-3',
+          !filtersOpen && 'max-sm:hidden',
+        )}
+      >
         <Segmented
           label={t.view.groupBy}
           size="sm"
@@ -550,7 +610,10 @@ export function TasksPage({
             label: t.view.statuses[value],
           }))}
         />
-        <Field label={t.view.sort} className="w-full sm:ml-auto sm:w-auto sm:min-w-44">
+        <Field
+          label={t.view.sort}
+          className="w-full sm:ml-auto sm:w-auto sm:min-w-44"
+        >
           {(control) => (
             <Select
               {...control}

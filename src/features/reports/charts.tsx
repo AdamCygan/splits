@@ -394,8 +394,10 @@ export function TimeChart({
  */
 export function HourHeatmap({
   entries,
+  className,
 }: {
   entries: ReadonlyArray<TimeEntry>
+  className?: string
 }) {
   const t = useMessages(reportsMessages).charts
   const format = useFormat()
@@ -419,13 +421,18 @@ export function HourHeatmap({
 
   if (map.max === 0)
     return (
-      <ChartCard title={t.hours.title} lead={t.hours.lead}>
+      <ChartCard
+        title={t.hours.title}
+        lead={t.hours.lead}
+        className={className}
+      >
         <p className="text-sm text-ink-soft">{t.hours.empty}</p>
       </ChartCard>
     )
 
   return (
     <ChartCard
+      className={className}
       title={t.hours.title}
       lead={t.hours.lead}
       legend={
@@ -526,10 +533,7 @@ export function EstimateChart({ rows }: { rows: ReadonlyArray<TaskRow> }) {
             {t.estimates.under}
           </li>
           <li className="inline-flex items-center gap-1.5">
-            <span
-              aria-hidden
-              className="size-2.5 rounded-[3px] bg-destructive"
-            />
+            <span aria-hidden className="size-2.5 rounded-[3px] bg-wt-review" />
             {t.estimates.over}
           </li>
         </ul>
@@ -564,7 +568,7 @@ export function EstimateChart({ rows }: { rows: ReadonlyArray<TaskRow> }) {
                     className={cn(
                       'absolute top-1/2 h-2.5 -translate-y-1/2',
                       m.diff > 0
-                        ? 'left-1/2 rounded-r-[4px] bg-destructive'
+                        ? 'left-1/2 rounded-r-[4px] bg-wt-review'
                         : 'right-1/2 rounded-l-[4px] bg-[var(--wt-pair)]',
                     )}
                     style={{ width: `${Math.max(width, 0.5)}%` }}
@@ -578,6 +582,11 @@ export function EstimateChart({ rows }: { rows: ReadonlyArray<TaskRow> }) {
           )
         })}
       </ul>
+      {misses.length < 3 && (
+        <p className="mt-4 border-t border-line pt-3 text-sm text-ink-soft">
+          {t.estimates.few}
+        </p>
+      )}
     </ChartCard>
   )
 }
