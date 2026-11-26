@@ -233,7 +233,7 @@ export function SprintsPage() {
                     className="h-2 overflow-hidden rounded-full bg-muted"
                   >
                     <div
-                      className="bar-grow h-full rounded-full bg-[var(--ink-fixed)] dark:bg-ink"
+                      className="bar-grow h-full rounded-full bg-ink"
                       style={{ width: `${(day / total) * 100}%` }}
                     />
                   </div>

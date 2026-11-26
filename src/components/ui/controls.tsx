@@ -191,7 +191,7 @@ export function CheckboxGroup<T extends string | number>({
               />
               <label
                 htmlFor={optionId}
-                className="flex h-10 min-w-12 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-sm font-medium text-ink-soft select-none peer-checked:border-ink peer-checked:bg-ink peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring"
+                className="flex h-10 min-w-12 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-sm font-medium text-ink-soft select-none peer-checked:border-[var(--selected)] peer-checked:bg-[var(--selected)] peer-checked:text-[var(--on-selected)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring"
               >
                 {checked && (
                   <Check aria-hidden className="size-3.5" strokeWidth={3} />

@@ -73,6 +73,9 @@
   --line: #dcdfea;
   /* Powierzchnie zawsze ciemne (sekcje na atramencie), niezależnie od motywu. */
   --ink-fixed: #14162b;
+  /* Zaznaczenie (aktywna zakładka, wybrana opcja): atrament na jasnym, jasne na ciemnym. */
+  --selected: #14162b;
+  --on-selected: #ffffff;
 
   --wt-task: #3d3bf3;
   --wt-review: #e8a33d;
@@ -103,6 +106,8 @@
 }
 
 .dark {
+  --selected: #eef0f8;
+  --on-selected: #14162b;
   --paper: #121426;
   --surface: #1a1d33;
   --ink: #eef0f8;

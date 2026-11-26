@@ -563,7 +563,7 @@ function EntryPreview({
                   className={cn(
                     'rounded border px-1.5 py-0.5 text-xs',
                     draft.defaultStoryPoints === null
-                      ? 'border-ink bg-ink text-white'
+                      ? 'border-[var(--selected)] bg-[var(--selected)] text-[var(--on-selected)]'
                       : 'border-line text-ink-soft',
                   )}
                 >
@@ -576,7 +576,7 @@ function EntryPreview({
                   className={cn(
                     'rounded border px-1.5 py-0.5 text-xs',
                     p === draft.defaultStoryPoints
-                      ? 'border-ink bg-ink text-white'
+                      ? 'border-[var(--selected)] bg-[var(--selected)] text-[var(--on-selected)]'
                       : 'border-line text-ink-soft',
                   )}
                 >
@@ -593,7 +593,7 @@ function EntryPreview({
           </div>
         )}
         <div className="flex justify-end">
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-[var(--ink-fixed)] px-2.5 py-1.5 text-xs font-medium text-white">
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-[var(--selected)] px-2.5 py-1.5 text-xs font-medium text-[var(--on-selected)]">
             <Check className="size-3" />
             {t.previewSave}
           </span>

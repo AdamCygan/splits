@@ -188,7 +188,7 @@ function PlanDetails({
                     'h-full rounded-full',
                     usagePct >= 100
                       ? 'bg-destructive'
-                      : 'bg-[var(--ink-fixed)]',
+                      : 'bg-ink',
                   )}
                   style={{ width: `${usagePct}%` }}
                 />

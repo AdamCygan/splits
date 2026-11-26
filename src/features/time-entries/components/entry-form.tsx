@@ -520,7 +520,7 @@ function EntryFormFields({
             {types.map((x) => (
               <ContextMenu key={x.id}>
                 <ContextMenuTrigger asChild>
-                  <label className="relative flex cursor-pointer items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-2 text-sm font-medium text-ink-soft transition-colors select-none hover:border-ink/40 hover:text-ink has-checked:border-transparent has-checked:bg-[var(--ink-fixed)] has-checked:text-white has-focus-visible:ring-[3px] has-focus-visible:ring-ring/40 data-[state=open]:ring-[3px] data-[state=open]:ring-ring/40">
+                  <label className="relative flex cursor-pointer items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-2 text-sm font-medium text-ink-soft transition-colors select-none hover:border-ink/40 hover:text-ink has-checked:border-transparent has-checked:bg-[var(--selected)] has-checked:text-[var(--on-selected)] has-focus-visible:ring-[3px] has-focus-visible:ring-ring/40 data-[state=open]:ring-[3px] data-[state=open]:ring-ring/40">
                     <input
                       type="radio"
                       name={`${uid}-type`}
@@ -823,7 +823,7 @@ function EntryFormFields({
               </legend>
               <div className="flex flex-wrap items-center gap-1.5">
                 {spRequirement === 'optional' && (
-                  <label className="grid h-10 cursor-pointer place-items-center rounded-lg border border-line px-3 text-sm font-medium hover:border-ink/40 has-checked:border-transparent has-checked:bg-[var(--ink-fixed)] has-checked:text-white has-focus-visible:ring-[3px] has-focus-visible:ring-ring/40">
+                  <label className="grid h-10 cursor-pointer place-items-center rounded-lg border border-line px-3 text-sm font-medium hover:border-ink/40 has-checked:border-transparent has-checked:bg-[var(--selected)] has-checked:text-[var(--on-selected)] has-focus-visible:ring-[3px] has-focus-visible:ring-ring/40">
                     <input
                       id={`${uid}-storyPoints`}
                       type="radio"
@@ -838,7 +838,7 @@ function EntryFormFields({
                 {withValue(scale, chosenSp).map((s, i) => (
                   <label
                     key={s.points}
-                    className="grid h-10 min-w-11 cursor-pointer place-items-center rounded-lg border border-line px-2.5 text-sm font-semibold tabular-nums hover:border-ink/40 has-checked:border-transparent has-checked:bg-[var(--ink-fixed)] has-checked:text-white has-focus-visible:ring-[3px] has-focus-visible:ring-ring/40"
+                    className="grid h-10 min-w-11 cursor-pointer place-items-center rounded-lg border border-line px-2.5 text-sm font-semibold tabular-nums hover:border-ink/40 has-checked:border-transparent has-checked:bg-[var(--selected)] has-checked:text-[var(--on-selected)] has-focus-visible:ring-[3px] has-focus-visible:ring-ring/40"
                   >
                     <input
                       id={

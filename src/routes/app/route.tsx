@@ -175,7 +175,7 @@ function AppShell() {
                 key={to}
                 to={to}
                 activeOptions={{ exact }}
-                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[0.9375rem] font-medium text-ink-soft transition-colors duration-150 hover:bg-muted hover:text-ink data-[status=active]:bg-[var(--ink-fixed)] data-[status=active]:text-white"
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[0.9375rem] font-medium text-ink-soft transition-colors duration-150 hover:bg-muted hover:text-ink data-[status=active]:bg-[var(--selected)] data-[status=active]:text-[var(--on-selected)]"
               >
                 <Icon aria-hidden className="size-[1.125rem]" />
                 {t.nav[key]}
@@ -184,7 +184,7 @@ function AppShell() {
             {user?.role === 'admin' && (
               <Link
                 to="/app/admin"
-                className="mt-3 flex items-center gap-3 rounded-lg border border-dashed border-line px-3 py-2.5 text-[0.9375rem] font-medium text-ink-soft hover:bg-muted hover:text-ink data-[status=active]:border-transparent data-[status=active]:bg-[var(--ink-fixed)] data-[status=active]:text-white"
+                className="mt-3 flex items-center gap-3 rounded-lg border border-dashed border-line px-3 py-2.5 text-[0.9375rem] font-medium text-ink-soft hover:bg-muted hover:text-ink data-[status=active]:border-transparent data-[status=active]:bg-[var(--selected)] data-[status=active]:text-[var(--on-selected)]"
               >
                 <ShieldCheck aria-hidden className="size-[1.125rem]" />
                 {panel.admin.nav}
@@ -256,7 +256,7 @@ function AppShell() {
                       <span
                         className={
                           isActive
-                            ? 'grid h-7 w-12 place-items-center rounded-full bg-[var(--ink-fixed)] text-white'
+                            ? 'grid h-7 w-12 place-items-center rounded-full bg-[var(--selected)] text-[var(--on-selected)]'
                             : 'grid h-7 w-12 place-items-center'
                         }
                       >

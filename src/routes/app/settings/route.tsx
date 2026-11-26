@@ -58,12 +58,12 @@ function SettingsLayout() {
               <Link
                 to={to}
                 activeOptions={{ exact }}
-                className="group flex items-center gap-3 rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink-soft hover:bg-muted hover:text-ink data-[status=active]:border-transparent data-[status=active]:bg-[var(--ink-fixed)] data-[status=active]:text-white lg:border-transparent lg:py-2.5"
+                className="group flex items-center gap-3 rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink-soft hover:bg-muted hover:text-ink data-[status=active]:border-transparent data-[status=active]:bg-[var(--selected)] data-[status=active]:text-[var(--on-selected)] lg:border-transparent lg:py-2.5"
               >
                 <Icon aria-hidden className="size-4 shrink-0" />
                 <span className="flex flex-col">
                   <span>{t.sections[key].title}</span>
-                  <span className="hidden text-xs font-normal text-ink-soft group-data-[status=active]:text-white/75 lg:block">
+                  <span className="hidden text-xs font-normal text-ink-soft group-data-[status=active]:text-[var(--on-selected)]/75 lg:block">
                     {t.sections[key].text}
                   </span>
                 </span>

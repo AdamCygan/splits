@@ -172,7 +172,7 @@ export function TodayPage({
               className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
             >
               <div
-                className="h-full rounded-full bg-[var(--ink-fixed)]"
+                className="h-full rounded-full bg-ink"
                 style={{ width: `${progress}%` }}
               />
             </div>

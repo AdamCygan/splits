@@ -138,7 +138,7 @@ export function TimeInput({
                   setDraft(null)
                   setOpen(false)
                 }}
-                className="block w-full rounded-lg px-3 py-1.5 text-left text-sm tabular-nums hover:bg-muted aria-pressed:bg-[var(--ink-fixed)] aria-pressed:text-white dark:aria-pressed:bg-ink dark:aria-pressed:text-paper"
+                className="block w-full rounded-lg px-3 py-1.5 text-left text-sm tabular-nums hover:bg-muted aria-pressed:bg-[var(--selected)] aria-pressed:text-[var(--on-selected)]"
               >
                 {displayTime(slot, twelve)}
               </button>
