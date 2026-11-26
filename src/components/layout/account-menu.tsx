@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '#/components/ui/dropdown-menu'
+import { shortcutLabel } from '#/features/commands/command-palette'
 import { useConsent } from '#/features/legal/consent-context'
 import { localeNames, locales } from '#/i18n/config'
 import type { Locale } from '#/i18n/config'
@@ -128,7 +129,7 @@ export function AccountMenu({
             <Search aria-hidden />
             <span className="flex-1">{t.menu.commands}</span>
             <kbd className="rounded border border-line px-1.5 text-[0.6875rem] text-ink-soft">
-              Ctrl K
+              {shortcutLabel()}
             </kbd>
           </DropdownMenuItem>
         )}

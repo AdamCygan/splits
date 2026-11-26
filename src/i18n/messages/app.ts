@@ -11,6 +11,15 @@ const en = {
     logout: 'Log out',
     account: 'Your account',
   },
+  commands: {
+    label: 'Search pages, tasks and actions',
+    placeholder: 'Go to a page, find a task, switch theme…',
+    results: 'Results',
+    tasks: 'Recent tasks',
+    pages: 'Pages',
+    actions: 'Actions',
+    empty: 'Nothing matches. Try a ticket key or a page name.',
+  },
   menu: {
     open: 'Account menu',
     settings: 'Account settings',
@@ -24,6 +33,7 @@ const en = {
     },
     language: 'Language',
     commands: 'Search and commands',
+    commandsShort: 'Search',
   },
   actions: {
     save: 'Save changes',
@@ -85,6 +95,15 @@ const pl: AppMessages = {
     logout: 'Wyloguj się',
     account: 'Twoje konto',
   },
+  commands: {
+    label: 'Szukaj stron, zadań i akcji',
+    placeholder: 'Przejdź do strony, znajdź zadanie, zmień motyw…',
+    results: 'Wyniki',
+    tasks: 'Ostatnie zadania',
+    pages: 'Strony',
+    actions: 'Akcje',
+    empty: 'Nic nie pasuje. Spróbuj numeru zadania albo nazwy strony.',
+  },
   menu: {
     open: 'Menu konta',
     settings: 'Ustawienia konta',
@@ -98,6 +117,7 @@ const pl: AppMessages = {
     },
     language: 'Język',
     commands: 'Szukaj i polecenia',
+    commandsShort: 'Szukaj',
   },
   actions: {
     save: 'Zapisz zmiany',

@@ -5,7 +5,7 @@ import {
   createFileRoute,
   useRouterState,
 } from '@tanstack/react-router'
-import { settingsSections } from '#/features/settings/sections'
+import { settingsGroups, settingsSections } from '#/features/settings/sections'
 import { useMessages } from '#/i18n/context'
 import { settingsMessages } from '#/i18n/messages/settings'
 
@@ -48,10 +48,10 @@ function SettingsLayout() {
         <p className="mb-3 hidden text-sm font-semibold text-ink-soft lg:block">
           {t.title}
         </p>
-        {/* Telefon/tablet: poziomy pasek przewijany palcem; komputer: pionowa lista z opisami */}
+        {/* Telefon/tablet: poziomy pasek przewijany palcem */}
         <ul
           ref={navRef}
-          className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-2 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0"
+          className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-2 lg:hidden"
         >
           {settingsSections.map(({ to, key, icon: Icon, exact }) => (
             <li key={to} className="shrink-0">
@@ -71,6 +71,47 @@ function SettingsLayout() {
             </li>
           ))}
         </ul>
+        {/* Komputer: pionowa lista z opisami, w grupach */}
+        <div className="hidden space-y-5 lg:block">
+          {settingsGroups.map((group) => (
+            <div key={group}>
+              {group !== 'start' && (
+                <p
+                  id={`settings-group-${group}`}
+                  className="mb-1.5 px-3 text-xs font-medium text-ink-faint"
+                >
+                  {t.groups[group]}
+                </p>
+              )}
+              <ul
+                aria-labelledby={
+                  group !== 'start' ? `settings-group-${group}` : undefined
+                }
+                className="flex flex-col gap-0.5"
+              >
+                {settingsSections
+                  .filter((x) => x.group === group)
+                  .map(({ to, key, icon: Icon, exact }) => (
+                    <li key={to}>
+                      <Link
+                        to={to}
+                        activeOptions={{ exact }}
+                        className="group flex items-center gap-3 rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink-soft hover:bg-muted hover:text-ink data-[status=active]:border-transparent data-[status=active]:bg-[var(--selected)] data-[status=active]:text-[var(--on-selected)] lg:border-transparent lg:py-2.5"
+                      >
+                        <Icon aria-hidden className="size-4 shrink-0" />
+                        <span className="flex flex-col">
+                          <span>{t.sections[key].title}</span>
+                          <span className="hidden text-xs font-normal text-ink-soft group-data-[status=active]:text-[var(--on-selected)]/75 lg:block">
+                            {t.sections[key].text}
+                          </span>
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       </nav>
       <div className="min-w-0">
         <Outlet />

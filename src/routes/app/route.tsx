@@ -11,6 +11,7 @@ import {
   CalendarRange,
   Clock,
   ListTodo,
+  Search,
   Settings,
   ShieldCheck,
 } from 'lucide-react'
@@ -20,6 +21,11 @@ import { Toaster } from 'sonner'
 import { Logo } from '#/components/brand/logo'
 import { AccountMenu } from '#/components/layout/account-menu'
 import { useBootstrap } from '#/features/app/bootstrap'
+import {
+  CommandPalette,
+  openCommandPalette,
+  shortcutLabel,
+} from '#/features/commands/command-palette'
 import {
   onSessionExpired,
   signOut,
@@ -76,6 +82,7 @@ function AppLayout() {
   return (
     <QueryProvider>
       <AppShell />
+      <CommandPalette />
       <Toaster
         position="bottom-right"
         closeButton
@@ -169,6 +176,18 @@ function AppShell() {
               <Logo />
             </Link>
           </div>
+          {/* Wejście do palety poleceń: widoczne, żeby skrót nie był jedyną drogą. */}
+          <button
+            type="button"
+            onClick={openCommandPalette}
+            className="mb-4 flex h-10 items-center gap-2.5 rounded-lg border border-line px-3 text-sm text-ink-soft hover:border-ink/30 hover:text-ink"
+          >
+            <Search aria-hidden className="size-4" />
+            <span className="flex-1 text-left">{t.menu.commandsShort}</span>
+            <kbd className="rounded border border-line px-1.5 text-[0.6875rem]">
+              {shortcutLabel()}
+            </kbd>
+          </button>
           <nav aria-label={t.nav.label} className="flex flex-col gap-0.5">
             {nav.map(({ to, key, icon: Icon, exact }) => (
               <Link
@@ -193,7 +212,11 @@ function AppShell() {
           </nav>
           {user && (
             <div className="mt-auto border-t border-line pt-3">
-              <AccountMenu user={user} onSignOut={() => void handleSignOut()} />
+              <AccountMenu
+                user={user}
+                onSignOut={() => void handleSignOut()}
+                onOpenCommands={openCommandPalette}
+              />
             </div>
           )}
         </aside>
@@ -219,6 +242,7 @@ function AppShell() {
                   user={user}
                   compact
                   onSignOut={() => void handleSignOut()}
+                  onOpenCommands={openCommandPalette}
                 />
               )}
             </div>

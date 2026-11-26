@@ -5,6 +5,12 @@ const en = {
   title: 'Settings',
   lead: 'Set up Pointhours to match how you and your team work. Changes apply right away.',
   sectionsLabel: 'Settings sections',
+  groups: {
+    start: 'Start',
+    time: 'Time tracking',
+    work: 'Work and tasks',
+    account: 'Account and billing',
+  },
   sections: {
     overview: { title: 'Overview', text: 'Setup checklist' },
     workday: { title: 'Workday', text: 'Hours, days, time zone' },
@@ -526,6 +532,12 @@ const pl: SettingsMessages = {
   title: 'Ustawienia',
   lead: 'Dopasuj Pointhours do tego, jak pracujesz Ty i Twój zespół. Zmiany działają od razu.',
   sectionsLabel: 'Sekcje ustawień',
+  groups: {
+    start: 'Start',
+    time: 'Rejestracja czasu',
+    work: 'Praca i zadania',
+    account: 'Konto i płatności',
+  },
   sections: {
     overview: { title: 'Przegląd', text: 'Lista kroków na start' },
     workday: { title: 'Dzień pracy', text: 'Godziny, dni, strefa czasowa' },

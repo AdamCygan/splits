@@ -13,53 +13,92 @@ import {
   Zap,
 } from 'lucide-react'
 
-/** Sekcje panelu ustawień — kolejność w menu i trasy. */
+/** Sekcje panelu ustawień — kolejność w menu, trasy i grupy na komputerze. */
 export const settingsSections = [
-  { to: '/app/settings', key: 'overview', icon: LayoutGrid, exact: true },
-  { to: '/app/settings/workday', key: 'workday', icon: Clock3, exact: false },
+  {
+    to: '/app/settings',
+    key: 'overview',
+    group: 'start',
+    icon: LayoutGrid,
+    exact: true,
+  },
+  {
+    to: '/app/settings/workday',
+    key: 'workday',
+    group: 'time',
+    icon: Clock3,
+    exact: false,
+  },
   {
     to: '/app/settings/sprints',
     key: 'sprints',
+    group: 'time',
     icon: CalendarRange,
     exact: false,
   },
   {
     to: '/app/settings/days-off',
     key: 'daysOff',
+    group: 'time',
     icon: CalendarOff,
     exact: false,
   },
   {
     to: '/app/settings/story-points',
     key: 'storyPoints',
+    group: 'time',
     icon: Ruler,
     exact: false,
   },
   {
     to: '/app/settings/work-types',
     key: 'workTypes',
+    group: 'work',
     icon: Layers,
     exact: false,
   },
   {
     to: '/app/settings/statuses',
     key: 'statuses',
+    group: 'work',
     icon: ListChecks,
     exact: false,
   },
-  { to: '/app/settings/projects', key: 'projects', icon: Flag, exact: false },
-  { to: '/app/settings/templates', key: 'templates', icon: Zap, exact: false },
+  {
+    to: '/app/settings/projects',
+    key: 'projects',
+    group: 'work',
+    icon: Flag,
+    exact: false,
+  },
+  {
+    to: '/app/settings/templates',
+    key: 'templates',
+    group: 'work',
+    icon: Zap,
+    exact: false,
+  },
   {
     to: '/app/settings/summaries',
     key: 'summaries',
+    group: 'work',
     icon: ScrollText,
     exact: false,
   },
   {
     to: '/app/settings/account',
     key: 'account',
+    group: 'account',
     icon: UserRound,
     exact: false,
   },
-  { to: '/app/settings/plan', key: 'plan', icon: CreditCard, exact: false },
+  {
+    to: '/app/settings/plan',
+    key: 'plan',
+    group: 'account',
+    icon: CreditCard,
+    exact: false,
+  },
 ] as const
+
+export const settingsGroups = ['start', 'time', 'work', 'account'] as const
