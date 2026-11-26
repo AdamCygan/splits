@@ -26,6 +26,7 @@ const en = {
       more: 'More',
       cell: '{day}, {hour}: {time}',
     },
+    noData: 'Nothing to show yet. Log time in a sprint and it appears here.',
     estimates: {
       title: 'Estimate accuracy',
       lead: 'Tasks with an estimate, biggest misses first.',
@@ -172,6 +173,8 @@ const pl: ReportsMessages = {
       more: 'Więcej',
       cell: '{day}, {hour}: {time}',
     },
+    noData:
+      'Na razie nic do pokazania. Zapisz czas w sprincie, a pojawi się tutaj.',
     estimates: {
       title: 'Trafność estymat',
       lead: 'Zadania z estymatą, od największego rozjazdu.',

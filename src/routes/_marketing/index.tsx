@@ -12,7 +12,7 @@ import {
 import { PricingSection } from '#/features/marketing/components/pricing-section'
 import { VideoSection } from '#/features/marketing/components/video-section'
 import { landingJsonLd } from '#/features/marketing/structured-data'
-import { useMessages } from '#/i18n/context'
+import { useI18n, useMessages } from '#/i18n/context'
 import { getLocale } from '#/i18n/locale'
 import { commonMessages } from '#/i18n/messages/common'
 import { homeMessages } from '#/i18n/messages/home'
@@ -67,7 +67,14 @@ function DemoLink({ label, dark }: { label: string; dark?: boolean }) {
  * film, cennik, pytania. Każda sekcja poniżej hero w osobnej granicy <Suspense>,
  * żeby hydratacja nie blokowała przeglądarki jednym długim zadaniem.
  */
+const productSizes = '(min-width: 1200px) 1152px, calc(100vw - 2rem)'
+const productSrcSet = (locale: string, format: 'avif' | 'webp') =>
+  [640, 960, 1440]
+    .map((w) => `/product-today-${locale}-${w}.${format} ${w}w`)
+    .join(', ')
+
 function LandingPage() {
+  const { locale } = useI18n()
   const t = useMessages(homeMessages)
   const m = useMessages(marketingMessages)
 
@@ -98,6 +105,28 @@ function LandingPage() {
         </div>
         <SprintSplit />
       </section>
+
+      {/* PRODUKT: prawdziwy ekran Dziś, wchodzi na ciemny pas z problemami poniżej */}
+      <div className="bg-[linear-gradient(to_bottom,transparent_58%,var(--ink-fixed)_58%)] px-4 sm:px-6">
+        <picture>
+          <source
+            type="image/avif"
+            srcSet={productSrcSet(locale, 'avif')}
+            sizes={productSizes}
+          />
+          <img
+            src={`/product-today-${locale}-1440.webp`}
+            srcSet={productSrcSet(locale, 'webp')}
+            sizes={productSizes}
+            width={1440}
+            height={900}
+            loading="lazy"
+            decoding="async"
+            alt={t.product.alt}
+            className="mx-auto block h-auto w-full max-w-6xl rounded-2xl border border-line bg-surface shadow-[0_32px_80px_-32px_rgba(20,22,43,0.45)]"
+          />
+        </picture>
+      </div>
 
       {/* PROBLEM */}
       <Suspense>

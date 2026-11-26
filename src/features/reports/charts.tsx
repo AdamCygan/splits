@@ -603,7 +603,15 @@ export function ColumnChart({
   items: Array<{ key: string; label: string; value: number; display: string }>
   color?: string
 }) {
+  const t = useMessages(reportsMessages).charts
   const max = Math.max(...items.map((i) => i.value), 1)
+  // Same zera (np. świeże konto): zamiast pustych słupków krótka informacja.
+  if (items.every((i) => i.value === 0))
+    return (
+      <ChartCard title={title} lead={lead}>
+        <p className="text-sm text-ink-soft">{t.noData}</p>
+      </ChartCard>
+    )
   return (
     <ChartCard title={title} lead={lead}>
       <ol className="flex h-40 items-end justify-around gap-1 border-b border-line">

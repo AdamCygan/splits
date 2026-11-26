@@ -10,6 +10,9 @@ const en = {
     demo: 'Try the live demo',
     note: 'Free forever, no card needed. The demo opens without signing up.',
   },
+  product: {
+    alt: 'The Today screen in Pointhours: time logged against the daily target, planned meetings, quick templates, an unfinished task to pick up and the day’s entries.',
+  },
   split: {
     label:
       'One sprint, 80 hours. A regular tracker shows a single block called Development. Pointhours shows 38 hours of tasks, 17 of code review, 11 of pairing, 9 of meetings and 5 of extra work, which is 2.4 hours per story point.',
@@ -111,6 +114,9 @@ const pl: HomeMessages = {
     primary: 'Zacznij za darmo',
     demo: 'Wypróbuj demo',
     note: 'Za darmo na zawsze, bez karty. Demo otwiera się bez rejestracji.',
+  },
+  product: {
+    alt: 'Ekran Dziś w Pointhours: czas względem dziennego celu, zaplanowane spotkania, szybkie szablony, niedokończone zadanie do podjęcia i wpisy z dnia.',
   },
   split: {
     label:

@@ -186,9 +186,7 @@ function PlanDetails({
                 <div
                   className={cn(
                     'h-full rounded-full',
-                    usagePct >= 100
-                      ? 'bg-destructive'
-                      : 'bg-ink',
+                    usagePct >= 100 ? 'bg-destructive' : 'bg-ink',
                   )}
                   style={{ width: `${usagePct}%` }}
                 />

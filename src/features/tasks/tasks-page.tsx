@@ -660,9 +660,13 @@ export function TasksPage({
       ) : visible.length === 0 ? (
         <div className="rounded-2xl border border-line bg-surface px-5 py-8 sm:px-6">
           <p className="text-ink-soft">{filtering ? t.noMatch : t.empty}</p>
-          {filtering && (
+          {filtering ? (
             <Button variant="outline" className="mt-4" onClick={clear}>
               {t.clear}
+            </Button>
+          ) : (
+            <Button variant="outline" className="mt-4" asChild>
+              <Link to="/app">{t.emptyCta}</Link>
             </Button>
           )}
         </div>
