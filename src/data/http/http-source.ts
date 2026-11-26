@@ -228,6 +228,21 @@ export const httpSource: DataSource = {
           }),
         ),
       ),
+    searchAll: (q) =>
+      get(
+        `/time-entries/search/all?${new URLSearchParams({ q }).toString()}`,
+        z.array(
+          z.object({
+            entry: s.timeEntrySchema,
+            workedMinutes: z.number(),
+            sessions: z.number(),
+            lastDate: z.string(),
+            finished: z.boolean(),
+            running: z.boolean(),
+            snippet: z.string().nullable(),
+          }),
+        ),
+      ),
     unfinished: () =>
       get(
         '/time-entries/unfinished',

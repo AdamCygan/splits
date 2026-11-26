@@ -54,6 +54,7 @@ import { useUpdateNote } from '../use-update-note'
 import { TaskProgress } from './task-progress'
 import { UnfinishedTasks } from './unfinished'
 import { EntryForm } from './entry-form'
+import type { EntryPrefill } from './entry-form'
 import { EditEntryDialog } from './edit-entry-dialog'
 import { TaskSearch } from './task-search'
 import { ExtendDialog } from './extend-dialog'
@@ -67,13 +68,24 @@ import {
   useStopTimer,
 } from './timer'
 
+/** Polecenie z palety (adres ?log=…&mode=… albo ?template=…), wykonywane raz po wejściu. */
+export type TodayRequest = {
+  log?: string
+  mode?: 'timer' | 'range' | 'duration'
+  template?: string
+}
+
 export function TodayPage({
   date,
   onDateChange,
+  request,
+  onRequestDone,
 }: {
   /** Wybrany dzień z adresu (?date=); brak = dziś. */
   date?: string
   onDateChange?: (date: string, today: string) => void
+  request?: TodayRequest
+  onRequestDone?: () => void
 }) {
   const t = useMessages(entriesMessages)
   const format = useFormat()
@@ -81,11 +93,22 @@ export function TodayPage({
   const settings = useQuery(settingsQuery).data
   const user = useCurrentUser()
   // Zadanie z wyszukiwarki do wpisania w formularz.
-  const [prefill, setPrefill] = useState<{
-    entry: TimeEntry
-    key: number
-  } | null>(null)
+  const [prefill, setPrefill] = useState<EntryPrefill | null>(null)
   const today = todayIn(settings?.timezone)
+  // Paleta: „Zapisz czas”/„Uruchom timer” wypełnia formularz i ustawia na nim fokus.
+  const requestedLog = request?.log
+  const requestedMode = request?.mode
+  useEffect(() => {
+    if (requestedLog === undefined && requestedMode === undefined) return
+    setPrefill((p) => ({
+      key: (p?.key ?? 0) + 1,
+      title: requestedLog,
+      mode: requestedMode,
+    }))
+    onRequestDone?.()
+    // Tylko przy nowym poleceniu z adresu.
+  }, [requestedLog, requestedMode])
+
   // Plan Free: dopisywanie wpisów z ostatnich 30 dni (tyle historii obejmuje Free).
   const limited = !hasProAccess(user)
   const minDate = limited
@@ -193,7 +216,12 @@ export function TodayPage({
         <BreakTile date={workDate} />
       </dl>
 
-      <QuickTemplates workDate={workDate} isToday={isToday} />
+      <QuickTemplates
+        workDate={workDate}
+        isToday={isToday}
+        requested={request?.template}
+        onRequestDone={onRequestDone}
+      />
 
       {isToday && <UnfinishedTasks today={today} />}
 
@@ -721,9 +749,14 @@ function groupByTask(entries: ReadonlyArray<TimeEntry>) {
 function QuickTemplates({
   workDate,
   isToday,
+  requested,
+  onRequestDone,
 }: {
   workDate: string
   isToday: boolean
+  /** Szablon wybrany w palecie poleceń (id), użyty raz po wczytaniu szablonów. */
+  requested?: string
+  onRequestDone?: () => void
 }) {
   const t = useMessages(entriesMessages)
   const format = useFormat()
@@ -822,6 +855,14 @@ function QuickTemplates({
         at,
       })
   }
+
+  useEffect(() => {
+    if (!requested || templates.length === 0 || types.length === 0) return
+    const template = templates.find((x) => x.id === requested)
+    onRequestDone?.()
+    if (template) use(template)
+    // Raz na wybór z palety.
+  }, [requested, templates.length, types.length])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

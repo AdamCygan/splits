@@ -5,6 +5,7 @@ import {
   eq,
   gte,
   ilike,
+  inArray,
   isNull,
   lte,
   or,
@@ -22,7 +23,12 @@ import {
 } from '#/domain/entries'
 import { spForType, taskGroupKey } from '#/domain/report'
 import { UNFINISHED_LOOKBACK_DAYS, unfinishedTasks } from '#/domain/unfinished'
-import { groupSearchResults, likePattern } from '#/domain/task-search'
+import {
+  groupSearchResults,
+  likePattern,
+  rankSearchResults,
+  searchWords,
+} from '#/domain/task-search'
 import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
 import { db } from '../db/client'
 import type { Tx } from '../db/client'
@@ -366,7 +372,63 @@ export const entryRoutes = new Hono<AppEnv>()
     return c.json((await pausedOn(db, userId, today)).map(toEntry))
   })
 
-  /** Zadania z poprzednich dni, których nie zakończono — do kontynuacji na „Dziś”. */
+  /**
+   * Wyszukiwarka palety poleceń: cała historia, tytuł, link i notatki (także nadgodzin
+   * i przedłużeń), każde słowo osobno. Filtr w SQL (ILIKE po kolumnach użytkownika),
+   * ranking i fragment notatki w domenie.
+   */
+  .get('/search/all', async (c) => {
+    const userId = c.get('userId')
+    const q = (c.req.query('q') ?? '').trim().slice(0, 200)
+    const words = searchWords(q).filter((w) => w.length >= 2)
+    if (words.length === 0) return c.json([])
+    const anyField = (w: string) => {
+      const p = likePattern(w)
+      return or(
+        ilike(t.timeEntries.title, p),
+        ilike(t.timeEntries.link, p),
+        ilike(t.timeEntries.note, p),
+        ilike(t.timeEntries.overtimeNote, p),
+        ilike(t.timeEntries.extensionNote, p),
+      )
+    }
+    // Sesje, w których występuje którekolwiek słowo; pełne dopasowanie (wszystkie słowa
+    // w obrębie zadania, także rozłożone na kilka sesji) sprawdza domena.
+    const hits = await db
+      .select({
+        title: t.timeEntries.title,
+        link: t.timeEntries.link,
+        taskTypeId: t.timeEntries.taskTypeId,
+      })
+      .from(t.timeEntries)
+      .where(and(mine(userId), or(...words.map(anyField))))
+      .orderBy(desc(t.timeEntries.workDate))
+      .limit(400)
+    if (hits.length === 0) return c.json([])
+    // Wszystkie sesje trafionych zadań (po tytule albo linku), żeby policzyć czas i sesje.
+    const titles = [...new Set(hits.map((h) => h.title))].slice(0, 100)
+    const links = [
+      ...new Set(hits.flatMap((h) => (h.link ? [h.link] : []))),
+    ].slice(0, 100)
+    const rows = await db
+      .select()
+      .from(t.timeEntries)
+      .where(
+        and(
+          mine(userId),
+          links.length
+            ? or(
+                inArray(t.timeEntries.title, titles),
+                inArray(t.timeEntries.link, links),
+              )
+            : inArray(t.timeEntries.title, titles),
+        ),
+      )
+      .orderBy(desc(t.timeEntries.workDate), desc(t.timeEntries.createdAt))
+      .limit(2000)
+    return c.json(rankSearchResults(rows.map(toEntry), q))
+  })
+
   /** Wyszukiwarka zadań (także zakończonych) po tytule albo linku, do kontynuacji pracy. */
   .get('/search', async (c) => {
     const userId = c.get('userId')

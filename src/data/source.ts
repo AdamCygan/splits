@@ -168,6 +168,10 @@ export interface DataSource {
     finishTask: (ref: TaskRef, finished: boolean) => R<{ updated: number }>
     /** Zadania (także zakończone) pasujące do tytułu albo linku, najnowsze najpierw. */
     search: (q: string) => R<Array<TaskSearchResult>>
+    /** Paleta poleceń: cała historia, tytuł, link i notatki; fragment notatki przy trafieniu w nią. */
+    searchAll: (
+      q: string,
+    ) => R<Array<TaskSearchResult & { snippet: string | null }>>
     /** Niezakończone zadania z poprzednich dni, najświeższe najpierw. */
     unfinished: () => R<Array<UnfinishedTask>>
     /** Zmienia samą notatkę wpisu (np. odhaczony checkbox). */

@@ -62,4 +62,60 @@ describe('task search', () => {
       (await other.c.get<Array<Result>>('/time-entries/search?q=refund')).body,
     ).toEqual([])
   })
+
+  it('palette search covers notes, every word and ranks title matches first', async () => {
+    const { c } = await registered()
+    const types =
+      await c.get<
+        Array<{ id: string; kind: string; storyPointsRequirement: string }>
+      >('/task-types')
+    const task = types.body.find((x) => x.kind === 'task')!
+    const today = todayIn('Europe/Warsaw')
+    const log = (title: string, note: string | null, daysAgo: number) =>
+      c.post<{ id: string }>('/time-entries', {
+        taskTypeId: task.id,
+        projectId: null,
+        title,
+        link: null,
+        storyPoints: task.storyPointsRequirement === 'required' ? 3 : null,
+        workDate: addDays(today, -daysAgo),
+        startTime: null,
+        endTime: null,
+        durationMinutes: 30,
+        note,
+        running: false,
+      })
+    await log('Webhook retry queue', null, 20)
+    await log(
+      'Payment gateway',
+      '- [ ] **Retry** policy for webhook 5xx responses',
+      2,
+    )
+    await log('Payment gateway', null, 1)
+    await log('Ledger export', 'Nothing about it', 1)
+
+    type Ranked = Result & { snippet: string | null }
+    const res = await c.get<Array<Ranked>>(
+      '/time-entries/search/all?q=webhook retry',
+    )
+    expect(res.status).toBe(200)
+    // Tytuł zawierający oba słowa? „Webhook retry queue” ma oba, więc jest pierwszy,
+    // mimo że to stara historia; „Payment gateway” trafia przez notatkę z fragmentem.
+    expect(res.body.map((r) => r.entry.title)).toEqual([
+      'Webhook retry queue',
+      'Payment gateway',
+    ])
+    expect(res.body[1]).toMatchObject({ sessions: 2, workedMinutes: 60 })
+    expect(res.body[1]?.snippet).toBe('Retry policy for webhook 5xx responses')
+    expect(res.body[0]?.snippet).toBeNull()
+
+    expect(
+      (await c.get<Array<Ranked>>('/time-entries/search/all?q=x')).body,
+    ).toEqual([])
+    const other = await registered()
+    expect(
+      (await other.c.get<Array<Ranked>>('/time-entries/search/all?q=webhook'))
+        .body,
+    ).toEqual([])
+  })
 })

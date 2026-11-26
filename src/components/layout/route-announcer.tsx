@@ -22,8 +22,15 @@ export function RouteAnnouncer() {
       // Tytuł ustawia HeadContent; dajemy mu jedną klatkę.
       requestAnimationFrame(() => {
         setMessage(document.title)
-        if (!toLocation.hash)
-          document.getElementById('main')?.focus({ preventScroll: true })
+        // Nowa strona sama ustawiła fokus w polu (np. „Zapisz czas” z palety): zostawiamy go.
+        const main = document.getElementById('main')
+        const focused = document.activeElement
+        const fieldFocused =
+          focused instanceof HTMLElement &&
+          main?.contains(focused) &&
+          focused.matches('input, textarea, select')
+        if (!toLocation.hash && !fieldFocused)
+          main?.focus({ preventScroll: true })
       })
     })
   }, [router])

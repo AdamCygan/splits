@@ -59,6 +59,13 @@ import { entryKeys } from '../queries'
 /** 'timer' = start bez godziny końca; zatrzymuje się później jednym kliknięciem. */
 type DraftMode = TimeInputMode | 'timer'
 
+export type EntryPrefill = {
+  key: number
+  entry?: TimeEntry
+  title?: string
+  mode?: DraftMode
+}
+
 type Draft = {
   taskTypeId: string
   title: string
@@ -241,8 +248,11 @@ type EntryFormProps = {
    * Wpis z godzinami dostaje kolejny przedział (od końca oryginału, tyle samo czasu).
    */
   copyOf?: TimeEntry | null
-  /** Zadanie z wyszukiwarki do wpisania w formularz (`key` zmienia się przy każdym wyborze). */
-  prefill?: { entry: TimeEntry; key: number } | null
+  /**
+   * Zadanie z wyszukiwarki albo z palety poleceń do wpisania w formularz (`key` zmienia
+   * się przy każdym wyborze): całe zadanie (`entry`) albo sam tytuł i sposób podania czasu.
+   */
+  prefill?: EntryPrefill | null
 }
 
 /**
@@ -312,6 +322,20 @@ function EntryFormFields({
   useEffect(() => {
     if (!prefill) return
     const e = prefill.entry
+    if (!e) {
+      // Z palety: tytuł i tryb (timer tylko dziś), reszta jak w pustym formularzu.
+      const mode =
+        prefill.mode === 'timer' && !timerAllowed ? 'duration' : prefill.mode
+      setDraft((d) => ({
+        ...d,
+        ...(prefill.title !== undefined ? { title: prefill.title } : {}),
+        ...(mode ? { mode } : {}),
+        ...(mode === 'timer' ? { start: nowTime() } : {}),
+      }))
+      titleRef.current?.focus()
+      titleRef.current?.scrollIntoView({ block: 'center' })
+      return
+    }
     setDraft((d) => ({
       ...d,
       taskTypeId: e.taskTypeId,
