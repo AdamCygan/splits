@@ -1,9 +1,9 @@
 import { Link } from '@tanstack/react-router'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '#/components/ui/button'
-import { Input } from '#/components/ui/input'
 import { addDays } from '#/domain/dates'
-import { useMessages } from '#/i18n/context'
+import { useI18n, useMessages } from '#/i18n/context'
+import { formatDate } from '#/i18n/format'
 import { entriesMessages } from '#/i18n/messages/entries'
 
 /**
@@ -26,6 +26,7 @@ export function DayPicker({
   onChange: (date: string) => void
 }) {
   const t = useMessages(entriesMessages).day
+  const { locale } = useI18n()
   const isToday = value === today
   const atMin = min !== null && value <= min
 
@@ -41,22 +42,46 @@ export function DayPicker({
           <ChevronLeft aria-hidden className="size-4" />
           <span className="sr-only">{t.previous}</span>
         </Button>
-        <Input
-          type="date"
-          aria-label={t.date}
-          value={value}
-          max={today}
-          min={min ?? undefined}
-          required
-          onChange={(e) => {
-            const next = e.target.value
-            if (!next) return
-            onChange(
-              next > today ? today : min !== null && next < min ? min : next,
-            )
-          }}
-          className="h-9 w-auto px-3 text-sm font-medium tabular-nums"
-        />
+        {/* Data w formacie aplikacji („czw., 26 lis”), a pod spodem przezroczyste pole daty:
+            kliknięcie otwiera systemowy kalendarz, klawiatura i czytniki dostają zwykłe pole. */}
+        <div className="relative h-9 rounded-md border border-input bg-surface focus-within:ring-[3px] focus-within:ring-ring/50">
+          <span
+            aria-hidden
+            className="flex h-full items-center gap-2 px-3 text-sm font-medium whitespace-nowrap"
+          >
+            <CalendarDays className="size-4 text-ink-soft" />
+            {formatDate(locale, value, {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short',
+              year:
+                value.slice(0, 4) === today.slice(0, 4) ? undefined : 'numeric',
+            })}
+          </span>
+          <input
+            type="date"
+            aria-label={t.date}
+            value={value}
+            max={today}
+            min={min ?? undefined}
+            required
+            onClick={(e) => {
+              try {
+                e.currentTarget.showPicker()
+              } catch {
+                // Starsze przeglądarki otwierają kalendarz same po kliknięciu.
+              }
+            }}
+            onChange={(e) => {
+              const next = e.target.value
+              if (!next) return
+              onChange(
+                next > today ? today : min !== null && next < min ? min : next,
+              )
+            }}
+            className="absolute inset-0 size-full cursor-pointer opacity-0"
+          />
+        </div>
         <Button
           variant="outline"
           size="icon"

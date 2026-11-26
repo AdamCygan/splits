@@ -19,9 +19,11 @@ test.describe('recurring meetings', () => {
     await expect(
       dialog.getByRole('radio', { name: 'Different time each day' }),
     ).toBeChecked()
-    await expect(dialog.getByLabel('Start time on Monday')).toHaveValue('10:00')
+    await expect(dialog.getByLabel('Start time on Monday')).toHaveValue(
+      '10:00 AM',
+    )
     await expect(dialog.getByLabel('Start time on Tuesday')).toHaveValue(
-      '09:30',
+      '9:30 AM',
     )
     await expectNoA11yViolations(page)
   })

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { hourOptions } from '#/lib/clock'
 import { useQuery } from '@tanstack/react-query'
 import { Check, Coffee, Pause, Pencil, Play, Square } from 'lucide-react'
 import { toast } from 'sonner'
@@ -98,10 +99,10 @@ export function useDismissPaused() {
   })
 }
 
+/** Godzina "HH:MM" w formacie użytkownika (12h/24h wg preferencji, domyślnie z języka). */
 export const clockTime = (tag: string, time: string) =>
   new Intl.DateTimeFormat(tag, {
-    hour: 'numeric',
-    minute: '2-digit',
+    ...hourOptions(tag),
     timeZone: 'UTC',
   }).format(new Date(`1970-01-01T${time}:00Z`))
 

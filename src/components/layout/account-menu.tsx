@@ -17,6 +17,8 @@ import type { Locale } from '#/i18n/config'
 import { useI18n, useMessages } from '#/i18n/context'
 import { appMessages } from '#/i18n/messages/app'
 import { commonMessages } from '#/i18n/messages/common'
+import { clockPrefs, setClock, useClockPref } from '#/lib/clock'
+import type { ClockPref } from '#/lib/clock'
 import { setTheme, themes, useTheme } from '#/lib/theme'
 import type { Theme } from '#/lib/theme'
 import { cn } from '#/lib/utils'
@@ -67,6 +69,7 @@ export function AccountMenu({
   const common = useMessages(commonMessages)
   const { locale, setLocale } = useI18n()
   const theme = useTheme()
+  const clock = useClockPref()
   const { openSettings } = useConsent()
 
   const trigger: ReactNode = compact ? (
@@ -138,6 +141,18 @@ export function AccountMenu({
           {themes.map((th) => (
             <DropdownMenuRadioItem key={th} value={th}>
               {t.menu.themes[th]}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>{t.menu.clock}</DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          value={clock}
+          onValueChange={(v) => setClock(v as ClockPref)}
+        >
+          {clockPrefs.map((c) => (
+            <DropdownMenuRadioItem key={c} value={c}>
+              {t.menu.clocks[c]}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>

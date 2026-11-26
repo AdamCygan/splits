@@ -1,4 +1,5 @@
 import type { TaskType, TimeEntry } from '#/data/types'
+import { hourOptions } from '#/lib/clock'
 import { taskKeyOf, taskStats } from '#/domain/summary'
 import type { SummaryValues, TaskStats } from '#/domain/summary'
 import type { Locale } from '#/i18n/config'
@@ -18,8 +19,7 @@ const dayLabel = (locale: Locale, date: string) =>
 
 const clock = (locale: Locale, time: string) =>
   new Intl.DateTimeFormat(localeTags[locale], {
-    hour: 'numeric',
-    minute: '2-digit',
+    ...hourOptions(localeTags[locale]),
     timeZone: 'UTC',
   })
     .format(new Date(`1970-01-01T${time}:00Z`))

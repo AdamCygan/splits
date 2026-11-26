@@ -431,3 +431,10 @@
 .tok-type {
   color: var(--tok-type);
 }
+
+/* Powiadomienia: przycisk zamknięcia z celem dotyku 24×24 px (WCAG 2.5.8). */
+/* Sonner wstrzykuje swój CSS w czasie działania, więc tu potrzebne !important. */
+[data-sonner-toast] [data-close-button] {
+  width: 24px !important;
+  height: 24px !important;
+}

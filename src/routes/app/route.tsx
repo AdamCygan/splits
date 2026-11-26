@@ -30,6 +30,7 @@ import { appMessages } from '#/i18n/messages/app'
 import { commonMessages } from '#/i18n/messages/common'
 import { panelMessages } from '#/i18n/messages/panel'
 import { TimerBar } from '#/features/time-entries/components/timer'
+import { useClockPref } from '#/lib/clock'
 import { applyTheme } from '#/lib/theme'
 import { QueryProvider } from '#/integrations/tanstack-query/query-provider'
 
@@ -152,6 +153,8 @@ function AppShell() {
     return () => applyTheme(false)
   }, [])
 
+  // Zmiana formatu godziny przerysowuje stronę, żeby wszystkie godziny poszły za nią.
+  const clock = useClockPref()
   const section = pathname.split('/').slice(0, 3).join('/')
 
   if (boot.isPending) return <AppPending />
@@ -229,7 +232,7 @@ function AppShell() {
             className="flex-1 px-4 pt-6 pb-28 outline-none sm:px-6 md:px-10 md:pt-10 md:pb-12"
           >
             {/* Krótkie wejście przy zmianie zakładki (klucz = sekcja, nie każda podstrona ustawień). */}
-            <div key={section} className="page-in">
+            <div key={`${section}:${clock}`} className="page-in">
               <Outlet />
             </div>
           </main>

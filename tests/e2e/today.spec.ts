@@ -134,6 +134,43 @@ test.describe('today: log time with notes', () => {
     await expectNoA11yViolations(page)
   })
 
+  test('time fields take quick typing and follow the time format setting', async ({
+    page,
+  }) => {
+    const form = page.getByRole('region', { name: 'Log time' })
+    await form
+      .locator('label')
+      .filter({ hasText: /^Start and end$/ })
+      .click()
+    const start = form.getByLabel('Start', { exact: true })
+    const end = form.getByLabel('End', { exact: true })
+    await start.fill('930')
+    await end.fill('10:45')
+    await end.press('Tab')
+    // Wpisane skrótem, pokazane w formacie języka (EN: 12h).
+    await expect(start).toHaveValue('9:30 AM')
+    await expect(end).toHaveValue('10:45 AM')
+    await expect(form.getByText('1h 15m')).toBeVisible()
+    await end.press('ArrowUp')
+    await expect(end).toHaveValue('10:50 AM')
+    await expectNoA11yViolations(page)
+
+    // Lista godzin pod zegarem.
+    await form.getByRole('button', { name: 'Pick a time' }).first().click()
+    await page.getByRole('button', { name: '2:00 PM', exact: true }).click()
+    await expect(start).toHaveValue('2:00 PM')
+
+    // 24h z menu konta: godziny na liście wpisów też się zmieniają.
+    await page
+      .getByRole('button', { name: /^Account menu/ })
+      .locator('visible=true')
+      .click()
+    await page.getByRole('menuitemradio', { name: /^24-hour/ }).click()
+    await expect(
+      page.getByRole('region', { name: 'Today’s entries' }),
+    ).toContainText('12:30–13:30')
+  })
+
   test('duplicates an entry and saves the edited copy as a new one', async ({
     page,
   }) => {
@@ -158,10 +195,13 @@ test.describe('today: log time with notes', () => {
     // Wszystko skopiowane; kopia z godzinami dostaje kolejny przedział.
     await expect(dialog.getByLabel('Title')).toHaveValue('PAY-190 Copy source')
     await expect(dialog.getByLabel('Start', { exact: true })).toHaveValue(
-      '10:00',
+      '10:00 AM',
     )
-    await expect(dialog.getByLabel('End', { exact: true })).toHaveValue('11:00')
+    await expect(dialog.getByLabel('End', { exact: true })).toHaveValue(
+      '11:00 AM',
+    )
     await expect(dialog.getByLabel('Notes')).toHaveValue('Original note')
+    await expectNoA11yViolations(page)
 
     await dialog.getByLabel('Title').fill('PAY-191 Edited copy')
     await dialog.getByRole('button', { name: 'Save copy' }).click()
@@ -170,7 +210,6 @@ test.describe('today: log time with notes', () => {
     // Oryginał zostaje bez zmian obok kopii.
     await expect(list).toContainText('PAY-190 Copy source')
     await expect(list).toContainText('PAY-191 Edited copy')
-    await expectNoA11yViolations(page)
   })
 
   test('switches to an urgent task and comes back as a new interval', async ({

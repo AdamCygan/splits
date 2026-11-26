@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
+import { hourOptions } from '#/lib/clock'
 import type { FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { CheckboxGroup, Field, Select, Switch } from '#/components/ui/controls'
+import { TimeInput } from '#/components/ui/time-input'
 import { Input } from '#/components/ui/input'
 import { data } from '#/data'
 import type { RoundingMinutes, UserSettings } from '#/data/types'
@@ -119,8 +121,7 @@ function WorkdayForm({ settings }: { settings: UserSettings }) {
     try {
       return new Date().toLocaleTimeString(tag, {
         timeZone: draft.timezone,
-        hour: '2-digit',
-        minute: '2-digit',
+        ...hourOptions(tag),
       })
     } catch {
       return '—'
@@ -274,14 +275,11 @@ function WorkdayForm({ settings }: { settings: UserSettings }) {
           {draft.reminderOn && (
             <Field label={t.reminderTime} error={show(errors.reminder)}>
               {(a) => (
-                <Input
+                <TimeInput
                   {...a}
-                  type="time"
                   className="max-w-40"
                   value={draft.reminderTime}
-                  onChange={(e) =>
-                    setDraft({ ...draft, reminderTime: e.target.value })
-                  }
+                  onChange={(v) => setDraft({ ...draft, reminderTime: v })}
                 />
               )}
             </Field>

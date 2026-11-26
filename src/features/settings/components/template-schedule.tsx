@@ -1,6 +1,6 @@
 import { useId } from 'react'
 import { CheckboxGroup, Switch } from '#/components/ui/controls'
-import { Input } from '#/components/ui/input'
+import { TimeInput } from '#/components/ui/time-input'
 import type { TemplateSchedule } from '#/data/types'
 import { sameTime } from '#/domain/schedule'
 import { useI18n, useMessages } from '#/i18n/context'
@@ -207,15 +207,14 @@ function TimeField({
       <label htmlFor={id} className="min-w-24 text-sm font-medium">
         {label}
       </label>
-      <Input
+      <TimeInput
         id={id}
-        type="time"
         className="w-40 shrink-0"
         value={value}
         aria-label={ariaLabel}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
       />
       {error && (
         <p id={`${id}-error`} className="text-sm text-destructive">

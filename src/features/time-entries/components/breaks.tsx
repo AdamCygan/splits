@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Button } from '#/components/ui/button'
 import { Field } from '#/components/ui/controls'
 import { Dialog, DialogContent } from '#/components/ui/dialog'
+import { TimeInput } from '#/components/ui/time-input'
 import { Input } from '#/components/ui/input'
 import { data } from '#/data'
 import type { WorkBreak } from '#/data/types'
@@ -404,24 +405,10 @@ function BreaksDialog({
             <legend className="text-sm text-ink-soft">{t.timesHint}</legend>
             <div className="mt-2 grid grid-cols-2 gap-3">
               <Field label={t.from}>
-                {(a) => (
-                  <Input
-                    {...a}
-                    type="time"
-                    value={from}
-                    onChange={(e) => setFrom(e.target.value)}
-                  />
-                )}
+                {(a) => <TimeInput {...a} value={from} onChange={setFrom} />}
               </Field>
               <Field label={t.to} error={submitted && hasTimes ? error : null}>
-                {(a) => (
-                  <Input
-                    {...a}
-                    type="time"
-                    value={to}
-                    onChange={(e) => setTo(e.target.value)}
-                  />
-                )}
+                {(a) => <TimeInput {...a} value={to} onChange={setTo} />}
               </Field>
             </div>
           </fieldset>

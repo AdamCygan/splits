@@ -22,6 +22,11 @@ const en = {
   },
   footer: { tagline: 'Developer time, counted honestly.' },
   language: { label: 'Language', change: 'Change language' },
+  time: {
+    pick: 'Pick a time',
+    list: 'Times',
+    hint: 'Type e.g. 9:30, 14:30 or 2:30 pm. Arrow keys change it by 5 minutes.',
+  },
   skipLink: 'Skip to main content',
   loading: 'Loading…',
   notFound: {
@@ -89,6 +94,11 @@ const pl: CommonMessages = {
   },
   footer: { tagline: 'Czas pracy developera, policzony uczciwie.' },
   language: { label: 'Język', change: 'Zmień język' },
+  time: {
+    pick: 'Wybierz godzinę',
+    list: 'Godziny',
+    hint: 'Wpisz np. 9:30, 14:30 albo 2:30 pm. Strzałki zmieniają o 5 minut.',
+  },
   skipLink: 'Przejdź do treści',
   loading: 'Ładowanie…',
   notFound: {

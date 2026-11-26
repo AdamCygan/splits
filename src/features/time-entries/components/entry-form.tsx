@@ -14,6 +14,7 @@ import {
 } from '#/components/ui/context-menu'
 import { Select, Switch, Textarea } from '#/components/ui/controls'
 import { Dialog, DialogContent } from '#/components/ui/dialog'
+import { TimeInput } from '#/components/ui/time-input'
 import { Input } from '#/components/ui/input'
 import { Segmented } from '#/components/ui/segmented'
 import { data } from '#/data'
@@ -674,16 +675,13 @@ function EntryFormFields({
                     {t.form.startedAt}
                   </label>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
-                    <Input
+                    <TimeInput
                       id={`${uid}-time`}
-                      type="time"
-                      className="w-36"
+                      className="w-40"
                       aria-invalid={issueText('time') ? true : undefined}
                       aria-describedby={describedBy('time', true)}
                       value={draft.start}
-                      onChange={(e) =>
-                        setDraft({ ...draft, start: e.target.value })
-                      }
+                      onChange={(v) => setDraft({ ...draft, start: v })}
                     />
                     <Button
                       type="button"
@@ -710,17 +708,13 @@ function EntryFormFields({
                     >
                       {t.form.start}
                     </label>
-                    <Input
+                    <TimeInput
                       id={`${uid}-time`}
-                      type="time"
-                      step={300}
-                      className="mt-1 w-36"
+                      className="mt-1 w-40"
                       aria-invalid={issueText('time') ? true : undefined}
                       aria-describedby={describedBy('time')}
                       value={draft.start}
-                      onChange={(e) =>
-                        setDraft({ ...draft, start: e.target.value })
-                      }
+                      onChange={(v) => setDraft({ ...draft, start: v })}
                     />
                   </div>
                   <div>
@@ -730,17 +724,13 @@ function EntryFormFields({
                     >
                       {t.form.end}
                     </label>
-                    <Input
+                    <TimeInput
                       id={`${uid}-end`}
-                      type="time"
-                      step={300}
-                      className="mt-1 w-36"
+                      className="mt-1 w-40"
                       aria-invalid={issueText('time') ? true : undefined}
                       aria-describedby={describedBy('time')}
                       value={draft.end}
-                      onChange={(e) =>
-                        setDraft({ ...draft, end: e.target.value })
-                      }
+                      onChange={(v) => setDraft({ ...draft, end: v })}
                     />
                   </div>
                   <p
