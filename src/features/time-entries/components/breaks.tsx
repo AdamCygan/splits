@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Coffee, Play, Trash2 } from 'lucide-react'
+import { Coffee, List as ListIcon, Play, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '#/components/ui/button'
 import { Field } from '#/components/ui/controls'
@@ -167,24 +167,29 @@ export function BreakBar({ running }: { running: WorkBreak }) {
 }
 
 /** Kafelek „Przerwy” na Dziś: ile wykorzystane z limitu, start przerwy i lista. */
-export function BreakTile({
-  date,
-  isToday,
-}: {
-  date: string
-  isToday: boolean
-}) {
+export function BreakTile({ date }: { date: string }) {
   const t = useMessages(entriesMessages).breaks
   const format = useFormat()
   const day = useBreakDay(date)
-  const start = useStartBreak()
   const [open, setOpen] = useState(false)
   const left = day.limit - day.used
   const share = day.limit > 0 ? Math.min(100, (day.used / day.limit) * 100) : 0
 
   return (
     <div className="bg-surface px-4 py-3 sm:px-5">
-      <dt className="text-sm text-ink-soft">{t.tile}</dt>
+      <dt className="flex items-center justify-between gap-2 text-sm text-ink-soft">
+        {t.tile}
+        <Button
+          size="icon"
+          variant="ghost"
+          className="-my-1.5 -mr-2 size-8"
+          title={t.manage}
+          aria-label={t.manage}
+          onClick={() => setOpen(true)}
+        >
+          <ListIcon aria-hidden className="size-4" />
+        </Button>
+      </dt>
       <dd className="type-heading mt-0.5 text-xl tabular-nums sm:text-2xl">
         {day.limit > 0
           ? fmt(t.tileValue, {
@@ -193,54 +198,53 @@ export function BreakTile({
             })
           : format.minutes(day.used)}
       </dd>
-      <dd>
-        {day.limit > 0 && (
-          <>
+      {day.limit > 0 && (
+        <dd>
+          <div
+            aria-hidden
+            className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
+          >
             <div
-              aria-hidden
-              className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
-            >
-              <div
-                className={cn(
-                  'h-full rounded-full',
-                  left < 0 ? 'bg-destructive' : 'bg-[var(--wt-pair)]',
-                )}
-                style={{ width: `${share}%` }}
-              />
-            </div>
-            <p
               className={cn(
-                'mt-1.5 text-xs',
-                left < 0 ? 'font-medium text-destructive' : 'text-ink-soft',
+                'h-full rounded-full',
+                left < 0 ? 'bg-wt-review' : 'bg-[var(--wt-pair)]',
               )}
-            >
-              {left >= 0
-                ? fmt(t.tileLeft, { time: format.minutes(left) })
-                : fmt(t.tileOver, { time: format.minutes(-left) })}
+              style={{ width: `${share}%` }}
+            />
+          </div>
+          {left < 0 ? (
+            <p className="mt-1.5 text-xs font-medium text-ink">
+              {fmt(t.tileOver, { time: format.minutes(-left) })}
             </p>
-          </>
-        )}
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {isToday && !day.running && (
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={start.isPending}
-              onClick={() => start.mutate()}
-            >
-              <Coffee aria-hidden />
-              {t.startLabel}
-            </Button>
+          ) : (
+            <p className="sr-only">
+              {fmt(t.tileLeft, { time: format.minutes(left) })}
+            </p>
           )}
-          <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
-            {t.manage}
-          </Button>
-        </div>
-        {open && (
-          <BreaksDialog date={date} day={day} onClose={() => setOpen(false)} />
-        )}
-      </dd>
+        </dd>
+      )}
+      {open && (
+        <BreaksDialog date={date} day={day} onClose={() => setOpen(false)} />
+      )}
     </div>
+  )
+}
+
+/** „Zacznij przerwę” w pasku nad dniem: tylko dziś i gdy przerwa nie trwa. */
+export function StartBreakButton({ date }: { date: string }) {
+  const t = useMessages(entriesMessages).breaks
+  const day = useBreakDay(date)
+  const start = useStartBreak()
+  if (day.running) return null
+  return (
+    <Button
+      variant="outline"
+      disabled={start.isPending}
+      onClick={() => start.mutate()}
+    >
+      <Coffee aria-hidden />
+      {t.startLabel}
+    </Button>
   )
 }
 

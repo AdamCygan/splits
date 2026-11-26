@@ -14,13 +14,16 @@ test.describe('progress, quick delete, sprint tasks and charts', () => {
       .filter({ hasText: 'PAY-142 Payment gateway integration' })
       .first()
     // 3 SP, estymata 5h, przepracowane 5h 55m we wszystkich dniach.
-    await expect(
-      task.getByText('≈ 3 of 3 SP done (5h 55m of 5h)'),
-    ).toBeVisible()
-    await expect(task.getByText(/55m over budget/)).toBeVisible()
-    await expect(
-      task.getByRole('progressbar', { name: 'Story points done so far' }),
-    ).toBeVisible()
+    // Na widoku krótko (czas z budżetu i przekroczenie), pełny opis w aria.
+    await expect(task.getByText('5h 55m / 5h')).toBeVisible()
+    await expect(task.getByText('+55m')).toBeVisible()
+    const bar = task.getByRole('progressbar', {
+      name: 'Story points done so far',
+    })
+    await expect(bar).toHaveAttribute(
+      'aria-valuetext',
+      '≈ 3 of 3 SP done (5h 55m of 5h) · 55m over budget · from your estimate',
+    )
   })
 
   test('deletes a whole task from the day after a warning', async ({
@@ -29,9 +32,11 @@ test.describe('progress, quick delete, sprint tasks and charts', () => {
     await page.goto('/app')
     await page
       .getByRole('button', {
-        name: 'Delete PAY-142 Payment gateway integration from this day',
+        name: 'More actions: PAY-142 Payment gateway integration',
+        exact: true,
       })
       .click()
+    await page.getByRole('menuitem', { name: 'Delete from this day' }).click()
     const dialog = page.getByRole('alertdialog')
     await expect(dialog).toContainText(
       'Delete “PAY-142 Payment gateway integration” from this day?',

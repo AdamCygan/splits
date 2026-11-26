@@ -17,6 +17,7 @@ import {
 import { Button } from '#/components/ui/button'
 import { Badge } from '#/components/ui/controls'
 import { ConfirmDialog } from '#/components/ui/dialog'
+import { ActionMenu } from '#/components/ui/action-menu'
 import { data } from '#/data'
 import type { QuickTemplate, TaskType, TimeEntry } from '#/data/types'
 import { addDays, nowTimeIn, todayIn } from '#/domain/dates'
@@ -46,7 +47,7 @@ import { entriesQuery, entryKeys } from '../queries'
 import { DayOffBanner, DayOffButton } from '#/features/days-off/day-off-today'
 import { DeleteTaskDialog } from '#/features/tasks/delete-task-dialog'
 import { TaskLink } from '#/features/tasks/task-link'
-import { BreakTile } from './breaks'
+import { BreakTile, StartBreakButton } from './breaks'
 import { DayPicker } from './day-picker'
 import { CheckableNote } from '#/components/note/note-markdown'
 import { useUpdateNote } from '../use-update-note'
@@ -140,6 +141,7 @@ export function TodayPage({
           <h1 className="type-display text-4xl sm:text-5xl">{headingText}</h1>
         </div>
         <div className="flex flex-wrap items-start gap-2 sm:justify-end">
+          {isToday && <StartBreakButton date={workDate} />}
           <DayOffButton date={workDate} />
           <DayPicker
             value={workDate}
@@ -188,7 +190,7 @@ export function TodayPage({
             {list.length}
           </dd>
         </div>
-        <BreakTile date={workDate} isToday={isToday} />
+        <BreakTile date={workDate} />
       </dl>
 
       <QuickTemplates workDate={workDate} isToday={isToday} />
@@ -315,8 +317,8 @@ function EntryList({ entries }: { entries: Array<TimeEntry> }) {
                   style={{ background: type?.color ?? 'var(--ink-faint)' }}
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                    <h3 className="min-w-0 font-semibold break-words">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h3 className="min-w-0 flex-1 font-semibold break-words">
                       <TaskLink task={latest}>{latest.title}</TaskLink>
                     </h3>
                     <p className="flex shrink-0 items-center gap-2 text-sm font-semibold tabular-nums">
@@ -325,24 +327,6 @@ function EntryList({ entries }: { entries: Array<TimeEntry> }) {
                       )}
                       {paused && <Badge tone="warning">{t.timer.paused}</Badge>}
                       <TaskTotal done={done} running={running} />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 text-ink-soft hover:text-destructive"
-                        title={t.deleteTask.day}
-                        aria-label={fmt(t.deleteTask.dayLabel, {
-                          name: latest.title,
-                        })}
-                        onClick={() =>
-                          setDeletingTask({
-                            task: latest,
-                            sessions: sessions.length,
-                            minutes: done,
-                          })
-                        }
-                      >
-                        <Trash2 aria-hidden className="size-4" />
-                      </Button>
                     </p>
                   </div>
                   <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
@@ -427,30 +411,6 @@ function EntryList({ entries }: { entries: Array<TimeEntry> }) {
                               </Badge>
                             )}
                             <span className="ml-auto flex items-center">
-                              {isMeeting && !entry.running && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setExtending(entry)}
-                                >
-                                  <TimerReset aria-hidden className="size-4" />
-                                  {t.extension.button}
-                                  <span className="sr-only">: {label}</span>
-                                </Button>
-                              )}
-                              {!entry.note && canNote && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    setEditing({ entry, notes: true })
-                                  }
-                                >
-                                  <NotebookPen aria-hidden className="size-4" />
-                                  {t.list.addNotes}
-                                  <span className="sr-only">: {label}</span>
-                                </Button>
-                              )}
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -463,28 +423,36 @@ function EntryList({ entries }: { entries: Array<TimeEntry> }) {
                               >
                                 <Pencil aria-hidden className="size-4" />
                               </Button>
-                              {!entry.running && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-8"
-                                  title={t.list.duplicate}
-                                  aria-label={`${t.list.duplicate}: ${label}`}
-                                  onClick={() => setDuplicating(entry)}
-                                >
-                                  <Copy aria-hidden className="size-4" />
-                                </Button>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-8"
-                                title={app.actions.delete}
-                                aria-label={`${app.actions.delete}: ${label}`}
-                                onClick={() => setDeleting(entry)}
-                              >
-                                <Trash2 aria-hidden className="size-4" />
-                              </Button>
+                              <ActionMenu
+                                title={t.list.more}
+                                label={`${t.list.more}: ${label}`}
+                                actions={[
+                                  !entry.note &&
+                                    canNote && {
+                                      label: t.list.addNotes,
+                                      icon: NotebookPen,
+                                      onSelect: () =>
+                                        setEditing({ entry, notes: true }),
+                                    },
+                                  isMeeting &&
+                                    !entry.running && {
+                                      label: t.extension.button,
+                                      icon: TimerReset,
+                                      onSelect: () => setExtending(entry),
+                                    },
+                                  !entry.running && {
+                                    label: t.list.duplicate,
+                                    icon: Copy,
+                                    onSelect: () => setDuplicating(entry),
+                                  },
+                                  {
+                                    label: t.list.deleteSession,
+                                    icon: Trash2,
+                                    destructive: true,
+                                    onSelect: () => setDeleting(entry),
+                                  },
+                                ]}
+                              />
                             </span>
                           </div>
                           {entry.note ? (
@@ -580,6 +548,24 @@ function EntryList({ entries }: { entries: Array<TimeEntry> }) {
                       {t.taskSummary.open}
                       <span className="sr-only">: {latest.title}</span>
                     </Button>
+                    <ActionMenu
+                      className="ml-auto"
+                      title={t.list.taskMore}
+                      label={fmt(t.list.taskMoreLabel, { name: latest.title })}
+                      actions={[
+                        {
+                          label: t.deleteTask.dayItem,
+                          icon: Trash2,
+                          destructive: true,
+                          onSelect: () =>
+                            setDeletingTask({
+                              task: latest,
+                              sessions: sessions.length,
+                              minutes: done,
+                            }),
+                        },
+                      ]}
+                    />
                   </div>
                 </div>
               </div>

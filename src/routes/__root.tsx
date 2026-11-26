@@ -19,6 +19,7 @@ import displayFont from '#/assets/fonts/brand-display-core.woff2?url'
 import textFont from '#/assets/fonts/brand-text-core.woff2?url'
 
 import appCss from '../styles.css?url'
+import { themeBootScript } from '#/lib/theme'
 
 /** W produkcji ten import znika z bundla (import.meta.env.DEV === false). */
 const Devtools = import.meta.env.DEV
@@ -101,9 +102,10 @@ function RootDocument({ children }: { children: ReactNode }) {
   const { locale, consent } = Route.useLoaderData()
 
   return (
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
       <body>
         <I18nProvider locale={locale}>

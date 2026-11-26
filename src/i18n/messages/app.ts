@@ -11,6 +11,14 @@ const en = {
     logout: 'Log out',
     account: 'Your account',
   },
+  menu: {
+    open: 'Account menu',
+    settings: 'Account settings',
+    theme: 'Theme',
+    themes: { system: 'Match system', light: 'Light', dark: 'Dark' },
+    language: 'Language',
+    commands: 'Search and commands',
+  },
   actions: {
     save: 'Save changes',
     saving: 'Saving…',
@@ -70,6 +78,14 @@ const pl: AppMessages = {
     settings: 'Ustawienia',
     logout: 'Wyloguj się',
     account: 'Twoje konto',
+  },
+  menu: {
+    open: 'Menu konta',
+    settings: 'Ustawienia konta',
+    theme: 'Motyw',
+    themes: { system: 'Jak w systemie', light: 'Jasny', dark: 'Ciemny' },
+    language: 'Język',
+    commands: 'Szukaj i polecenia',
   },
   actions: {
     save: 'Zapisz zmiany',

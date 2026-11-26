@@ -20,7 +20,12 @@ test.describe('accounts on the real server', () => {
     await page.reload()
     await expect(page).toHaveURL(/\/app\/settings/)
 
-    await page.getByRole('button', { name: 'Log out' }).first().click()
+    // Wylogowanie siedzi w menu konta (awatar), widocznym w każdym układzie.
+    await page
+      .getByRole('button', { name: /^Account menu/ })
+      .locator('visible=true')
+      .click()
+    await page.getByRole('menuitem', { name: 'Log out' }).click()
     await expect(page).toHaveURL(/\/login/)
     await page.goto('/app')
     await expect(page).toHaveURL(/\/login/)

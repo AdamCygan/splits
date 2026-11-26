@@ -72,8 +72,11 @@ test.describe('today: log time with notes', () => {
   test('adds notes to an existing entry later', async ({ page }) => {
     const list = page.getByRole('region', { name: 'Today’s entries' })
     await list
-      .getByRole('button', { name: /add notes.*staging certificate hotfix/i })
+      .getByRole('button', {
+        name: /^More actions: Staging certificate hotfix, /,
+      })
       .click()
+    await page.getByRole('menuitem', { name: 'Add notes' }).click()
     const dialog = page.getByRole('dialog')
     await expect(dialog.getByLabel('Notes')).toBeFocused()
     await page.keyboard.type('Rotated the cert with certbot.')
@@ -148,8 +151,9 @@ test.describe('today: log time with notes', () => {
     await expect(list).toContainText('PAY-190 Copy source')
 
     await list
-      .getByRole('button', { name: /^Duplicate: .*PAY-190 Copy source/ })
+      .getByRole('button', { name: /^More actions: PAY-190 Copy source, / })
       .click()
+    await page.getByRole('menuitem', { name: 'Duplicate' }).click()
     const dialog = page.getByRole('dialog', { name: 'Duplicate entry' })
     // Wszystko skopiowane; kopia z godzinami dostaje kolejny przedział.
     await expect(dialog.getByLabel('Title')).toHaveValue('PAY-190 Copy source')
@@ -404,7 +408,11 @@ test.describe('today: log time with notes', () => {
       .getByRole('listitem')
       .filter({ hasText: 'Daily stand-up' })
       .first()
-    await item.getByRole('button', { name: /^Ran over/ }).click()
+    await item
+      .getByRole('button', { name: /^More actions: / })
+      .first()
+      .click()
+    await page.getByRole('menuitem', { name: 'Ran over' }).click()
     const dialog = page.getByRole('dialog', {
       name: 'Daily stand-up ran over',
     })

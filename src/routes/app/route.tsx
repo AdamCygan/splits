@@ -11,7 +11,6 @@ import {
   CalendarRange,
   Clock,
   ListTodo,
-  LogOut,
   Settings,
   ShieldCheck,
 } from 'lucide-react'
@@ -19,7 +18,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { Toaster } from 'sonner'
 import { Logo } from '#/components/brand/logo'
-import { LanguageSwitcher } from '#/components/layout/language-switcher'
+import { AccountMenu } from '#/components/layout/account-menu'
 import { useBootstrap } from '#/features/app/bootstrap'
 import {
   onSessionExpired,
@@ -30,8 +29,8 @@ import { useMessages } from '#/i18n/context'
 import { appMessages } from '#/i18n/messages/app'
 import { commonMessages } from '#/i18n/messages/common'
 import { panelMessages } from '#/i18n/messages/panel'
-import { CookieSettingsButton } from '#/features/legal/cookie-banner'
 import { TimerBar } from '#/features/time-entries/components/timer'
+import { applyTheme } from '#/lib/theme'
 import { QueryProvider } from '#/integrations/tanstack-query/query-provider'
 
 /**
@@ -147,6 +146,12 @@ function AppShell() {
     await navigate({ to: '/register' })
   }
 
+  // Ciemny motyw dotyczy tylko panelu: zdejmujemy go po wyjściu na stronę główną.
+  useEffect(() => {
+    applyTheme()
+    return () => applyTheme(false)
+  }, [])
+
   const section = pathname.split('/').slice(0, 3).join('/')
 
   if (boot.isPending) return <AppPending />
@@ -154,7 +159,7 @@ function AppShell() {
   return (
     <>
       <div className="flex min-h-dvh">
-        {/* Boczne menu (komputer) */}
+        {/* Boczne menu (komputer): przyklejone, na pełną wysokość okna */}
         <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-line bg-surface p-4 md:flex">
           <div className="mb-8 flex items-center justify-between px-2 pt-1">
             <Link to="/app" aria-label={common.nav.home} className="rounded-md">
@@ -183,32 +188,11 @@ function AppShell() {
               </Link>
             )}
           </nav>
-          <div className="mt-auto space-y-3 border-t border-line pt-4">
-            {user && (
-              <div className="px-2">
-                <p className="truncate font-medium">{user.displayName}</p>
-                <p className="truncate text-sm text-ink-soft">{user.email}</p>
-              </div>
-            )}
-            <LanguageSwitcher className="px-2" />
-            <p className="flex flex-wrap gap-x-3 gap-y-1 px-2 text-xs text-ink-soft">
-              <Link to="/terms" className="hover:text-ink">
-                {common.legal.terms}
-              </Link>
-              <Link to="/privacy" className="hover:text-ink">
-                {common.legal.privacy}
-              </Link>
-              <CookieSettingsButton className="hover:text-ink" />
-            </p>
-            <button
-              type="button"
-              onClick={() => void handleSignOut()}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[0.9375rem] text-ink-soft hover:bg-muted hover:text-ink"
-            >
-              <LogOut aria-hidden className="size-[1.125rem]" />
-              {t.nav.logout}
-            </button>
-          </div>
+          {user && (
+            <div className="mt-auto border-t border-line pt-3">
+              <AccountMenu user={user} onSignOut={() => void handleSignOut()} />
+            </div>
+          )}
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
@@ -227,14 +211,13 @@ function AppShell() {
                   {panel.admin.nav}
                 </Link>
               )}
-              <button
-                type="button"
-                onClick={() => void handleSignOut()}
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-ink-soft"
-              >
-                <LogOut aria-hidden className="size-4" />
-                {t.nav.logout}
-              </button>
+              {user && (
+                <AccountMenu
+                  user={user}
+                  compact
+                  onSignOut={() => void handleSignOut()}
+                />
+              )}
             </div>
           </header>
 

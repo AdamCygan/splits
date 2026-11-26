@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react'
+import { Check } from 'lucide-react'
 import { DropdownMenu as Primitive } from 'radix-ui'
 import { cn } from '#/lib/utils'
 
@@ -53,6 +54,45 @@ export function DropdownMenuSeparator({
     <Primitive.Separator
       {...props}
       className={cn('my-1 h-px bg-line', className)}
+    />
+  )
+}
+
+export const DropdownMenuRadioGroup = Primitive.RadioGroup
+
+/** Pozycja wyboru jednej z opcji (motyw, język): znaczek przy wybranej. */
+export function DropdownMenuRadioItem({
+  className,
+  children,
+  ...props
+}: ComponentProps<typeof Primitive.RadioItem>) {
+  return (
+    <Primitive.RadioItem
+      {...props}
+      className={cn(
+        'flex cursor-pointer items-center gap-2.5 rounded-lg py-2 pr-2.5 pl-8 text-sm font-medium outline-none select-none data-[highlighted]:bg-muted relative',
+        className,
+      )}
+    >
+      <Primitive.ItemIndicator className="absolute left-2.5 grid place-items-center">
+        <Check aria-hidden className="size-4" />
+      </Primitive.ItemIndicator>
+      {children}
+    </Primitive.RadioItem>
+  )
+}
+
+export function DropdownMenuLabel({
+  className,
+  ...props
+}: ComponentProps<typeof Primitive.Label>) {
+  return (
+    <Primitive.Label
+      {...props}
+      className={cn(
+        'px-2.5 pt-2 pb-1 text-xs font-medium text-ink-soft',
+        className,
+      )}
     />
   )
 }
