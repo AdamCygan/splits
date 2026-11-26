@@ -55,7 +55,7 @@ export function uses12h(tag: string, pref: ClockPref = readClock()) {
 export function hourOptions(tag: string): Intl.DateTimeFormatOptions {
   return uses12h(tag)
     ? { hour: 'numeric', minute: '2-digit', hourCycle: 'h12' }
-    : { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }
+    : { hour: 'numeric', minute: '2-digit', hourCycle: 'h23' }
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
