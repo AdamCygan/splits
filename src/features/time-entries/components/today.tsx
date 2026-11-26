@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Check,
+  Copy,
   ExternalLink,
   NotebookPen,
   Pause,
@@ -253,6 +254,8 @@ function EntryList({ entries }: { entries: Array<TimeEntry> }) {
   const { tag } = useI18n()
   const types = useQuery(taskTypesQuery).data ?? []
   const projects = useQuery(projectsQuery).data ?? []
+  // Kopia wpisu: formularz z danymi oryginału, zapis tworzy nowy wpis.
+  const [duplicating, setDuplicating] = useState<TimeEntry | null>(null)
   const [editing, setEditing] = useState<{
     entry: TimeEntry
     notes: boolean
@@ -460,6 +463,18 @@ function EntryList({ entries }: { entries: Array<TimeEntry> }) {
                               >
                                 <Pencil aria-hidden className="size-4" />
                               </Button>
+                              {!entry.running && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8"
+                                  title={t.list.duplicate}
+                                  aria-label={`${t.list.duplicate}: ${label}`}
+                                  onClick={() => setDuplicating(entry)}
+                                >
+                                  <Copy aria-hidden className="size-4" />
+                                </Button>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -578,6 +593,13 @@ function EntryList({ entries }: { entries: Array<TimeEntry> }) {
           entry={editing.entry}
           focusNotes={editing.notes}
           onClose={() => setEditing(null)}
+        />
+      )}
+      {duplicating && (
+        <EditEntryDialog
+          entry={duplicating}
+          duplicate
+          onClose={() => setDuplicating(null)}
         />
       )}
 

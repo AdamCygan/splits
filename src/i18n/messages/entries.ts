@@ -25,6 +25,11 @@ const en = {
   form: {
     title: 'Log time',
     editTitle: 'Edit entry',
+    duplicateTitle: 'Duplicate entry',
+    duplicateLead:
+      'Everything is copied from the original. Change what’s different and save it as a new entry.',
+    duplicateSave: 'Save copy',
+    duplicated: 'Copy saved',
     lead: 'Pick the kind of work, add what you did and save.',
     typeLegend: 'Kind of work',
     link: 'Link',
@@ -376,6 +381,7 @@ const en = {
     empty: 'Nothing logged yet today. Your entries will show up here.',
     showNotes: 'Show full notes',
     addNotes: 'Add notes',
+    duplicate: 'Duplicate',
     noNotes: 'No notes',
     deleteTitle: 'Delete “{name}”?',
     deleteText: 'The entry and its notes will be removed.',
@@ -416,6 +422,11 @@ const pl: EntriesMessages = {
   form: {
     title: 'Dodaj czas',
     editTitle: 'Edytuj wpis',
+    duplicateTitle: 'Duplikuj wpis',
+    duplicateLead:
+      'Wszystko jest skopiowane z oryginału. Zmień to, co inne, i zapisz jako nowy wpis.',
+    duplicateSave: 'Zapisz kopię',
+    duplicated: 'Kopia zapisana',
     lead: 'Wybierz rodzaj pracy, dopisz, co zrobiłeś, i zapisz.',
     typeLegend: 'Rodzaj pracy',
     link: 'Link',
@@ -794,6 +805,7 @@ const pl: EntriesMessages = {
     empty: 'Dziś jeszcze nic nie zalogowano. Wpisy pojawią się tutaj.',
     showNotes: 'Pokaż całe notatki',
     addNotes: 'Dodaj notatki',
+    duplicate: 'Duplikuj',
     noNotes: 'Bez notatek',
     deleteTitle: 'Usunąć „{name}”?',
     deleteText: 'Wpis i jego notatki zostaną usunięte.',

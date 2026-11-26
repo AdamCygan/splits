@@ -88,6 +88,25 @@ function nowRounded() {
   return Math.floor((d.getHours() * 60 + d.getMinutes()) / 5) * 5
 }
 
+/** Szkic kopii: opis zadania, notatka i czas; bez nadgodzin i przedłużenia (dotyczą oryginału). */
+function copyDraft(source: TimeEntry): Draft {
+  const base = initialDraft(source, undefined)
+  const timed = source.startTime !== null && source.endTime !== null
+  const start = timed ? toMinutes(source.endTime!) : 0
+  const end = Math.min(start + source.durationMinutes, 23 * 60 + 59)
+  return {
+    ...base,
+    mode: timed && end > start ? 'range' : 'duration',
+    start: timed ? fromMinutes(start) : '',
+    end: timed ? fromMinutes(end) : '',
+    overtime: false,
+    overtimeDuration: '',
+    overtimeNote: '',
+    extensionMinutes: null,
+    extensionNote: null,
+  }
+}
+
 function initialDraft(
   entry: TimeEntry | null,
   type: TaskType | undefined,
@@ -216,6 +235,11 @@ type EntryFormProps = {
   hideSubmit?: boolean
   focusNotes?: boolean
   onSaved?: (entry: TimeEntry) => void
+  /**
+   * Kopia istniejącego wpisu: formularz startuje z jego danymi, a zapis tworzy nowy wpis.
+   * Wpis z godzinami dostaje kolejny przedział (od końca oryginału, tyle samo czasu).
+   */
+  copyOf?: TimeEntry | null
   /** Zadanie z wyszukiwarki do wpisania w formularz (`key` zmienia się przy każdym wyborze). */
   prefill?: { entry: TimeEntry; key: number } | null
 }
@@ -255,6 +279,7 @@ function EntryFormFields({
   focusNotes,
   onSaved,
   prefill,
+  copyOf = null,
 }: EntryFormProps) {
   const t = useMessages(entriesMessages)
   const format = useFormat()
@@ -271,7 +296,9 @@ function EntryFormFields({
   // Timer liczy czas od teraz, więc nowy wpis z timerem jest możliwy tylko dziś.
   const timerAllowed = workDate === todayIn(timeZone)
   const [customFor, setCustomFor] = useState<TaskType | null>(null)
-  const [draft, setDraft] = useState<Draft>(() => initialDraft(entry, types[0]))
+  const [draft, setDraft] = useState<Draft>(() =>
+    copyOf ? copyDraft(copyOf) : initialDraft(entry, types[0]),
+  )
   // Zmiana dnia na przeszły w trakcie wypełniania: timer przechodzi na „czas trwania”.
   useEffect(() => {
     if (!timerAllowed && !entry && draft.mode === 'timer')
@@ -303,7 +330,11 @@ function EntryFormFields({
       entry ? data.entries.update(entry.id, input) : data.entries.create(input),
     {
       invalidate: [entryKeys.all],
-      success: entry ? t.form.updated : t.form.saved,
+      success: entry
+        ? t.form.updated
+        : copyOf
+          ? t.form.duplicated
+          : t.form.saved,
       onSuccess: (saved) => {
         onSaved?.(saved)
         if (!entry) {

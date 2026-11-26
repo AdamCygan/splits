@@ -131,6 +131,44 @@ test.describe('today: log time with notes', () => {
     await expectNoA11yViolations(page)
   })
 
+  test('duplicates an entry and saves the edited copy as a new one', async ({
+    page,
+  }) => {
+    const form = page.getByRole('region', { name: 'Log time' })
+    await form
+      .locator('label')
+      .filter({ hasText: /^Start and end$/ })
+      .click()
+    await form.getByLabel('Title').fill('PAY-190 Copy source')
+    await form.getByLabel('Start', { exact: true }).fill('09:00')
+    await form.getByLabel('End', { exact: true }).fill('10:00')
+    await form.getByLabel('Notes').fill('Original note')
+    await form.getByRole('button', { name: 'Save entry' }).click()
+    const list = page.getByRole('region', { name: 'Today’s entries' })
+    await expect(list).toContainText('PAY-190 Copy source')
+
+    await list
+      .getByRole('button', { name: /^Duplicate: .*PAY-190 Copy source/ })
+      .click()
+    const dialog = page.getByRole('dialog', { name: 'Duplicate entry' })
+    // Wszystko skopiowane; kopia z godzinami dostaje kolejny przedział.
+    await expect(dialog.getByLabel('Title')).toHaveValue('PAY-190 Copy source')
+    await expect(dialog.getByLabel('Start', { exact: true })).toHaveValue(
+      '10:00',
+    )
+    await expect(dialog.getByLabel('End', { exact: true })).toHaveValue('11:00')
+    await expect(dialog.getByLabel('Notes')).toHaveValue('Original note')
+
+    await dialog.getByLabel('Title').fill('PAY-191 Edited copy')
+    await dialog.getByRole('button', { name: 'Save copy' }).click()
+    await expect(dialog).toBeHidden()
+    await expect(page.getByText('Copy saved')).toBeVisible()
+    // Oryginał zostaje bez zmian obok kopii.
+    await expect(list).toContainText('PAY-190 Copy source')
+    await expect(list).toContainText('PAY-191 Edited copy')
+    await expectNoA11yViolations(page)
+  })
+
   test('switches to an urgent task and comes back as a new interval', async ({
     page,
   }) => {

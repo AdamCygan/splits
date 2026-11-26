@@ -9,14 +9,17 @@ import { EntryForm } from './entry-form'
 /**
  * Edycja wpisu w oknie: z listy dnia i z paska działającego timera (wtedy wpis dalej
  * trwa — zmienia się tytuł, typ, link, SP czy notatka, a licznik biegnie dalej).
+ * `duplicate`: ten sam formularz z danymi wpisu, ale zapis tworzy nowy wpis.
  */
 export function EditEntryDialog({
   entry,
   focusNotes = false,
+  duplicate = false,
   onClose,
 }: {
   entry: TimeEntry
   focusNotes?: boolean
+  duplicate?: boolean
   onClose: () => void
 }) {
   const t = useMessages(entriesMessages)
@@ -25,8 +28,8 @@ export function EditEntryDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         size="lg"
-        title={t.form.editTitle}
-        description={entry.title}
+        title={duplicate ? t.form.duplicateTitle : t.form.editTitle}
+        description={duplicate ? t.form.duplicateLead : entry.title}
         closeLabel={app.actions.close}
         footer={
           <>
@@ -34,7 +37,7 @@ export function EditEntryDialog({
               {app.actions.cancel}
             </Button>
             <Button type="submit" form="edit-entry-form">
-              {app.actions.save}
+              {duplicate ? t.form.duplicateSave : app.actions.save}
             </Button>
           </>
         }
@@ -43,7 +46,8 @@ export function EditEntryDialog({
           formId="edit-entry-form"
           hideSubmit
           workDate={entry.workDate}
-          entry={entry}
+          entry={duplicate ? null : entry}
+          copyOf={duplicate ? entry : null}
           focusNotes={focusNotes}
           onSaved={onClose}
         />
