@@ -1,5 +1,5 @@
 import { hasProAccess } from '#/features/billing/domain/plans'
-import { currentUser } from '#/features/account/controllers/routes.server'
+import { currentUser } from '#/features/account/data/repository.server'
 import { ApiError } from '#/server/http/errors'
 
 type FreeLimitCode =

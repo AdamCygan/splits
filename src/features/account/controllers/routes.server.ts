@@ -1,3 +1,14 @@
+import {
+  updateProfile,
+  cancelEmailChange,
+  resendVerification,
+  setupTwoFactor,
+  listSessions,
+  revokeOwnSession,
+  sendDeleteCode,
+  currentUser,
+  assertNotDemo,
+} from './../data/repository.server'
 import { and, asc, eq, ne, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { getCookie } from 'hono/cookie'
@@ -9,14 +20,11 @@ import {
 import {
   REFRESH_COOKIE,
   revokeOtherSessions,
-  sha256,
 } from '#/features/auth/data/tokens.server'
 import {
   encryptSecret,
   hashRecoveryCode,
   newRecoveryCodes,
-  newTotpSecret,
-  otpauthUrl,
   verifyTotp,
 } from '#/features/auth/data/totp.server'
 import { db } from '#/server/db/client'
@@ -36,35 +44,16 @@ import {
 import { rateLimit } from '#/server/http/rate-limit'
 import { billingEnabled } from '#/features/billing/data/stripe.server'
 import { clearRefreshCookie } from '#/features/auth/controllers/routes.server'
-import { cancelSubscriptionsFor } from '#/features/billing/controllers/routes.server'
+import { cancelSubscriptionsFor } from '#/features/billing/data/repository.server'
 import { toUser } from '#/features/auth/data/mappers.server'
 import {
-  cancelPendingEmail,
   confirmIdentity,
   consumeDeletionCode,
   disableTwoFactor,
   notify,
-  revokeSession,
   securityStatus,
-  sendDeletionCode,
   sendEmailConfirmation,
-  sessionsOf,
 } from '../data/notifications.server'
-
-export async function currentUser(userId: string) {
-  const [user] = await db.select().from(users).where(eq(users.id, userId))
-  if (!user) throw new ApiError('auth.no_session', 401)
-  return user
-}
-
-export interface DemoFlag {
-  isDemo: boolean
-}
-
-/** Konto demo jest tylko do oglądania aplikacji: bez zmian danych konta i bez płatności. */
-export function assertNotDemo(user: DemoFlag) {
-  if (user.isDemo) throw new ApiError('demo.restricted', 403)
-}
 
 export const accountRoutes = new Hono<AppEnv>()
   .get('/', async (c) => c.json(toUser(await currentUser(c.get('userId')))))
@@ -177,13 +166,7 @@ export const accountRoutes = new Hono<AppEnv>()
   .put('/profile', async (c) => {
     const userId = c.get('userId')
     const input = await body(c, profileInput)
-    assertNotDemo(await currentUser(userId))
-    const [user] = await db
-      .update(users)
-      .set({ displayName: input.displayName })
-      .where(eq(users.id, userId))
-      .returning()
-    return c.json(toUser(user!))
+    return c.json(await updateProfile(userId, input))
   })
 
   /**
@@ -218,18 +201,14 @@ export const accountRoutes = new Hono<AppEnv>()
 
   /** Rezygnacja ze zmiany e-maila (link przestaje działać). */
   .delete('/email/pending', async (c) => {
-    await db.transaction((tx) => cancelPendingEmail(tx, c.get('userId')))
+    await cancelEmailChange(c.get('userId'))
     return c.body(null, 204)
   })
 
   /** Ponowne wysłanie linku potwierdzającego adres. */
   .post('/email/verify', async (c) => {
     const userId = c.get('userId')
-    rateLimit(`verify-resend:${userId}`, 3, 60 * 60_000)
-    const user = await currentUser(userId)
-    assertNotDemo(user)
-    if (user.emailVerifiedAt) throw new ApiError('auth.already_verified', 409)
-    await db.transaction((tx) => sendEmailConfirmation(tx, user, null))
+    await resendVerification(userId)
     return c.body(null, 204)
   })
 
@@ -241,9 +220,7 @@ export const accountRoutes = new Hono<AppEnv>()
   /** Początek włączania 2FA: nowy sekret do zeskanowania (zapisuje się dopiero po kodzie). */
   .post('/2fa/setup', async (c) => {
     const user = await currentUser(c.get('userId'))
-    assertNotDemo(user)
-    const secret = newTotpSecret()
-    return c.json({ secret, otpauthUrl: otpauthUrl(secret, user.email) })
+    return c.json(setupTwoFactor(user))
   })
 
   /** Włączenie 2FA: kod z aplikacji dla tego sekretu (+ hasło); zwraca kody zapasowe raz. */
@@ -317,16 +294,12 @@ export const accountRoutes = new Hono<AppEnv>()
   /** Urządzenia z aktywną sesją (rodziny refresh tokenów), bieżące oznaczone. */
   .get('/sessions', async (c) => {
     const current = getCookie(c, REFRESH_COOKIE)
-    return c.json(
-      await sessionsOf(c.get('userId'), current ? sha256(current) : null),
-    )
+    return c.json(await listSessions(c.get('userId'), current))
   })
 
   /** Wylogowanie jednego urządzenia. */
   .delete('/sessions/:id', async (c) => {
-    await db.transaction((tx) =>
-      revokeSession(tx, c.get('userId'), c.req.param('id')),
-    )
+    await revokeOwnSession(c.get('userId'), c.req.param('id'))
     return c.body(null, 204)
   })
 
@@ -365,10 +338,7 @@ export const accountRoutes = new Hono<AppEnv>()
   /** Kod do usunięcia konta na adres konta (konto demo usuwa się samo po 24 h). */
   .post('/delete-code', async (c) => {
     const userId = c.get('userId')
-    rateLimit(`delete-code:${userId}`, 5, 60 * 60_000)
-    const user = await currentUser(userId)
-    assertNotDemo(user)
-    await db.transaction((tx) => sendDeletionCode(tx, user))
+    await sendDeleteCode(userId)
     return c.body(null, 204)
   })
 

@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { currentUser } from '#/features/account/controllers/routes.server'
+import { currentUser } from '#/features/account/data/repository.server'
 import { hasProAccess } from '#/features/billing/domain/plans'
 import { syncCadenceSprints } from '#/features/sprints/data/repository.server'
 import { db } from '#/server/db/client'
