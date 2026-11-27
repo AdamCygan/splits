@@ -1,3 +1,4 @@
+import { selectable } from '#/domain/archive'
 import { notePlainText } from '#/domain/markdown'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
@@ -11,7 +12,7 @@ import { Input } from '#/components/ui/input'
 import { data } from '#/data'
 import type { TaskRef, TaskType, TimeEntry } from '#/data/types'
 import { ENTRY_LIMITS, isUrl, parseDuration } from '#/domain/entries'
-import { maxPoints } from '#/domain/summary'
+import { maxEstimate, maxPoints } from '#/domain/summary'
 import {
   mutationFieldError,
   projectsQuery,
@@ -19,14 +20,13 @@ import {
   taskTypesQuery,
   useDataMutation,
 } from '#/features/settings/queries'
-import { useFormat, useI18n, useMessages } from '#/i18n/context'
+import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { unwrap } from '#/lib/api-client'
 import { entryKeys } from '../queries'
 import { EntryForm } from './entry-form'
-import { clockTime } from './timer'
 
 export const taskQueryKey = (ref: TaskRef) =>
   [...entryKeys.all, 'task', ref.taskTypeId, ref.link ?? '', ref.title] as const
@@ -112,18 +112,13 @@ export function TaskDetails({
   const t = useMessages(entriesMessages)
   const format = useFormat()
   const latest = entries.at(-1)!
-  const projects = (useQuery(projectsQuery).data ?? []).filter(
-    (p) => !p.archivedAt || p.id === latest.projectId,
+  const projects = selectable(
+    useQuery(projectsQuery).data ?? [],
+    latest.projectId,
   )
   const scale = useQuery(scaleQuery).data ?? []
   const sp = maxPoints(entries)
-  const estimate = entries.reduce<number | null>(
-    (max, e) =>
-      e.estimateMinutes !== null && (max === null || e.estimateMinutes > max)
-        ? e.estimateMinutes
-        : max,
-    null,
-  )
+  const estimate = maxEstimate(entries)
   const actual = entries.reduce((sum, e) => sum + e.durationMinutes, 0)
   const [draft, setDraft] = useState({
     title: latest.title,
@@ -331,7 +326,6 @@ export function Sessions({ entries }: { entries: Array<TimeEntry> }) {
   const t = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   const format = useFormat()
-  const { tag } = useI18n()
   const [editing, setEditing] = useState<TimeEntry | null>(null)
   const [deleting, setDeleting] = useState<TimeEntry | null>(null)
   const dayLabel = (entry: TimeEntry) =>
@@ -353,7 +347,7 @@ export function Sessions({ entries }: { entries: Array<TimeEntry> }) {
         {[...entries].reverse().map((entry) => {
           const interval =
             entry.startTime && entry.endTime
-              ? `${clockTime(tag, entry.startTime)}–${clockTime(tag, entry.endTime)}`
+              ? format.timeRange(entry.startTime, entry.endTime)
               : null
           const day = dayLabel(entry)
           return (

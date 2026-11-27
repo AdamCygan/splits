@@ -1,3 +1,4 @@
+import { maxOf } from './numbers'
 import type { TimeEntry } from '#/data/types'
 import { extractTaskKey } from './rules'
 
@@ -68,10 +69,14 @@ export type TaskStats = {
 export function maxPoints(
   entries: ReadonlyArray<Pick<TimeEntry, 'storyPoints'>>,
 ): number | null {
-  const points = entries
-    .map((e) => e.storyPoints)
-    .filter((p): p is number => p !== null)
-  return points.length ? Math.max(...points) : null
+  return maxOf(entries.map((e) => e.storyPoints))
+}
+
+/** Estymata zadania: największa podana w jego sesjach (null = żadna). */
+export function maxEstimate(
+  entries: ReadonlyArray<Pick<TimeEntry, 'estimateMinutes'>>,
+): number | null {
+  return maxOf(entries.map((e) => e.estimateMinutes))
 }
 
 export function taskStats(entries: ReadonlyArray<TimeEntry>): TaskStats {

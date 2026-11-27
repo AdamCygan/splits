@@ -1,7 +1,8 @@
 import type { FieldRequirement, TaskType, TimeEntry } from '#/data/types'
 import { addDays, diffDays, isValidDate, startOfWeek } from './dates'
+import { elapsedSeconds } from './entries'
 import { extractTaskKey } from './rules'
-import { maxPoints } from './summary'
+import { maxEstimate, maxPoints } from './summary'
 
 /** Jeden wiersz raportu: zadanie (wszystkie jego wpisy w okresie) z SP i czasem. */
 export type TaskRow = {
@@ -119,13 +120,7 @@ export function groupTasks(
       overtimeNotes: sorted.flatMap((e) =>
         e.overtimeNote ? [e.overtimeNote] : [],
       ),
-      estimateMinutes: sorted.reduce<number | null>(
-        (max, e) =>
-          e.estimateMinutes != null && (max === null || e.estimateMinutes > max)
-            ? e.estimateMinutes
-            : max,
-        null,
-      ),
+      estimateMinutes: maxEstimate(sorted),
       extensionMinutes: sorted.reduce(
         (sum, e) => sum + (e.extensionMinutes ?? 0),
         0,
@@ -222,6 +217,28 @@ export function sortRows(
   })
 }
 
+export type SortState = { by: TaskSort; dir: 'asc' | 'desc' }
+
+/** Klik w nagłówek: ta sama kolumna odwraca kierunek, nowa startuje od naturalnego (tytuł A→Z, liczby malejąco). */
+export const nextSort = (sort: SortState, by: TaskSort): SortState =>
+  sort.by === by
+    ? { by, dir: sort.dir === 'asc' ? 'desc' : 'asc' }
+    : { by, dir: by === 'title' ? 'asc' : 'desc' }
+
+/** Działający timer liczymy do teraz, żeby raport nie pokazywał 0 minut. */
+export const withElapsed = (
+  entries: ReadonlyArray<TimeEntry>,
+  now: number,
+): Array<TimeEntry> =>
+  entries.map((e) =>
+    e.running
+      ? {
+          ...e,
+          durationMinutes: Math.floor(elapsedSeconds(e.startedAt, now) / 60),
+        }
+      : e,
+  )
+
 // ---------- Okresy raportu ----------
 
 export type ReportRange = { from: string; to: string }
@@ -264,6 +281,42 @@ function previousMonth(first: string) {
   return m === 1
     ? `${y! - 1}-12-01`
     : `${y}-${String(m! - 1).padStart(2, '0')}-01`
+}
+
+export const REPORT_PRESETS: ReadonlyArray<PeriodPreset> = [
+  'this_week',
+  'last_week',
+  'this_month',
+  'last_month',
+  'last_30',
+]
+
+/** Okres raportu: sprint, gotowy zakres kalendarza albo własne daty. */
+export type ReportPeriod = `sprint:${string}` | PeriodPreset | 'custom'
+
+/**
+ * Daty raportu dla wybranego okresu, przycięte do historii planu (`oldest`, null = bez
+ * limitu). `clamped` mówi, że część okresu jest poza planem (pokazujemy wtedy informację).
+ */
+export function reportRange(options: {
+  period: ReportPeriod
+  sprint: { startsOn: string; endsOn: string } | undefined
+  custom: ReportRange
+  today: string
+  weekStartsOn: number
+  oldest: string | null
+}): { range: ReportRange; clamped: boolean } {
+  const { period, sprint, oldest } = options
+  const requested: ReportRange = sprint
+    ? { from: sprint.startsOn, to: sprint.endsOn }
+    : period === 'custom'
+      ? options.custom
+      : presetRange(period as PeriodPreset, options.today, options.weekStartsOn)
+  const clamped = oldest !== null && requested.from < oldest
+  return {
+    range: clamped ? { ...requested, from: oldest } : requested,
+    clamped,
+  }
 }
 
 /** Zakres jest poprawny, gdy obie daty istnieją, `from` ≤ `to` i nie przekracza roku. */

@@ -33,9 +33,9 @@ time-tracker/
 │   │   ├── auth/               # hasła (scrypt), tokeny (JWT, refresh z rotacją)
 │   │   ├── features/           # trasy API: auth, account, config, sprints, entries
 │   │   └── seed-data.ts        # dane startowe nowego konta
-│   ├── domain/                 # reguły wspólne dla formularzy i API (wpisy, SP, sprinty, raporty)
+│   ├── domain/                 # Model: czyste reguły wspólne dla ekranów i API (z testami)
 │   ├── data/                   # kontrakt danych dla UI (DataSource) + adapter HTTP
-│   ├── features/               # UI per obszar: time-entries, reports, settings, legal…
+│   ├── features/               # UI per obszar (MVVM: use-*.ts = ViewModel, widoki dostają vm)
 │   ├── i18n/messages/          # teksty EN/PL
 │   └── config/                 # site.ts (marka), legal.ts (dane do regulaminu)
 ├── drizzle/                    # migracje SQL (generowane: pnpm db:generate)

@@ -6,6 +6,7 @@ import { Badge, ColorDot, ColorPicker, Field } from '#/components/ui/controls'
 import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import { data } from '#/data'
+import { splitArchived } from '#/domain/archive'
 import type { Project, ProjectInput, Tag, TagInput } from '#/data/types'
 import { LIMITS, PROJECT_KEY_RE } from '#/domain/rules'
 import { useMessages } from '#/i18n/context'
@@ -19,6 +20,7 @@ import {
   tagsQuery,
   useDataMutation,
 } from '../queries'
+import { useArchive } from '../use-archive'
 import { usePalette, withCurrent } from './palette'
 import { QueryView, SectionHeader, SettingsCard } from './ui'
 
@@ -37,15 +39,10 @@ function Projects() {
   const t = useMessages(settingsMessages).projects
   const app = useMessages(appMessages)
   const [editing, setEditing] = useState<Project | 'new' | null>(null)
-  const archive = useDataMutation(
-    ({ id, archived }: { id: string; archived: boolean; name: string }) =>
-      data.projects.setArchived(id, archived),
-    {
-      invalidate: [keys.projects],
-      success: (_r, v) =>
-        fmt(v.archived ? t.archived : t.restored, { name: v.name }),
-    },
-  )
+  const archive = useArchive(data.projects.setArchived, {
+    invalidate: keys.projects,
+    messages: t,
+  })
 
   return (
     <SettingsCard
@@ -59,8 +56,7 @@ function Projects() {
     >
       <QueryView query={projectsQuery}>
         {(projects) => {
-          const active = projects.filter((p) => !p.archivedAt)
-          const archived = projects.filter((p) => p.archivedAt)
+          const { active, archived } = splitArchived(projects)
           return (
             <>
               {active.length === 0 ? (
@@ -92,13 +88,7 @@ function Projects() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() =>
-                            archive.mutate({
-                              id: project.id,
-                              archived: true,
-                              name: project.name,
-                            })
-                          }
+                          onClick={() => archive.archive(project)}
                         >
                           <Archive aria-hidden className="size-4" />
                           {app.actions.archive}
@@ -125,13 +115,7 @@ function Projects() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() =>
-                            archive.mutate({
-                              id: project.id,
-                              archived: false,
-                              name: project.name,
-                            })
-                          }
+                          onClick={() => archive.restore(project)}
                         >
                           <ArchiveRestore aria-hidden className="size-4" />
                           {app.actions.restore}

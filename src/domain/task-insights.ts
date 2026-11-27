@@ -158,3 +158,97 @@ export function taskInsights(
     extensionMinutes: sorted.reduce((s, e) => s + (e.extensionMinutes ?? 0), 0),
   }
 }
+
+/** Odcinek na osi dnia zadania: wpis z godzinami (`own` = sesja tego zadania). */
+export type TaskDaySegment<TEntry> = {
+  entry: TEntry
+  start: number
+  end: number
+  own: boolean
+}
+
+/**
+ * Oś jednego dnia zadania: wszystkie wpisy z godzinami tego dnia (sesje zadania i inna
+ * praca), zakres osi od najwcześniejszego do najpóźniejszego (co najmniej godzina) i czas
+ * sesji zadania bez godzin.
+ */
+export function taskDayTimeline<
+  TEntry extends Pick<
+    TimeEntry,
+    'id' | 'workDate' | 'startTime' | 'endTime' | 'durationMinutes'
+  >,
+>(
+  date: string,
+  sessions: ReadonlyArray<TEntry>,
+  sameDays: ReadonlyArray<TEntry>,
+) {
+  const own = new Set(sessions.map((s) => s.id))
+  const segments: Array<TaskDaySegment<TEntry>> = sameDays.flatMap((e) =>
+    e.workDate === date && e.startTime && e.endTime
+      ? [
+          {
+            entry: e,
+            start: toMinutes(e.startTime),
+            end: toMinutes(e.endTime),
+            own: own.has(e.id),
+          },
+        ]
+      : [],
+  )
+  const from = Math.min(...segments.map((x) => x.start), 24 * 60)
+  const to = Math.max(...segments.map((x) => x.end), 0)
+  const span = Math.max(60, to - from)
+  return {
+    segments,
+    from,
+    to,
+    untimedMinutes: sessions
+      .filter((s) => s.workDate === date && !(s.startTime && s.endTime))
+      .reduce((sum, s) => sum + s.durationMinutes, 0),
+    /** Pozycja i szerokość odcinka na osi (w procentach). */
+    place: (x: { start: number; end: number }) => ({
+      left: ((x.start - from) / span) * 100,
+      width: (Math.max(1, x.end - x.start) / span) * 100,
+    }),
+  }
+}
+
+export type TaskNoteKind = 'note' | 'overtime' | 'extension'
+
+/** Notatki z sesji zadania (notatka, powód nadgodzin, powód przedłużenia), od najstarszej. */
+export function taskNotes(
+  sessions: ReadonlyArray<
+    Pick<
+      TimeEntry,
+      | 'id'
+      | 'workDate'
+      | 'startTime'
+      | 'endTime'
+      | 'durationMinutes'
+      | 'note'
+      | 'overtimeNote'
+      | 'extensionNote'
+    >
+  >,
+) {
+  return sessions.flatMap((s) =>
+    (
+      [
+        ['note', s.note],
+        ['overtime', s.overtimeNote],
+        ['extension', s.extensionNote],
+      ] as const
+    )
+      .filter(([, text]) => Boolean(text))
+      .map(([kind, text]) => ({
+        id: `${s.id}-${kind}`,
+        kind: kind,
+        text: text!,
+        entryId: s.id,
+        date: s.workDate,
+        start: s.startTime,
+        end: s.endTime,
+        minutes: s.durationMinutes,
+      })),
+  )
+}

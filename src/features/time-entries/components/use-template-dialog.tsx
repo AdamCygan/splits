@@ -9,32 +9,12 @@ import type { Project, QuickTemplate, TaskType } from '#/data/types'
 import { useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { isUrl, parseDuration } from '#/domain/entries'
+import { templateNeeds } from '#/domain/templates'
+import type { TemplateChoice } from '#/domain/templates'
 import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'
 
-export type TemplateChoice = {
-  projectId: string | null
-  link: string | null
-  note: string | null
-  /** Czas wpisu podany w oknie (dzień z przeszłości, a szablon nie ma czasu). */
-  minutes: number | null
-}
-
-/** Czego brakuje, żeby szablon zapisał wpis jednym kliknięciem. */
-export function templateNeeds(
-  template: QuickTemplate,
-  type: TaskType | undefined,
-  projects: Array<Project>,
-  isToday: boolean,
-) {
-  return {
-    project: template.askProject && projects.length > 0,
-    // Szablon bez czasu włącza timer, a timer działa tylko dziś: wcześniej trzeba podać czas.
-    duration: !isToday && template.defaultDurationMinutes === null,
-    link: type?.linkRequirement === 'required',
-    note: type?.descriptionRequirement === 'required',
-  }
-}
+export type { TemplateChoice } from '#/domain/templates'
 
 /**
  * Okno przed zapisem wpisu z szablonu. Sam wybór projektu: lista przycisków (klik zapisuje).

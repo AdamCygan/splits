@@ -42,6 +42,40 @@ Mikroserwisy nie mają tu sensu: jeden zespół, jedna baza, mały ruch.
 - Panel `/app` renderuje się tylko w przeglądarce (`ssr: false`): sesja żyje w pamięci i ciasteczku httpOnly.
 - **TanStack Query** do danych z serwera, **Zod** waliduje formularze i odpowiedzi API.
 
+### Komponenty: MVVM
+
+Większe ekrany panelu są w układzie **Model – ViewModel – View**, żeby logika nie mieszała się
+z JSX i żeby te same reguły nie powtarzały się na kilku stronach.
+
+- **Model** — czyste funkcje bez Reacta, z testami w `tests/unit`. Reguły wspólne dla wielu
+  ekranów (i dla API) są w `src/domain/*` (np. `task-groups`, `task-list`, `workday`,
+  `templates`, `sprints`, `report`, `day-summary`, `task-insights`, `numbers`, `archive`).
+  Reguły jednego formularza mogą leżeć obok niego w `model.ts` (np. `entry-form/model.ts`).
+- **ViewModel** — hook `useXViewModel(props)` w `use-x.ts`: zapytania (TanStack Query),
+  stan ekranu, mutacje, wartości pochodne i akcje. Zwraca jeden obiekt, a jego typ
+  eksportujemy jako `XViewModel = ReturnType<typeof useXViewModel>`.
+- **View** — komponenty, które dostają `vm` i tylko renderują albo wywołują akcje
+  (`vm.setFilter(...)`, `vm.resume(entry)`). Bez `useQuery` i bez obliczeń domenowych.
+
+Każdy taki ekran to katalog z `index.tsx` (wejście widoku), więc importy tras się nie zmieniają:
+
+```
+features/tasks/tasks-page/
+├── index.tsx          # TasksPage: układ strony, sekcje
+├── use-tasks.ts       # useTasksViewModel
+├── task-filters.tsx   # widoki sekcji, każdy dostaje { vm }
+├── task-row.tsx
+└── …
+```
+
+W tym układzie są: Dziś (`time-entries/components/today`), formularz wpisu (`entry-form`),
+paleta poleceń (`commands`), Zadania, strona zadania, Raporty, Sprinty i podsumowanie dnia.
+
+Wspólne klocki widoków są w `src/components/ui`: `StatGrid`/`StatTile` (liczby nad stroną),
+`Panel` (karta sekcji z nagłówkiem), `ProgressBar`, `Kbd`, `ActionMenu`. Formatowanie
+(czas, SP, daty, godziny 12h/24h, przedziały godzin, różnice wobec estymaty) daje
+`useFormat()` z `src/i18n/context.tsx`, a nie lokalne funkcje w komponentach.
+
 ## 5. Uwierzytelnianie
 
 - Login (username lub e-mail) + hasło; hasła **scrypt** (N=2^15, r=8, p=3 wg OWASP) z wbudowanego `node:crypto`.

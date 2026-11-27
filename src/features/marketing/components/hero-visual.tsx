@@ -94,7 +94,7 @@ export function HeroVisual() {
 
       {/* Podsumowanie */}
       <div className="relative -mt-14 ml-auto w-[88%] rounded-2xl border border-line bg-surface p-4 shadow-[0_24px_60px_-28px_rgba(20,22,43,0.35)]">
-        <p className="flex items-center gap-2 text-xs font-semibold text-[#0b6b5b]">
+        <p className="flex items-center gap-2 text-xs font-semibold text-ok">
           <Copy className="size-3.5" />
           {t.summaryTitle}
         </p>

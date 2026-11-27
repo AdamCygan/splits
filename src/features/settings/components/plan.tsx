@@ -1,3 +1,4 @@
+import { percentOf } from '#/domain/numbers'
 import { useEffect } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -125,10 +126,7 @@ function PlanDetails({
       month: 'long',
       year: 'numeric',
     })
-  const usagePct = Math.min(
-    100,
-    Math.round((customCount / FREE_LIMITS.customWorkTypes) * 100),
-  )
+  const usagePct = percentOf(customCount, FREE_LIMITS.customWorkTypes, true)
 
   return (
     <>

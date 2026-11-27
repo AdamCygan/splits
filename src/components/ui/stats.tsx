@@ -36,8 +36,8 @@ export function StatGrid({
 
 /**
  * Jeden kafelek: etykieta, duża wartość i opcjonalna podpowiedź (`warn` = przekroczenie).
- * `children` dokłada własną treść pod wartością (np. pasek postępu), a `action` stoi
- * obok etykiety (np. przycisk „Zarządzaj”).
+ * `children` dokłada własną treść pod wartością (np. pasek postępu; trafia do <dd>),
+ * a `action` stoi obok etykiety (np. przycisk „Zarządzaj”).
  */
 export function StatTile({
   label,
@@ -75,7 +75,7 @@ export function StatTile({
           {hint}
         </dd>
       )}
-      {children}
+      {children && <dd>{children}</dd>}
     </div>
   )
 }

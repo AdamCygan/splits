@@ -16,6 +16,7 @@ import { Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import { Segmented } from '#/components/ui/segmented'
 import { data } from '#/data'
+import { splitArchived } from '#/domain/archive'
 import type {
   FieldRequirement,
   TaskType,
@@ -38,6 +39,7 @@ import {
   useDataMutation,
 } from '../queries'
 import { markSetupStep } from '../setup-progress'
+import { useArchive } from '../use-archive'
 import { usePalette, withCurrent } from './palette'
 import { QueryView, SectionHeader, SettingsCard } from './ui'
 
@@ -48,23 +50,17 @@ export function WorkTypeSettings() {
   const user = useCurrentUser()
   const [editing, setEditing] = useState<TaskType | 'new' | null>(null)
 
-  const archive = useDataMutation(
-    ({ id, archived }: { id: string; archived: boolean; name: string }) =>
-      data.taskTypes.setArchived(id, archived),
-    {
-      invalidate: [keys.taskTypes],
-      success: (_r, v) =>
-        fmt(v.archived ? t.archived : t.restored, { name: v.name }),
-    },
-  )
+  const archive = useArchive(data.taskTypes.setArchived, {
+    invalidate: keys.taskTypes,
+    messages: t,
+  })
 
   return (
     <div>
       <SectionHeader title={t.title} lead={t.lead} />
       <QueryView query={taskTypesQuery} skeletonRows={5}>
         {(types) => {
-          const active = types.filter((x) => !x.archivedAt)
-          const archived = types.filter((x) => x.archivedAt)
+          const { active, archived } = splitArchived(types)
           const customCount = active.filter((x) => !x.isSystem).length
           const limited = !hasProAccess(user)
           const atLimit = limited && customCount >= FREE_LIMITS.customWorkTypes
@@ -149,14 +145,8 @@ export function WorkTypeSettings() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            disabled={archive.isPending}
-                            onClick={() =>
-                              archive.mutate({
-                                id: type.id,
-                                archived: true,
-                                name: type.name,
-                              })
-                            }
+                            disabled={archive.pending}
+                            onClick={() => archive.archive(type)}
                           >
                             <Archive aria-hidden className="size-4" />
                             {app.actions.archive}
@@ -183,14 +173,8 @@ export function WorkTypeSettings() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            disabled={archive.isPending || atLimit}
-                            onClick={() =>
-                              archive.mutate({
-                                id: type.id,
-                                archived: false,
-                                name: type.name,
-                              })
-                            }
+                            disabled={archive.pending || atLimit}
+                            onClick={() => archive.restore(type)}
                           >
                             <ArchiveRestore aria-hidden className="size-4" />
                             {app.actions.restore}

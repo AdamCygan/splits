@@ -12,6 +12,34 @@ export function sprintPhase(
   return 'current'
 }
 
+type Dated = Pick<Sprint, 'startsOn' | 'endsOn'>
+
+/** Sprinty, które już się zaczęły, od najnowszego (opcjonalnie nie starsze niż `oldest`). */
+export function startedSprints<TSprint extends Dated>(
+  sprints: ReadonlyArray<TSprint>,
+  today: string,
+  oldest: string | null = null,
+): Array<TSprint> {
+  return sprints
+    .filter((s) => s.startsOn <= today && (!oldest || s.endsOn >= oldest))
+    .sort((a, b) => b.startsOn.localeCompare(a.startsOn))
+}
+
+/** Sprint, który trwa dziś (albo undefined). */
+export const currentSprint = <TSprint extends Dated>(
+  sprints: ReadonlyArray<TSprint>,
+  today: string,
+) => sprints.find((s) => sprintPhase(s, today) === 'current')
+
+/** Najbliższy sprint, który się jeszcze nie zaczął. */
+export const upcomingSprint = <TSprint extends Dated>(
+  sprints: ReadonlyArray<TSprint>,
+  today: string,
+) =>
+  sprints
+    .filter((s) => s.startsOn > today)
+    .sort((a, b) => a.startsOn.localeCompare(b.startsOn))[0]
+
 /** Czy dwa przedziały dat (włącznie) nachodzą na siebie — to samo co EXCLUDE w bazie. */
 export function rangesOverlap(
   a: { startsOn: string; endsOn: string },
@@ -94,4 +122,31 @@ export function sprintWorkingDays(
     if (workingDays.includes(day)) count++
   }
   return count
+}
+
+/**
+ * Sprinty na stronie Sprinty: bieżący, ostatnie zakończone (najnowsze pierwsze, do
+ * `history`) i najbliższy przyszły. `shown` = bieżący + zakończone, `from` = pierwszy
+ * dzień najstarszego z nich, `lastDay` = ostatni dzień, dla którego potrzebne są dni wolne.
+ */
+export function sprintOverview<TSprint extends Dated>(
+  sprints: ReadonlyArray<TSprint>,
+  today: string,
+  history: number,
+) {
+  const started = startedSprints(sprints, today)
+  const current = started.find((s) => s.endsOn >= today)
+  const past = started.filter((s) => s.endsOn < today).slice(0, history)
+  const upcoming = upcomingSprint(sprints, today)
+  const shown = current ? [current, ...past] : past
+  return {
+    current,
+    past,
+    upcoming,
+    shown,
+    from: shown.at(-1)?.startsOn ?? today,
+    lastDay: [...shown, upcoming]
+      .filter((x) => x !== undefined)
+      .reduce((max, x) => (x.endsOn > max ? x.endsOn : max), today),
+  }
 }

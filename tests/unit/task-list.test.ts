@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import type { TaskRow } from '#/domain/report'
-import { groupTaskList, matchesStatus, taskStatus } from '#/domain/task-list'
+import {
+  NO_TASK_FILTERS,
+  activeFilterCount,
+  filterTaskRows,
+  groupTaskList,
+  matchesStatus,
+  matchesTaskQuery,
+  taskPeriodRange,
+  taskStatus,
+} from '#/domain/task-list'
 
 const row = (over: Partial<TaskRow>): { row: TaskRow } => ({
   row: {
@@ -65,5 +74,121 @@ describe('task list', () => {
     expect(matchesStatus('done', 'open')).toBe(false)
     expect(matchesStatus('done', 'done')).toBe(true)
     expect(matchesStatus('open', 'all')).toBe(true)
+  })
+})
+
+describe('task list filters and period', () => {
+  const base: TaskRow = {
+    key: 'a',
+    title: 'Fix login retry',
+    link: 'https://jira.example.com/browse/PH-12',
+    taskKey: 'PH-12',
+    taskTypeId: 't1',
+    projectId: null,
+    storyPoints: 3,
+    minutes: 120,
+    overtimeMinutes: 0,
+    overtimeNotes: [],
+    estimateMinutes: null,
+    extensionMinutes: 0,
+    extensionNotes: [],
+    sessions: 2,
+    days: 1,
+    first: '2026-11-20',
+    last: '2026-11-21',
+    running: false,
+  }
+  const rows = [
+    { row: base, estimate: { status: 'over' as const } },
+    {
+      row: {
+        ...base,
+        key: 'b',
+        title: 'Review PR',
+        link: null,
+        taskKey: null,
+        taskTypeId: 't2',
+      },
+      estimate: null,
+    },
+  ]
+
+  it('filters by text in title, link or ticket number', () => {
+    const f = { ...NO_TASK_FILTERS, query: 'ph-12' }
+    expect(filterTaskRows(rows, f, new Set()).map((x) => x.row.key)).toEqual([
+      'a',
+    ])
+    expect(matchesTaskQuery(rows[1]!.row, 'review')).toBe(true)
+  })
+
+  it('filters by type, estimate and status', () => {
+    expect(
+      filterTaskRows(rows, { ...NO_TASK_FILTERS, typeId: 't2' }, new Set()),
+    ).toHaveLength(1)
+    expect(
+      filterTaskRows(
+        rows,
+        { ...NO_TASK_FILTERS, estimate: 'over' },
+        new Set(),
+      )[0]?.row.key,
+    ).toBe('a')
+    expect(
+      filterTaskRows(
+        rows,
+        { ...NO_TASK_FILTERS, status: 'done' },
+        new Set(['b']),
+      )[0]?.row.key,
+    ).toBe('b')
+  })
+
+  it('counts filters that differ from the defaults', () => {
+    expect(activeFilterCount(NO_TASK_FILTERS, 'd30')).toBe(0)
+    expect(
+      activeFilterCount(
+        { ...NO_TASK_FILTERS, typeId: 'x', status: 'open' },
+        'd90',
+      ),
+    ).toBe(3)
+  })
+
+  it('builds the date range for a period or a sprint', () => {
+    const today = '2026-11-27'
+    expect(
+      taskPeriodRange({
+        choice: 'd30',
+        sprint: undefined,
+        today,
+        oldest: null,
+        freeDays: null,
+      }),
+    ).toEqual({ from: '2026-10-29', to: today })
+    expect(
+      taskPeriodRange({
+        choice: 'd90',
+        sprint: undefined,
+        today,
+        oldest: '2026-10-29',
+        freeDays: 30,
+      }).from,
+    ).toBe('2026-10-29')
+    const sprint = { startsOn: '2026-10-01', endsOn: '2026-12-10' }
+    expect(
+      taskPeriodRange({
+        choice: 'sprint:s',
+        sprint,
+        today,
+        oldest: '2026-10-29',
+        freeDays: 30,
+      }),
+    ).toEqual({ from: '2026-10-29', to: today })
+    expect(
+      taskPeriodRange({
+        choice: 'sprint:s',
+        sprint,
+        today,
+        oldest: null,
+        freeDays: null,
+      }).from,
+    ).toBe('2026-10-01')
   })
 })

@@ -1,3 +1,4 @@
+import { maxOf } from './numbers'
 import type { TimeEntry } from '#/data/types'
 import { taskGroupKey } from './report'
 
@@ -57,4 +58,58 @@ export function aggregateTasks(
       }
     })
     .sort((a, b) => (isLaterSession(a.latest, b.latest) ? -1 : 1))
+}
+
+/** Zadanie na liście dnia: sesje chronologicznie i fakty pokazywane na karcie. */
+export type DayTaskGroup = {
+  key: string
+  /** Sesje od najwcześniejszej (wpisy bez godzin na końcu). */
+  sessions: Array<TimeEntry>
+  /** Ostatnio dodana sesja: z niej tytuł, link i „Kontynuuj”. */
+  latest: TimeEntry
+  running: TimeEntry | undefined
+  /** Wstrzymane, gdy nic nie trwa, a któraś sesja ma pauzę. */
+  paused: boolean
+  /** Czas zakończonych sesji (działająca dolicza się w widoku co sekundę). */
+  doneMinutes: number
+  /** SP zadania: największa wartość z sesji (kilka sesji to wciąż jedno zadanie). */
+  storyPoints: number | null
+  /** Estymata zadania: największa podana w sesjach. */
+  estimateMinutes: number | null
+}
+
+/**
+ * Wpisy dnia pogrupowane w zadania (ten sam link albo typ i tytuł). Sesje w zadaniu idą
+ * chronologicznie, a zadania od ostatnio ruszanego (działające na górze).
+ */
+export function dayTaskGroups(
+  entries: ReadonlyArray<TimeEntry>,
+): Array<DayTaskGroup> {
+  const order = (e: TimeEntry) => `${e.startTime ?? '99:99'}|${e.createdAt}`
+  const lastAdded = (list: ReadonlyArray<TimeEntry>) =>
+    list.reduce((max, e) => (e.createdAt > max ? e.createdAt : max), '')
+  return [...groupEntriesByTask(entries)]
+    .map(([key, list]) => {
+      const sessions = [...list].sort((a, b) =>
+        order(a).localeCompare(order(b)),
+      )
+      const running = sessions.find((e) => e.running)
+      return {
+        key,
+        sessions,
+        latest: sessions.at(-1)!,
+        running,
+        paused: !running && sessions.some((e) => e.paused),
+        doneMinutes: sessions.reduce((s, e) => s + e.durationMinutes, 0),
+        storyPoints: maxOf(sessions.map((e) => e.storyPoints)),
+        estimateMinutes: maxOf(sessions.map((e) => e.estimateMinutes)),
+        addedAt: lastAdded(sessions),
+      }
+    })
+    .sort(
+      (a, b) =>
+        Number(Boolean(b.running)) - Number(Boolean(a.running)) ||
+        b.addedAt.localeCompare(a.addedAt),
+    )
+    .map(({ addedAt: _addedAt, ...group }) => group)
 }

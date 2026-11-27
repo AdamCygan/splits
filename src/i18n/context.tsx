@@ -1,8 +1,11 @@
 import { createContext, useCallback, useContext, useMemo } from 'react'
 import { useRouter } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
+import { fromMinutes } from '#/domain/entries'
+import { clockTime, useClockPref } from '#/lib/clock'
 import { localeTags } from './config'
 import {
+  fmt,
   formatDate,
   formatMinutes,
   formatNumber,
@@ -62,9 +65,33 @@ export function useMessages<T>(dictionary: Record<Locale, T>): T {
 
 /** Gotowe formatery związane z bieżącym językiem. */
 export function useFormat() {
-  const { locale } = useI18n()
-  return useMemo(
-    () => ({
+  const { locale, tag } = useI18n()
+  // Zmiana 12h/24h w ustawieniach od razu przelicza godziny na stronie.
+  const clock = useClockPref()
+  return useMemo(() => {
+    const time = (value: string | number) =>
+      clockTime(tag, typeof value === 'number' ? fromMinutes(value) : value)
+    return {
+      /** Godzina w formacie użytkownika: "HH:MM" albo minuty od północy. */
+      time,
+      /** Przedział godzin: „9:00–10:30”. */
+      timeRange: (start: string | number, end: string | number) =>
+        `${time(start)}–${time(end)}`,
+      /** Godziny sesji z czasem („9:00–10:30, 1 h 30 min”) albo sam czas, gdy bez godzin. */
+      session: (start: string | null, end: string | null, minutes: number) =>
+        start && end
+          ? `${time(start)}–${time(end)}, ${formatMinutes(locale, minutes)}`
+          : formatMinutes(locale, minutes),
+      /** Różnica czasu wobec planu: „+30 min ponad”, „15 min mniej”, „dokładnie”. */
+      delta: (
+        diff: number,
+        forms: { over: string; under: string; exact: string },
+      ) =>
+        diff > 0
+          ? fmt(forms.over, { time: formatMinutes(locale, diff) })
+          : diff < 0
+            ? fmt(forms.under, { time: formatMinutes(locale, -diff) })
+            : forms.exact,
       minutes: (total: number) => formatMinutes(locale, total),
       sp: (points: number) => formatSp(locale, points),
       number: (value: number, digits = 1) =>
@@ -82,9 +109,9 @@ export function useFormat() {
         count: number,
         vars?: Record<string, string | number>,
       ) => plural(locale, forms, count, vars),
-    }),
-    [locale],
-  )
+    }
+    // `clock` w zależnościach: ta sama funkcja daje inny wynik po zmianie 12h/24h.
+  }, [locale, tag, clock])
 }
 
 export type Dictionary<T> = Record<Locale, T>

@@ -6,6 +6,7 @@ import { Badge, ColorDot, ColorPicker, Field } from '#/components/ui/controls'
 import { Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import { data } from '#/data'
+import { splitArchived } from '#/domain/archive'
 import type { StatusCategory, TaskStatus, TaskStatusInput } from '#/data/types'
 import { LIMITS } from '#/domain/rules'
 import { useMessages } from '#/i18n/context'
@@ -18,6 +19,7 @@ import {
   statusesQuery,
   useDataMutation,
 } from '../queries'
+import { useArchive } from '../use-archive'
 import { usePalette, withCurrent } from './palette'
 import {
   QueryView,
@@ -51,8 +53,7 @@ function StatusList({ statuses }: { statuses: Array<TaskStatus> }) {
   const app = useMessages(appMessages)
   const [editing, setEditing] = useState<TaskStatus | 'new' | null>(null)
   const [announcer, announce] = useAnnouncer()
-  const active = statuses.filter((s) => !s.archivedAt)
-  const archived = statuses.filter((s) => s.archivedAt)
+  const { active, archived } = splitArchived(statuses)
 
   const reorder = useDataMutation(
     (ids: Array<string>) => data.statuses.reorder(ids),
@@ -65,21 +66,10 @@ function StatusList({ statuses }: { statuses: Array<TaskStatus> }) {
       success: (_r, v) => fmt(t.defaultSet, { name: v.name }),
     },
   )
-  const archive = useDataMutation(
-    ({
-      id,
-      archived: value,
-    }: {
-      id: string
-      archived: boolean
-      name: string
-    }) => data.statuses.setArchived(id, value),
-    {
-      invalidate: [keys.statuses],
-      success: (_r, v) =>
-        fmt(v.archived ? t.archived : t.restored, { name: v.name }),
-    },
-  )
+  const archive = useArchive(data.statuses.setArchived, {
+    invalidate: keys.statuses,
+    messages: t,
+  })
 
   const onMove = (from: number, to: number) => {
     const next = move(active, from, to)
@@ -176,14 +166,8 @@ function StatusList({ statuses }: { statuses: Array<TaskStatus> }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  disabled={archive.isPending}
-                  onClick={() =>
-                    archive.mutate({
-                      id: status.id,
-                      archived: true,
-                      name: status.name,
-                    })
-                  }
+                  disabled={archive.pending}
+                  onClick={() => archive.archive(status)}
                 >
                   <Archive aria-hidden className="size-4" />
                   {app.actions.archive}
@@ -210,13 +194,7 @@ function StatusList({ statuses }: { statuses: Array<TaskStatus> }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() =>
-                    archive.mutate({
-                      id: status.id,
-                      archived: false,
-                      name: status.name,
-                    })
-                  }
+                  onClick={() => archive.restore(status)}
                 >
                   <ArchiveRestore aria-hidden className="size-4" />
                   {app.actions.restore}

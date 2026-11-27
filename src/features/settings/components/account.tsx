@@ -10,6 +10,7 @@ import { ConfirmDialog } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import { Segmented } from '#/components/ui/segmented'
 import { data } from '#/data'
+import { downloadFile } from '#/lib/download'
 import type { ProfileInput, User } from '#/data/types'
 import { LIMITS } from '#/domain/rules'
 import { clearSession, setCurrentUser } from '#/features/auth/session'
@@ -67,15 +68,11 @@ function ExportData() {
     invalidate: [],
     success: t.done,
     onSuccess: (payload) => {
-      const blob = new Blob([JSON.stringify(payload, null, 2)], {
-        type: 'application/json',
-      })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `pointhours-export-${new Date().toISOString().slice(0, 10)}.json`
-      a.click()
-      URL.revokeObjectURL(url)
+      downloadFile(
+        `pointhours-export-${new Date().toISOString().slice(0, 10)}.json`,
+        [JSON.stringify(payload, null, 2)],
+        'application/json',
+      )
     },
   })
   return (

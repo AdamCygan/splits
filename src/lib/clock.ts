@@ -29,6 +29,13 @@ export function hourOptions(tag: string): Intl.DateTimeFormatOptions {
     : { hour: 'numeric', minute: '2-digit', hourCycle: 'h23' }
 }
 
+/** Godzina "HH:MM" w formacie użytkownika (12h/24h wg preferencji, domyślnie z języka). */
+export const clockTime = (tag: string, time: string) =>
+  new Intl.DateTimeFormat(tag, {
+    ...hourOptions(tag),
+    timeZone: 'UTC',
+  }).format(new Date(`1970-01-01T${time}:00Z`))
+
 /** "HH:MM" (24h) do wyświetlenia w polu: "14:30" albo "2:30 PM". */
 export function displayTime(value: string, twelve: boolean) {
   const m = /^(\d{2}):(\d{2})$/.exec(value)

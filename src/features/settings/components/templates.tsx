@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { selectable } from '#/domain/archive'
 import { Button } from '#/components/ui/button'
 import { ColorDot, Field, Select } from '#/components/ui/controls'
 import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
@@ -9,7 +10,6 @@ import { Input } from '#/components/ui/input'
 import { data } from '#/data'
 import type { QuickTemplate, QuickTemplateInput } from '#/data/types'
 import { LIMITS } from '#/domain/rules'
-import { clockTime } from '#/features/time-entries/components/timer'
 import { scheduleRuns } from '#/domain/schedule'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, weekdayNames } from '#/i18n/format'
@@ -54,7 +54,7 @@ export function TemplateSettings() {
   const [editing, setEditing] = useState<QuickTemplate | 'new' | null>(null)
   const [deleting, setDeleting] = useState<QuickTemplate | null>(null)
   const [announcer, announce] = useAnnouncer()
-  const { locale, tag } = useI18n()
+  const { locale } = useI18n()
   const weekStartsOn = useQuery(settingsQuery).data?.weekStartsOn ?? 1
   const shortDays = weekdayNames(locale, 'short')
   /** „pn 10:00, wt–pt 9:30” */
@@ -62,7 +62,7 @@ export function TemplateSettings() {
     scheduleRuns(schedule, weekStartsOn)
       .map(
         (r) =>
-          `${shortDays[r.from]}${r.to !== r.from ? `–${shortDays[r.to]}` : ''} ${clockTime(tag, r.time)}`,
+          `${shortDays[r.from]}${r.to !== r.from ? `–${shortDays[r.to]}` : ''} ${format.time(r.time)}`,
       )
       .join(', ')
 
@@ -226,11 +226,13 @@ function TemplateDialog({
   const t = useMessages(settingsMessages).templates
   const app = useMessages(appMessages)
   const format = useFormat()
-  const types = (useQuery(taskTypesQuery).data ?? []).filter(
-    (x) => !x.archivedAt || x.id === template?.taskTypeId,
+  const types = selectable(
+    useQuery(taskTypesQuery).data ?? [],
+    template?.taskTypeId,
   )
-  const projects = (useQuery(projectsQuery).data ?? []).filter(
-    (p) => !p.archivedAt || p.id === template?.projectId,
+  const projects = selectable(
+    useQuery(projectsQuery).data ?? [],
+    template?.projectId,
   )
   const scale = useQuery(scaleQuery).data ?? []
   const others = (useQuery(templatesQuery).data ?? []).filter(

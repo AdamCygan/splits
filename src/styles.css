@@ -78,6 +78,8 @@
   --on-selected: #ffffff;
   /* Przekroczenie (czas ponad estymatę, budżet): informacja, nie błąd. */
   --warn: #9a4a00;
+  /* Zrobione, w normie (zakończone zadanie, spotkanie wpisane). */
+  --ok: #0b6b5b;
 
   --wt-task: #3d3bf3;
   --wt-review: #e8a33d;
@@ -111,6 +113,7 @@
   --selected: #eef0f8;
   --on-selected: #14162b;
   --warn: #f4b26b;
+  --ok: #6ee7b7;
   --paper: #121426;
   --surface: #1a1d33;
   --ink: #eef0f8;
@@ -160,6 +163,7 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-warn: var(--warn);
+  --color-ok: var(--ok);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);

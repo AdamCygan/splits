@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { data } from '#/data'
 import type { TimeEntry } from '#/data/types'
 import { earnedPoints, taskBudget } from '#/domain/sp-scale'
-import { maxPoints } from '#/domain/summary'
+import { maxEstimate, maxPoints } from '#/domain/summary'
 import { scaleQuery } from '#/features/settings/queries'
 import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
@@ -36,13 +36,7 @@ export function useTaskProgress(entry: TimeEntry | undefined) {
   if (!entry || !sessions) return null
   const all = [...sessions, ...(entry.running ? [entry] : [])]
   const sp = maxPoints(all)
-  const estimate = all.reduce<number | null>(
-    (max, e) =>
-      e.estimateMinutes !== null && (max === null || e.estimateMinutes > max)
-        ? e.estimateMinutes
-        : max,
-    null,
-  )
+  const estimate = maxEstimate(all)
   const budget = taskBudget(sp, estimate, scale)
   if (sp === null || budget === null) return null
   const worked =

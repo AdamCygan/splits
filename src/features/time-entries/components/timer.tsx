@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { hourOptions } from '#/lib/clock'
 import { useQuery } from '@tanstack/react-query'
 import { Check, Coffee, Pause, Pencil, Play, Square } from 'lucide-react'
 import { toast } from 'sonner'
@@ -14,7 +13,7 @@ import {
   taskTypesQuery,
   useDataMutation,
 } from '#/features/settings/queries'
-import { useFormat, useI18n, useMessages } from '#/i18n/context'
+import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { cn } from '#/lib/utils'
@@ -99,13 +98,6 @@ export function useDismissPaused() {
   })
 }
 
-/** Godzina "HH:MM" w formacie użytkownika (12h/24h wg preferencji, domyślnie z języka). */
-export const clockTime = (tag: string, time: string) =>
-  new Intl.DateTimeFormat(tag, {
-    ...hourOptions(tag),
-    timeZone: 'UTC',
-  }).format(new Date(`1970-01-01T${time}:00Z`))
-
 /**
  * Pasek timera na każdej stronie panelu. Gdy timer działa: licznik, „Wstrzymaj” i „Stop”,
  * a obok wstrzymane zadania do szybkiego powrotu. Gdy nic nie działa: lista wstrzymanych z „Wznów”.
@@ -113,7 +105,7 @@ export const clockTime = (tag: string, time: string) =>
  */
 export function TimerBar() {
   const t = useMessages(entriesMessages)
-  const { tag } = useI18n()
+  const format = useFormat()
   const running = useQuery(runningQuery).data
   const paused = useQuery(pausedQuery).data ?? []
   const types = useQuery(taskTypesQuery).data ?? []
@@ -180,7 +172,7 @@ export function TimerBar() {
           <p className="truncate text-xs text-white/70">
             {type?.name}
             {running.startTime &&
-              ` · ${fmt(t.timer.since, { time: clockTime(tag, running.startTime) })}`}
+              ` · ${fmt(t.timer.since, { time: format.time(running.startTime) })}`}
             <RunningProgress entry={running} />
           </p>
         </div>

@@ -144,3 +144,41 @@ export function daySummary(
     byType,
   }
 }
+
+/**
+ * Oś dnia: pełne godziny od początku do końca pracy (co najmniej godzina), znaczniki
+ * co 1, 2 albo 3 godziny (zależnie od długości dnia) i pozycja minuty w procentach.
+ */
+export function timelineAxis(span: { start: number; end: number }) {
+  const from = Math.floor(span.start / 60) * 60
+  const to = Math.max(from + 60, Math.ceil(span.end / 60) * 60)
+  const hours = (to - from) / 60
+  const step = hours > 12 ? 3 : hours > 8 ? 2 : 1
+  return {
+    from,
+    to,
+    ticks: Array.from(
+      { length: Math.floor(hours / step) + 1 },
+      (_, i) => from + i * step * 60,
+    ),
+    /** Pozycja minuty dnia na osi (0–100%). */
+    x: (minute: number) => ((minute - from) / (to - from)) * 100,
+    /** Minuta dnia w miejscu ułamka szerokości osi (0–1). */
+    at: (fraction: number) => from + fraction * (to - from),
+  }
+}
+
+/** Indeks odcinka osi, w który trafia minuta (−1 = przerwa między odcinkami). */
+export const blockIndexAt = (
+  blocks: ReadonlyArray<{ start: number; end: number }>,
+  minute: number,
+) => blocks.findIndex((b) => minute >= b.start && minute <= b.end)
+
+/** Sesje zadania od najwcześniejszej; wpisy bez godzin na końcu. */
+export const sessionsOfTask = <TEntry extends TimeEntry>(
+  entries: ReadonlyArray<TEntry>,
+  key: string,
+): Array<TEntry> =>
+  entries
+    .filter((e) => taskGroupKey(e) === key)
+    .sort((a, b) => (a.startTime ?? '99').localeCompare(b.startTime ?? '99'))

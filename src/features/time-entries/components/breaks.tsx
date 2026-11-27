@@ -13,18 +13,19 @@ import type { WorkBreak } from '#/data/types'
 import { minutesBetween, parseDuration } from '#/domain/entries'
 import { TIME_RE } from '#/domain/rules'
 import { settingsQuery, useDataMutation } from '#/features/settings/queries'
-import { useFormat, useI18n, useMessages } from '#/i18n/context'
+import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'
-import { cn } from '#/lib/utils'
 import {
   breakKeys,
   breaksQuery,
   entryKeys,
   runningBreakQuery,
 } from '../queries'
-import { clockTime, formatClock } from './timer'
+import { formatClock } from './timer'
+import { ProgressBar } from '#/components/ui/progress-bar'
+import { StatTile } from '#/components/ui/stats'
 
 /** Sekundy trwającej przerwy, odświeżane co sekundę. */
 function useBreakSeconds(running: WorkBreak | null | undefined) {
@@ -90,7 +91,6 @@ export function useEndBreak() {
 export function BreakBar({ running }: { running: WorkBreak }) {
   const t = useMessages(entriesMessages)
   const format = useFormat()
-  const { tag } = useI18n()
   const day = useBreakDay(running.workDate)
   const end = useEndBreak()
   const left = day.limit - day.used
@@ -119,7 +119,7 @@ export function BreakBar({ running }: { running: WorkBreak }) {
           <p className="truncate text-sm font-semibold">
             {t.breaks.running}
             {running.startTime &&
-              ` · ${fmt(t.breaks.since, { time: clockTime(tag, running.startTime) })}`}
+              ` · ${fmt(t.breaks.since, { time: format.time(running.startTime) })}`}
           </p>
           {day.limit > 0 && (
             <p className="truncate text-xs text-white/75">
@@ -177,9 +177,9 @@ export function BreakTile({ date }: { date: string }) {
   const share = day.limit > 0 ? Math.min(100, (day.used / day.limit) * 100) : 0
 
   return (
-    <div className="bg-surface px-4 py-3 sm:px-5">
-      <dt className="flex items-center justify-between gap-2 text-sm text-ink-soft">
-        {t.tile}
+    <StatTile
+      label={t.tile}
+      action={
         <Button
           size="icon"
           variant="ghost"
@@ -190,29 +190,23 @@ export function BreakTile({ date }: { date: string }) {
         >
           <ListIcon aria-hidden className="size-4" />
         </Button>
-      </dt>
-      <dd className="type-heading mt-0.5 text-xl tabular-nums sm:text-2xl">
-        {day.limit > 0
+      }
+      value={
+        day.limit > 0
           ? fmt(t.tileValue, {
               used: format.minutes(day.used),
               limit: format.minutes(day.limit),
             })
-          : format.minutes(day.used)}
-      </dd>
+          : format.minutes(day.used)
+      }
+    >
       {day.limit > 0 && (
-        <dd>
-          <div
-            aria-hidden
-            className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
-          >
-            <div
-              className={cn(
-                'h-full rounded-full',
-                left < 0 ? 'bg-wt-review' : 'bg-[var(--wt-pair)]',
-              )}
-              style={{ width: `${share}%` }}
-            />
-          </div>
+        <>
+          <ProgressBar
+            value={share}
+            tone={left < 0 ? 'warn' : 'pair'}
+            className="mt-2"
+          />
           {left < 0 ? (
             <p className="mt-1.5 text-xs font-medium text-ink">
               {fmt(t.tileOver, { time: format.minutes(-left) })}
@@ -222,12 +216,12 @@ export function BreakTile({ date }: { date: string }) {
               {fmt(t.tileLeft, { time: format.minutes(left) })}
             </p>
           )}
-        </dd>
+        </>
       )}
       {open && (
         <BreaksDialog date={date} day={day} onClose={() => setOpen(false)} />
       )}
-    </div>
+    </StatTile>
   )
 }
 
@@ -262,7 +256,6 @@ function BreaksDialog({
   const t = useMessages(entriesMessages).breaks
   const app = useMessages(appMessages)
   const format = useFormat()
-  const { tag } = useI18n()
   const [duration, setDuration] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
@@ -307,9 +300,9 @@ function BreaksDialog({
 
   const label = (b: WorkBreak) =>
     b.startTime && b.endTime
-      ? `${clockTime(tag, b.startTime)}–${clockTime(tag, b.endTime)}`
+      ? format.timeRange(b.startTime, b.endTime)
       : b.running && b.startTime
-        ? `${clockTime(tag, b.startTime)}–${t.now}`
+        ? `${format.time(b.startTime)}–${t.now}`
         : null
 
   const submit = (e: FormEvent) => {
