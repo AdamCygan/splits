@@ -27,6 +27,7 @@ export const toUser = (u: typeof t.users.$inferSelect): User => ({
   plan: u.plan,
   hasPassword: u.passwordHash !== null,
   isDemo: u.isDemo,
+  emailVerified: u.emailVerifiedAt !== null || u.isDemo,
 })
 
 export const toSettings = (

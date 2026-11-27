@@ -23,12 +23,56 @@ export interface User {
   hasPassword: boolean
   /** Konto demo z przykładowymi danymi (bez zakupów i zmian konta, usuwane po 24 h). */
   isDemo: boolean
+  /** Adres potwierdzony linkiem z e-maila (albo przez Google). */
+  emailVerified: boolean
 }
 
 export interface AuthSession {
   accessToken: string
   expiresAt: string
   user: User
+}
+
+/** Wynik logowania hasłem: sesja albo prośba o kod 2FA (bilet ważny 5 min). */
+export type LoginResult = AuthSession | { mfaRequired: true; mfaToken: string }
+
+/** Ustawienia bezpieczeństwa konta (Ustawienia → Bezpieczeństwo). */
+export interface SecurityStatus {
+  emailVerified: boolean
+  /** Nowy adres czekający na potwierdzenie linkiem. */
+  pendingEmail: string | null
+  twoFactor: boolean
+  recoveryCodesLeft: number
+  google: boolean
+  hasPassword: boolean
+}
+
+/** Urządzenie z aktywną sesją. */
+export interface ActiveSession {
+  id: string
+  userAgent: string | null
+  ip: string | null
+  startedAt: string
+  lastActiveAt: string
+  current: boolean
+}
+
+/** Hasło i/lub kod 2FA potwierdzające tożsamość. */
+export interface IdentityInput {
+  password?: string | null
+  code?: string | null
+}
+
+export interface Invoice {
+  id: string
+  number: string | null
+  date: string
+  /** W najmniejszej jednostce waluty (centy). */
+  total: number
+  currency: string
+  status: string
+  pdfUrl: string | null
+  url: string | null
 }
 
 /** Rodzaj dnia wolnego: urlop, zwolnienie lekarskie (L4), święto, inne wolne. */
@@ -291,7 +335,7 @@ export interface UnfinishedTask {
   /** Ostatni dzień pracy nad zadaniem (YYYY-MM-DD). */
   lastDate: string
 }
-export type ProfileInput = Pick<User, 'displayName' | 'email'>
+export type ProfileInput = Pick<User, 'displayName'>
 export interface PasswordChangeInput {
   currentPassword: string
   newPassword: string

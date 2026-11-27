@@ -1,9 +1,18 @@
-import { and, asc, eq, ne, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, isNull, ne, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { getCookie } from 'hono/cookie'
 import { cutAccess } from '../auth/access'
 import { hashPassword, verifyPassword } from '../auth/passwords'
-import { REFRESH_COOKIE, revokeOtherSessions } from '../auth/tokens'
+import { activeSessions } from '../auth/sessions'
+import { REFRESH_COOKIE, revokeOtherSessions, sha256 } from '../auth/tokens'
+import {
+  encryptSecret,
+  hashRecoveryCode,
+  newRecoveryCodes,
+  newTotpSecret,
+  otpauthUrl,
+  verifyTotp,
+} from '../auth/totp'
 import { db } from '../db/client'
 import * as t from '../db/schema'
 import { users } from '../db/schema'
@@ -12,14 +21,24 @@ import { ApiError, conflict } from '../http/errors'
 import {
   body,
   deleteAccountInput,
+  emailChangeInput,
+  identityInput,
   passwordChangeInput,
   profileInput,
+  totpEnableInput,
 } from '../http/inputs'
 import { rateLimit } from '../http/rate-limit'
 import { billingEnabled } from '../billing/stripe'
 import { clearRefreshCookie } from './auth'
 import { cancelSubscriptionsFor } from './billing'
 import { toUser } from './dto'
+import {
+  confirmIdentity,
+  notify,
+  sendDeletionCode,
+  sendEmailConfirmation,
+  consumeDeletionCode,
+} from './security'
 
 export async function currentUser(userId: string) {
   const [user] = await db.select().from(users).where(eq(users.id, userId))
@@ -148,22 +167,226 @@ export const accountRoutes = new Hono<AppEnv>()
     const userId = c.get('userId')
     const input = await body(c, profileInput)
     assertNotDemo(await currentUser(userId))
-    const [taken] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(
-        and(
-          eq(sql`lower(${users.email})`, input.email.trim().toLowerCase()),
-          ne(users.id, userId),
-        ),
-      )
-    if (taken) throw conflict('auth.email_taken', 'email')
     const [user] = await db
       .update(users)
-      .set({ displayName: input.displayName, email: input.email.trim() })
+      .set({ displayName: input.displayName })
       .where(eq(users.id, userId))
       .returning()
     return c.json(toUser(user!))
+  })
+
+  /**
+   * Zmiana e-maila: hasło (i kod 2FA, jeśli włączone), potem link na nowy adres.
+   * Adres zmienia się dopiero po kliknięciu, stary dostaje ostrzeżenie.
+   */
+  .post('/email', async (c) => {
+    const userId = c.get('userId')
+    rateLimit(`email-change:${userId}`, 5, 60 * 60_000)
+    const input = await body(c, emailChangeInput)
+    const email = input.email.trim()
+    await db.transaction(async (tx) => {
+      const user = await currentUser(userId)
+      assertNotDemo(user)
+      await confirmIdentity(tx, user, input)
+      if (email.toLowerCase() === user.email.toLowerCase())
+        throw new ApiError('auth.email_same', 400, 'email')
+      const [taken] = await tx
+        .select({ id: users.id })
+        .from(users)
+        .where(
+          and(
+            eq(sql`lower(${users.email})`, email.toLowerCase()),
+            ne(users.id, userId),
+          ),
+        )
+      if (taken) throw conflict('auth.email_taken', 'email')
+      await sendEmailConfirmation(tx, user, email)
+    })
+    return c.body(null, 204)
+  })
+
+  /** Rezygnacja ze zmiany e-maila (link przestaje działać). */
+  .delete('/email/pending', async (c) => {
+    await db
+      .update(t.authTokens)
+      .set({ usedAt: new Date() })
+      .where(
+        and(
+          eq(t.authTokens.userId, c.get('userId')),
+          eq(t.authTokens.purpose, 'email_change'),
+          isNull(t.authTokens.usedAt),
+        ),
+      )
+    return c.body(null, 204)
+  })
+
+  /** Ponowne wysłanie linku potwierdzającego adres. */
+  .post('/email/verify', async (c) => {
+    const userId = c.get('userId')
+    rateLimit(`verify-resend:${userId}`, 3, 60 * 60_000)
+    const user = await currentUser(userId)
+    assertNotDemo(user)
+    if (user.emailVerifiedAt) throw new ApiError('auth.already_verified', 409)
+    await db.transaction((tx) => sendEmailConfirmation(tx, user, null))
+    return c.body(null, 204)
+  })
+
+  /** Stan bezpieczeństwa: potwierdzenie adresu, oczekująca zmiana, 2FA, Google, kody. */
+  .get('/security', async (c) => {
+    const userId = c.get('userId')
+    const user = await currentUser(userId)
+    const [pending] = await db
+      .select({ email: t.authTokens.newEmail })
+      .from(t.authTokens)
+      .where(
+        and(
+          eq(t.authTokens.userId, userId),
+          eq(t.authTokens.purpose, 'email_change'),
+          isNull(t.authTokens.usedAt),
+          gt(t.authTokens.expiresAt, new Date()),
+        ),
+      )
+      .orderBy(desc(t.authTokens.createdAt))
+      .limit(1)
+    const [google] = await db
+      .select({ id: t.externalLogins.providerUserId })
+      .from(t.externalLogins)
+      .where(
+        and(
+          eq(t.externalLogins.userId, userId),
+          eq(t.externalLogins.provider, 'google'),
+        ),
+      )
+    return c.json({
+      emailVerified: user.emailVerifiedAt !== null,
+      pendingEmail: pending?.email ?? null,
+      twoFactor: user.totpEnabledAt !== null,
+      recoveryCodesLeft: user.recoveryCodes.length,
+      google: Boolean(google),
+      hasPassword: user.passwordHash !== null,
+    })
+  })
+
+  /** Początek włączania 2FA: nowy sekret do zeskanowania (zapisuje się dopiero po kodzie). */
+  .post('/2fa/setup', async (c) => {
+    const user = await currentUser(c.get('userId'))
+    assertNotDemo(user)
+    const secret = newTotpSecret()
+    return c.json({ secret, otpauthUrl: otpauthUrl(secret, user.email) })
+  })
+
+  /** Włączenie 2FA: kod z aplikacji dla tego sekretu (+ hasło); zwraca kody zapasowe raz. */
+  .post('/2fa/enable', async (c) => {
+    const userId = c.get('userId')
+    rateLimit(`2fa:${userId}`, 10, 15 * 60_000)
+    const input = await body(c, totpEnableInput)
+    const codes = newRecoveryCodes()
+    const user = await db.transaction(async (tx) => {
+      const account = await currentUser(userId)
+      assertNotDemo(account)
+      if (
+        account.passwordHash &&
+        !(await verifyPassword(input.password ?? '', account.passwordHash))
+      )
+        throw new ApiError('auth.wrong_password', 400, 'password')
+      const step = verifyTotp(input.secret, input.code, null)
+      if (step === null) throw new ApiError('auth.invalid_code', 400, 'code')
+      await tx
+        .update(users)
+        .set({
+          totpSecret: encryptSecret(input.secret),
+          totpEnabledAt: new Date(),
+          totpLastStep: step,
+          recoveryCodes: codes.map(hashRecoveryCode),
+        })
+        .where(eq(users.id, userId))
+      // Pozostałe urządzenia logują się od nowa, już z drugim krokiem.
+      await revokeOtherSessions(tx, userId, getCookie(c, REFRESH_COOKIE))
+      return account
+    })
+    await notify(user, 'twoFactorOn')
+    return c.json({ recoveryCodes: codes })
+  })
+
+  /** Wyłączenie 2FA: hasło (jeśli jest) i aktualny kod albo kod zapasowy. */
+  .post('/2fa/disable', async (c) => {
+    const userId = c.get('userId')
+    rateLimit(`2fa:${userId}`, 10, 15 * 60_000)
+    const input = await body(c, identityInput)
+    const user = await db.transaction(async (tx) => {
+      const account = await currentUser(userId)
+      if (!account.totpEnabledAt) return account
+      await confirmIdentity(tx, account, input)
+      await tx
+        .update(users)
+        .set({
+          totpSecret: null,
+          totpEnabledAt: null,
+          totpLastStep: null,
+          recoveryCodes: [],
+        })
+        .where(eq(users.id, userId))
+      return account
+    })
+    await notify(user, 'twoFactorOff')
+    return c.body(null, 204)
+  })
+
+  /** Nowe kody zapasowe (stare przestają działać); wymaga kodu 2FA. */
+  .post('/2fa/recovery-codes', async (c) => {
+    const userId = c.get('userId')
+    rateLimit(`2fa:${userId}`, 10, 15 * 60_000)
+    const input = await body(c, identityInput)
+    const codes = newRecoveryCodes()
+    await db.transaction(async (tx) => {
+      const user = await currentUser(userId)
+      if (!user.totpEnabledAt)
+        throw new ApiError('auth.invalid_code', 400, 'code')
+      await confirmIdentity(tx, user, input)
+      await tx
+        .update(users)
+        .set({ recoveryCodes: codes.map(hashRecoveryCode) })
+        .where(eq(users.id, userId))
+    })
+    return c.json({ recoveryCodes: codes })
+  })
+
+  /** Urządzenia z aktywną sesją (rodziny refresh tokenów), bieżące oznaczone. */
+  .get('/sessions', async (c) => {
+    const userId = c.get('userId')
+    const rows = await db
+      .select()
+      .from(t.refreshTokens)
+      .where(eq(t.refreshTokens.userId, userId))
+      .orderBy(asc(t.refreshTokens.createdAt))
+    const current = getCookie(c, REFRESH_COOKIE)
+    const currentFamily = current
+      ? rows.find((r) => r.tokenHash === sha256(current))?.familyId
+      : undefined
+    return c.json(activeSessions(rows, currentFamily ?? null))
+  })
+
+  /** Wylogowanie jednego urządzenia. */
+  .delete('/sessions/:id', async (c) => {
+    await db
+      .update(t.refreshTokens)
+      .set({ revokedAt: new Date() })
+      .where(
+        and(
+          eq(t.refreshTokens.userId, c.get('userId')),
+          eq(t.refreshTokens.familyId, c.req.param('id')),
+          isNull(t.refreshTokens.revokedAt),
+        ),
+      )
+    return c.body(null, 204)
+  })
+
+  /** Wylogowanie wszystkich urządzeń poza tym. */
+  .post('/sessions/revoke-others', async (c) => {
+    await db.transaction((tx) =>
+      revokeOtherSessions(tx, c.get('userId'), getCookie(c, REFRESH_COOKIE)),
+    )
+    return c.body(null, 204)
   })
 
   .post('/password', async (c) => {
@@ -186,22 +409,31 @@ export const accountRoutes = new Hono<AppEnv>()
         .where(eq(users.id, userId))
       await revokeOtherSessions(tx, userId, getCookie(c, REFRESH_COOKIE))
     })
+    await notify(user, 'passwordChanged')
+    return c.body(null, 204)
+  })
+
+  /** Kod do usunięcia konta na adres konta (konto demo usuwa się samo po 24 h). */
+  .post('/delete-code', async (c) => {
+    const userId = c.get('userId')
+    rateLimit(`delete-code:${userId}`, 5, 60 * 60_000)
+    const user = await currentUser(userId)
+    assertNotDemo(user)
+    await db.transaction((tx) => sendDeletionCode(tx, user))
     return c.body(null, 204)
   })
 
   .delete('/', async (c) => {
     const userId = c.get('userId')
+    // Kod ma 6 cyfr: limit prób na konto chroni przed zgadywaniem.
     rateLimit(`delete:${userId}`, 10, 15 * 60_000)
     const input = await body(c, deleteAccountInput)
     const user = await currentUser(userId)
-    if (
-      user.passwordHash &&
-      !(await verifyPassword(input.password, user.passwordHash))
-    )
-      throw new ApiError('auth.wrong_password', 400, 'password')
+    await db.transaction((tx) => consumeDeletionCode(tx, userId, input.code))
     // Najpierw koniec płatności, potem ON DELETE CASCADE usuwa wszystkie dane konta.
     if (billingEnabled()) await cancelSubscriptionsFor(userId)
     await db.delete(users).where(eq(users.id, userId))
+    await notify(user, 'accountDeleted')
     cutAccess(userId)
     clearRefreshCookie(c)
     return c.body(null, 204)

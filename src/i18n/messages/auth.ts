@@ -20,6 +20,8 @@ const en = {
     forgot: 'Forgot your password?',
     submit: 'Log in',
     submitting: 'Logging in…',
+    twoFactorUnavailable:
+      'This account uses two-step login, which this version of the app can’t complete yet. Write to support to sign in.',
   },
   register: {
     seoTitle: 'Create a free account | Pointhours',
@@ -68,6 +70,22 @@ const en = {
       'This link is incomplete. Open the link from the email again, or ask for a new one.',
     again: 'Ask for a new link',
   },
+  confirmEmail: {
+    seoTitle: 'Confirm your email | Pointhours',
+    checking: 'Confirming your email address…',
+    verifiedTitle: 'Email address confirmed',
+    verifiedText:
+      'Thanks! Receipts and account emails will go to this address, and you can now buy a plan.',
+    changedTitle: 'Email address changed',
+    changedText:
+      'Your account now uses the new address. Use it to log in from now on. We let the old address know.',
+    failedTitle: 'This link doesn’t work',
+    missing:
+      'This link is incomplete. Open the link from the email again, or ask for a new one in Settings → Account.',
+    openApp: 'Open Pointhours',
+    toAccount: 'Go to account settings',
+    logIn: 'Log in',
+  },
   validation: {
     loginRequired: 'Enter your username or email.',
     passwordRequired: 'Enter your password.',
@@ -104,6 +122,8 @@ const pl: AuthMessages = {
     forgot: 'Nie pamiętasz hasła?',
     submit: 'Zaloguj się',
     submitting: 'Logowanie…',
+    twoFactorUnavailable:
+      'To konto ma logowanie dwuetapowe, którego ta wersja aplikacji jeszcze nie obsługuje. Napisz do wsparcia, żeby się zalogować.',
   },
   register: {
     seoTitle: 'Załóż darmowe konto | Pointhours',
@@ -151,6 +171,22 @@ const pl: AuthMessages = {
     missing:
       'Ten link jest niepełny. Otwórz ponownie link z e-maila albo poproś o nowy.',
     again: 'Poproś o nowy link',
+  },
+  confirmEmail: {
+    seoTitle: 'Potwierdzenie adresu e-mail | Pointhours',
+    checking: 'Potwierdzamy adres e-mail…',
+    verifiedTitle: 'Adres e-mail potwierdzony',
+    verifiedText:
+      'Dzięki! Na ten adres będą przychodzić faktury i wiadomości o koncie, a plan możesz już kupić.',
+    changedTitle: 'Adres e-mail zmieniony',
+    changedText:
+      'Konto używa teraz nowego adresu. Od teraz loguj się nim. Stary adres dostał informację o zmianie.',
+    failedTitle: 'Ten link nie działa',
+    missing:
+      'Ten link jest niepełny. Otwórz ponownie link z e-maila albo poproś o nowy w Ustawienia → Konto.',
+    openApp: 'Otwórz Pointhours',
+    toAccount: 'Przejdź do ustawień konta',
+    logIn: 'Zaloguj się',
   },
   validation: {
     loginRequired: 'Podaj login lub e-mail.',

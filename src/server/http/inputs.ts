@@ -72,7 +72,32 @@ export const resetInput = z.object({
 
 export const profileInput = z.object({
   displayName: trimmed(1, LIMITS.displayName),
+})
+
+/** Hasło i/lub kod 2FA potwierdzające tożsamość przed zmianą wrażliwych ustawień. */
+const identity = {
+  password: z.string().max(LIMITS.passwordMax).nullish(),
+  code: z.string().max(20).nullish(),
+}
+
+export const emailChangeInput = z.object({
   email: z.email().max(254),
+  ...identity,
+})
+
+export const identityInput = z.object(identity)
+
+export const tokenInput = z.object({ token: z.string().min(10).max(200) })
+
+export const mfaLoginInput = z.object({
+  mfaToken: z.string().min(10).max(2000),
+  code: z.string().min(6).max(20),
+})
+
+export const totpEnableInput = z.object({
+  secret: z.string().regex(/^[A-Z2-7]{16,64}$/),
+  code: z.string().min(6).max(20),
+  password: identity.password,
 })
 
 export const passwordChangeInput = z.object({
@@ -80,8 +105,12 @@ export const passwordChangeInput = z.object({
   newPassword: password,
 })
 
+/** Usunięcie konta: 6-cyfrowy kod z e-maila (POST /account/delete-code). */
 export const deleteAccountInput = z.object({
-  password: z.string().max(LIMITS.passwordMax),
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/),
 })
 
 export const settingsInput = z.object({

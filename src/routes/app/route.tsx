@@ -35,6 +35,7 @@ import { useMessages } from '#/i18n/context'
 import { appMessages } from '#/i18n/messages/app'
 import { commonMessages } from '#/i18n/messages/common'
 import { panelMessages } from '#/i18n/messages/panel'
+import { AccountNotices } from '#/features/notices'
 import { TimerBar } from '#/features/time-entries/components/timer'
 import { useClockPref } from '#/lib/clock'
 import { applyTheme } from '#/lib/theme'
@@ -267,6 +268,7 @@ function AppShell() {
           </header>
 
           {user?.isDemo && <DemoBanner onRegister={() => void leaveDemo()} />}
+          {user && <AccountNotices user={user} />}
           <TimerBar />
           <main
             id="main"

@@ -35,7 +35,15 @@ export const httpSource: DataSource = {
 
   auth: {
     register: (input) => auth('/register', s.sessionSchema, input),
-    login: (input) => auth('/login', s.sessionSchema, input),
+    login: (input) => auth('/login', s.loginResultSchema, input),
+    loginWithCode: (mfaToken, code) =>
+      auth('/login/2fa', s.sessionSchema, { mfaToken, code }),
+    confirmEmail: (token) =>
+      auth(
+        '/email/confirm',
+        z.object({ kind: z.enum(['verified', 'changed']) }),
+        { token },
+      ),
     restore: () => auth('/refresh', s.sessionSchema),
     logout: () => auth('/logout', emptyResponse),
     forgotPassword: (email) =>
@@ -58,8 +66,67 @@ export const httpSource: DataSource = {
       send('PUT', '/account/profile', s.userSchema, input),
     changePassword: (input) =>
       send('POST', '/account/password', emptyResponse, input),
-    deleteAccount: (password) =>
-      send('DELETE', '/account', emptyResponse, { password }),
+    sendDeleteCode: () => send('POST', '/account/delete-code', emptyResponse),
+    deleteAccount: (code) =>
+      send('DELETE', '/account', emptyResponse, { code }),
+    security: () =>
+      get(
+        '/account/security',
+        z.object({
+          emailVerified: z.boolean(),
+          pendingEmail: z.string().nullable(),
+          twoFactor: z.boolean(),
+          recoveryCodesLeft: z.number(),
+          google: z.boolean(),
+          hasPassword: z.boolean(),
+        }),
+      ),
+    changeEmail: (input) =>
+      send('POST', '/account/email', emptyResponse, input),
+    cancelEmailChange: () =>
+      send('DELETE', '/account/email/pending', emptyResponse),
+    resendVerification: () =>
+      send('POST', '/account/email/verify', emptyResponse),
+    twoFactorSetup: () =>
+      send(
+        'POST',
+        '/account/2fa/setup',
+        z.object({ secret: z.string(), otpauthUrl: z.string() }),
+      ),
+    twoFactorEnable: (input) =>
+      send(
+        'POST',
+        '/account/2fa/enable',
+        z.object({ recoveryCodes: z.array(z.string()) }),
+        input,
+      ),
+    twoFactorDisable: (input) =>
+      send('POST', '/account/2fa/disable', emptyResponse, input),
+    newRecoveryCodes: (input) =>
+      send(
+        'POST',
+        '/account/2fa/recovery-codes',
+        z.object({ recoveryCodes: z.array(z.string()) }),
+        input,
+      ),
+    sessions: () =>
+      get(
+        '/account/sessions',
+        z.array(
+          z.object({
+            id: z.string(),
+            userAgent: z.string().nullable(),
+            ip: z.string().nullable(),
+            startedAt: z.string(),
+            lastActiveAt: z.string(),
+            current: z.boolean(),
+          }),
+        ),
+      ),
+    revokeSession: (id) =>
+      send('DELETE', `/account/sessions/${id}`, emptyResponse),
+    revokeOtherSessions: () =>
+      send('POST', '/account/sessions/revoke-others', emptyResponse),
     exportData: () => get('/account/export', z.unknown()),
   },
 
@@ -313,6 +380,22 @@ export const httpSource: DataSource = {
         { sessionId },
       ),
     portal: () => send('POST', '/billing/portal', z.object({ url: z.url() })),
+    invoices: () =>
+      get(
+        '/billing/invoices',
+        z.array(
+          z.object({
+            id: z.string(),
+            number: z.string().nullable(),
+            date: z.string(),
+            total: z.number(),
+            currency: z.string(),
+            status: z.string(),
+            pdfUrl: z.string().nullable(),
+            url: z.string().nullable(),
+          }),
+        ),
+      ),
   },
 
   admin: {

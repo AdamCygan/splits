@@ -23,11 +23,26 @@ export const keys = {
   tags: ['tags'],
   templates: ['quick-templates'],
   daysOff: ['days-off'],
+  security: ['security'],
+  sessions: ['sessions'],
+  invoices: ['invoices'],
 } as const satisfies Record<string, QueryKey>
 
 export const meQuery = queryOptions({
   queryKey: keys.me,
   queryFn: () => unwrap(data.account.me()),
+})
+export const securityQuery = queryOptions({
+  queryKey: keys.security,
+  queryFn: () => unwrap(data.account.security()),
+})
+export const sessionsQuery = queryOptions({
+  queryKey: keys.sessions,
+  queryFn: () => unwrap(data.account.sessions()),
+})
+export const invoicesQuery = queryOptions({
+  queryKey: keys.invoices,
+  queryFn: () => unwrap(data.billing.invoices()),
 })
 export const settingsQuery = queryOptions({
   queryKey: keys.settings,

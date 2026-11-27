@@ -8,6 +8,7 @@ import {
   fmt,
   formatDate,
   formatMinutes,
+  formatMoney,
   formatNumber,
   formatSp,
   plural,
@@ -99,6 +100,9 @@ export function useFormat() {
           : diff < 0
             ? fmt(forms.under, { time: formatMinutes(locale, -diff) })
             : forms.exact,
+      /** Kwota w najmniejszej jednostce waluty (np. centy ze Stripe). */
+      money: (minorUnits: number, currency: string) =>
+        formatMoney(tag, minorUnits, currency),
       minutes: (total: number) => formatMinutes(locale, total),
       sp: (points: number) => formatSp(locale, points),
       number: (value: number, digits = 1) =>

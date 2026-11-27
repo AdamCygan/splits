@@ -24,7 +24,17 @@ export const userSchema = z.object({
   plan: planSchema,
   hasPassword: z.boolean(),
   isDemo: z.boolean().default(false),
+  emailVerified: z.boolean().default(true),
 })
+
+export const loginResultSchema = z.union([
+  z.object({ mfaRequired: z.literal(true), mfaToken: z.string() }),
+  z.object({
+    accessToken: z.string(),
+    expiresAt: z.string(),
+    user: userSchema,
+  }),
+])
 
 export const sessionSchema = z.object({
   accessToken: z.string(),

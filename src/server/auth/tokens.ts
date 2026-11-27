@@ -171,3 +171,43 @@ export async function revokeOtherSessions(
       ),
     )
 }
+
+const MFA_AUDIENCE = 'pointhours-mfa'
+
+/**
+ * Bilet drugiego kroku logowania (5 min): hasło albo Google już przeszło, brakuje kodu 2FA.
+ * Nie daje dostępu do API (inny `aud` niż access token).
+ */
+export async function signMfaToken(userId: string) {
+  return new SignJWT({})
+    .setProtectedHeader({ alg: 'HS256' })
+    .setSubject(userId)
+    .setIssuer(ISSUER)
+    .setAudience(MFA_AUDIENCE)
+    .setIssuedAt()
+    .setExpirationTime('5m')
+    .sign(secret)
+}
+
+export async function verifyMfaToken(token: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, secret, {
+      issuer: ISSUER,
+      audience: MFA_AUDIENCE,
+      algorithms: ['HS256'],
+    })
+    return typeof payload.sub === 'string' ? payload.sub : null
+  } catch {
+    return null
+  }
+}
+
+/** Unieważnia wszystkie sesje użytkownika (wszystkie rodziny refresh tokenów). */
+export async function revokeAllSessions(tx: Tx, userId: string) {
+  await tx
+    .update(refreshTokens)
+    .set({ revokedAt: new Date() })
+    .where(
+      and(eq(refreshTokens.userId, userId), isNull(refreshTokens.revokedAt)),
+    )
+}

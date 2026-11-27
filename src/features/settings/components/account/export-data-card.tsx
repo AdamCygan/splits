@@ -1,0 +1,37 @@
+import { Download } from 'lucide-react'
+import { Button } from '#/components/ui/button'
+import { data } from '#/data'
+import { useMessages } from '#/i18n/context'
+import { panelMessages } from '#/i18n/messages/panel'
+import { downloadFile } from '#/lib/download'
+import { useDataMutation } from '../../queries'
+import { SettingsCard } from '../ui'
+
+/** Pobranie wszystkich danych konta jako plik JSON (RODO: prawo do przenoszenia danych). */
+export function ExportDataCard() {
+  const t = useMessages(panelMessages).export
+  const download = useDataMutation(() => data.account.exportData(), {
+    invalidate: [],
+    success: t.done,
+    onSuccess: (payload) => {
+      downloadFile(
+        `pointhours-export-${new Date().toISOString().slice(0, 10)}.json`,
+        [JSON.stringify(payload, null, 2)],
+        'application/json',
+      )
+    },
+  })
+  return (
+    <SettingsCard title={t.title} lead={t.lead}>
+      <Button
+        variant="outline"
+        disabled={download.isPending}
+        aria-busy={download.isPending}
+        onClick={() => download.mutate(undefined)}
+      >
+        <Download aria-hidden className="size-4" />
+        {download.isPending ? t.busy : t.button}
+      </Button>
+    </SettingsCard>
+  )
+}

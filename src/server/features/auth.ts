@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { and, eq, gt, isNull, or, sql } from 'drizzle-orm'
+import { and, eq, gt, inArray, isNull, ne, or, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import type { Context } from 'hono'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
@@ -20,9 +20,12 @@ import {
   issueRefreshToken,
   randomToken,
   revokeToken,
+  revokeAllSessions,
   rotateRefreshToken,
   sha256,
   signAccessToken,
+  signMfaToken,
+  verifyMfaToken,
 } from '../auth/tokens'
 import { db } from '../db/client'
 import type { Tx } from '../db/client'
@@ -36,13 +39,16 @@ import {
   demoInput,
   emailInput,
   loginInput,
+  mfaLoginInput,
   registerInput,
   resetInput,
+  tokenInput,
   timezone as timezoneSchema,
 } from '../http/inputs'
 import { rateLimit, resetRateLimit } from '../http/rate-limit'
 import { runMaintenance } from '../maintenance'
 import { toUser } from './dto'
+import { notify, sendEmailConfirmation, useSecondFactor } from './security'
 import { createWorkspace } from './workspace'
 
 const MAX_FAILED_LOGINS = 10
@@ -234,6 +240,8 @@ export const authRoutes = new Hono<AppEnv>()
         locale: input.locale,
         timezone: input.timezone ?? 'UTC',
       })
+      // Link potwierdzający adres: bez tego reset hasła i e-maile mogłyby trafiać do obcych.
+      await sendEmailConfirmation(tx, user, null)
       return sessionFor(c, tx, user)
     })
     return c.json(session, 201)
@@ -301,6 +309,17 @@ export const authRoutes = new Hono<AppEnv>()
     resetRateLimit(`login:${lower(input.login)}`)
     // Dopiero po poprawnym haśle: odpowiedź nie zdradza obcym, że konto istnieje i jest zablokowane.
     if (user.disabledAt) throw new ApiError('auth.account_disabled', 403)
+    // 2FA: hasło się zgadza, ale sesja dopiero po kodzie z aplikacji (bilet ważny 5 min).
+    if (user.totpEnabledAt) {
+      await db
+        .update(users)
+        .set({ failedLoginCount: 0, lockoutUntil: null })
+        .where(eq(users.id, user.id))
+      return c.json({
+        mfaRequired: true,
+        mfaToken: await signMfaToken(user.id),
+      })
+    }
     const session = await db.transaction(async (tx) => {
       const [fresh] = await tx
         .update(users)
@@ -314,6 +333,90 @@ export const authRoutes = new Hono<AppEnv>()
       return sessionFor(c, tx, fresh!)
     })
     return c.json(session)
+  })
+
+  /** Drugi krok logowania: bilet z pierwszego kroku + kod z aplikacji albo kod zapasowy. */
+  .post('/login/2fa', async (c) => {
+    const meta = requestMeta(c)
+    const input = await body(c, mfaLoginInput)
+    rateLimit(`mfa-ip:${meta.ip}`, 30, 15 * 60_000)
+    const userId = await verifyMfaToken(input.mfaToken)
+    if (!userId) throw new ApiError('auth.mfa_expired', 401)
+    rateLimit(`mfa:${userId}`, 8, 15 * 60_000)
+    const session = await db.transaction(async (tx) => {
+      const [user] = await tx.select().from(users).where(eq(users.id, userId))
+      if (!user?.totpEnabledAt) throw new ApiError('auth.mfa_expired', 401)
+      if (user.disabledAt) throw new ApiError('auth.account_disabled', 403)
+      if (!(await useSecondFactor(tx, user, input.code)))
+        throw new ApiError('auth.invalid_code', 400, 'code')
+      const [fresh] = await tx
+        .update(users)
+        .set({ lastLoginAt: new Date() })
+        .where(eq(users.id, user.id))
+        .returning()
+      return sessionFor(c, tx, fresh!)
+    })
+    resetRateLimit(`mfa:${userId}`)
+    return c.json(session)
+  })
+
+  /** Link z e-maila: potwierdzenie adresu po rejestracji albo nowego adresu po zmianie. */
+  .post('/email/confirm', async (c) => {
+    const meta = requestMeta(c)
+    rateLimit(`email-confirm:${meta.ip}`, 30, 60 * 60_000)
+    const { token } = await body(c, tokenInput)
+    const result = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(authTokens)
+        .set({ usedAt: new Date() })
+        .where(
+          and(
+            eq(authTokens.tokenHash, sha256(token)),
+            inArray(authTokens.purpose, ['email_verification', 'email_change']),
+            isNull(authTokens.usedAt),
+            gt(authTokens.expiresAt, new Date()),
+          ),
+        )
+        .returning()
+      if (!row) return null
+      const [user] = await tx
+        .select()
+        .from(users)
+        .where(eq(users.id, row.userId))
+      if (!user) return null
+      if (row.purpose === 'email_verification') {
+        // Link do starego adresu po zmianie e-maila nie potwierdza nowego.
+        await tx
+          .update(users)
+          .set({ emailVerifiedAt: user.emailVerifiedAt ?? new Date() })
+          .where(eq(users.id, user.id))
+        return { kind: 'verified' as const, user, oldEmail: null }
+      }
+      const newEmail = row.newEmail!
+      const [taken] = await tx
+        .select({ id: users.id })
+        .from(users)
+        .where(
+          and(
+            eq(sql`lower(${users.email})`, lower(newEmail)),
+            ne(users.id, user.id),
+          ),
+        )
+      if (taken) throw conflict('auth.email_taken', 'email')
+      await tx
+        .update(users)
+        .set({ email: newEmail, emailVerifiedAt: new Date() })
+        .where(eq(users.id, user.id))
+      return { kind: 'changed' as const, user, oldEmail: user.email }
+    })
+    if (!result) throw new ApiError('auth.email_link_invalid', 400, 'token')
+    if (result.oldEmail) {
+      const email = (
+        await db.select().from(users).where(eq(users.id, result.user.id))
+      )[0]!.email
+      await notify(result.user, 'emailChanged', { email }, result.oldEmail)
+    }
+    return c.json({ kind: result.kind })
   })
 
   .post('/refresh', async (c) => {
@@ -397,7 +500,7 @@ export const authRoutes = new Hono<AppEnv>()
         )
         .returning()
       if (!row) return false
-      await tx
+      const [owner] = await tx
         .update(users)
         .set({
           passwordHash,
@@ -408,6 +511,7 @@ export const authRoutes = new Hono<AppEnv>()
           emailVerifiedAt: sql`coalesce(${users.emailVerifiedAt}, now())`,
         })
         .where(eq(users.id, row.userId))
+        .returning()
       // Nowe hasło = wylogowanie ze wszystkich urządzeń.
       await tx
         .update(refreshTokens)
@@ -418,9 +522,10 @@ export const authRoutes = new Hono<AppEnv>()
             isNull(refreshTokens.revokedAt),
           ),
         )
-      return true
+      return owner ?? true
     })
     if (!done) throw new ApiError('auth.reset_invalid', 400, 'token')
+    if (typeof done === 'object') await notify(done, 'passwordChanged')
     return c.body(null, 204)
   })
 
@@ -516,7 +621,7 @@ export const authRoutes = new Hono<AppEnv>()
       ? localeCookie
       : c.get('locale')
 
-    const outcome = { blocked: false }
+    const outcome: { blocked: boolean; mfaToken?: string } = { blocked: false }
     await db.transaction(async (tx) => {
       const [link] = await tx
         .select({ userId: externalLogins.userId })
@@ -538,6 +643,22 @@ export const authRoutes = new Hono<AppEnv>()
             .from(users)
             .where(eq(sql`lower(${users.email})`, lower(email)))
         )[0]
+        // Konto z niepotwierdzonym adresem mógł założyć ktoś obcy, znając tylko e-mail:
+        // właściciel adresu (Google to potwierdził) przejmuje je bez cudzego hasła, 2FA i sesji.
+        if (user && !user.emailVerifiedAt) {
+          await revokeAllSessions(tx, user.id)
+          ;[user] = await tx
+            .update(users)
+            .set({
+              passwordHash: null,
+              totpSecret: null,
+              totpEnabledAt: null,
+              recoveryCodes: [],
+              emailVerifiedAt: new Date(),
+            })
+            .where(eq(users.id, user.id))
+            .returning()
+        }
         user ??= await createAccount(tx, {
           username: await uniqueUsername(tx, email),
           email,
@@ -560,6 +681,11 @@ export const authRoutes = new Hono<AppEnv>()
         outcome.blocked = true
         return
       }
+      // 2FA: Google potwierdził tożsamość, ale kod z aplikacji wpisuje się na stronie logowania.
+      if (user.totpEnabledAt) {
+        outcome.mfaToken = await signMfaToken(user.id)
+        return
+      }
       const [fresh] = await tx
         .update(users)
         .set({
@@ -571,5 +697,9 @@ export const authRoutes = new Hono<AppEnv>()
       await sessionFor(c, tx, fresh!)
     })
     if (outcome.blocked) return c.redirect('/login?error=disabled')
+    if (outcome.mfaToken)
+      return c.redirect(
+        `/login?${new URLSearchParams({ mfa: outcome.mfaToken, redirect: redirectTo }).toString()}`,
+      )
     return c.redirect(redirectTo)
   })

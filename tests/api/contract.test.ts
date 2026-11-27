@@ -5,7 +5,7 @@ import type {
   QuickTemplateInput,
 } from '#/data/types'
 import { api } from '#/server/app'
-import { inSequence, numbered } from './helpers'
+import { inSequence, lastDeleteCode, numbered, otherCode } from './helpers'
 
 /**
  * Prawdziwy adapter frontendu (httpSource + api-client + schematy Zod) na prawdziwym API i bazie.
@@ -140,7 +140,7 @@ describe('API contract (frontend adapter against the real server)', () => {
         password: 'correct horse 1',
       }),
     )
-    expect(session.user.hasPassword).toBe(true)
+    expect(session).toMatchObject({ user: { hasPassword: true } })
   })
 
   it('Should create the default workspace on sign-up', async () => {
@@ -656,12 +656,8 @@ describe('API contract (frontend adapter against the real server)', () => {
   })
 
   it('Should update profile, change the password and delete the account', async () => {
-    const user = await value(
-      data.account.updateProfile({
-        displayName: 'Ada',
-        email: `ada${stamp}${n}@example.com`,
-      }),
-    )
+    const me = await value(data.account.me())
+    const user = await value(data.account.updateProfile({ displayName: 'Ada' }))
     expect(user.displayName).toBe('Ada')
     expect(
       await errorCode(
@@ -677,10 +673,12 @@ describe('API contract (frontend adapter against the real server)', () => {
         newPassword: 'another horse 2',
       }),
     )
-    expect(await errorCode(data.account.deleteAccount('correct horse 1'))).toBe(
-      'auth.wrong_password',
+    await value(data.account.sendDeleteCode())
+    const code = lastDeleteCode(me.email)
+    expect(await errorCode(data.account.deleteAccount(otherCode(code)))).toBe(
+      'auth.invalid_delete_code',
     )
-    await value(data.account.deleteAccount('another horse 2'))
+    await value(data.account.deleteAccount(code))
     expect(await errorCode(data.account.me())).toBe('auth.no_session')
   })
 })

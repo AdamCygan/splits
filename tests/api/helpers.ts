@@ -1,4 +1,5 @@
 import { api } from '#/server/app'
+import { outbox } from '#/server/email'
 
 export interface ApiResponse<TBody> {
   status: number
@@ -76,7 +77,14 @@ export function client() {
 export type ApiClient = ReturnType<typeof client>
 
 let n = 0
-export async function registered(locale: 'en' | 'pl' = 'en') {
+export interface RegisteredOptions {
+  verify?: boolean
+}
+
+export async function registered(
+  locale: 'en' | 'pl' = 'en',
+  { verify = true }: RegisteredOptions = {},
+) {
   const c = client()
   const id = `${Date.now().toString(36)}${n++}`
   const res = await c.post('/auth/register', {
@@ -87,8 +95,36 @@ export async function registered(locale: 'en' | 'pl' = 'en') {
     timezone: 'Europe/Warsaw',
   })
   if (res.status !== 201) throw new Error(`register failed ${res.status}`)
+  // Jak prawdziwy użytkownik: link z e-maila potwierdza adres (zakupy tego wymagają).
+  if (verify)
+    await c.post('/auth/email/confirm', {
+      token: lastToken(`user${id}@example.com`),
+    })
   return { c, username: `user${id}`, email: `user${id}@example.com` }
 }
+
+/** Token z ostatniego linku wysłanego na adres (z lokalnej skrzynki e-maili). */
+export function lastToken(to: string): string {
+  const mail = [...outbox]
+    .reverse()
+    .find((m) => m.to === to && /token=/.test(m.text))
+  if (!mail) throw new Error(`no email with a link for ${to}`)
+  return /token=([\w-]+)/.exec(mail.text)![1]!
+}
+
+/** Kod usunięcia konta z ostatniego e-maila na adres (6 cyfr w osobnej linii). */
+export function lastDeleteCode(to: string): string {
+  const mail = [...outbox]
+    .reverse()
+    .find((m) => m.to === to && /delete/i.test(m.subject))
+  const code = mail && /^(\d{6})$/m.exec(mail.text)?.[1]
+  if (!code) throw new Error(`no delete code for ${to}`)
+  return code
+}
+
+/** Inny poprawny kod niż podany (do sprawdzania odrzucenia złego kodu). */
+export const otherCode = (code: string) =>
+  String((Number(code) + 1) % 1_000_000).padStart(6, '0')
 
 export async function sample() {
   const c = client()

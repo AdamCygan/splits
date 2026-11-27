@@ -2,23 +2,75 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 
+export interface SampleAccountOptions {
+  locale?: 'en' | 'pl'
+  /** Domyślnie potwierdzony adres e-mail. */
+  emailVerified?: boolean
+  /** Subskrypcja Pro w danym stanie Stripe. */
+  subscription?: 'active' | 'past_due'
+}
+
+export interface SampleAccount {
+  email: string
+}
+
 /**
  * Loguje do nowego konta z przykładowymi danymi (endpoint testowy, ENABLE_TEST_ROUTES=1).
  * page.request dzieli ciasteczka ze stroną, więc /app odtworzy sesję z refresh tokenu.
  */
 export async function signInWithSamples(
   page: Page,
-  locale: 'en' | 'pl' = 'en',
-) {
+  localeOrOptions: 'en' | 'pl' | SampleAccountOptions = 'en',
+): Promise<SampleAccount> {
+  const options =
+    typeof localeOrOptions === 'string'
+      ? { locale: localeOrOptions }
+      : localeOrOptions
   const response = await page.request.post('/api/v1/test/sample-account', {
     data: {
-      locale,
+      locale: options.locale ?? 'en',
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+      emailVerified: options.emailVerified ?? true,
+      subscription: options.subscription,
     },
   })
   expect(response.status()).toBe(201)
+  const session = (await response.json()) as { user: SampleAccount }
   await page.goto('/app')
   await expect(page).toHaveURL(/\/app/)
+  return { email: session.user.email }
+}
+
+export interface SentEmail {
+  subject: string
+  text: string
+}
+
+/** E-maile, które serwer testowy „wysłał” na adres (od najstarszego). */
+export async function mailsTo(page: Page, to: string) {
+  const response = await page.request.get(
+    `/api/v1/test/outbox?to=${encodeURIComponent(to)}`,
+  )
+  return (await response.json()) as Array<SentEmail>
+}
+
+/** Ścieżka z linkiem z ostatniego e-maila na adres (np. /confirm-email?token=…). */
+export async function lastLink(page: Page, to: string) {
+  const mail = (await mailsTo(page, to))
+    .reverse()
+    .find((m) => /token=/.test(m.text))
+  const url = mail && /https?:\/\/\S+/.exec(mail.text)?.[0]
+  if (!url) throw new Error(`no link sent to ${to}`)
+  const { pathname, search } = new URL(url)
+  return pathname + search
+}
+
+/** 6-cyfrowy kod z ostatniego e-maila na adres. */
+export async function lastCode(page: Page, to: string) {
+  const mail = (await mailsTo(page, to)).at(-1)
+  const code = mail && /^(\d{6})$/m.exec(mail.text)?.[1]
+  if (!code) throw new Error(`no code sent to ${to}`)
+  return code
 }
 
 /** Zero naruszeń WCAG 2.2 A/AA wg axe. */

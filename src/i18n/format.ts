@@ -106,3 +106,16 @@ export function weekdayNames(locale: Locale, style: 'long' | 'short' = 'long') {
     formatter.format(new Date(Date.UTC(2023, 0, 1 + i))),
   )
 }
+
+/**
+ * Kwota z najmniejszej jednostki waluty (centy, grosze; tak podaje ją Stripe) w formacie
+ * języka: „$49.00”, „199,00 zł”. Waluty bez części ułamkowej (np. JPY) liczą się 1:1.
+ */
+export function formatMoney(tag: string, minorUnits: number, currency: string) {
+  const formatter = new Intl.NumberFormat(tag, {
+    style: 'currency',
+    currency: currency.toUpperCase(),
+  })
+  const digits = formatter.resolvedOptions().maximumFractionDigits ?? 2
+  return formatter.format(minorUnits / 10 ** digits)
+}

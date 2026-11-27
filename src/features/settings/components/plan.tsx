@@ -6,6 +6,7 @@ import { ArrowRight, Check, ExternalLink } from 'lucide-react'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { Badge } from '#/components/ui/controls'
 import { data } from '#/data'
+import { InvoicesCard } from '#/features/billing/invoices'
 import { FREE_LIMITS, formatPrice, planById } from '#/features/billing/plans'
 import {
   billingKeys,
@@ -41,6 +42,7 @@ export function PlanSettings({ checkoutSession }: PlanSettingsProps) {
               planId={user.role === 'admin' ? 'lifetime' : user.plan}
               admin={user.role === 'admin'}
             />
+            <InvoicesCard isDemo={user.isDemo} />
           </>
         )}
       </QueryView>

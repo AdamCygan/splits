@@ -44,6 +44,8 @@ export const planCode = pgEnum('plan_code', ['free', 'pro', 'lifetime'])
 export const authTokenPurpose = pgEnum('auth_token_purpose', [
   'email_verification',
   'password_reset',
+  'email_change',
+  'account_deletion',
 ])
 export const taskKind = pgEnum('task_kind', [
   'task',
@@ -84,6 +86,16 @@ export const users = pgTable(
     failedLoginCount: smallint('failed_login_count').notNull().default(0),
     lockoutUntil: timestamp('lockout_until', { withTimezone: true }),
     passwordChangedAt: timestamp('password_changed_at', { withTimezone: true }),
+    /** Sekret TOTP (2FA), zaszyfrowany AES-GCM kluczem z JWT_SECRET; null = 2FA wyłączone. */
+    totpSecret: text('totp_secret'),
+    totpEnabledAt: timestamp('totp_enabled_at', { withTimezone: true }),
+    /** Ostatni użyty krok czasu TOTP: ten sam kod nie zadziała drugi raz. */
+    totpLastStep: integer('totp_last_step'),
+    /** Skróty SHA-256 jednorazowych kodów zapasowych 2FA. */
+    recoveryCodes: jsonb('recovery_codes')
+      .$type<Array<string>>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
     lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
     /** Klient w Stripe (cus_…), tworzony przy pierwszym przejściu do płatności. */
     stripeCustomerId: text('stripe_customer_id').unique(),
@@ -148,6 +160,8 @@ export const authTokens = pgTable('auth_tokens', {
   userId: userId(),
   purpose: authTokenPurpose('purpose').notNull(),
   tokenHash: text('token_hash').notNull().unique(),
+  /** Nowy adres przy zmianie e-maila (purpose = email_change). */
+  newEmail: text('new_email'),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   usedAt: timestamp('used_at', { withTimezone: true }),
   createdAt: createdAt(),
@@ -173,6 +187,8 @@ export const userSettings = pgTable(
     locale: text('locale').notNull().default('en'),
     /** 'HH:MM' albo null = przypomnienie wyłączone. */
     dailyReminderAt: text('daily_reminder_at'),
+    /** Dzień (lokalny), w którym poszło ostatnie przypomnienie: najwyżej jedno dziennie. */
+    reminderSentOn: date('reminder_sent_on'),
     summaryTemplate: text('summary_template'),
     /** Ile minut przerwy dziennie przysługuje (0 = bez limitu na przerwy). */
     breakMinutes: smallint('break_minutes').notNull().default(30),

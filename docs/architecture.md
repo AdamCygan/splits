@@ -68,7 +68,7 @@ features/tasks/tasks-page/
 └── …
 ```
 
-W tym układzie są: Dziś (`time-entries/components/today`), formularz wpisu (`entry-form`),
+W tym układzie są: Dziś (`time-entries/components/today`), formularz wpisu (`entry-form`), Konto (`settings/components/account`), komunikaty o koncie (`notices`), faktury (`billing/invoices`), potwierdzenie e-maila (`auth/confirm-email`),
 paleta poleceń (`commands`), Zadania, strona zadania, Raporty, Sprinty i podsumowanie dnia.
 
 Wspólne klocki widoków są w `src/components/ui`: `StatGrid`/`StatTile` (liczby nad stroną),

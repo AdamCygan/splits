@@ -40,7 +40,7 @@ afterEach(() => serverEnv.adminEmails.clear())
 
 describe('owner superuser (ADMIN_EMAILS)', () => {
   it('Should become admin on login, but only with a verified email', async () => {
-    const account = await registered()
+    const account = await registered('en', { verify: false })
     serverEnv.adminEmails.add(account.email)
 
     // Ktoś mógł założyć konto na cudzy adres: bez potwierdzenia nie ma panelu.
@@ -64,7 +64,7 @@ describe('owner superuser (ADMIN_EMAILS)', () => {
   })
 
   it('Should confirm the email address through a password reset link', async () => {
-    const account = await registered()
+    const account = await registered('en', { verify: false })
     serverEnv.adminEmails.add(account.email)
     const logs: Array<string> = []
     const original = console.info

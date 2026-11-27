@@ -4,7 +4,7 @@ import { sql } from 'drizzle-orm'
 import { planForPrice, setStripeClient } from '#/server/billing/stripe'
 import { db } from '#/server/db/client'
 import { users } from '#/server/db/schema'
-import { client, registered } from './helpers'
+import { client, lastDeleteCode, registered } from './helpers'
 
 /**
  * Płatności na prawdziwym API i bazie, z fałszywym klientem Stripe (bez sieci).
@@ -61,11 +61,32 @@ interface PortalParams {
   customer: string
 }
 
+interface InvoiceListParams {
+  customer: string
+}
+
+/** Faktura roczna Pro w formacie Stripe (kwota w centach, data w sekundach). */
+const stripeInvoice = (customer: string) => ({
+  id: `in_${customer}`,
+  number: 'PH-0001',
+  created: Date.UTC(2026, 10, 20) / 1000,
+  total: 4900,
+  currency: 'usd',
+  status: 'paid',
+  invoice_pdf: `https://pay.stripe.com/invoice/${customer}/pdf`,
+  hosted_invoice_url: `https://invoice.stripe.com/i/${customer}`,
+})
+
 let n = 0
 const nextYear = Math.floor(Date.now() / 1000) + 365 * 86_400
 
 const fake = {
   webhooks: real.webhooks,
+  invoices: {
+    list: async ({ customer }: InvoiceListParams) => ({
+      data: [stripeInvoice(customer)],
+    }),
+  },
   prices: {
     list: async ({ lookup_keys }: PriceListParams) => ({
       data: lookup_keys.includes('splits_pro_yearly')
@@ -374,11 +395,13 @@ describe('billing (Stripe, yearly plans only)', () => {
 
   it('Should open the customer portal and cancel billing when the account is deleted', async () => {
     const { c, sub, customer } = await buyPro()
+    const me = await c.get<{ email: string }>('/account')
     const portal = await c.post<{ url: string }>('/billing/portal')
     expect(portal.body.url).toBe(
       `https://billing.stripe.com/p/session/${customer}`,
     )
-    await c.del('/account', { password: 'correct horse 42' })
+    await c.post('/account/delete-code')
+    await c.del('/account', { code: lastDeleteCode(me.body.email) })
     expect(state.canceled).toContain(sub.id)
   })
 
@@ -463,5 +486,28 @@ describe('planForPrice', () => {
       }),
     ).toBe('pro')
     expect(planForPrice({ id: 'price_other', lookup_key: null })).toBeNull()
+  })
+
+  it('Should list the Stripe invoices of the customer with links to the files', async () => {
+    const { c, customer } = await buyPro()
+    const invoices =
+      await c.get<Array<Record<string, unknown>>>('/billing/invoices')
+    expect(invoices.body).toEqual([
+      {
+        id: `in_${customer}`,
+        number: 'PH-0001',
+        date: '2026-11-20T00:00:00.000Z',
+        total: 4900,
+        currency: 'usd',
+        status: 'paid',
+        pdfUrl: `https://pay.stripe.com/invoice/${customer}/pdf`,
+        url: `https://invoice.stripe.com/i/${customer}`,
+      },
+    ])
+  })
+
+  it('Should return no invoices for an account that never paid', async () => {
+    const { c } = await registered()
+    expect((await c.get('/billing/invoices')).body).toEqual([])
   })
 })

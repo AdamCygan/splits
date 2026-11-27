@@ -3,6 +3,16 @@ import type { Plural } from '../format'
 
 /** Teksty nowych ekranów panelu: demo, Sprinty, Zadania, eksport danych i panel administratora. */
 const en = {
+  notices: {
+    label: 'Account notices',
+    unverified: 'Confirm your email address: we sent a link to {email}.',
+    resend: 'Send the link again',
+    resent: 'New link sent to {email}',
+    pastDue:
+      'Your last payment didn’t go through. Update your card so Pro stays on.',
+    updatePayment: 'Update payment',
+    opening: 'Opening…',
+  },
   demo: {
     seoTitle: 'Live demo',
     starting: 'Setting up your demo…',
@@ -308,6 +318,16 @@ const en = {
 export type PanelMessages = typeof en
 
 const pl: PanelMessages = {
+  notices: {
+    label: 'Komunikaty o koncie',
+    unverified: 'Potwierdź adres e-mail: wysłaliśmy link na {email}.',
+    resend: 'Wyślij link ponownie',
+    resent: 'Wysłaliśmy nowy link na {email}',
+    pastDue:
+      'Ostatnia płatność nie przeszła. Zaktualizuj kartę, żeby Pro dalej działało.',
+    updatePayment: 'Zaktualizuj płatność',
+    opening: 'Otwieram…',
+  },
   demo: {
     seoTitle: 'Demo na żywo',
     starting: 'Przygotowujemy demo…',

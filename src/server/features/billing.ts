@@ -145,9 +145,36 @@ export const billingRoutes = new Hono<AppEnv>()
     })
   })
 
+  /** Faktury i paragony ze Stripe (ostatnie 24), z linkami do PDF i strony płatności. */
+  .get('/invoices', async (c) => {
+    const user = await currentUser(c.get('userId'))
+    if (!billingEnabled() || !user.stripeCustomerId) return c.json([])
+    const list = await stripe()
+      .invoices.list({ customer: user.stripeCustomerId, limit: 24 })
+      .catch((error: unknown) => {
+        console.error('[billing] invoices', error)
+        throw new ApiError('billing.failed', 502)
+      })
+    return c.json(
+      list.data.map((i) => ({
+        id: i.id,
+        number: i.number ?? null,
+        date: new Date(i.created * 1000).toISOString(),
+        total: i.total,
+        currency: i.currency,
+        status: i.status ?? 'draft',
+        pdfUrl: i.invoice_pdf ?? null,
+        url: i.hosted_invoice_url ?? null,
+      })),
+    )
+  })
+
   /** Koszyk → Stripe Checkout: subskrypcja płatna z góry za rok. */
   .post('/checkout', async (c) => {
     const user = await currentUser(c.get('userId'))
+    // Płatność tylko z potwierdzonym adresem: na niego idą faktury i e-maile o odnowieniu.
+    if (!user.emailVerifiedAt && !user.isDemo)
+      throw new ApiError('auth.email_unverified', 403)
     const { plan } = await body(c, checkoutInput)
     assertNotDemo(user)
     if (!billingEnabled()) throw new ApiError('billing.unavailable', 503)

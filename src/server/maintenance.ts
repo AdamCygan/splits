@@ -2,6 +2,7 @@ import { and, eq, lt, or } from 'drizzle-orm'
 import { db } from './db/client'
 import { authTokens, refreshTokens, stripeEvents, users } from './db/schema'
 import { reportError } from './monitoring'
+import { runReminders } from './reminders'
 
 export const DEMO_LIFETIME_HOURS = 24
 const HOUR = 3_600_000
@@ -63,4 +64,11 @@ export function startMaintenance() {
   setTimeout(run, 60_000).unref()
   timer = setInterval(run, HOUR)
   timer.unref()
+  // Dzienne przypomnienia: co 15 minut, żeby trafiać blisko ustawionej godziny.
+  const remind = () =>
+    runReminders().catch((error: unknown) => {
+      console.error('[reminders]', error)
+      void reportError(error, { tags: { area: 'reminders' } })
+    })
+  setInterval(remind, 15 * 60_000).unref()
 }

@@ -1,8 +1,13 @@
 import type { ApiFailure } from '#/lib/api-client'
 import type { Result } from '#/lib/result'
 import type {
+  ActiveSession,
   AuthSession,
+  IdentityInput,
+  Invoice,
   LoginInput,
+  LoginResult,
+  SecurityStatus,
   PasswordChangeInput,
   ProfileInput,
   Project,
@@ -57,7 +62,11 @@ export interface DataSource {
 
   auth: {
     register: (input: RegisterInput) => R<AuthSession>
-    login: (input: LoginInput) => R<AuthSession>
+    login: (input: LoginInput) => R<LoginResult>
+    /** Drugi krok logowania: kod z aplikacji albo kod zapasowy. */
+    loginWithCode: (mfaToken: string, code: string) => R<AuthSession>
+    /** Link z e-maila: potwierdzenie adresu albo nowego adresu. */
+    confirmEmail: (token: string) => R<{ kind: 'verified' | 'changed' }>
     /** Odtwarza sesję z refresh tokenu (ciasteczko httpOnly). */
     restore: () => R<AuthSession>
     logout: () => R<undefined>
@@ -75,7 +84,27 @@ export interface DataSource {
     me: () => R<User>
     updateProfile: (input: ProfileInput) => R<User>
     changePassword: (input: PasswordChangeInput) => R<undefined>
-    deleteAccount: (password: string) => R<undefined>
+    /** Kod do usunięcia konta na e-mail (ważny 15 minut). */
+    sendDeleteCode: () => R<undefined>
+    deleteAccount: (code: string) => R<undefined>
+    security: () => R<SecurityStatus>
+    /** Zmiana e-maila: link na nowy adres, zmiana dopiero po kliknięciu. */
+    changeEmail: (input: { email: string } & IdentityInput) => R<undefined>
+    cancelEmailChange: () => R<undefined>
+    resendVerification: () => R<undefined>
+    twoFactorSetup: () => R<{ secret: string; otpauthUrl: string }>
+    twoFactorEnable: (input: {
+      secret: string
+      code: string
+      password?: string
+    }) => R<{ recoveryCodes: Array<string> }>
+    twoFactorDisable: (input: IdentityInput) => R<undefined>
+    newRecoveryCodes: (
+      input: IdentityInput,
+    ) => R<{ recoveryCodes: Array<string> }>
+    sessions: () => R<Array<ActiveSession>>
+    revokeSession: (id: string) => R<undefined>
+    revokeOtherSessions: () => R<undefined>
     /** Wszystkie dane konta jako obiekt JSON (do pobrania jako plik). */
     exportData: () => R<unknown>
   }
@@ -210,6 +239,7 @@ export interface DataSource {
     sync: (sessionId: string) => R<{ plan: PlanCode; paid: boolean }>
     /** Adres Stripe Customer Portal (faktury, karta, anulowanie). */
     portal: () => R<{ url: string }>
+    invoices: () => R<Array<Invoice>>
   }
 
   /** Panel administratora: tylko dla roli „admin” (serwer sprawdza ją przy każdym żądaniu). */

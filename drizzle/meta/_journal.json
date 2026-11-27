@@ -92,6 +92,13 @@
       "when": 1795605598163,
       "tag": "0012_sprint_time_goals",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795781357958,
+      "tag": "0013_client_panel",
+      "breakpoints": true
     }
   ]
 }

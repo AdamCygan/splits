@@ -37,6 +37,11 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         setFormError(errorText(result.error))
         return
       }
+      // Drugi krok (kod 2FA) dojdzie razem z ustawieniami bezpieczeństwa.
+      if ('mfaRequired' in result.value) {
+        setFormError(t.login.twoFactorUnavailable)
+        return
+      }
       startSession(result.value)
       await navigate({ to: redirectTo ?? '/app' })
     },

@@ -29,13 +29,13 @@ export function isValidDate(value: string): boolean {
 }
 
 /** Dzisiejsza data w podanej strefie (domyślnie strefa przeglądarki). */
-export function todayIn(timeZone?: string): string {
+export function todayIn(timeZone?: string, at: Date = new Date()): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  }).format(new Date())
+  }).format(at)
   return parts
 }
 

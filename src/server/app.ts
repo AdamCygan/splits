@@ -15,7 +15,8 @@ import { accountRoutes } from './features/account'
 import { adminRoutes } from './features/admin'
 import { bootstrapRoutes } from './features/bootstrap'
 import { billingRoutes, stripeWebhookRoutes } from './features/billing'
-import { authRoutes, createAccount, sessionFor } from './features/auth'
+import { authRoutes } from './features/auth'
+import { testRoutes } from './features/test-routes'
 import {
   projectRoutes,
   scaleRoutes,
@@ -34,8 +35,6 @@ import { ApiError, fromDatabaseError, problem } from './http/errors'
 import { startMaintenance } from './maintenance'
 import { installProcessHandlers, reportError } from './monitoring'
 import { launchProblems } from '#/config/launch-check'
-import { body, timezone } from './http/inputs'
-import { z } from 'zod'
 
 const VERSION = '1.0.0'
 
@@ -141,32 +140,8 @@ api.route('/auth', authRoutes)
 // Webhook Stripe: bez logowania, uwierzytelniony podpisem Stripe-Signature.
 api.route('/stripe', stripeWebhookRoutes)
 
-// Tylko testy e2e (ENABLE_TEST_ROUTES=1 poza produkcją): konto z przykładowymi danymi.
-if (serverEnv.testRoutes) {
-  api.post('/test/sample-account', async (c) => {
-    const input = await body(
-      c,
-      z.object({
-        locale: z.enum(['en', 'pl']).default('en'),
-        timezone: timezone.optional(),
-      }),
-    )
-    const id = randomUUID().slice(0, 8)
-    const session = await db.transaction(async (tx) => {
-      const user = await createAccount(tx, {
-        username: `sample-${id}`,
-        email: `sample-${id}@example.com`,
-        displayName: input.locale === 'pl' ? 'Konto testowe' : 'Sample account',
-        passwordHash: null,
-        locale: input.locale,
-        timezone: input.timezone ?? 'UTC',
-        withSamples: true,
-      })
-      return sessionFor(c, tx, user)
-    })
-    return c.json(session, 201)
-  })
-}
+// Tylko testy e2e (ENABLE_TEST_ROUTES=1 poza produkcją): konto z danymi, skrzynka e-maili.
+if (serverEnv.testRoutes) api.route('/test', testRoutes)
 
 for (const [path, routes] of Object.entries(protectedRoutes)) {
   api.use(path, requireAuth)

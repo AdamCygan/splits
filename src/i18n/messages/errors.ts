@@ -13,6 +13,17 @@ const en = {
     'Too many attempts. Wait a few minutes and try again.',
   'auth.reset_invalid':
     'This reset link has expired or was already used. Ask for a new one.',
+  'auth.invalid_code':
+    'That code isn’t right. Use the current code from your app or a backup code.',
+  'auth.mfa_expired': 'This sign-in took too long. Log in again.',
+  'auth.email_link_invalid':
+    'This link has expired or was already used. Ask for a new one in Settings.',
+  'auth.email_same': 'That’s already your email address.',
+  'auth.email_unverified':
+    'Confirm your email address first. We’ve sent you a link.',
+  'auth.already_verified': 'Your email address is already confirmed.',
+  'auth.invalid_delete_code':
+    'That code isn’t right or has expired. Send a new one and try again.',
   'auth.google_unavailable':
     'Signing in with Google isn’t available right now.',
   'auth.google_failed': 'We couldn’t sign you in with Google. Try again.',
@@ -69,6 +80,17 @@ const pl: ErrorMessages = {
   'auth.too_many_attempts':
     'Za dużo prób. Odczekaj kilka minut i spróbuj ponownie.',
   'auth.reset_invalid': 'Ten link wygasł albo został już użyty. Poproś o nowy.',
+  'auth.invalid_code':
+    'Ten kod jest nieprawidłowy. Wpisz aktualny kod z aplikacji albo kod zapasowy.',
+  'auth.mfa_expired': 'Logowanie trwało zbyt długo. Zaloguj się ponownie.',
+  'auth.email_link_invalid':
+    'Ten link wygasł albo został już użyty. Poproś o nowy w Ustawieniach.',
+  'auth.email_same': 'To już jest Twój adres e-mail.',
+  'auth.email_unverified':
+    'Najpierw potwierdź adres e-mail. Wysłaliśmy Ci link.',
+  'auth.already_verified': 'Twój adres e-mail jest już potwierdzony.',
+  'auth.invalid_delete_code':
+    'Ten kod jest nieprawidłowy albo wygasł. Wyślij nowy i spróbuj ponownie.',
   'auth.google_unavailable': 'Logowanie przez Google jest teraz niedostępne.',
   'auth.google_failed':
     'Nie udało się zalogować przez Google. Spróbuj ponownie.',

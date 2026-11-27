@@ -56,6 +56,29 @@ const en = {
       'You have Lifetime. Every Pro feature is yours, now and in the future.',
     adminNote:
       'Administrator account: every Pro feature is on, with no payment.',
+    invoices: {
+      title: 'Invoices',
+      lead: 'Invoices and receipts for your payments, from Stripe.',
+      empty: 'No invoices yet. They show up here after your first payment.',
+      caption: 'Your invoices, newest first',
+      date: 'Date',
+      number: 'Number',
+      amount: 'Amount',
+      status: 'Status',
+      actions: 'Files',
+      pdf: 'PDF',
+      view: 'View',
+      pdfOf: 'of invoice {number}',
+      viewOf: 'invoice {number}',
+      noNumber: 'Draft',
+      statuses: {
+        paid: 'Paid',
+        open: 'Due',
+        draft: 'Draft',
+        void: 'Void',
+        uncollectible: 'Unpaid',
+      } as Record<string, string>,
+    },
   },
 }
 
@@ -116,6 +139,29 @@ const pl: BillingMessages = {
       'Masz Lifetime. Wszystkie funkcje Pro są Twoje, teraz i w przyszłości.',
     adminNote:
       'Konto administratora: wszystkie funkcje Pro działają bez opłat.',
+    invoices: {
+      title: 'Faktury',
+      lead: 'Faktury i potwierdzenia płatności ze Stripe.',
+      empty: 'Nie ma jeszcze faktur. Pojawią się tu po pierwszej płatności.',
+      caption: 'Twoje faktury, od najnowszej',
+      date: 'Data',
+      number: 'Numer',
+      amount: 'Kwota',
+      status: 'Status',
+      actions: 'Pliki',
+      pdf: 'PDF',
+      view: 'Zobacz',
+      pdfOf: 'faktury {number}',
+      viewOf: 'fakturę {number}',
+      noNumber: 'Szkic',
+      statuses: {
+        paid: 'Opłacona',
+        open: 'Do zapłaty',
+        draft: 'Szkic',
+        void: 'Anulowana',
+        uncollectible: 'Nieopłacona',
+      },
+    },
   },
 }
 
