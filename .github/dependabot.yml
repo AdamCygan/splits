@@ -1,5 +1,7 @@
 # Cotygodniowe aktualizacje zależności. Łatki bezpieczeństwa przychodzą od razu (security updates),
 # niezależnie od tego harmonogramu, gdy w ustawieniach repozytorium są włączone Dependabot alerts.
+# cooldown: nowa wersja paczki musi poczekać 7 dni, zanim ją zaproponujemy. Złośliwe wydania
+# (przejęte konto autora) zwykle są wycofywane w ciągu kilku dni. Poprawek bezpieczeństwa to nie dotyczy.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -7,6 +9,8 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 10
     groups:
       # Drobne aktualizacje w jednym PR, duże wersje osobno (mogą wymagać zmian w kodzie).
@@ -18,6 +22,8 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      default-days: 7
     groups:
       actions:
         patterns: ['*']
@@ -27,3 +33,5 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      default-days: 7

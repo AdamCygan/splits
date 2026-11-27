@@ -38,7 +38,8 @@ def api_request(path: str, key: str, body: dict | None = None) -> bytes:
         headers={"xi-api-key": key, "content-type": "application/json", "accept": "audio/mpeg"},
         method="POST" if body is not None else "GET",
     )
-    with urllib.request.urlopen(req, timeout=120) as res:  # noqa: S310 (stały adres API)
+    # Adres zawsze https:// ze stałej API, ścieżki tylko z tego skryptu (nie od użytkownika).
+    with urllib.request.urlopen(req, timeout=120) as res:  # noqa: S310  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
         return res.read()
 
 
