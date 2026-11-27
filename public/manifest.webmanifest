@@ -1,6 +1,6 @@
 {
-  "name": "Pointhours: time tracking for developers",
-  "short_name": "Pointhours",
+  "name": "Timeblame: time tracking for developers",
+  "short_name": "Timeblame",
   "description": "Time on tasks, code reviews and sprints in one place.",
   "lang": "en",
   "start_url": "/app",

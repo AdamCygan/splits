@@ -1,9 +1,9 @@
-# Pointhours — time tracker dla programistów
+# Timeblame — time tracker dla programistów
 
 Szybkie notowanie czasu na zadaniach, Code Review, pair programmingu i pracach dodatkowych.
 Story pointy, sprinty i analityka per dzień, sprint, miesiąc i zadanie.
 
-> Marka „Pointhours” żyje w `src/config/site.ts` (nazwa, opis, adres).
+> Marka „Timeblame” żyje w `src/config/site.ts` (nazwa, opis, adres).
 
 Cała aplikacja to **jeden projekt w TypeScripcie**: strony (SSR) i API (`/api/v1`) działają
 w jednym procesie Node i wdrażają się jako jeden obraz Dockera.
@@ -179,7 +179,7 @@ Jak to działa:
 Konfiguracja (najpierw w trybie testowym, klucz `sk_test_…`):
 
 ```bash
-STRIPE_SECRET_KEY=sk_test_… APP_URL=https://pointhours.com pnpm stripe:setup
+STRIPE_SECRET_KEY=sk_test_… APP_URL=https://timeblame.com pnpm stripe:setup
 # tworzy produkt i cenę (lookup key splits_pro_yearly), portal klienta i webhook; wypisuje STRIPE_WEBHOOK_SECRET
 fly secrets set STRIPE_SECRET_KEY=sk_… STRIPE_WEBHOOK_SECRET=whsec_…
 ```
@@ -221,9 +221,9 @@ z placeholderami też ostrzega (w logach i w Sentry).
    fly deploy --ha=false                       # jedna maszyna (domyślnie Fly stawia dwie)
    curl https://<nazwa>.fly.dev/api/v1/health  # {"status":"ok"}
    ```
-4. **Domena**: `fly certs add pointhours.com`, a u rejestratora rekordy DNS z `fly certs show`.
+4. **Domena**: `fly certs add timeblame.com`, a u rejestratora rekordy DNS z `fly certs show`.
 5. **Google** (opcjonalnie): w Google Cloud Console utwórz _OAuth client ID_ (Web application) z adresem
-   przekierowania `https://pointhours.com/api/v1/auth/google/callback`, potem
+   przekierowania `https://timeblame.com/api/v1/auth/google/callback`, potem
    `fly secrets set GOOGLE_CLIENT_ID=… GOOGLE_CLIENT_SECRET=…`. Przycisk „Continue with Google” pojawi się sam.
 6. **E-maile**: zweryfikuj domenę w Resend i `fly secrets set RESEND_API_KEY=…`.
 7. **Błędy**: załóż projekt w Sentry w regionie UE (sentry.io, _Data Storage Location: EU_), platforma Node,

@@ -164,7 +164,7 @@ describe('auth', () => {
     const c = client()
     expect((await c.get<{ status: string }>('/health')).body.status).toBe('ok')
     expect((await c.get<{ name: string }>('/meta')).body.name).toBe(
-      'Pointhours',
+      'Timeblame',
     )
     expect((await c.get('/nope')).status).toBe(404)
   })

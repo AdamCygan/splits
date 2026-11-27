@@ -67,7 +67,7 @@ export const serverEnv = {
   sentryDsn: env.SENTRY_DSN ?? null,
   /** Wersja aplikacji w zgłoszeniach błędów (Fly ustawia FLY_IMAGE_REF przy każdym deployu). */
   release: env.APP_RELEASE ?? env.FLY_IMAGE_REF ?? null,
-  emailFrom: env.EMAIL_FROM ?? 'Pointhours <no-reply@pointhours.com>',
+  emailFrom: env.EMAIL_FROM ?? 'Timeblame <no-reply@timeblame.com>',
   /**
    * Właściciele aplikacji (ADMIN_EMAILS, po przecinku): konto z takim potwierdzonym adresem
    * dostaje rolę admina przy logowaniu, a inni administratorzy nie mogą go zablokować ani usunąć.

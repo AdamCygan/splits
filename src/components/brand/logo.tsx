@@ -8,7 +8,7 @@ export interface LogoMarkProps {
 }
 
 /**
- * Znak Pointhours: stoper, którego tarcza to międzyczasy w kolorach rodzajów pracy.
+ * Znak Timeblame: stoper, którego tarcza to międzyczasy w kolorach rodzajów pracy.
  * Ten sam znak jest w filmie, obrazie OG i ikonach (marketing/brand).
  */
 export function LogoMark({ className }: LogoMarkProps) {
@@ -88,7 +88,7 @@ export function Logo({ className }: LogoProps) {
         aria-hidden
         className="font-display text-[1.375rem] leading-none font-[780] tracking-[-0.03em]"
       >
-        pointhours
+        timeblame
       </span>
     </span>
   )

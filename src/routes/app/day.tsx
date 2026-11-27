@@ -5,6 +5,7 @@ import { DayPage } from '#/features/day/day-page'
 import { settingsQuery } from '#/features/settings/queries'
 import { getLocale } from '#/i18n/locale'
 import { dayViewMessages } from '#/i18n/messages/day-view'
+import { site } from '#/config/site'
 
 interface DaySearch {
   date?: string
@@ -17,7 +18,7 @@ export const Route = createFileRoute('/app/day')({
       ? { date: search.date }
       : {},
   head: () => ({
-    meta: [{ title: `${dayViewMessages[getLocale()].seoTitle} | Pointhours` }],
+    meta: [{ title: `${dayViewMessages[getLocale()].seoTitle} | ${site.name}` }],
   }),
   component: DayRoute,
 })

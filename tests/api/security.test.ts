@@ -32,7 +32,7 @@ describe('email confirmation', () => {
   it('Should send a link on sign-up and confirm the address with it', async () => {
     const { c, email } = await registered('en', { verify: false })
     expect(mailsTo(email).at(-1)?.subject).toBe(
-      'Confirm your email for Pointhours',
+      'Confirm your email for Timeblame',
     )
     expect(
       (await c.get<Security>('/account/security')).body.emailVerified,
@@ -75,7 +75,7 @@ describe('changing the email address', () => {
     expect(pending.body.pendingEmail).toBe(next)
     expect((await c.get<{ email: string }>('/account')).body.email).toBe(email)
     expect(mailsTo(email).at(-1)?.subject).toBe(
-      'Your Pointhours email is about to change',
+      'Your Timeblame email is about to change',
     )
 
     const done = await client().post<{ kind: string }>('/auth/email/confirm', {
@@ -84,7 +84,7 @@ describe('changing the email address', () => {
     expect(done.body.kind).toBe('changed')
     expect((await c.get<{ email: string }>('/account')).body.email).toBe(next)
     expect(mailsTo(email).at(-1)?.subject).toBe(
-      'Your Pointhours email was changed',
+      'Your Timeblame email was changed',
     )
     const relogin = await client().post<Session>('/auth/login', {
       login: next,
@@ -113,7 +113,7 @@ describe('two-step login', () => {
     const setup = await account.c.post<{ secret: string; otpauthUrl: string }>(
       '/account/2fa/setup',
     )
-    expect(setup.body.otpauthUrl).toMatch(/^otpauth:\/\/totp\/Pointhours/)
+    expect(setup.body.otpauthUrl).toMatch(/^otpauth:\/\/totp\/Timeblame/)
     const enabled = await account.c.post<{ recoveryCodes: Array<string> }>(
       '/account/2fa/enable',
       {
@@ -227,7 +227,7 @@ describe('deleting the account', () => {
     const { c, email, username } = await registered()
     expect((await c.post('/account/delete-code')).status).toBe(204)
     expect(mailsTo(email).at(-1)?.subject).toBe(
-      'Your code to delete your Pointhours account',
+      'Your code to delete your Timeblame account',
     )
     expect(
       (await c.del('/account', { code: lastDeleteCode(email) })).status,

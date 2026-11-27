@@ -4,7 +4,7 @@ import type { Plural } from '../format'
 const en = {
   hero: {
     title: 'Code reviews ate your sprint. Now you can prove it.',
-    lead: 'Pointhours is the time tracker built for developers. Start a timer in one click, log a review with a right-click, jot down what you actually did, and finish every sprint with story points and hours for each kind of work.',
+    lead: 'Timeblame is the time tracker built for developers. Start a timer in one click, log a review with a right-click, jot down what you actually did, and finish every sprint with story points and hours for each kind of work.',
     primaryCta: 'Start tracking free',
     videoCta: 'Watch the video, 28s',
     note: 'Free forever. No credit card. Ready in under a minute.',
@@ -46,18 +46,18 @@ const en = {
     ],
   },
   video: {
-    title: 'See a workday with Pointhours',
+    title: 'See a workday with Timeblame',
     lead: 'A code review template, the timer, the entry form and the sprint summary in 28 seconds. It works without sound.',
     play: 'Watch the video, 28s',
-    playSuffix: ': Pointhours in 28 seconds',
+    playSuffix: ': Timeblame in 28 seconds',
     transcriptToggle: 'What’s in the video',
     captionsLabel: 'English',
-    name: 'Pointhours in 28 seconds',
+    name: 'Timeblame in 28 seconds',
     description:
-      'A short video showing how Pointhours logs a developer’s time: a one-click code review template, the timer, an entry form that adapts to the type of work and a sprint summary with story points and hours.',
+      'A short video showing how Timeblame logs a developer’s time: a one-click code review template, the timer, an entry form that adapts to the type of work and a sprint summary with story points and hours.',
     transcript: [
       'Friday retro. How much time went into code reviews? Nobody remembers.',
-      'Pointhours, time tracking for developers.',
+      'Timeblame, time tracking for developers.',
       'Log an entry in three seconds: click the 25-minute code review template and it appears on your day’s timeline. Stop the timer and the entry saves itself.',
       'A form that fits the work: a code review is a merge request link and a duration, pair programming is a title and a duration.',
       'End of the sprint: 37 story points and 70 hours, split into tasks, code reviews, pair programming, extra work and meetings.',
@@ -74,11 +74,11 @@ const en = {
       },
       {
         title: 'Notes that write your summary',
-        text: 'Jot down decisions and blockers. Pointhours turns them into a ready-to-paste task summary for Jira or stand-up.',
+        text: 'Jot down decisions and blockers. Timeblame turns them into a ready-to-paste task summary for Jira or stand-up.',
       },
       {
         title: 'Links recognized automatically',
-        text: 'Paste a URL and Pointhours pulls out PAY-142 or !481.',
+        text: 'Paste a URL and Timeblame pulls out PAY-142 or !481.',
       },
     ],
   },
@@ -142,9 +142,9 @@ const en = {
     title: 'Free for your daily grind. Pro for the price of one lunch a year',
     lead: 'Log, time and summarize your work for free, forever. Go Pro when you want every sprint, every export and no limits. One payment a year, nothing monthly.',
     pageTitle: 'Pricing',
-    pageSeoTitle: 'Pointhours pricing: Free and Pro, billed yearly',
+    pageSeoTitle: 'Timeblame pricing: Free and Pro, billed yearly',
     pageSeoDescription:
-      'Use Pointhours free forever, or go Pro for $24 a year (that’s $2 a month), paid once a year. Team plan for whole teams is coming soon. Full refund within 14 days.',
+      'Use Timeblame free forever, or go Pro for $24 a year (that’s $2 a month), paid once a year. Team plan for whole teams is coming soon. Full refund within 14 days.',
     badges: { pro: 'Most popular', team: 'Coming soon' },
     perMonthYearly: 'That’s {price} a month, paid once a year',
     perSeat: 'per person, per year',
@@ -189,8 +189,8 @@ const en = {
         a: 'Yes, with no time limit and no credit card. You get time logging, the timer, sprints and story points. Pro unlocks full report history, CSV export and unlimited custom types.',
       },
       {
-        q: 'Does Pointhours replace Jira or GitLab?',
-        a: 'No. Your tasks stay in your tracker. In Pointhours you paste a ticket or merge request link and log how long you spent on it.',
+        q: 'Does Timeblame replace Jira or GitLab?',
+        a: 'No. Your tasks stay in your tracker. In Timeblame you paste a ticket or merge request link and log how long you spent on it.',
       },
       {
         q: 'My team counts story points differently. Can I change that?',
@@ -198,7 +198,7 @@ const en = {
       },
       {
         q: 'Is it a tool for the whole team?',
-        a: 'Pointhours is personal. Everyone has their own account and their own stats. Nobody watches your day.',
+        a: 'Timeblame is personal. Everyone has their own account and their own stats. Nobody watches your day.',
       },
       {
         q: 'Can I use it to bill clients for my hours?',
@@ -210,11 +210,11 @@ const en = {
       },
       {
         q: 'What are task summaries?',
-        a: 'Write a template once, for example “Total time on {task}: {total}. Why: {notes}”. Pointhours fills it in from every entry on that task, ready to paste into Jira, a pull request or your stand-up.',
+        a: 'Write a template once, for example “Total time on {task}: {total}. Why: {notes}”. Timeblame fills it in from every entry on that task, ready to paste into Jira, a pull request or your stand-up.',
       },
       {
         q: 'Does it work on my phone?',
-        a: 'Yes. Pointhours runs in the browser on desktop and mobile. There’s nothing to install.',
+        a: 'Yes. Timeblame runs in the browser on desktop and mobile. There’s nothing to install.',
       },
       {
         q: 'Why only yearly billing?',
@@ -269,7 +269,7 @@ const en = {
     notes: {
       task: 'A full entry: ticket link, story points, start and end time, and an optional description.',
       code_review:
-        'Paste the merge request link and enter the time. Pointhours recognizes !481 on its own.',
+        'Paste the merge request link and enter the time. Timeblame recognizes !481 on its own.',
       pair_programming: 'A session title and the time. That’s all.',
       additional_work:
         'Everything that eats time outside tickets: hotfixes, support, onboarding.',
@@ -319,7 +319,7 @@ export type MarketingMessages = typeof en
 const pl: MarketingMessages = {
   hero: {
     title: 'Code review zjadło Ci sprint. Teraz to udowodnisz.',
-    lead: 'Pointhours to time tracker zrobiony dla programistów. Timer jednym kliknięciem, wpis z code review prawym przyciskiem, notatka o tym, co naprawdę zrobiłeś, a na koniec sprintu story pointy i godziny dla każdego rodzaju pracy.',
+    lead: 'Timeblame to time tracker zrobiony dla programistów. Timer jednym kliknięciem, wpis z code review prawym przyciskiem, notatka o tym, co naprawdę zrobiłeś, a na koniec sprintu story pointy i godziny dla każdego rodzaju pracy.',
     primaryCta: 'Zacznij za darmo',
     videoCta: 'Zobacz film, 28 s',
     note: 'Za darmo na zawsze. Bez karty. Gotowe w minutę.',
@@ -361,18 +361,18 @@ const pl: MarketingMessages = {
     ],
   },
   video: {
-    title: 'Zobacz, jak wygląda dzień z Pointhours',
+    title: 'Zobacz, jak wygląda dzień z Timeblame',
     lead: 'Szablon Code Review, timer, formularz i podsumowanie sprintu w 28 sekund. Film działa bez dźwięku.',
     play: 'Obejrzyj film, 28 s',
-    playSuffix: ': Pointhours w 28 sekund',
+    playSuffix: ': Timeblame w 28 sekund',
     transcriptToggle: 'Co jest w filmie',
     captionsLabel: 'Polski',
-    name: 'Pointhours w 28 sekund',
+    name: 'Timeblame w 28 sekund',
     description:
-      'Krótki film o tym, jak Pointhours notuje czas pracy programisty: szablon Code Review jednym kliknięciem, timer, formularz dopasowany do rodzaju pracy i podsumowanie sprintu ze story pointami i godzinami.',
+      'Krótki film o tym, jak Timeblame notuje czas pracy programisty: szablon Code Review jednym kliknięciem, timer, formularz dopasowany do rodzaju pracy i podsumowanie sprintu ze story pointami i godzinami.',
     transcript: [
       'Piątek, retro. Ile czasu zjadły Code Review? Nikt nie pamięta.',
-      'Pointhours, time tracker dla programistów.',
+      'Timeblame, time tracker dla programistów.',
       'Wpis w trzy sekundy: klikasz szablon Code Review, 25 minut, i wpis pojawia się na osi dnia. Zatrzymujesz timer i wpis zapisuje się sam.',
       'Formularz dopasowany do pracy: Code Review to link do merge requesta i czas, pair programming to tytuł i czas.',
       'Koniec sprintu: 37 story pointów i 70 godzin, z podziałem na zadania, Code Review, pair programming, prace dodatkowe i spotkania.',
@@ -389,11 +389,11 @@ const pl: MarketingMessages = {
       },
       {
         title: 'Notatki, które piszą podsumowanie',
-        text: 'Notujesz decyzje i blokery. Pointhours robi z nich gotowe do wklejenia podsumowanie zadania do Jiry albo na daily.',
+        text: 'Notujesz decyzje i blokery. Timeblame robi z nich gotowe do wklejenia podsumowanie zadania do Jiry albo na daily.',
       },
       {
         title: 'Linki rozpoznawane same',
-        text: 'Wklejasz URL, Pointhours wyciąga PAY-142 albo !481.',
+        text: 'Wklejasz URL, Timeblame wyciąga PAY-142 albo !481.',
       },
     ],
   },
@@ -457,9 +457,9 @@ const pl: MarketingMessages = {
     title: 'Za darmo na co dzień. Pro w cenie jednego lunchu na rok',
     lead: 'Loguj, mierz i podsumowuj pracę za darmo, na zawsze. Przejdź na Pro, gdy chcesz każdy sprint, każdy eksport i brak limitów. Jedna płatność w roku, nic co miesiąc.',
     pageTitle: 'Cennik',
-    pageSeoTitle: 'Cennik Pointhours: Free i Pro, płatne rocznie',
+    pageSeoTitle: 'Cennik Timeblame: Free i Pro, płatne rocznie',
     pageSeoDescription:
-      'Pointhours za darmo na zawsze albo Pro za 24 $ rocznie (2 $ miesięcznie), płatne raz w roku. Plan Team dla całych zespołów już wkrótce. Pełny zwrot w ciągu 14 dni.',
+      'Timeblame za darmo na zawsze albo Pro za 24 $ rocznie (2 $ miesięcznie), płatne raz w roku. Plan Team dla całych zespołów już wkrótce. Pełny zwrot w ciągu 14 dni.',
     badges: { pro: 'Najczęściej wybierany', team: 'Wkrótce' },
     perMonthYearly: 'To {price} miesięcznie, płatne raz w roku',
     perSeat: 'za osobę, rocznie',
@@ -504,8 +504,8 @@ const pl: MarketingMessages = {
         a: 'Tak, bez limitu czasu i bez karty. Notujesz czas, korzystasz z timera, sprintów i story pointów. Pro odblokowuje pełną historię raportów, eksport CSV i nielimitowane własne typy.',
       },
       {
-        q: 'Czy Pointhours zastępuje Jirę albo GitLaba?',
-        a: 'Nie. Zadania nadal żyją w Twoim trackerze. W Pointhours wklejasz link do ticketu lub merge requesta i notujesz, ile czasu na nim spędziłeś.',
+        q: 'Czy Timeblame zastępuje Jirę albo GitLaba?',
+        a: 'Nie. Zadania nadal żyją w Twoim trackerze. W Timeblame wklejasz link do ticketu lub merge requesta i notujesz, ile czasu na nim spędziłeś.',
       },
       {
         q: 'Mój zespół liczy story pointy inaczej. Da się to ustawić?',
@@ -513,7 +513,7 @@ const pl: MarketingMessages = {
       },
       {
         q: 'Czy to narzędzie dla całego zespołu?',
-        a: 'Pointhours jest osobisty: każdy prowadzi własne konto i własne statystyki. Nikt nie podgląda Twojego dnia.',
+        a: 'Timeblame jest osobisty: każdy prowadzi własne konto i własne statystyki. Nikt nie podgląda Twojego dnia.',
       },
       {
         q: 'Nadaje się do rozliczania godzin z klientem?',
@@ -525,11 +525,11 @@ const pl: MarketingMessages = {
       },
       {
         q: 'Czym są podsumowania zadań?',
-        a: 'Piszesz szablon raz, np. „Łączny czas na {task}: {total}. Dlaczego: {notes}”. Pointhours wypełnia go ze wszystkich wpisów zadania, gotowy do wklejenia w Jirę, pull request albo na daily.',
+        a: 'Piszesz szablon raz, np. „Łączny czas na {task}: {total}. Dlaczego: {notes}”. Timeblame wypełnia go ze wszystkich wpisów zadania, gotowy do wklejenia w Jirę, pull request albo na daily.',
       },
       {
         q: 'Działa na telefonie?',
-        a: 'Tak. Pointhours działa w przeglądarce na komputerze i telefonie, bez instalowania aplikacji.',
+        a: 'Tak. Timeblame działa w przeglądarce na komputerze i telefonie, bez instalowania aplikacji.',
       },
       {
         q: 'Dlaczego tylko płatność roczna?',

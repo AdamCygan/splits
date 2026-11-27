@@ -383,7 +383,7 @@ describe('account data export', () => {
     const res = await c.get<Record<string, unknown>>('/account/export')
     expect(res.status).toBe(200)
     expect(res.headers.get('content-disposition')).toMatch(
-      /attachment; filename="pointhours-export-\d{4}-\d{2}-\d{2}\.json"/,
+      /attachment; filename="timeblame-export-\d{4}-\d{2}-\d{2}\.json"/,
     )
     expect(res.body).toMatchObject({ format: 'splits-export', version: 1 })
     expect((res.body.timeEntries as Array<unknown>).length).toBeGreaterThan(10)

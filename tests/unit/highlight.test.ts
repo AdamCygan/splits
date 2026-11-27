@@ -49,7 +49,7 @@ describe('markdown in the editor', () => {
     '```ts',
     'const a = 1',
     '```',
-    'See https://pointhours.com',
+    'See https://timeblame.com',
     '',
   ].join('\n')
   const lines = markdownLines(text)
@@ -82,7 +82,7 @@ describe('markdown in the editor', () => {
     ])
     expect(lines[4]!.parts[0]).toEqual({ text: 'const', kind: 'keyword' })
     expect(lines[6]!.parts.at(-1)).toEqual({
-      text: 'https://pointhours.com',
+      text: 'https://timeblame.com',
       kind: 'link',
     })
   })

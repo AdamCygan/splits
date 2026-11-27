@@ -8,7 +8,7 @@ interface NonceStore {
   getStore: () => string | undefined
 }
 
-const KEY = Symbol.for('pointhours.cspNonce')
+const KEY = Symbol.for('timeblame.cspNonce')
 
 type WithNonceStore = typeof globalThis & { [KEY]?: NonceStore }
 

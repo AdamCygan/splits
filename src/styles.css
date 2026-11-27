@@ -60,7 +60,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Pointhours — tokeny marki.
+ * Timeblame — tokeny marki.
  * Interfejs jest monochromatyczny (atrament na chłodnym papierze).
  * Kolor niosą wyłącznie dane: każdy typ pracy ma swoją barwę (--wt-*).
  */
@@ -225,7 +225,7 @@
 }
 
 @layer components {
-  /* Nagłówki: zwężony krój display (wdth 80, opsz 72) = charakter Pointhours. */
+  /* Nagłówki: zwężony krój display (wdth 80, opsz 72) = charakter Timeblame. */
   .type-display {
     font-family: var(--font-display);
     font-weight: 740;

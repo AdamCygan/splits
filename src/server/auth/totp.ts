@@ -87,8 +87,8 @@ export function verifyTotp(
 }
 
 export function otpauthUrl(secret: string, account: string) {
-  const label = encodeURIComponent(`Pointhours:${account}`)
-  return `otpauth://totp/${label}?secret=${secret}&issuer=Pointhours&algorithm=SHA1&digits=${DIGITS}&period=${STEP_SECONDS}`
+  const label = encodeURIComponent(`Timeblame:${account}`)
+  return `otpauth://totp/${label}?secret=${secret}&issuer=Timeblame&algorithm=SHA1&digits=${DIGITS}&period=${STEP_SECONDS}`
 }
 
 /** GCM z pełnym, 16-bajtowym tagiem: krótszy tag z bazy nie przejdzie deszyfrowania. */

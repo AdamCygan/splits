@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Generuje podzbiory fontu Bricolage Grotesque (OFL) używane przez Pointhours.
+# Generuje podzbiory fontu Bricolage Grotesque (OFL) używane przez Timeblame.
 # Wymaga: python3 + fonttools + brotli  (pip install fonttools brotli)
 #
 # Zamiast pełnego fontu zmiennego (3 osie, ~185 KB w woff2) budujemy:

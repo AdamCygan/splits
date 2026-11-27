@@ -40,14 +40,14 @@ export async function sendEmail(email: Email) {
 
 const texts = {
   en: {
-    resetSubject: 'Reset your Pointhours password',
+    resetSubject: 'Reset your Timeblame password',
     reset: (name: string, link: string) =>
-      `Hi ${name},\n\nSomeone (hopefully you) asked to reset the password for your Pointhours account. Open this link within 60 minutes to choose a new one:\n\n${link}\n\nIf it wasn’t you, ignore this email. Your password stays the same.\n\nPointhours`,
+      `Hi ${name},\n\nSomeone (hopefully you) asked to reset the password for your Timeblame account. Open this link within 60 minutes to choose a new one:\n\n${link}\n\nIf it wasn’t you, ignore this email. Your password stays the same.\n\nTimeblame`,
   },
   pl: {
-    resetSubject: 'Zmiana hasła w Pointhours',
+    resetSubject: 'Zmiana hasła w Timeblame',
     reset: (name: string, link: string) =>
-      `Cześć ${name},\n\nKtoś (mamy nadzieję, że Ty) poprosił o zmianę hasła do konta w Pointhours. Otwórz ten link w ciągu 60 minut i ustaw nowe hasło:\n\n${link}\n\nJeśli to nie Ty, zignoruj tę wiadomość. Hasło się nie zmieni.\n\nPointhours`,
+      `Cześć ${name},\n\nKtoś (mamy nadzieję, że Ty) poprosił o zmianę hasła do konta w Timeblame. Otwórz ten link w ciągu 60 minut i ustaw nowe hasło:\n\n${link}\n\nJeśli to nie Ty, zignoruj tę wiadomość. Hasło się nie zmieni.\n\nTimeblame`,
   },
 } satisfies Record<Locale, unknown>
 
@@ -82,106 +82,106 @@ const accountTexts: Record<
 > = {
   en: {
     verify: {
-      subject: 'Confirm your email for Pointhours',
+      subject: 'Confirm your email for Timeblame',
       body: (v) =>
-        `Hi ${v.name},\n\nConfirm that this is your email address by opening this link within 24 hours:\n\n${v.link}\n\nIf you didn’t create a Pointhours account, ignore this email.\n\nPointhours`,
+        `Hi ${v.name},\n\nConfirm that this is your email address by opening this link within 24 hours:\n\n${v.link}\n\nIf you didn’t create a Timeblame account, ignore this email.\n\nTimeblame`,
     },
     emailChange: {
-      subject: 'Confirm your new email for Pointhours',
+      subject: 'Confirm your new email for Timeblame',
       body: (v) =>
-        `Hi ${v.name},\n\nYou asked to use this address for your Pointhours account. Open this link within 24 hours to confirm:\n\n${v.link}\n\nIf it wasn’t you, ignore this email and nothing changes.\n\nPointhours`,
+        `Hi ${v.name},\n\nYou asked to use this address for your Timeblame account. Open this link within 24 hours to confirm:\n\n${v.link}\n\nIf it wasn’t you, ignore this email and nothing changes.\n\nTimeblame`,
     },
     emailChangeNotice: {
-      subject: 'Your Pointhours email is about to change',
+      subject: 'Your Timeblame email is about to change',
       body: (v) =>
-        `Hi ${v.name},\n\nSomeone asked to change the email of your Pointhours account to ${v.email}. It changes only after that address is confirmed.\n\nIf it wasn’t you, change your password now and turn on two-step login: ${v.link}\n\nPointhours`,
+        `Hi ${v.name},\n\nSomeone asked to change the email of your Timeblame account to ${v.email}. It changes only after that address is confirmed.\n\nIf it wasn’t you, change your password now and turn on two-step login: ${v.link}\n\nTimeblame`,
     },
     emailChanged: {
-      subject: 'Your Pointhours email was changed',
+      subject: 'Your Timeblame email was changed',
       body: (v) =>
-        `Hi ${v.name},\n\nYour Pointhours account now uses ${v.email}. This address won’t get emails about the account anymore.\n\nIf it wasn’t you, reply to this email or write to ${v.support}.\n\nPointhours`,
+        `Hi ${v.name},\n\nYour Timeblame account now uses ${v.email}. This address won’t get emails about the account anymore.\n\nIf it wasn’t you, reply to this email or write to ${v.support}.\n\nTimeblame`,
     },
     passwordChanged: {
-      subject: 'Your Pointhours password was changed',
+      subject: 'Your Timeblame password was changed',
       body: (v) =>
-        `Hi ${v.name},\n\nThe password of your Pointhours account was just changed and other devices were signed out.\n\nIf it wasn’t you, reset your password: ${v.link}\n\nPointhours`,
+        `Hi ${v.name},\n\nThe password of your Timeblame account was just changed and other devices were signed out.\n\nIf it wasn’t you, reset your password: ${v.link}\n\nTimeblame`,
     },
     twoFactorOn: {
       subject: 'Two-step login is on',
       body: (v) =>
-        `Hi ${v.name},\n\nTwo-step login is now on for your Pointhours account. Keep your backup codes somewhere safe.\n\nIf it wasn’t you, reset your password: ${v.link}\n\nPointhours`,
+        `Hi ${v.name},\n\nTwo-step login is now on for your Timeblame account. Keep your backup codes somewhere safe.\n\nIf it wasn’t you, reset your password: ${v.link}\n\nTimeblame`,
     },
     twoFactorOff: {
       subject: 'Two-step login was turned off',
       body: (v) =>
-        `Hi ${v.name},\n\nTwo-step login was turned off for your Pointhours account.\n\nIf it wasn’t you, reset your password and turn it back on: ${v.link}\n\nPointhours`,
+        `Hi ${v.name},\n\nTwo-step login was turned off for your Timeblame account.\n\nIf it wasn’t you, reset your password and turn it back on: ${v.link}\n\nTimeblame`,
     },
     accountDeleted: {
-      subject: 'Your Pointhours account was deleted',
+      subject: 'Your Timeblame account was deleted',
       body: (v) =>
-        `Hi ${v.name},\n\nYour Pointhours account and all its data were deleted, and any subscription was canceled. Thanks for trying Pointhours.\n\nPointhours`,
+        `Hi ${v.name},\n\nYour Timeblame account and all its data were deleted, and any subscription was canceled. Thanks for trying Timeblame.\n\nTimeblame`,
     },
     deleteCode: {
-      subject: 'Your code to delete your Pointhours account',
+      subject: 'Your code to delete your Timeblame account',
       body: (v) =>
-        `Hi ${v.name},\n\nYour code to delete your Pointhours account is:\n\n${v.code}\n\nIt works for ${v.minutes} minutes. Deleting removes all your time entries and settings for good.\n\nIf you didn’t ask for this, ignore this email: your account stays as it is.\n\nPointhours`,
+        `Hi ${v.name},\n\nYour code to delete your Timeblame account is:\n\n${v.code}\n\nIt works for ${v.minutes} minutes. Deleting removes all your time entries and settings for good.\n\nIf you didn’t ask for this, ignore this email: your account stays as it is.\n\nTimeblame`,
     },
     reminder: {
-      subject: 'Log today’s work in Pointhours',
+      subject: 'Log today’s work in Timeblame',
       body: (v) =>
-        `Hi ${v.name},\n\nSo far today you’ve logged ${v.logged} of ${v.target}. Add anything that’s missing while you still remember it:\n\n${v.link}\n\nYou can change or turn off this reminder in Settings → Workday.\n\nPointhours`,
+        `Hi ${v.name},\n\nSo far today you’ve logged ${v.logged} of ${v.target}. Add anything that’s missing while you still remember it:\n\n${v.link}\n\nYou can change or turn off this reminder in Settings → Workday.\n\nTimeblame`,
     },
   },
   pl: {
     verify: {
-      subject: 'Potwierdź adres e-mail w Pointhours',
+      subject: 'Potwierdź adres e-mail w Timeblame',
       body: (v) =>
-        `Cześć ${v.name},\n\nPotwierdź, że to Twój adres, otwierając ten link w ciągu 24 godzin:\n\n${v.link}\n\nJeśli nie zakładałeś konta w Pointhours, zignoruj tę wiadomość.\n\nPointhours`,
+        `Cześć ${v.name},\n\nPotwierdź, że to Twój adres, otwierając ten link w ciągu 24 godzin:\n\n${v.link}\n\nJeśli nie zakładałeś konta w Timeblame, zignoruj tę wiadomość.\n\nTimeblame`,
     },
     emailChange: {
-      subject: 'Potwierdź nowy adres e-mail w Pointhours',
+      subject: 'Potwierdź nowy adres e-mail w Timeblame',
       body: (v) =>
-        `Cześć ${v.name},\n\nPoprosiłeś o używanie tego adresu w koncie Pointhours. Otwórz ten link w ciągu 24 godzin, żeby to potwierdzić:\n\n${v.link}\n\nJeśli to nie Ty, zignoruj tę wiadomość. Nic się nie zmieni.\n\nPointhours`,
+        `Cześć ${v.name},\n\nPoprosiłeś o używanie tego adresu w koncie Timeblame. Otwórz ten link w ciągu 24 godzin, żeby to potwierdzić:\n\n${v.link}\n\nJeśli to nie Ty, zignoruj tę wiadomość. Nic się nie zmieni.\n\nTimeblame`,
     },
     emailChangeNotice: {
-      subject: 'Adres e-mail w Pointhours ma się zmienić',
+      subject: 'Adres e-mail w Timeblame ma się zmienić',
       body: (v) =>
-        `Cześć ${v.name},\n\nKtoś poprosił o zmianę adresu e-mail Twojego konta w Pointhours na ${v.email}. Zmiana nastąpi dopiero po potwierdzeniu tego adresu.\n\nJeśli to nie Ty, od razu zmień hasło i włącz logowanie dwuetapowe: ${v.link}\n\nPointhours`,
+        `Cześć ${v.name},\n\nKtoś poprosił o zmianę adresu e-mail Twojego konta w Timeblame na ${v.email}. Zmiana nastąpi dopiero po potwierdzeniu tego adresu.\n\nJeśli to nie Ty, od razu zmień hasło i włącz logowanie dwuetapowe: ${v.link}\n\nTimeblame`,
     },
     emailChanged: {
-      subject: 'Adres e-mail w Pointhours został zmieniony',
+      subject: 'Adres e-mail w Timeblame został zmieniony',
       body: (v) =>
-        `Cześć ${v.name},\n\nTwoje konto w Pointhours używa teraz adresu ${v.email}. Na ten adres nie będą już przychodzić wiadomości o koncie.\n\nJeśli to nie Ty, odpowiedz na tę wiadomość albo napisz na ${v.support}.\n\nPointhours`,
+        `Cześć ${v.name},\n\nTwoje konto w Timeblame używa teraz adresu ${v.email}. Na ten adres nie będą już przychodzić wiadomości o koncie.\n\nJeśli to nie Ty, odpowiedz na tę wiadomość albo napisz na ${v.support}.\n\nTimeblame`,
     },
     passwordChanged: {
-      subject: 'Hasło w Pointhours zostało zmienione',
+      subject: 'Hasło w Timeblame zostało zmienione',
       body: (v) =>
-        `Cześć ${v.name},\n\nHasło do Twojego konta w Pointhours zostało właśnie zmienione, a inne urządzenia wylogowane.\n\nJeśli to nie Ty, ustaw nowe hasło: ${v.link}\n\nPointhours`,
+        `Cześć ${v.name},\n\nHasło do Twojego konta w Timeblame zostało właśnie zmienione, a inne urządzenia wylogowane.\n\nJeśli to nie Ty, ustaw nowe hasło: ${v.link}\n\nTimeblame`,
     },
     twoFactorOn: {
       subject: 'Logowanie dwuetapowe jest włączone',
       body: (v) =>
-        `Cześć ${v.name},\n\nLogowanie dwuetapowe jest włączone dla Twojego konta w Pointhours. Przechowuj kody zapasowe w bezpiecznym miejscu.\n\nJeśli to nie Ty, ustaw nowe hasło: ${v.link}\n\nPointhours`,
+        `Cześć ${v.name},\n\nLogowanie dwuetapowe jest włączone dla Twojego konta w Timeblame. Przechowuj kody zapasowe w bezpiecznym miejscu.\n\nJeśli to nie Ty, ustaw nowe hasło: ${v.link}\n\nTimeblame`,
     },
     twoFactorOff: {
       subject: 'Logowanie dwuetapowe zostało wyłączone',
       body: (v) =>
-        `Cześć ${v.name},\n\nLogowanie dwuetapowe zostało wyłączone dla Twojego konta w Pointhours.\n\nJeśli to nie Ty, ustaw nowe hasło i włącz je ponownie: ${v.link}\n\nPointhours`,
+        `Cześć ${v.name},\n\nLogowanie dwuetapowe zostało wyłączone dla Twojego konta w Timeblame.\n\nJeśli to nie Ty, ustaw nowe hasło i włącz je ponownie: ${v.link}\n\nTimeblame`,
     },
     accountDeleted: {
-      subject: 'Konto w Pointhours zostało usunięte',
+      subject: 'Konto w Timeblame zostało usunięte',
       body: (v) =>
-        `Cześć ${v.name},\n\nTwoje konto w Pointhours i wszystkie jego dane zostały usunięte, a subskrypcja anulowana. Dzięki, że wypróbowałeś Pointhours.\n\nPointhours`,
+        `Cześć ${v.name},\n\nTwoje konto w Timeblame i wszystkie jego dane zostały usunięte, a subskrypcja anulowana. Dzięki, że wypróbowałeś Timeblame.\n\nTimeblame`,
     },
     deleteCode: {
-      subject: 'Kod do usunięcia konta w Pointhours',
+      subject: 'Kod do usunięcia konta w Timeblame',
       body: (v) =>
-        `Cześć ${v.name},\n\nTwój kod do usunięcia konta w Pointhours:\n\n${v.code}\n\nDziała przez ${v.minutes} minut. Usunięcie kasuje na zawsze wszystkie wpisy czasu i ustawienia.\n\nJeśli to nie Ty, zignoruj tę wiadomość: konto zostaje bez zmian.\n\nPointhours`,
+        `Cześć ${v.name},\n\nTwój kod do usunięcia konta w Timeblame:\n\n${v.code}\n\nDziała przez ${v.minutes} minut. Usunięcie kasuje na zawsze wszystkie wpisy czasu i ustawienia.\n\nJeśli to nie Ty, zignoruj tę wiadomość: konto zostaje bez zmian.\n\nTimeblame`,
     },
     reminder: {
-      subject: 'Wpisz dzisiejszą pracę w Pointhours',
+      subject: 'Wpisz dzisiejszą pracę w Timeblame',
       body: (v) =>
-        `Cześć ${v.name},\n\nDziś masz wpisane ${v.logged} z ${v.target}. Dopisz brakujące rzeczy, póki pamiętasz:\n\n${v.link}\n\nPrzypomnienie zmienisz albo wyłączysz w Ustawienia → Dzień pracy.\n\nPointhours`,
+        `Cześć ${v.name},\n\nDziś masz wpisane ${v.logged} z ${v.target}. Dopisz brakujące rzeczy, póki pamiętasz:\n\n${v.link}\n\nPrzypomnienie zmienisz albo wyłączysz w Ustawienia → Dzień pracy.\n\nTimeblame`,
     },
   },
 }

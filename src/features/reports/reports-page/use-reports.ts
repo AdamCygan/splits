@@ -181,7 +181,7 @@ export function useReportsViewModel({
       })
       // BOM: Excel rozpoznaje wtedy UTF-8 i polskie znaki.
       downloadFile(
-        `pointhours-report-${range.from}_${range.to}.csv`,
+        `timeblame-report-${range.from}_${range.to}.csv`,
         ['﻿', csv],
         'text/csv;charset=utf-8',
       )

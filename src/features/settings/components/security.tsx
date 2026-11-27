@@ -347,7 +347,7 @@ function CodesDialog({ codes, onClose }: CodesDialogProps) {
               )
               const a = document.createElement('a')
               a.href = url
-              a.download = 'pointhours-backup-codes.txt'
+              a.download = 'timeblame-backup-codes.txt'
               a.click()
               URL.revokeObjectURL(url)
             }}
@@ -460,7 +460,7 @@ interface HelpCardProps {
 
 function HelpCard({ user }: HelpCardProps) {
   const t = useMessages(settingsMessages).security
-  const subject = encodeURIComponent(`Pointhours: ${user.id}`)
+  const subject = encodeURIComponent(`Timeblame: ${user.id}`)
   return (
     <SettingsCard title={t.helpTitle}>
       <p className="text-[0.9375rem]">{fmt(t.helpText, { id: user.id })}</p>

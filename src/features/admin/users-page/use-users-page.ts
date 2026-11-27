@@ -83,7 +83,7 @@ export function useUsersPageViewModel({ filter, onFilter }: UsersPageOptions) {
         return
       }
       downloadFile(
-        `pointhours-users-${new Date().toISOString().slice(0, 10)}.csv`,
+        `timeblame-users-${new Date().toISOString().slice(0, 10)}.csv`,
         ['﻿', adminUsersCsv(result.value)],
         'text/csv;charset=utf-8',
       )

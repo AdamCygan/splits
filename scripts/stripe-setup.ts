@@ -1,9 +1,9 @@
 /**
- * Jednorazowa konfiguracja Stripe dla Pointhours (można uruchamiać wielokrotnie):
- *   STRIPE_SECRET_KEY=sk_test_… APP_URL=https://pointhours.com pnpm stripe:setup
+ * Jednorazowa konfiguracja Stripe dla Timeblame (można uruchamiać wielokrotnie):
+ *   STRIPE_SECRET_KEY=sk_test_… APP_URL=https://timeblame.com pnpm stripe:setup
  *
  * Tworzy (albo zostawia istniejące):
- *  - produkt „Pointhours Pro” z ceną roczną 24 USD (VAT wliczony), lookup key splits_pro_yearly,
+ *  - produkt „Timeblame Pro” z ceną roczną 24 USD (VAT wliczony), lookup key splits_pro_yearly,
  *  - konfigurację Customer Portal: faktury, karta, dane do faktury, wyłączenie odnowienia na koniec roku,
  *  - endpoint webhooka {APP_URL}/api/v1/stripe/webhook (tylko dla adresu https) i wypisuje jego sekret.
  */
@@ -20,7 +20,7 @@ const stripe = new Stripe(key)
 const PRO = {
   lookupKey: 'splits_pro_yearly',
   amount: 2400,
-  name: 'Pointhours Pro',
+  name: 'Timeblame Pro',
   description:
     'Full history, sprint analytics, CSV export and unlimited work types. Billed yearly.',
 }
@@ -100,7 +100,7 @@ async function ensurePortal(price: Stripe.Price) {
   const ours = configs.data.find((c) => c.metadata?.app === 'splits')
   const params: Stripe.BillingPortal.ConfigurationCreateParams = {
     business_profile: {
-      headline: 'Pointhours: manage your plan',
+      headline: 'Timeblame: manage your plan',
       ...(appUrl.startsWith('https://')
         ? {
             privacy_policy_url: `${appUrl}/privacy`,
@@ -164,7 +164,7 @@ async function ensureWebhook() {
   const created = await stripe.webhookEndpoints.create({
     url,
     enabled_events: WEBHOOK_EVENTS,
-    description: 'Pointhours: subscriptions',
+    description: 'Timeblame: subscriptions',
   })
   console.log(`✓ Utworzono webhook ${url}`)
   console.log(`  STRIPE_WEBHOOK_SECRET=${created.secret}`)

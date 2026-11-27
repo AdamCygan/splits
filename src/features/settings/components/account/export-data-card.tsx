@@ -15,7 +15,7 @@ export function ExportDataCard() {
     success: t.done,
     onSuccess: (payload) => {
       downloadFile(
-        `pointhours-export-${new Date().toISOString().slice(0, 10)}.json`,
+        `timeblame-export-${new Date().toISOString().slice(0, 10)}.json`,
         [JSON.stringify(payload, null, 2)],
         'application/json',
       )

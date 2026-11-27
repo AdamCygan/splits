@@ -1,4 +1,4 @@
-# Marketing Pointhours
+# Marketing Timeblame
 
 ## Pliki
 
@@ -7,7 +7,7 @@
 | `video/out/promo-{en,pl}-16x9.mp4` | 1920×1080, 28 s | YouTube, LinkedIn (wideo), reklamy w-stream, prezentacje |
 | `video/out/promo-{en,pl}-9x16.mp4` | 1080×1920, 28 s | Instagram/Facebook Reels i Stories, TikTok, YouTube Shorts |
 | `video/out/promo-{en,pl}-1x1.mp4`  | 1080×1080, 28 s | posty w feedzie (Facebook, Instagram, LinkedIn) |
-| `video/out/promo-{en,pl}-web.mp4`  | 1280×720, 350 KB | strona główna (kopie w `public/media`, landing wybiera język odwiedzającego) |
+| `video/out/promo-{en,pl}-web.mp4`  | 1280×720, 350 KB | strona główna (kopie w `public/media/timeblame-{en,pl}-*`, landing wybiera język odwiedzającego) |
 | `video/out/short-{historia}-{en,pl}.mp4` (11 historii) | 1080×1920, 21–23 s | Shorty: YouTube Shorts, Reels, TikTok, LinkedIn (pion) |
 | `public/og.png`, `og-pl.png` | 1200×630 | podgląd linku w social media i komunikatorach (EN / PL) |
 
@@ -30,7 +30,7 @@ open marketing/video/promo.html?play
 python marketing/video/render.py --stills 2,7.6,11.2,15.6,20.8,24.5
 
 # pełny render obu języków, z adresem strony na planszy końcowej
-python marketing/video/render.py --url pointhours.com
+python marketing/video/render.py --url timeblame.com
 # tylko angielski, tylko pionowy
 python marketing/video/render.py --langs en --formats 9x16
 ```
@@ -47,13 +47,13 @@ Tekst i czasy lektora są w `video/voiceover.json` (EN i PL, `{name}` = nazwa pr
 ```bash
 export ELEVENLABS_API_KEY=...
 python marketing/video/voiceover.py --list-voices          # wybór głosu
-python marketing/video/voiceover.py --name Pointhours            # → out/promo-{lang}-{format}-voice.mp4 + napisy .vtt/.srt
+python marketing/video/voiceover.py --name Timeblame            # → out/promo-{lang}-{format}-voice.mp4 + napisy .vtt/.srt
 python marketing/video/voiceover.py --music podklad.mp3     # opcjonalny podkład ściszany pod głosem
 python marketing/video/voiceover.py --dry-run               # bez API: ton testowy, sprawdza synchronizację
 ```
 
-Po renderze skopiuj `promo-{lang}-web-voice.mp4` do `public/media/promo-{lang}-web.mp4`,
-napisy `promo-{lang}.vtt` do `public/media/` i ustaw `hasVoice: true` w `src/features/marketing/video.ts`.
+Po renderze skopiuj `promo-{lang}-web-voice.mp4` do `public/media/timeblame-{lang}-web.mp4`,
+napisy `promo-{lang}.vtt` do `public/media/timeblame-{lang}.vtt` i ustaw `hasVoice: true` w `src/features/marketing/video.ts`.
 
 ## Teksty reklam
 
@@ -61,7 +61,7 @@ Bez wymyślonych liczb i opinii klientów: dopóki nie masz prawdziwych danych, 
 
 **Wariant A: problem z retro**
 - Nagłówek: Ile czasu zjadły Code Review w tym sprincie?
-- Tekst: Pointhours notuje czas na zadaniach, Code Review, pair programmingu i spotkaniach. Wpis zajmuje kilka sekund, a na koniec sprintu widzisz story pointy i godziny dla każdego rodzaju pracy. Plan Free bez karty.
+- Tekst: Timeblame notuje czas na zadaniach, Code Review, pair programmingu i spotkaniach. Wpis zajmuje kilka sekund, a na koniec sprintu widzisz story pointy i godziny dla każdego rodzaju pracy. Plan Free bez karty.
 - Przycisk: Zarejestruj się
 
 **Wariant B: koniec z arkuszem**
@@ -71,11 +71,11 @@ Bez wymyślonych liczb i opinii klientów: dopóki nie masz prawdziwych danych, 
 
 **Wariant C: story pointy dla całej pracy**
 - Nagłówek: Code Review też ma story pointy
-- Tekst: Tablica widzi tylko tickety. Pointhours liczy też review, hotfixy i spotkania, więc sprint pokazuje całą wykonaną pracę. Skalę SP ustawiasz sam.
+- Tekst: Tablica widzi tylko tickety. Timeblame liczy też review, hotfixy i spotkania, więc sprint pokazuje całą wykonaną pracę. Skalę SP ustawiasz sam.
 - Przycisk: Dowiedz się więcej
 
 **Wariant D: oferta Lifetime (na start)**
-- Nagłówek: Pointhours Pro na zawsze za 99 $
+- Nagłówek: Timeblame Pro na zawsze za 99 $
 - Tekst: Jedna płatność, wszystkie funkcje Pro, obecne i przyszłe. Oferta dla pierwszych użytkowników.
 - Przycisk: Kup teraz
 
@@ -106,12 +106,12 @@ Rejestrację (`signup_completed`) i zakup (`checkout_completed`) podepniemy raze
 ## Shorty (21 historii × EN/PL)
 
 Źródło: `video/shorts.html` (jedna historia na `?story=`, teksty w słowniku `I18N`), render: `video/shorts.py`.
-Każdy short: hak w pierwszej sekundzie → problem → jak to rozwiązuje Pointhours → plansza z ceną i „Link w bio”.
+Każdy short: hak w pierwszej sekundzie → problem → jak to rozwiązuje Timeblame → plansza z ceną i „Link w bio”.
 Treść mieści się w bezpiecznej strefie (y 200–1480 px), więc nie zasłaniają jej przyciski i opisy platform.
 
 ```bash
 python marketing/video/shorts.py                      # 42 pliki w out/ (21 historii × EN/PL)
-python marketing/video/shorts.py --url pointhours.com     # adres zamiast „Link w bio” (np. do reklam)
+python marketing/video/shorts.py --url timeblame.com     # adres zamiast „Link w bio” (np. do reklam)
 python marketing/video/shorts.py --stories pause --langs pl --stills 2,6,10,15,20   # klatki kontrolne
 ```
 
@@ -145,22 +145,22 @@ Napisy nie są potrzebne, cały tekst jest na ekranie.
 ### Opisy do publikacji
 
 Pełna lista opisów, tytułów i hashtagów dla wszystkich 11 filmów, plan publikacji i ustawienia kont są w dokumencie
-„Pointhours: kanał z shortami — start i opisy”. Poniżej opisy pierwszych trzech filmów.
+„Timeblame: kanał z shortami — start i opisy”. Poniżej opisy pierwszych trzech filmów.
 
 **sprint · PL**
-Ticket na 3 SP, a zeszły 4 dni. Gdzie poszedł sprint? Pointhours rozbija czas na taski, code review, pairing i spotkania, a na koniec pokazuje, ile naprawdę kosztuje story point. Za darmo, link w bio.
+Ticket na 3 SP, a zeszły 4 dni. Gdzie poszedł sprint? Timeblame rozbija czas na taski, code review, pairing i spotkania, a na koniec pokazuje, ile naprawdę kosztuje story point. Za darmo, link w bio.
 `#programista #scrum #sprint #codereview #it #b2b`
 
 **sprint · EN**
-Estimated 3 SP, took 4 days. Where did the sprint go? Pointhours splits your time into tasks, code reviews, pairing and meetings, and shows what a story point really costs. Free, link in bio.
+Estimated 3 SP, took 4 days. Where did the sprint go? Timeblame splits your time into tasks, code reviews, pairing and meetings, and shows what a story point really costs. Free, link in bio.
 `#developer #scrum #agile #codereview #softwareengineering #devtools`
 
 **pause · PL**
-Siedzisz w zadaniu i nagle: pilne, produkcja leży. W Pointhours dajesz pauzę, robisz hotfix i wracasz. Raport pokaże oba interwały, bez zgadywania o 17:00. Link w bio.
+Siedzisz w zadaniu i nagle: pilne, produkcja leży. W Timeblame dajesz pauzę, robisz hotfix i wracasz. Raport pokaże oba interwały, bez zgadywania o 17:00. Link w bio.
 `#programista #devlife #hotfix #produktywność #it`
 
 **pause · EN**
-Deep in a task, then: prod is down. In Pointhours you pause, fix it and resume. Your report keeps every interval, no guessing at 5 PM. Link in bio.
+Deep in a task, then: prod is down. In Timeblame you pause, fix it and resume. Your report keeps every interval, no guessing at 5 PM. Link in bio.
 `#developer #devlife #oncall #productivity #devtools`
 
 **invoice · PL**
@@ -174,11 +174,11 @@ Last day of the month and the client wants your hours. Skip 2 hours of digging t
 ### Opisy do 10 nowych shortów
 
 **overrun · PL**
-Planning zaplanowany na godzinę skończył się o 11:40. W Pointhours klikasz „Przedłużyło się”, dopisujesz 40 minut i powód. Na retro masz liczby, nie wrażenia. Link w bio.
+Planning zaplanowany na godzinę skończył się o 11:40. W Timeblame klikasz „Przedłużyło się”, dopisujesz 40 minut i powód. Na retro masz liczby, nie wrażenia. Link w bio.
 `#programista #scrum #spotkania #retro #it`
 
 **overrun · EN**
-Sprint planning was booked for an hour and ended at 11:40. In Pointhours you tap “Ran over”, add the 40 minutes and why. Bring numbers to the retro, not feelings. Link in bio.
+Sprint planning was booked for an hour and ended at 11:40. In Timeblame you tap “Ran over”, add the 40 minutes and why. Bring numbers to the retro, not feelings. Link in bio.
 `#developer #scrum #meetings #agile #devtools`
 
 **estvsreal · PL**
@@ -198,11 +198,11 @@ Monday morning and Friday is empty. Go back a day on Today and add the tasks, re
 `#developer #timesheet #freelancer #productivity #devtools`
 
 **anyproject · PL**
-5 repozytoriów i 5 takich samych szablonów code review? W Pointhours jeden szablon „dowolny projekt”: klikasz i wybierasz repo. Nowe repo pojawia się na liście samo. Link w bio.
+5 repozytoriów i 5 takich samych szablonów code review? W Timeblame jeden szablon „dowolny projekt”: klikasz i wybierasz repo. Nowe repo pojawia się na liście samo. Link w bio.
 `#programista #codereview #gitlab #github #it`
 
 **anyproject · EN**
-5 repos and 5 identical code review templates? In Pointhours it’s one “any project” template: tap it and pick the repo. New repos show up on their own. Link in bio.
+5 repos and 5 identical code review templates? In Timeblame it’s one “any project” template: tap it and pick the repo. New repos show up on their own. Link in bio.
 `#developer #codereview #github #gitlab #devtools`
 
 **overtime · PL**
@@ -230,25 +230,25 @@ The ticket got renamed and you have 4 entries to fix? Click the task in the repo
 `#developer #performancereview #career #softwareengineering #devtools`
 
 **jiralink · PL**
-Kopiujesz klucz ticketu, wklejasz, przepisujesz tytuł. 20 razy w tygodniu. W Pointhours wklejasz link, a PAY-142 albo !486 rozpoznaje się samo. Link w bio.
+Kopiujesz klucz ticketu, wklejasz, przepisujesz tytuł. 20 razy w tygodniu. W Timeblame wklejasz link, a PAY-142 albo !486 rozpoznaje się samo. Link w bio.
 `#programista #jira #gitlab #produktywność #it`
 
 **jiralink · EN**
-Copy the ticket key, paste, retype the title. 20 times a week. In Pointhours you paste the link and PAY-142 or !486 fills itself in. Link in bio.
+Copy the ticket key, paste, retype the title. 20 times a week. In Timeblame you paste the link and PAY-142 or !486 fills itself in. Link in bio.
 `#developer #jira #gitlab #productivity #devtools`
 
 **switching · PL**
-7 zadań przed obiadem i żadne nieskończone? Pointhours pokazuje każdą sesję i każde przerwanie. Pokaż to przed kolejnym „szybkim pytaniem”. Link w bio.
+7 zadań przed obiadem i żadne nieskończone? Timeblame pokazuje każdą sesję i każde przerwanie. Pokaż to przed kolejnym „szybkim pytaniem”. Link w bio.
 `#programista #focus #deepwork #devlife #it`
 
 **switching · EN**
-7 tasks before lunch and none finished? Pointhours shows every session and every interruption. Show it before the next “quick question”. Link in bio.
+7 tasks before lunch and none finished? Timeblame shows every session and every interruption. Show it before the next “quick question”. Link in bio.
 `#developer #focus #deepwork #devlife #devtools`
 
 **demo · PL**
-Rejestracja, mail, karta, żeby się tylko rozejrzeć? W Pointhours otwierasz demo z przykładowym sprintem bez zakładania konta. Podoba się, to się zapisujesz. Link w bio.
+Rejestracja, mail, karta, żeby się tylko rozejrzeć? W Timeblame otwierasz demo z przykładowym sprintem bez zakładania konta. Podoba się, to się zapisujesz. Link w bio.
 `#programista #narzędzia #timetracking #it #saas`
 
 **demo · EN**
-Sign up, confirm email, add a card, just to look around? Pointhours opens a live demo with a sample sprint, no account needed. Like it? Then sign up. Link in bio.
+Sign up, confirm email, add a card, just to look around? Timeblame opens a live demo with a sample sprint, no account needed. Like it? Then sign up. Link in bio.
 `#developer #devtools #timetracking #saas #productivity`

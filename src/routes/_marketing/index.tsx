@@ -85,7 +85,7 @@ function DemoLink({ label, dark }: DemoLinkProps) {
 const productSizes = '(min-width: 1200px) 1152px, calc(100vw - 2rem)'
 const productSrcSet = (locale: string, format: 'avif' | 'webp') =>
   [640, 960, 1440]
-    .map((w) => `/product-today-${locale}-${w}.${format} ${w}w`)
+    .map((w) => `/product-timeblame-${locale}-${w}.${format} ${w}w`)
     .join(', ')
 
 function LandingPage() {
@@ -130,7 +130,7 @@ function LandingPage() {
             sizes={productSizes}
           />
           <img
-            src={`/product-today-${locale}-1440.webp`}
+            src={`/product-timeblame-${locale}-1440.webp`}
             srcSet={productSrcSet(locale, 'webp')}
             sizes={productSizes}
             width={1440}

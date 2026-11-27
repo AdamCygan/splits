@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Pointhours shorts</title>
+<title>Timeblame shorts</title>
 <!--
-  Trzy pionowe shorty (1080×1920) o problemach, które rozwiązuje Pointhours:
+  Trzy pionowe shorty (1080×1920) o problemach, które rozwiązuje Timeblame:
     ?story=sprint   gdzie poszedł sprint (podział na typy pracy)
     ?story=pause    pilne przerwanie zadania (pauza, przełączenie, powrót, interwały)
     ?story=invoice  koniec miesiąca na B2B (raport godzin do faktury)
@@ -12,7 +12,7 @@
                     8 kolejnych historii we wspólnym schemacie (funkcja generic)
     ?story=overrun | estvsreal | pastday | anyproject | overtime | taskedit | yearreview | jiralink | switching | demo
                     10 historii o nowszych funkcjach (ten sam schemat)
-  Język: ?lang=en (domyślnie) albo ?lang=pl. Adres na planszy końcowej: ?url=pointhours.com
+  Język: ?lang=en (domyślnie) albo ?lang=pl. Adres na planszy końcowej: ?url=timeblame.com
   (bez niego: „Link w bio”). Podgląd w przeglądarce: dodaj &play.
   Animacja jest deterministyczna: window.render(t) ustawia klatkę dla czasu t (s), shorts.py zapisuje MP4.
   Treść trzyma się bezpiecznej strefy (y 200–1480, x 64–940), bo dół i prawą krawędź zasłaniają przyciski platform.
@@ -90,7 +90,7 @@
     <div class="end">
       <div class="logo-row" id="logo">
         <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="13" y="1.5" width="6" height="3.2" rx="1.3" fill="#fff"/><rect x="15" y="3.8" width="2" height="3.6" fill="#fff"/><g transform="rotate(-90 16 18)" fill="none" stroke-width="4.2"><circle cx="16" cy="18" r="11" stroke="var(--task)" stroke-dasharray="25.33 69.115" stroke-dashoffset="-1.1"/><circle cx="16" cy="18" r="11" stroke="var(--review)" stroke-dasharray="9.65 69.115" stroke-dashoffset="-28.63"/><circle cx="16" cy="18" r="11" stroke="var(--pair)" stroke-dasharray="15.68 69.115" stroke-dashoffset="-40.48"/><circle cx="16" cy="18" r="11" stroke="var(--extra)" stroke-dasharray="9.65 69.115" stroke-dashoffset="-58.36"/></g><path d="M16 18 L19.9 13.4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="16" cy="18" r="1.9" fill="#fff"/></svg>
-        <div class="wordmark">pointhours</div>
+        <div class="wordmark">timeblame</div>
       </div>
       <p class="tagline" id="end-tag"></p>
       <h2 class="display punch" id="end-punch"></h2>
@@ -122,7 +122,7 @@
         hook1: 'Estimated: 3 story points.', hook2: 'Took: 4 days.',
         says: 'Your time tracker says:', blob: 'Development · 80 h',
         nothing: '…and nothing else.', where: 'So where did the sprint go?',
-        caption: 'Pointhours shows it.',
+        caption: 'Timeblame shows it.',
         cardHead: 'Sprint 14', cardMeta: '80 h · 34 story points',
         cols: ['Type of work', 'Hours', 'Share'],
         rows: [['Tasks', '38 h', '48%'], ['Code review', '17 h', '21%'], ['Pairing', '11 h', '14%'], ['Meetings', '9 h', '11%'], ['Extra work', '5 h', '6%']],
@@ -158,7 +158,7 @@
         cols: ['Ticket', 'SP', 'Hours'],
         rows: [['PAY-151 Invoice PDF', '8', '34.5'], ['PAY-142 Payment gateway', '5', '21.5'], ['PAY-139 Refund API', '3', '14.0'], ['Code reviews', '–', '18.5'], ['Meetings', '–', '12.0'], ['+ 11 more tickets', '13', '51.5']],
         total: 'Total', totalSp: '29', totalH: '152.0',
-        export: 'Export CSV', file: 'pointhours-report-2026-10.csv',
+        export: 'Export CSV', file: 'timeblame-report-2026-10.csv',
         outro: 'One click. Attach it to your invoice.',
         punch: 'Timesheets in one click.',
       },
@@ -172,7 +172,7 @@
         hook1: 'Wycena: 3 story pointy.', hook2: 'Zajęło: 4 dni.',
         says: 'Twój tracker mówi:', blob: 'Programowanie · 80 h',
         nothing: '…i nic więcej.', where: 'To gdzie poszedł sprint?',
-        caption: 'Pointhours to pokazuje.',
+        caption: 'Timeblame to pokazuje.',
         cardHead: 'Sprint 14', cardMeta: '80 h · 34 story pointy',
         cols: ['Typ pracy', 'Godziny', 'Udział'],
         rows: [['Taski', '38 h', '48%'], ['Code review', '17 h', '21%'], ['Pair programming', '11 h', '14%'], ['Spotkania', '9 h', '11%'], ['Praca extra', '5 h', '6%']],
@@ -208,7 +208,7 @@
         cols: ['Ticket', 'SP', 'Godziny'],
         rows: [['PAY-151 Faktura PDF', '8', '34,5'], ['PAY-142 Bramka płatności', '5', '21,5'], ['PAY-139 API zwrotów', '3', '14,0'], ['Code review', '–', '18,5'], ['Spotkania', '–', '12,0'], ['+ 11 kolejnych ticketów', '13', '51,5']],
         total: 'Razem', totalSp: '29', totalH: '152,0',
-        export: 'Eksport CSV', file: 'pointhours-raport-2026-10.csv',
+        export: 'Eksport CSV', file: 'timeblame-raport-2026-10.csv',
         outro: 'Jedno kliknięcie. Załącz do faktury.',
         punch: 'Raport do faktury w minutę.',
       },
@@ -222,7 +222,7 @@
         board: 'Your tickets moved yesterday',
         mrs: [['MR !481 Refund form', '14 comments'], ['MR !486 Webhook retries', '9 comments'], ['MR !490 Invoice PDF', 'approved']],
         p1: 'Over 3 hours of code review.', p2: 'Zero tickets moved.',
-        caption: 'In Pointhours, reviews count.', head: 'Yesterday', meta: 'code review',
+        caption: 'In Timeblame, reviews count.', head: 'Yesterday', meta: 'code review',
         rows: [['CR !481 Refund form validation', '1 h 25 min'], ['CR !486 Webhook retries', '1 h 05 min'], ['CR !490 Invoice PDF', '50 min'], ['Code review total', '3 h 20 min']],
         stat: '21%', statLabel: 'of your sprint is code review',
         outro: 'Next standup, show the numbers.', punch: 'Make code review visible.',
@@ -240,7 +240,7 @@
         kicker: 'Your calendar, this week', hook1: 'Planning. Refinement. Retro.', hook2: 'When do you actually code?',
         days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], blocks: ['Planning', 'Refinement', '1:1', 'Workshop', 'Demo', 'Retro'],
         p1: 'Meetings feel like the whole week.', p2: 'But nobody knows the number.',
-        caption: 'Pointhours knows the number.', head: 'This week', meta: '38 h logged',
+        caption: 'Timeblame knows the number.', head: 'This week', meta: '38 h logged',
         rows: [['Tasks', '19 h'], ['Meetings', '9 h 30 min'], ['Code review', '6 h'], ['Pairing', '3 h 30 min']],
         stat: '25%', statLabel: 'of your week in meetings',
         outro: 'Bring it to the retro. Cut one meeting.', punch: 'Meetings, measured.',
@@ -287,7 +287,7 @@
         kicker: 'Ticket done', hook1: 'PM: “Add a summary in Jira.”', hook2: '“How long did it take?”',
         comment: 'comment', timeSpent: 'Time spent:', notes: ['Mon: started gateway, 2 h?', 'Tue: review fixes', 'Wed: ???'],
         p1: 'You scroll through 3 days of notes…', p2: '…and write “about a day”.',
-        caption: 'Pointhours writes it for you.', head: 'PAY-142 Payment gateway', meta: 'task summary',
+        caption: 'Timeblame writes it for you.', head: 'PAY-142 Payment gateway', meta: 'task summary',
         lines: ['Total: 7 h 10 min · 5 SP', 'Sessions: 4 over 3 days', 'Task 5 h 20 min · Code review 1 h 10 min · Pairing 40 min', 'Intervals: 6:40–7:20, 9:00–10:00, …'],
         copy: 'Copy', copied: 'Copied to clipboard',
         outro: 'Paste it into Jira. Done.', punch: 'Task summaries in one click.',
@@ -394,7 +394,7 @@
         board: 'Twoje tickety przesunięte wczoraj',
         mrs: [['MR !481 Formularz zwrotów', '14 komentarzy'], ['MR !486 Retry webhooków', '9 komentarzy'], ['MR !490 Faktura PDF', 'zatwierdzony']],
         p1: 'Ponad 3 godziny code review.', p2: 'Zero przesuniętych ticketów.',
-        caption: 'W Pointhours review się liczy.', head: 'Wczoraj', meta: 'code review',
+        caption: 'W Timeblame review się liczy.', head: 'Wczoraj', meta: 'code review',
         rows: [['CR !481 Walidacja formularza zwrotów', '1 h 25 min'], ['CR !486 Retry webhooków', '1 h 05 min'], ['CR !490 Faktura PDF', '50 min'], ['Code review razem', '3 h 20 min']],
         stat: '21%', statLabel: 'sprintu to code review',
         outro: 'Na kolejnym daily pokaż liczby.', punch: 'Code review widać w liczbach.',
@@ -412,7 +412,7 @@
         kicker: 'Twój kalendarz, ten tydzień', hook1: 'Planning. Refinement. Retro.', hook2: 'A kiedy kodujesz?',
         days: ['Pn', 'Wt', 'Śr', 'Cz', 'Pt'], blocks: ['Planning', 'Refinement', '1:1', 'Warsztat', 'Demo', 'Retro'],
         p1: 'Spotkania zajmują cały tydzień?', p2: 'Tylko nikt nie zna liczby.',
-        caption: 'Pointhours zna liczbę.', head: 'Ten tydzień', meta: '38 h wpisane',
+        caption: 'Timeblame zna liczbę.', head: 'Ten tydzień', meta: '38 h wpisane',
         rows: [['Taski', '19 h'], ['Spotkania', '9 h 30 min'], ['Code review', '6 h'], ['Pair programming', '3 h 30 min']],
         stat: '25%', statLabel: 'tygodnia na spotkaniach',
         outro: 'Pokaż to na retro. Wytnijcie jedno spotkanie.', punch: 'Spotkania w liczbach.',
@@ -459,7 +459,7 @@
         kicker: 'Ticket gotowy', hook1: 'PM: „Dodaj podsumowanie w Jirze.”', hook2: '„Ile to zajęło?”',
         comment: 'komentarz', timeSpent: 'Czas pracy:', notes: ['Pn: start bramki, 2 h?', 'Wt: poprawki po review', 'Śr: ???'],
         p1: 'Przewijasz notatki z 3 dni…', p2: '…i piszesz „mniej więcej dzień”.',
-        caption: 'Pointhours napisze to za Ciebie.', head: 'PAY-142 Integracja bramki', meta: 'podsumowanie zadania',
+        caption: 'Timeblame napisze to za Ciebie.', head: 'PAY-142 Integracja bramki', meta: 'podsumowanie zadania',
         lines: ['Razem: 7 h 10 min · 5 SP', 'Sesje: 4 w ciągu 3 dni', 'Task 5 h 20 min · Code review 1 h 10 min · Pairing 40 min', 'Interwały: 6:40–7:20, 9:00–10:00, …'],
         copy: 'Kopiuj', copied: 'Skopiowano do schowka',
         outro: 'Wklej do Jiry. Gotowe.', punch: 'Podsumowanie zadania jednym kliknięciem.',
@@ -857,7 +857,7 @@
   }
 
   /* ============================ 8 kolejnych historii: wspólny schemat ====== */
-  // hak (0–3 s) → problem na ciemnym tle (3–7,7 s) → rozwiązanie w Pointhours na jasnym tle → plansza końcowa.
+  // hak (0–3 s) → problem na ciemnym tle (3–7,7 s) → rozwiązanie w Timeblame na jasnym tle → plansza końcowa.
   // Elementy .pv pojawiają się po kolei w scenie problemu, .rv w karcie rozwiązania, .hlrow podświetla się
   // po wszystkich .rv, #click to przycisk klikany kursorem, a .after pojawia się po kliknięciu.
   const C = { task: 'var(--task)', review: 'var(--review)', pair: 'var(--pair)', meeting: 'var(--meeting)', extra: 'var(--extra)' };

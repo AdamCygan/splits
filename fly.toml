@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# Pointhours na Fly.io: jedna aplikacja (strony + API), region Frankfurt, baza na Neonie.
+# Timeblame na Fly.io: jedna aplikacja (strony + API), region Frankfurt, baza na Neonie.
 #
 #   fly apps create <nazwa>                    # tylko za pierwszym razem; tę samą nazwę wpisz w `app` niżej
 #   fly secrets set DATABASE_URL="postgresql://…neon.tech/neondb?sslmode=verify-full" \
@@ -8,7 +8,7 @@
 #
 # Sekrety (hasła, klucze) tylko przez `fly secrets set`, nigdy w tym pliku.
 # ---------------------------------------------------------------------------
-app = 'pointhours'
+app = 'timeblame'
 primary_region = 'fra'
 
 [build]
@@ -16,12 +16,12 @@ primary_region = 'fra'
 
   [build.args]
     # Publiczne (trafiają do przeglądarki): domena strony i klucz PostHog (phc_…, pusty = bez statystyk).
-    VITE_APP_URL = 'https://pointhours.com'
+    VITE_APP_URL = 'https://timeblame.com'
     VITE_POSTHOG_KEY = ''
 
 [env]
-  APP_URL = 'https://pointhours.com'
-  EMAIL_FROM = 'Pointhours <no-reply@pointhours.com>'
+  APP_URL = 'https://timeblame.com'
+  EMAIL_FROM = 'Timeblame <no-reply@timeblame.com>'
   # Fly ustawia adres klienta w Fly-Client-IP (limity prób logowania).
   CLIENT_IP_HEADER = 'fly-client-ip'
 

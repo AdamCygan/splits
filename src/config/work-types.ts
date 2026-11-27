@@ -1,6 +1,6 @@
 /**
  * Kolory typów pracy — te same na landing page, w formularzu, w filmie i w analityce.
- * Kolor w interfejsie Pointhours oznacza zawsze rodzaj pracy, nigdy dekorację.
+ * Kolor w interfejsie Timeblame oznacza zawsze rodzaj pracy, nigdy dekorację.
  * Nazwy typów są w słowniku (i18n/messages/common.ts → workTypes).
  */
 export type WorkKind =

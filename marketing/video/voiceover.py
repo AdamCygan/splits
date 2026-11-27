@@ -3,7 +3,7 @@ Lektor do filmu promocyjnego: ElevenLabs → ścieżka głosu zsynchronizowana z
 oraz napisy WebVTT/SRT (dostępność: film działa też bez dźwięku).
 
     export ELEVENLABS_API_KEY=...          # klucz z elevenlabs.io → Profile → API key
-    python marketing/video/voiceover.py --name Pointhours                 # EN i PL, wszystkie formaty
+    python marketing/video/voiceover.py --name Timeblame                 # EN i PL, wszystkie formaty
     python marketing/video/voiceover.py --langs en --voice <voice_id>
     python marketing/video/voiceover.py --list-voices                 # dostępne głosy
     python marketing/video/voiceover.py --dry-run                     # bez API: ton testowy zamiast głosu
@@ -139,7 +139,7 @@ def mux(video: Path, voice: Path, music: Path | None, target: Path) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--langs", default="en,pl")
-    ap.add_argument("--name", default="Pointhours", help="nazwa produktu czytana przez lektora")
+    ap.add_argument("--name", default="Timeblame", help="nazwa produktu czytana przez lektora")
     ap.add_argument("--voice", default=None, help="voice_id ElevenLabs (nadpisuje voiceover.json)")
     ap.add_argument("--music", default=None, help="opcjonalny podkład muzyczny")
     ap.add_argument("--out", default=str(HERE / "out"))

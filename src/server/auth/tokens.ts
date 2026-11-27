@@ -16,8 +16,8 @@ export const REFRESH_COOKIE_PATH = '/api/v1/auth'
 export const REFRESH_REUSE_GRACE_MS = 30_000
 
 const secret = new TextEncoder().encode(serverEnv.jwtSecret)
-const ISSUER = 'pointhours'
-const AUDIENCE = 'pointhours-web'
+const ISSUER = 'timeblame'
+const AUDIENCE = 'timeblame-web'
 
 export async function signAccessToken(userId: string) {
   const expiresAt = new Date(Date.now() + ACCESS_TOKEN_MINUTES * 60_000)
@@ -172,7 +172,7 @@ export async function revokeOtherSessions(
     )
 }
 
-const MFA_AUDIENCE = 'pointhours-mfa'
+const MFA_AUDIENCE = 'timeblame-mfa'
 
 /**
  * Bilet drugiego kroku logowania (5 min): hasło albo Google już przeszło, brakuje kodu 2FA.

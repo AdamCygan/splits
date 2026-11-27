@@ -3,10 +3,10 @@ import type { Dictionary } from '../context'
 const en = {
   seo: {
     title:
-      'Pointhours: time tracking for developers. Tasks, code reviews, sprints',
+      'Timeblame: time tracking for developers. Tasks, code reviews, sprints',
     description:
       'Log time on tasks, code reviews, pair programming and meetings in seconds. See story points and hours for every kind of work at the end of the sprint. Free plan, no credit card.',
-    ogAlt: 'Pointhours: a workday split into tasks, code reviews and meetings',
+    ogAlt: 'Timeblame: a workday split into tasks, code reviews and meetings',
   },
   nav: {
     video: 'Video',
@@ -16,11 +16,11 @@ const en = {
     faq: 'FAQ',
     login: 'Log in',
     signup: 'Sign up free',
-    home: 'Pointhours home page',
+    home: 'Timeblame home page',
     footer: 'Footer',
     contact: 'Contact',
   },
-  footer: { tagline: 'Developer time, counted honestly.' },
+  footer: { tagline: 'Blame the meetings, not the people.' },
   language: { label: 'Language', change: 'Change language' },
   time: {
     pick: 'Pick a time',
@@ -76,11 +76,11 @@ export type CommonMessages = typeof en
 const pl: CommonMessages = {
   seo: {
     title:
-      'Pointhours: time tracker dla programistów. Zadania, Code Review, sprinty',
+      'Timeblame: time tracker dla programistów. Zadania, Code Review, sprinty',
     description:
       'Notuj czas na zadaniach, Code Review, pair programmingu i spotkaniach w kilka sekund. Na koniec sprintu zobacz story pointy i godziny dla każdego rodzaju pracy. Plan Free bez karty.',
     ogAlt:
-      'Pointhours: dzień pracy podzielony na zadania, Code Review i spotkania',
+      'Timeblame: dzień pracy podzielony na zadania, Code Review i spotkania',
   },
   nav: {
     video: 'Film',
@@ -90,11 +90,11 @@ const pl: CommonMessages = {
     faq: 'FAQ',
     login: 'Zaloguj się',
     signup: 'Załóż konto',
-    home: 'Pointhours, strona główna',
+    home: 'Timeblame, strona główna',
     footer: 'Stopka',
     contact: 'Kontakt',
   },
-  footer: { tagline: 'Czas pracy developera, policzony uczciwie.' },
+  footer: { tagline: 'Winne są spotkania, nie ludzie.' },
   language: { label: 'Język', change: 'Zmień język' },
   time: {
     pick: 'Wybierz godzinę',

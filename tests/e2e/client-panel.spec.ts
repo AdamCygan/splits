@@ -55,7 +55,7 @@ test.describe('unconfirmed email', () => {
       page.getByRole('heading', { level: 1, name: 'Email address confirmed' }),
     ).toBeVisible()
     await expectNoA11yViolations(page)
-    await page.getByRole('link', { name: 'Open Pointhours' }).click()
+    await page.getByRole('link', { name: 'Open Timeblame' }).click()
     await expect(page).toHaveURL(/\/app$/)
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     await expect(notices(page)).toHaveCount(0)

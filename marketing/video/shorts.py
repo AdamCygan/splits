@@ -1,9 +1,9 @@
 """
-Renderuje pionowe shorty Pointhours (1080x1920, 30 kl./s) w dwóch językach.
+Renderuje pionowe shorty Timeblame (1080x1920, 30 kl./s) w dwóch językach.
 
     python marketing/video/shorts.py                                # 6 plików: out/short-{historia}-{en,pl}.mp4
     python marketing/video/shorts.py --stories pause --langs pl     # wybrane
-    python marketing/video/shorts.py --url pointhours.com               # adres zamiast „Link w bio”
+    python marketing/video/shorts.py --url timeblame.com               # adres zamiast „Link w bio”
     python marketing/video/shorts.py --stills 1.5,5,10,14,19        # tylko klatki kontrolne (PNG)
 
 Historie: sprint, pause, invoice, review, pairing, meetings, extra, estimate, forgot, templates, summary,

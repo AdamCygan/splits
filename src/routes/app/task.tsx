@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { TaskPage } from '#/features/tasks/task-page'
 import { getLocale } from '#/i18n/locale'
 import { taskViewMessages } from '#/i18n/messages/task-view'
+import { site } from '#/config/site'
 
 /** Zadanie nie ma własnego id: adres to typ pracy, tytuł i link (jak grupowanie w raporcie). */
 interface TaskSearch {
@@ -19,7 +20,7 @@ export const Route = createFileRoute('/app/task')({
       : {}),
   }),
   head: () => ({
-    meta: [{ title: `${taskViewMessages[getLocale()].seoTitle} | Pointhours` }],
+    meta: [{ title: `${taskViewMessages[getLocale()].seoTitle} | ${site.name}` }],
   }),
   component: TaskRoute,
 })

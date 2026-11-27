@@ -9,7 +9,7 @@ const en = {
   googleUnavailable:
     'Signing in with Google isn’t set up yet. Use your email instead.',
   login: {
-    seoTitle: 'Log in | Pointhours',
+    seoTitle: 'Log in | Timeblame',
     title: 'Log in',
     expired:
       'Your session expired, so we signed you out. Log in again to pick up where you left off. Everything you saved is safe, and a running timer keeps running.',
@@ -24,9 +24,9 @@ const en = {
       'This account uses two-step login, which this version of the app can’t complete yet. Write to support to sign in.',
   },
   register: {
-    seoTitle: 'Create a free account | Pointhours',
+    seoTitle: 'Create a free account | Timeblame',
     seoDescription:
-      'Create a free Pointhours account and start logging time on tasks, code reviews and meetings. No credit card needed.',
+      'Create a free Timeblame account and start logging time on tasks, code reviews and meetings. No credit card needed.',
     title: 'Create your account',
     haveAccount: 'Already have an account?',
     logIn: 'Log in',
@@ -45,7 +45,7 @@ const en = {
     },
   },
   forgot: {
-    seoTitle: 'Reset your password | Pointhours',
+    seoTitle: 'Reset your password | Timeblame',
     title: 'Reset your password',
     lead: 'Enter the email for your account and we’ll send you a link to set a new password.',
     email: 'Email',
@@ -57,7 +57,7 @@ const en = {
     back: 'Back to log in',
   },
   reset: {
-    seoTitle: 'Choose a new password | Pointhours',
+    seoTitle: 'Choose a new password | Timeblame',
     title: 'Choose a new password',
     lead: 'Pick a password you don’t use anywhere else.',
     password: 'New password',
@@ -71,7 +71,7 @@ const en = {
     again: 'Ask for a new link',
   },
   confirmEmail: {
-    seoTitle: 'Confirm your email | Pointhours',
+    seoTitle: 'Confirm your email | Timeblame',
     checking: 'Confirming your email address…',
     verifiedTitle: 'Email address confirmed',
     verifiedText:
@@ -82,7 +82,7 @@ const en = {
     failedTitle: 'This link doesn’t work',
     missing:
       'This link is incomplete. Open the link from the email again, or ask for a new one in Settings → Account.',
-    openApp: 'Open Pointhours',
+    openApp: 'Open Timeblame',
     toAccount: 'Go to account settings',
     logIn: 'Log in',
   },
@@ -111,7 +111,7 @@ const pl: AuthMessages = {
     'Logowanie przez Google nie jest jeszcze włączone. Użyj e-maila.',
   or: 'albo',
   login: {
-    seoTitle: 'Logowanie | Pointhours',
+    seoTitle: 'Logowanie | Timeblame',
     title: 'Zaloguj się',
     expired:
       'Twoja sesja wygasła, więc wylogowaliśmy cię. Zaloguj się ponownie, żeby wrócić tam, gdzie skończyłeś. Wszystko, co zapisałeś, jest bezpieczne, a włączony timer liczy dalej.',
@@ -126,9 +126,9 @@ const pl: AuthMessages = {
       'To konto ma logowanie dwuetapowe, którego ta wersja aplikacji jeszcze nie obsługuje. Napisz do wsparcia, żeby się zalogować.',
   },
   register: {
-    seoTitle: 'Załóż darmowe konto | Pointhours',
+    seoTitle: 'Załóż darmowe konto | Timeblame',
     seoDescription:
-      'Załóż darmowe konto Pointhours i zacznij notować czas pracy na zadaniach, Code Review i spotkaniach. Bez karty.',
+      'Załóż darmowe konto Timeblame i zacznij notować czas pracy na zadaniach, Code Review i spotkaniach. Bez karty.',
     title: 'Załóż konto',
     haveAccount: 'Masz już konto?',
     logIn: 'Zaloguj się',
@@ -147,7 +147,7 @@ const pl: AuthMessages = {
     },
   },
   forgot: {
-    seoTitle: 'Reset hasła | Pointhours',
+    seoTitle: 'Reset hasła | Timeblame',
     title: 'Reset hasła',
     lead: 'Podaj e-mail konta, a wyślemy link do ustawienia nowego hasła.',
     email: 'E-mail',
@@ -159,7 +159,7 @@ const pl: AuthMessages = {
     back: 'Wróć do logowania',
   },
   reset: {
-    seoTitle: 'Nowe hasło | Pointhours',
+    seoTitle: 'Nowe hasło | Timeblame',
     title: 'Ustaw nowe hasło',
     lead: 'Wybierz hasło, którego nie używasz nigdzie indziej.',
     password: 'Nowe hasło',
@@ -173,7 +173,7 @@ const pl: AuthMessages = {
     again: 'Poproś o nowy link',
   },
   confirmEmail: {
-    seoTitle: 'Potwierdzenie adresu e-mail | Pointhours',
+    seoTitle: 'Potwierdzenie adresu e-mail | Timeblame',
     checking: 'Potwierdzamy adres e-mail…',
     verifiedTitle: 'Adres e-mail potwierdzony',
     verifiedText:
@@ -184,7 +184,7 @@ const pl: AuthMessages = {
     failedTitle: 'Ten link nie działa',
     missing:
       'Ten link jest niepełny. Otwórz ponownie link z e-maila albo poproś o nowy w Ustawienia → Konto.',
-    openApp: 'Otwórz Pointhours',
+    openApp: 'Otwórz Timeblame',
     toAccount: 'Przejdź do ustawień konta',
     logIn: 'Zaloguj się',
   },

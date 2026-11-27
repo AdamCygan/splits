@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # ---------------------------------------------------------------------------
-# Cała aplikacja Pointhours w jednym obrazie: strony (TanStack Start, SSR) + API (/api/v1)
+# Cała aplikacja Timeblame w jednym obrazie: strony (TanStack Start, SSR) + API (/api/v1)
 # na Node 24. Migracje bazy wykonuje serwer przy starcie (katalog drizzle/).
 # ---------------------------------------------------------------------------
 

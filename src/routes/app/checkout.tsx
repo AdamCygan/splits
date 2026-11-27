@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { CheckoutPage } from '#/features/billing/checkout-page'
 import { getLocale } from '#/i18n/locale'
 import { billingMessages } from '#/i18n/messages/billing'
+import { site } from '#/config/site'
 
 interface CheckoutSearch {
   plan: 'pro'
@@ -20,7 +21,7 @@ export const Route = createFileRoute('/app/checkout')({
   head: () => ({
     meta: [
       {
-        title: `${billingMessages[getLocale()].checkout.seoTitle} | Pointhours`,
+        title: `${billingMessages[getLocale()].checkout.seoTitle} | ${site.name}`,
       },
     ],
   }),

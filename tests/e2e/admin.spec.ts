@@ -41,7 +41,7 @@ test.describe('admin panel', () => {
     const download = page.waitForEvent('download')
     await page.getByRole('button', { name: 'Export CSV' }).click()
     const file = await download
-    expect(file.suggestedFilename()).toMatch(/^pointhours-users-.+\.csv$/)
+    expect(file.suggestedFilename()).toMatch(/^timeblame-users-.+\.csv$/)
     const csv = await readFile((await file.path()), 'utf8')
     expect(csv).toContain(other.email)
     await expect(page.getByText('Exported 1 account')).toBeVisible()

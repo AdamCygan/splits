@@ -9,8 +9,8 @@ const ready = {
       ids: 'NIP: 5250000000, REGON: 000000000, CEIDG',
     },
     email: {
-      support: 'support@pointhours.com',
-      privacy: 'privacy@pointhours.com',
+      support: 'support@timeblame.com',
+      privacy: 'privacy@timeblame.com',
     },
     processors: {
       hosting: 'Fly.io, Inc. (region Frankfurt)',
@@ -18,8 +18,8 @@ const ready = {
       email: 'Resend, Inc.',
     },
   },
-  supportEmail: 'support@pointhours.com',
-  appUrl: 'https://pointhours.com',
+  supportEmail: 'support@timeblame.com',
+  appUrl: 'https://timeblame.com',
 }
 
 describe('launchProblems', () => {

@@ -1,11 +1,12 @@
 import type { Locale } from '#/i18n/config'
 
 /**
- * Pliki filmu promocyjnego per język. Generuje je marketing/video/render.py,
- * kopie dla strony leżą w public/media. Teksty (tytuł, opis, transkrypcja) są w słowniku marketing.
+ * Pliki filmu promocyjnego per język. Generuje je marketing/video/render.py (out/promo-{lang}-*),
+ * kopie dla strony leżą w public/media jako timeblame-{lang}-*. Nowa nazwa pliku przy każdej
+ * zmianie filmu: /media ma cache na 30 dni. Teksty (tytuł, opis, transkrypcja) są w słowniku marketing.
  */
 export function promoVideoFiles(locale: Locale) {
-  const base = `/media/promo-${locale}`
+  const base = `/media/timeblame-${locale}`
   return {
     src: `${base}-web.mp4`,
     /** Napisy z tekstu lektora (voiceover.py → promo-{lang}.vtt). */
@@ -25,7 +26,7 @@ export function promoVideoFiles(locale: Locale) {
 
 export const promoVideoMeta = {
   durationIso: 'PT28S',
-  uploadDate: '2026-11-02',
+  uploadDate: '2026-11-27',
   /** true, gdy w public/media leży wersja z lektorem — wtedy film startuje z dźwiękiem. */
   hasVoice: false,
 } as const

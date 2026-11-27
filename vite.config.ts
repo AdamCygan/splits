@@ -20,7 +20,7 @@ const config = defineConfig({
               'public, max-age=2592000, stale-while-revalidate=86400',
           },
         },
-        // Zrzuty produktu na landingu (product-today-<język>-<szerokość>.<format>).
+        // Zrzuty produktu na landingu (product-timeblame-<język>-<szerokość>.<format>).
         '/product-*': {
           headers: {
             'cache-control':

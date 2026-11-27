@@ -2,12 +2,13 @@ import { env } from '#/lib/env'
 
 /**
  * Stałe dane produktu. Teksty zależne od języka (tytuł, opis) są w i18n/messages/common.ts.
- * "Pointhours" = story pointy i godziny: ile czasu naprawdę kosztuje każdy punkt sprintu.
+ * "Timeblame" = `git blame` dla czasu: pokazuje, co naprawdę zjadło sprint (spotkania,
+ * code review, hotfixy), i ile godzin kosztuje każdy story point.
  * Przed startem sprawdź dostępność domeny i znaku towarowego (EUIPO, UPRP).
  * Adres produkcyjny ustawiasz przez VITE_APP_URL — od niego zależą canonical, sitemap i Open Graph.
  */
 export const site = {
-  name: 'Pointhours',
+  name: 'Timeblame',
   url: env.VITE_APP_URL,
   ogImage: '/og.png',
   ogImagePl: '/og-pl.png',

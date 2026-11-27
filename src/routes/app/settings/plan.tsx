@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { PlanSettings } from '#/features/settings/components/plan'
 import { getLocale } from '#/i18n/locale'
 import { settingsMessages } from '#/i18n/messages/settings'
+import { site } from '#/config/site'
 
 /** Powrót ze Stripe Checkout: ?checkout=success&session_id=cs_… */
 interface PlanSearch {
@@ -19,7 +20,7 @@ export const Route = createFileRoute('/app/settings/plan')({
   head: () => ({
     meta: [
       {
-        title: `${settingsMessages[getLocale()].sections.plan.title} | Pointhours`,
+        title: `${settingsMessages[getLocale()].sections.plan.title} | ${site.name}`,
       },
     ],
   }),

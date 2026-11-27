@@ -4,6 +4,7 @@ import { TodayPage } from '#/features/time-entries/components/today'
 import type { TodayRequest } from '#/features/time-entries/components/today'
 import { getLocale } from '#/i18n/locale'
 import { entriesMessages } from '#/i18n/messages/entries'
+import { site } from '#/config/site'
 
 type TodaySearch = TodayRequest & { date?: string }
 
@@ -30,7 +31,7 @@ export const Route = createFileRoute('/app/')({
       : {}),
   }),
   head: () => ({
-    meta: [{ title: `${entriesMessages[getLocale()].pageTitle} | Pointhours` }],
+    meta: [{ title: `${entriesMessages[getLocale()].pageTitle} | ${site.name}` }],
   }),
   component: TodayRoute,
 })
