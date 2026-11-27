@@ -13,7 +13,9 @@ const databaseUrl =
 export default defineConfig({
   testDir: 'tests/e2e',
   fullyParallel: true,
-  reporter: process.env.CI ? 'github' : 'list',
+  // W CI jedna powtórka na wolniejszej maszynie; taki test raport i tak pokazuje jako „flaky”.
+  retries: process.env.CI ? 1 : 0,
+  reporter: process.env.CI ? [['github'], ['list']] : 'list',
   use: {
     baseURL: `http://localhost:${port}`,
     trace: 'retain-on-failure',

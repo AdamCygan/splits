@@ -1,7 +1,7 @@
-# Testy i wdrożenie na Fly.io po każdym pushu do main.
-# Wymaga sekretu repozytorium FLY_API_TOKEN (fly tokens create deploy -x 999999h).
-# Migracje bazy (Neon) wykonuje sama aplikacja przy starcie.
-name: Deploy
+# Testy po każdym pushu do main i w każdym pull requeście: typy, lint, testy jednostkowe i API,
+# a na buildzie produkcyjnym e2e z dostępnością (axe). Wdrożenie robi Railway sam z gałęzi main,
+# więc ten workflow niczego nie wdraża.
+name: CI
 
 on:
   push:
@@ -13,13 +13,15 @@ on:
 permissions:
   contents: read
 
+# Nowy push do tej samej gałęzi przerywa poprzedni przebieg (liczy się tylko najnowszy).
 concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: false
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     services:
       postgres:
         image: postgres:18-alpine
@@ -35,6 +37,8 @@ jobs:
       E2E_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/splits_e2e
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       # Wersję pnpm bierze z pola packageManager w package.json.
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -46,15 +50,12 @@ jobs:
       - run: pnpm test
       - run: PGPASSWORD=postgres psql -h localhost -U postgres -c 'create database splits_e2e'
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm build && pnpm test:e2e
-
-  deploy:
-    needs: test
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1 # 1.6
-      - run: flyctl deploy --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - run: pnpm build
+      - run: pnpm test:e2e
+      # Ślady (trace) nieudanych testów: pnpm exec playwright show-trace <plik>.zip
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7

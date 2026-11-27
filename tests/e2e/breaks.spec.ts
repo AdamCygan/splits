@@ -8,7 +8,8 @@ test.describe('breaks', () => {
     await page.goto('/app/settings/workday')
     await page.getByLabel('Breaks per day').selectOption('45')
     await page.getByRole('button', { name: 'Save changes' }).click()
-    await expect(page.getByText('Saved').first()).toBeVisible()
+    // Pełny tekst powiadomienia: samo „Saved” pasuje też do ukrytego paska „You have unsaved changes”.
+    await expect(page.getByText('Changes saved')).toBeVisible()
     await page.goto('/app')
     await expect(page.getByText('0m of 45m')).toBeVisible()
   })

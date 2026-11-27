@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { inSequence, numbered } from '../support/sequence'
-import { signInWithSamples, testEach } from './helpers'
+import { settleAnimations, signInWithSamples, testEach } from './helpers'
 
 /**
  * Przegląd dostępności całej aplikacji (WCAG 2.2 AA + dobre praktyki axe): każda strona
@@ -54,6 +54,7 @@ async function sidewaysScroll(page: Page) {
 }
 
 async function violations(page: Page) {
+  await settleAnimations(page)
   const result = await new AxeBuilder({ page })
     .withTags([
       'wcag2a',

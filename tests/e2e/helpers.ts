@@ -107,8 +107,26 @@ export async function lastCode(page: Page, to: string) {
   return code
 }
 
+/**
+ * Czeka, aż skończą się skończone animacje i przejścia CSS (np. wjazd powiadomienia).
+ * axe liczy kontrast z bieżącej przezroczystości, więc w trakcie animacji widzi za słaby tekst.
+ * Animacje bez końca (wskaźnik ładowania, pulsujący timer) są pomijane.
+ */
+export async function settleAnimations(page: Page) {
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .every(
+        (animation) =>
+          animation.playState !== 'running' ||
+          animation.effect?.getComputedTiming().endTime === Infinity,
+      ),
+  )
+}
+
 /** Zero naruszeń WCAG 2.2 A/AA wg axe. */
 export async function expectNoA11yViolations(page: Page) {
+  await settleAnimations(page)
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
     .analyze()

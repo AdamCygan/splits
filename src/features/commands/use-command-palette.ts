@@ -48,6 +48,14 @@ import {
 import type { Command, PaletteContext } from './model'
 import { OPEN_EVENT } from './open'
 
+/** Aktywna opcja zapamiętana razem z listą wyników, do której należy. */
+interface Selection {
+  key: string
+  index: number
+}
+
+type IndexUpdate = number | ((index: number) => number)
+
 /**
  * ViewModel palety poleceń: otwieranie (Ctrl/⌘+K, zdarzenie z menu), zapytanie
  * z opóźnieniem do wyszukiwarki na serwerze, dane i akcje dla modelu, wyniki, aktywna
@@ -64,7 +72,7 @@ export function useCommandPaletteViewModel() {
   const [help, setHelp] = useState(false)
   const [query, setQuery] = useState('')
   const [debounced, setDebounced] = useState('')
-  const [active, setActive] = useState(0)
+  const [selection, setSelection] = useState<Selection>({ key: '', index: 0 })
   const listId = useId()
   const listRef = useRef<HTMLUListElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -107,7 +115,10 @@ export function useCommandPaletteViewModel() {
     ...rangeEntriesQuery(addDays(today, -29), today),
     enabled: open,
   }).data
-  const searching = debounced.length >= 2
+  const typed = query.trim()
+  // Wyniki z serwera tylko dla bieżącego tekstu: przy szybkim pisaniu i Enterze przed końcem
+  // opóźnienia stare wyniki (np. z poprzedniego otwarcia) nie mogą uruchomić złego zadania.
+  const searching = debounced.length >= 2 && debounced === typed
   const found = useQuery({
     queryKey: [...entryKeys.all, 'search-all', debounced],
     queryFn: () => unwrap(data.entries.searchAll(debounced)),
@@ -155,7 +166,6 @@ export function useCommandPaletteViewModel() {
     () => aggregateTasks(recent ?? []).slice(0, 5),
     [recent],
   )
-  const typed = query.trim()
   const words = queryWords(typed)
   const taskResults: Array<Command> = searching
     ? (found.data ?? []).map((r) =>
@@ -175,8 +185,15 @@ export function useCommandPaletteViewModel() {
     ...typedCommands(ctx, typed),
   ])
 
-  const resultKey = results.map((r) => r.id).join('|')
-  useEffect(() => setActive(0), [resultKey, open])
+  // Nowa lista wyników (albo ponowne otwarcie) zaczyna od pierwszej opcji już w tym samym
+  // renderze, a nie dopiero po efekcie: Enter wciśnięty w międzyczasie nie trafi w starą pozycję.
+  const resultKey = `${open}|${results.map((r) => r.id).join('|')}`
+  const active = selection.key === resultKey ? selection.index : 0
+  const setActive = (next: IndexUpdate) =>
+    setSelection({
+      key: resultKey,
+      index: typeof next === 'function' ? next(active) : next,
+    })
   useEffect(() => {
     listRef.current
       ?.querySelector(`[data-index="${active}"]`)
@@ -186,6 +203,7 @@ export function useCommandPaletteViewModel() {
   const close = () => {
     setOpen(false)
     setQuery('')
+    setDebounced('')
     setHelp(false)
   }
   const run = (cmd: Command | undefined, alt = false) => {
@@ -222,7 +240,9 @@ export function useCommandPaletteViewModel() {
     results,
     active,
     activeCommand: results.at(active),
-    searchingNow: searching && found.isFetching,
+    // Także w czasie opóźnienia przed zapytaniem: zamiast „brak wyników” widać „Szukam…”.
+    searchingNow:
+      typed.length >= 2 && (debounced !== typed || found.isFetching),
     listId,
     listRef,
     inputRef,

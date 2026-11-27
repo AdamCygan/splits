@@ -6,9 +6,7 @@ allowBuilds:
   # Wyświetla tylko komunikat o darowiznach.
   core-js: false
 
-# Playwright i jego rdzeń w tej samej wersji co przeglądarka w CI i w testach.
 overrides:
-  playwright-core: 1.63.0
   # Łatka bezpieczeństwa w zależności narzędzia (pnpm audit). Usuń, gdy drizzle-kit
   # sam przejdzie na poprawioną wersję.
   # esbuild <=0.24.2: dowolna strona może czytać serwer deweloperski (drizzle-kit > @esbuild-kit/core-utils).

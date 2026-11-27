@@ -230,8 +230,10 @@ z placeholderami też ostrzega (w logach i w Sentry).
    i `fly secrets set SENTRY_DSN=https://…@o….ingest.de.sentry.io/…`. Trafiają tam błędy 5xx API,
    nieudane webhooki Stripe (znacznik `area: stripe-webhook`) i ostrzeżenie startowe. Bez SDK, bez danych
    z treści wpisów i bez adresów IP. W Sentry ustaw alert e-mailem na każdy nowy problem.
-8. **Automatyczne wdrożenia**: `fly tokens create deploy -x 999999h`, wynik zapisz w GitHubie jako sekret
-   `FLY_API_TOKEN`. Każdy push do `main` uruchamia testy (z Postgresem) i wdraża (`.github/workflows/deploy.yml`).
+8. **Automatyczne wdrożenia**: GitHub Actions tylko testuje (`.github/workflows/ci.yml`: typy, lint, testy
+   jednostkowe i API z Postgresem, e2e z axe). Wdraża hosting z gałęzi `main`: na Railway to wbudowane
+   automatyczne wdrożenia; na Fly.io włącz je w panelu (GitHub → Deploy) albo uruchamiaj `fly deploy`.
+   Na Railway warto zaznaczyć „Wait for CI”, żeby wdrażał tylko commity z zielonym CI.
 
 Ten sam obraz działa też na dowolnym serwerze z Dockerem (`docker compose up -d --build`) i na Railway.
 
