@@ -15,7 +15,7 @@ import {
   resumeEntry,
   stopRunning,
   userTimezone,
-} from '#/features/time-entries/controllers/routes.server'
+} from '#/features/time-entries/data/repository.server'
 
 type Row = typeof t.breaks.$inferSelect
 

@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { currentUser } from '#/features/account/controllers/routes.server'
 import { hasProAccess } from '#/features/billing/domain/plans'
-import { syncCadenceSprints } from '#/features/sprints/controllers/routes.server'
+import { syncCadenceSprints } from '#/features/sprints/data/repository.server'
 import { db } from '#/server/db/client'
 import * as t from '#/server/db/schema'
 import { ApiError, notFound } from '#/server/http/errors'

@@ -16,7 +16,7 @@ import { toUser } from '#/features/auth/data/mappers.server'
 import {
   entriesOn,
   pausedOn,
-} from '#/features/time-entries/controllers/routes.server'
+} from '#/features/time-entries/data/repository.server'
 
 /**
  * Start panelu jednym żądaniem: konto, ustawienia, konfiguracja i dzisiejszy dzień.
