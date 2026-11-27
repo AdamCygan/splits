@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
-import { sha256 } from '#/server/auth/tokens'
+import { sha256 } from '../../src/features/auth/data/tokens.server'
 import { db } from '#/server/db/client'
 import { refreshTokens } from '#/server/db/schema'
 import { client, inSequence, numbered, registered, sample } from './helpers'

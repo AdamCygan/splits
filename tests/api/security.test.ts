@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { currentStep, totpAt } from '#/server/auth/totp'
+import { currentStep, totpAt } from '../../src/features/auth/data/totp.server'
 import { outbox } from '#/server/email'
 import { serverEnv } from '#/server/env'
 import {

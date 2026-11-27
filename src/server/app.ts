@@ -7,29 +7,30 @@ import { secureHeaders } from 'hono/secure-headers'
 import { LOCALE_COOKIE, isLocale } from '#/i18n/config'
 import type { Locale } from '#/i18n/config'
 import { site } from '#/config/site'
-import { isCutOff } from './auth/access'
-import { verifyAccessToken } from './auth/tokens'
+import { isCutOff } from '#/features/auth/data/access.server'
+import { verifyAccessToken } from '#/features/auth/data/tokens.server'
 import { db, ensureMigrated } from './db/client'
 import { serverEnv } from './env'
-import { accountRoutes } from './features/account'
-import { adminRoutes } from './features/admin'
-import { bootstrapRoutes } from './features/bootstrap'
-import { billingRoutes, stripeWebhookRoutes } from './features/billing'
-import { authRoutes } from './features/auth'
-import { testRoutes } from './features/test-routes'
+import { accountRoutes } from '#/features/account/controllers/routes.server'
+import { adminRoutes } from '#/features/admin/controllers/routes.server'
+import { bootstrapRoutes } from '#/features/app/controllers/routes.server'
 import {
-  projectRoutes,
-  scaleRoutes,
-  settingsRoutes,
-  statusRoutes,
-  tagRoutes,
-  taskTypeRoutes,
-  templateRoutes,
-} from './features/config'
-import { entryRoutes } from './features/entries'
-import { breakRoutes } from './features/breaks'
-import { dayOffRoutes } from './features/days-off'
-import { sprintRoutes } from './features/sprints'
+  billingRoutes,
+  stripeWebhookRoutes,
+} from '#/features/billing/controllers/routes.server'
+import { authRoutes } from '#/features/auth/controllers/routes.server'
+import { testRoutes } from './test-routes'
+import { projectRoutes } from '#/features/projects/controllers/routes.server'
+import { scaleRoutes } from '#/features/story-points/controllers/routes.server'
+import { settingsRoutes } from '#/features/settings/controllers/routes.server'
+import { statusRoutes } from '#/features/task-statuses/controllers/routes.server'
+import { tagRoutes } from '#/features/tags/controllers/routes.server'
+import { taskTypeRoutes } from '#/features/task-types/controllers/routes.server'
+import { templateRoutes } from '#/features/templates/controllers/routes.server'
+import { entryRoutes } from '#/features/time-entries/controllers/routes.server'
+import { breakRoutes } from '#/features/breaks/controllers/routes.server'
+import { dayOffRoutes } from '#/features/days-off/controllers/routes.server'
+import { sprintRoutes } from '#/features/sprints/controllers/routes.server'
 import type { AppEnv } from './http/context'
 import { ApiError, fromDatabaseError, problem } from './http/errors'
 import { sameOrigin } from './http/origin'

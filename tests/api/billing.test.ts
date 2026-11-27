@@ -1,7 +1,7 @@
 import Stripe from 'stripe'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import { eq, sql } from 'drizzle-orm'
-import { planForPrice, setStripeClient } from '#/server/billing/stripe'
+import { planForPrice, setStripeClient } from '../../src/features/billing/data/stripe.server'
 import { db } from '#/server/db/client'
 import { payments, users } from '#/server/db/schema'
 import { client, lastDeleteCode, registered } from './helpers'

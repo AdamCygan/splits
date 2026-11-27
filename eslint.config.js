@@ -138,6 +138,16 @@ export default [
     },
   },
   {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: [
+      'src/server/**',
+      'src/**/*.server.ts',
+      'src/server.ts',
+      'src/routes/api/**',
+    ],
+    rules: { 'no-restricted-imports': ['error', { patterns: [serverOnly] }] },
+  },
+  {
     files: ['src/features/*/views/**'],
     rules: {
       'no-restricted-imports': ['error', { patterns: viewImports }],

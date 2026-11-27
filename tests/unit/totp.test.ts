@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { activeSessions } from '#/server/auth/sessions'
+import { activeSessions } from '../../src/features/auth/data/sessions.server'
 import {
   base32Decode,
   base32Encode,
@@ -9,7 +9,7 @@ import {
   newRecoveryCodes,
   totpAt,
   verifyTotp,
-} from '#/server/auth/totp'
+} from '../../src/features/auth/data/totp.server'
 
 // Wektor testowy z RFC 6238 (SHA-1): sekret "12345678901234567890".
 const SECRET = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'
