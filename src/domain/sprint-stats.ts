@@ -1,10 +1,7 @@
-import type {
-  SpScaleStep,
-  Sprint,
-  SprintTimeGoal,
-  TaskType,
-  TimeEntry,
-} from '#/data/types'
+import type { SpScaleStep } from '#/features/story-points/data/dto'
+import type { Sprint, SprintTimeGoal } from '#/features/sprints/data/dto'
+import type { TaskType } from '#/features/task-types/data/dto'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { diffDays } from './dates'
 import { byType, groupTasks, totalsOf } from './report'
 import type { TaskRow, TypeRow } from './report'

@@ -1,9 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import type {
-  TimeEntryInput,
-  SprintTimeGoal,
-  QuickTemplateInput,
-} from '#/data/types'
+import type { TimeEntryInput } from '../../src/features/time-entries/data/dto'
+import type { SprintTimeGoal } from '../../src/features/sprints/data/dto'
+import type { QuickTemplateInput } from '../../src/features/templates/data/dto'
 import { eq } from 'drizzle-orm'
 import { api } from '#/server/app'
 import { db } from '#/server/db/client'
@@ -30,7 +28,7 @@ globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   return response
 }
 
-const { httpSource: data } = await import('#/data/http/http-source')
+const { frontendApi: data } = await import('../support/frontend-api')
 const { setAccessToken } = await import('#/lib/auth-token')
 
 async function value<T>(

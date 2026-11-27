@@ -3,8 +3,8 @@ import type { FormEvent } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
-import { data } from '#/data'
-import type { SpScaleStep } from '#/data/types'
+import { spScaleApi } from '#/features/story-points/data/api'
+import type { SpScaleStep } from '#/features/story-points/data/dto'
 import { SCALE_LIMITS, scalePresets, validateScale } from '#/domain/sp-scale'
 import type { ScaleIssue } from '#/domain/sp-scale'
 import { useFormat, useMessages } from '#/i18n/context'
@@ -71,7 +71,7 @@ function ScaleEditor({ scale }: ScaleEditorProps) {
   const [announcer, announce] = useAnnouncer()
   useEffect(() => setRows(toRows(scale)), [scale])
 
-  const save = useDataMutation(data.spScale.replace, {
+  const save = useDataMutation(spScaleApi.replace, {
     invalidate: [keys.scale],
     success: t.saved,
     onSuccess: () => markSetupStep('storyPoints'),

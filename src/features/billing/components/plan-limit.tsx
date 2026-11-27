@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { useCurrentUser } from '#/features/auth/session'
 import { useMessages } from '#/i18n/context'
 import { billingMessages } from '#/i18n/messages/billing'
-import { hasProAccess } from '../plans'
+import { hasProAccess } from '../domain/plans'
 
 /** Czy zalogowany użytkownik jest na planie Free (bez Pro i bez roli administratora). */
 export function useFreePlan() {

@@ -1,16 +1,13 @@
-import type {
-  Project,
-  QuickTemplate,
-  SpScaleStep,
-  Sprint,
-  SprintCadence,
-  Tag,
-  TaskStatus,
-  TaskType,
-  TimeEntry,
-  User,
-  UserSettings,
-} from '#/data/types'
+import type { Project } from '#/features/projects/data/dto'
+import type { QuickTemplate } from '#/features/templates/data/dto'
+import type { SpScaleStep } from '#/features/story-points/data/dto'
+import type { Sprint, SprintCadence } from '#/features/sprints/data/dto'
+import type { Tag } from '#/features/tags/data/dto'
+import type { TaskStatus } from '#/features/task-statuses/data/dto'
+import type { TaskType } from '#/features/task-types/data/dto'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
+import type { User } from '#/features/auth/data/dto'
+import type { UserSettings } from '#/features/settings/data/dto'
 import type { Locale } from '#/i18n/config'
 import type * as t from '../db/schema'
 

@@ -12,7 +12,7 @@ import {
   sql,
 } from 'drizzle-orm'
 import { Hono } from 'hono'
-import type { TimeEntryInput } from '#/data/types'
+import type { TimeEntryInput } from '#/features/time-entries/data/dto'
 import { addDays, nowTimeIn, todayIn } from '#/domain/dates'
 import {
   isFutureStart,
@@ -29,7 +29,7 @@ import {
   rankSearchResults,
   searchWords,
 } from '#/domain/task-search'
-import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
+import { FREE_LIMITS, hasProAccess } from '#/features/billing/domain/plans'
 import { db } from '../db/client'
 import type { Tx } from '../db/client'
 import * as t from '../db/schema'

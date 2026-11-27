@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { data } from '#/data'
-import type { User } from '#/data/types'
+import { accountApi } from '#/features/account/data/api'
+import { billingApi } from '#/features/billing/data/api'
+import type { User } from '#/features/auth/data/dto'
 import { billingQuery, useStripeRedirect } from '#/features/billing/queries'
 import { useDataMutation } from '#/features/settings/queries'
 import { useMessages } from '#/i18n/context'
@@ -15,11 +16,11 @@ import { accountNotices } from './model'
 export function useAccountNoticesViewModel(user: User) {
   const t = useMessages(panelMessages).notices
   const billing = useQuery({ ...billingQuery, enabled: !user.isDemo }).data
-  const resend = useDataMutation(() => data.account.resendVerification(), {
+  const resend = useDataMutation(() => accountApi.resendVerification(), {
     invalidate: [],
     success: fmt(t.resent, { email: user.email }),
   })
-  const portal = useStripeRedirect(() => data.billing.portal())
+  const portal = useStripeRedirect(() => billingApi.portal())
 
   return {
     email: user.email,

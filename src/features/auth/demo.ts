@@ -1,4 +1,4 @@
-import { data } from '#/data'
+import { authApi } from './data/api'
 import type { Locale } from '#/i18n/config'
 import { track } from '#/integrations/posthog/analytics'
 import type { ApiFailure } from '#/lib/api-client'
@@ -10,7 +10,7 @@ let starting: Promise<ApiFailure | null> | null = null
 async function openDemo(locale: Locale): Promise<ApiFailure | null> {
   if (getCurrentUser() ?? (await ensureSession())) return null
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-  const result = await data.auth.demo({ locale, timezone })
+  const result = await authApi.demo({ locale, timezone })
   if (!result.ok) return result.error
   startSession(result.value)
   track('demo_started', { locale })

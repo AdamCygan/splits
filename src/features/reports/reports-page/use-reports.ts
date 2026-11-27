@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { selectable } from '#/domain/archive'
-import type { TaskRef } from '#/data/types'
+import type { TaskRef } from '#/features/time-entries/data/dto'
 import { addDays, todayIn } from '#/domain/dates'
 import { percentOf } from '#/domain/numbers'
 import {
@@ -25,7 +25,7 @@ import type {
 } from '#/domain/report'
 import { currentSprint, startedSprints } from '#/domain/sprints'
 import { historyStart } from '#/domain/workday'
-import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
+import { FREE_LIMITS, hasProAccess } from '#/features/billing/domain/plans'
 import {
   meQuery,
   projectsQuery,

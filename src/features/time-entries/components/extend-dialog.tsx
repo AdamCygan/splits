@@ -4,8 +4,11 @@ import { Button } from '#/components/ui/button'
 import { Field, Textarea } from '#/components/ui/controls'
 import { Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
-import { data } from '#/data'
-import type { TimeEntry, TimeEntryInput } from '#/data/types'
+import { entriesApi } from '../data/api'
+import type {
+  TimeEntry,
+  TimeEntryInput,
+} from '#/features/time-entries/data/dto'
 import { ENTRY_LIMITS, parseDuration, withExtension } from '#/domain/entries'
 import { useDataMutation } from '#/features/settings/queries'
 import { useFormat, useMessages } from '#/i18n/context'
@@ -47,7 +50,7 @@ export function ExtendDialog({ entry, onClose }: ExtendDialogProps) {
       : null
 
   const save = useDataMutation(
-    (input: TimeEntryInput) => data.entries.update(entry.id, input),
+    (input: TimeEntryInput) => entriesApi.update(entry.id, input),
     {
       invalidate: [entryKeys.all],
       success: (saved) =>

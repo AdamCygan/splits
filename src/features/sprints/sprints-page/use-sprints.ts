@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { DAY_OFF_KINDS } from '#/data/types'
-import type { Sprint } from '#/data/types'
+import { DAY_OFF_KINDS } from '#/features/days-off/data/dto'
+import type { Sprint } from '#/features/sprints/data/dto'
 import { todayIn } from '#/domain/dates'
 import { sprintAvailability } from '#/domain/days-off'
 import {
@@ -12,7 +12,7 @@ import {
 } from '#/domain/sprint-stats'
 import { sprintOverview } from '#/domain/sprints'
 import { historyStart } from '#/domain/workday'
-import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
+import { FREE_LIMITS, hasProAccess } from '#/features/billing/domain/plans'
 import {
   daysOffQuery,
   meQuery,

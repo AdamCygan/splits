@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { data } from '#/data'
-import type { User } from '#/data/types'
+import { accountApi } from '#/features/account/data/api'
+import type { User } from '#/features/auth/data/dto'
 import { clearSession } from '#/features/auth/session'
 import { useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
@@ -22,14 +22,14 @@ export function useDeleteAccountViewModel(user: User) {
   const [code, setCode] = useState('')
   const [submitted, setSubmitted] = useState(false)
 
-  const send = useDataMutation(() => data.account.sendDeleteCode(), {
+  const send = useDataMutation(() => accountApi.sendDeleteCode(), {
     invalidate: [],
     success: () =>
       fmt(codeSent ? t.codeResent : t.codeSent, { email: user.email }),
     onSuccess: () => setCodeSent(true),
   })
   const remove = useDataMutation(
-    (value: string) => data.account.deleteAccount(value),
+    (value: string) => accountApi.deleteAccount(value),
     {
       invalidate: [],
       onSuccess: () => {

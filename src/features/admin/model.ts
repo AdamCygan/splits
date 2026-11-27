@@ -1,6 +1,10 @@
 import { ADMIN_ACTION_KINDS, ADMIN_USER_SORTS } from '#/domain/admin'
 import type { AdminActionKind, AdminUserSort, SortDir } from '#/domain/admin'
-import type { AdminActionFilter, AdminUserFilter, PlanCode } from '#/data/types'
+import type {
+  AdminActionFilter,
+  AdminUserFilter,
+} from '#/features/admin/data/dto'
+import type { PlanCode } from '#/features/auth/data/dto'
 
 export const PLANS: ReadonlyArray<PlanCode> = ['free', 'pro', 'lifetime']
 

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { data } from '#/data'
-import type { TimeEntry } from '#/data/types'
+import { entriesApi } from '../data/api'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { earnedPoints, taskBudget } from '#/domain/sp-scale'
 import { maxEstimate, maxPoints } from '#/domain/summary'
 import { scaleQuery } from '#/features/settings/queries'
@@ -30,7 +30,7 @@ export function useTaskProgress(entry: TimeEntry | undefined) {
     : null
   const sessions = useQuery({
     queryKey: ref ? taskQueryKey(ref) : ['none'],
-    queryFn: () => unwrap(data.entries.forTask(ref!)),
+    queryFn: () => unwrap(entriesApi.forTask(ref!)),
     enabled: !!ref,
   }).data
   if (!entry || !sessions) return null

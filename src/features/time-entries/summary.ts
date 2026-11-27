@@ -1,4 +1,5 @@
-import type { TaskType, TimeEntry } from '#/data/types'
+import type { TaskType } from '#/features/task-types/data/dto'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { hourOptions } from '#/lib/clock'
 import { taskKeyOf, taskStats } from '#/domain/summary'
 import type { SummaryValues, TaskStats } from '#/domain/summary'

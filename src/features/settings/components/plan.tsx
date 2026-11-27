@@ -4,9 +4,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowRight, Check, ExternalLink } from 'lucide-react'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { Badge } from '#/components/ui/controls'
-import { data } from '#/data'
+import { billingApi } from '#/features/billing/data/api'
 import { InvoicesCard } from '#/features/billing/invoices'
-import { PRO_PRICES, formatPrice, planById } from '#/features/billing/plans'
+import {
+  PRO_PRICES,
+  formatPrice,
+  planById,
+} from '#/features/billing/domain/plans'
 import {
   billingKeys,
   billingQuery,
@@ -63,7 +67,7 @@ function CheckoutReturn({ sessionId }: CheckoutReturnProps) {
   const navigate = useNavigate()
   const sync = useQuery({
     queryKey: ['billing', 'sync', sessionId],
-    queryFn: () => unwrap(data.billing.sync(sessionId)),
+    queryFn: () => unwrap(billingApi.sync(sessionId)),
     retry: 2,
     staleTime: Infinity,
   })
@@ -112,7 +116,7 @@ function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
   const pricing = useMessages(marketingMessages).pricing
   const { tag, locale } = useI18n()
   const billing = useQuery(billingQuery).data
-  const portal = useStripeRedirect(() => data.billing.portal())
+  const portal = useStripeRedirect(() => billingApi.portal())
   const isFree = planId === 'free'
   const name = admin
     ? 'Admin'

@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 import { Badge } from '#/components/ui/controls'
-import type { AdminUser } from '#/data/types'
+import type { AdminUser } from '#/features/admin/data/dto'
 import { isPaymentProblem } from '#/domain/admin'
 import type { AdminUserSort } from '#/domain/admin'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'

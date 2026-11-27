@@ -1,11 +1,11 @@
+import type { SpScaleStep } from '#/features/story-points/data/dto'
+import type { TaskType } from '#/features/task-types/data/dto'
 import type {
-  SpScaleStep,
-  TaskType,
   TimeEntry,
   TimeEntryInput,
-  TimeInputMode,
   TimerStartInput,
-} from '#/data/types'
+} from '#/features/time-entries/data/dto'
+import type { TimeInputMode } from '#/features/settings/data/dto'
 import {
   fromMinutes,
   minutesBetween,

@@ -1,10 +1,10 @@
+import type { Project } from '#/features/projects/data/dto'
+import type { QuickTemplate } from '#/features/templates/data/dto'
+import type { TaskType } from '#/features/task-types/data/dto'
 import type {
-  Project,
-  QuickTemplate,
-  TaskType,
   TimeEntryInput,
   TimerStartInput,
-} from '#/data/types'
+} from '#/features/time-entries/data/dto'
 import { minutesBetween } from './entries'
 import { spForType } from './report'
 import type { ScheduledMeeting } from './schedule'

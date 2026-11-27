@@ -4,8 +4,9 @@ import { Copy, Settings2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { Dialog, DialogContent } from '#/components/ui/dialog'
-import { data } from '#/data'
-import type { TaskType, TimeEntry } from '#/data/types'
+import { entriesApi } from '../data/api'
+import type { TaskType } from '#/features/task-types/data/dto'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { renderSummary, taskStats } from '#/domain/summary'
 import { settingsQuery } from '#/features/settings/queries'
 import { useI18n, useMessages } from '#/i18n/context'
@@ -39,7 +40,7 @@ export function SummaryDialog({ entry, type, onClose }: SummaryDialogProps) {
     ],
     queryFn: () =>
       unwrap(
-        data.entries.forTask({
+        entriesApi.forTask({
           title: entry.title,
           link: entry.link,
           taskTypeId: entry.taskTypeId,

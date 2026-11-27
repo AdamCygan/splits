@@ -1,7 +1,7 @@
 import { Button } from '#/components/ui/button'
 import { Badge, Field, Select, Switch } from '#/components/ui/controls'
 import { Panel } from '#/components/ui/panel'
-import type { PlanCode } from '#/data/types'
+import type { PlanCode } from '#/features/auth/data/dto'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
 import { adminMessages } from '#/i18n/messages/admin'

@@ -1,4 +1,5 @@
-import type { DayOff, DayOffKind, Sprint } from '#/data/types'
+import type { DayOff, DayOffKind } from '#/features/days-off/data/dto'
+import type { Sprint } from '#/features/sprints/data/dto'
 import { addDays, diffDays, weekday } from './dates'
 
 export interface DayOffRange {

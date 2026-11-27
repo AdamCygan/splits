@@ -1,6 +1,6 @@
 import { queryOptions, useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { data } from '#/data'
+import { billingApi } from './data/api'
 import { ApiError, unwrap } from '#/lib/api-client'
 import { useErrorText } from '#/lib/use-error-text'
 
@@ -8,7 +8,7 @@ export const billingKeys = { status: ['billing', 'status'] as const }
 
 export const billingQuery = queryOptions({
   queryKey: billingKeys.status,
-  queryFn: () => unwrap(data.billing.status()),
+  queryFn: () => unwrap(billingApi.status()),
 })
 
 /**
@@ -16,7 +16,7 @@ export const billingQuery = queryOptions({
  * więc przycisk zostaje zablokowany aż do opuszczenia strony.
  */
 export function useStripeRedirect<T>(
-  open: (arg: T) => ReturnType<typeof data.billing.portal>,
+  open: (arg: T) => ReturnType<typeof billingApi.portal>,
 ) {
   const errorText = useErrorText()
   return useMutation({

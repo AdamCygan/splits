@@ -1,6 +1,6 @@
 import { Download } from 'lucide-react'
 import { Button } from '#/components/ui/button'
-import { data } from '#/data'
+import { accountApi } from '#/features/account/data/api'
 import { useMessages } from '#/i18n/context'
 import { panelMessages } from '#/i18n/messages/panel'
 import { downloadFile } from '#/lib/download'
@@ -10,7 +10,7 @@ import { SettingsCard } from '../ui'
 /** Pobranie wszystkich danych konta jako plik JSON (RODO: prawo do przenoszenia danych). */
 export function ExportDataCard() {
   const t = useMessages(panelMessages).export
-  const download = useDataMutation(() => data.account.exportData(), {
+  const download = useDataMutation(() => accountApi.exportData(), {
     invalidate: [],
     success: t.done,
     onSuccess: (payload) => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { TimeEntry } from '#/data/types'
+import type { TimeEntry } from '../../src/features/time-entries/data/dto'
 import { taskInsights } from '#/domain/task-insights'
 
 let n = 0

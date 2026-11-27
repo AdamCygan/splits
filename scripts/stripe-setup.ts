@@ -12,8 +12,8 @@
  *  - endpoint webhooka {APP_URL}/api/v1/stripe/webhook (tylko dla adresu https) i wypisuje jego sekret.
  */
 import Stripe from 'stripe'
-import { PRO_PRICES } from '../src/features/billing/plans'
-import type { BillingInterval } from '../src/features/billing/plans'
+import { PRO_PRICES } from '../src/features/billing/domain/plans'
+import type { BillingInterval } from '../src/features/billing/domain/plans'
 
 const key = process.env.STRIPE_SECRET_KEY
 if (!key) {

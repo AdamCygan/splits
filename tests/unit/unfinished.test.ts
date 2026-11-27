@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { TimeEntry } from '#/data/types'
+import type { TimeEntry } from '../../src/features/time-entries/data/dto'
 import { UNFINISHED_LIMIT, unfinishedTasks } from '#/domain/unfinished'
 
 const today = '2026-11-18'

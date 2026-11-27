@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { data } from '#/data'
-import type { QuickTemplate } from '#/data/types'
+import { entriesApi } from '../../data/api'
+import type { QuickTemplate } from '#/features/templates/data/dto'
 import { nowTimeIn } from '#/domain/dates'
 import type { ScheduledMeeting } from '#/domain/schedule'
 import {
@@ -65,8 +65,8 @@ export function useQuickTemplatesViewModel({
         now: nowTimeIn(timeZone),
         at,
       })
-      if (plan.kind === 'entry') return data.entries.create(plan.input)
-      const result = await data.entries.start(plan.input)
+      if (plan.kind === 'entry') return entriesApi.create(plan.input)
+      const result = await entriesApi.start(plan.input)
       return result.ok ? { ...result, value: result.value.started } : result
     },
     {

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import type { QuickTemplate, TaskType, TimeEntry } from '#/data/types'
+import type { QuickTemplate } from '../../src/features/templates/data/dto'
+import type { TaskType } from '../../src/features/task-types/data/dto'
+import type { TimeEntry } from '../../src/features/time-entries/data/dto'
 import { aggregateTasks, dayTaskGroups } from '#/domain/task-groups'
 import {
   defaultChoice,

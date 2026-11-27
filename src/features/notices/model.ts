@@ -1,4 +1,4 @@
-import type { User } from '#/data/types'
+import type { User } from '#/features/auth/data/dto'
 import { isPaymentProblem } from '#/domain/admin'
 
 export type AccountNotice = 'unverified' | 'pastDue'

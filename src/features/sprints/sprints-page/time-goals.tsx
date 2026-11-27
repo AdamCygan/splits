@@ -1,5 +1,5 @@
 import { ColorDot } from '#/components/ui/controls'
-import type { TaskType } from '#/data/types'
+import type { TaskType } from '#/features/task-types/data/dto'
 import { percentOf } from '#/domain/numbers'
 import type { GoalProgress } from '#/domain/sprint-stats'
 import { useFormat, useMessages } from '#/i18n/context'

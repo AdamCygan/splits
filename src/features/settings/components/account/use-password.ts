@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { data } from '#/data'
+import { accountApi } from '#/features/account/data/api'
 import { passwordSchema } from '#/features/auth/schemas'
 import { useMessages } from '#/i18n/context'
 import { authMessages } from '#/i18n/messages/auth'
@@ -18,7 +18,7 @@ export function usePasswordViewModel(hasPassword: boolean) {
   const v = useMessages(authMessages).validation
   const [draft, setDraft] = useState(EMPTY)
   const [submitted, setSubmitted] = useState(false)
-  const save = useDataMutation(data.account.changePassword, {
+  const save = useDataMutation(accountApi.changePassword, {
     invalidate: [],
     success: t.passwordSaved,
     onSuccess: () => {

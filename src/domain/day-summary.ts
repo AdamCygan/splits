@@ -1,4 +1,6 @@
-import type { TaskType, TimeEntry, WorkBreak } from '#/data/types'
+import type { TaskType } from '#/features/task-types/data/dto'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
+import type { WorkBreak } from '#/features/breaks/data/dto'
 import { toMinutes } from './entries'
 import { groupTasks, taskGroupKey } from './report'
 import type { TaskRow } from './report'

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import type { AdminActionFilter } from '#/data/types'
+import type { AdminActionFilter } from '#/features/admin/data/dto'
 import { AdminLogPage } from '#/features/admin/log-page'
 import { parseActionSearch } from '#/features/admin/model'
 

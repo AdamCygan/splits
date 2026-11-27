@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { Check } from 'lucide-react'
 import { Button } from '#/components/ui/button'
-import { PRO_PRICES, formatPrice } from '#/features/billing/plans'
+import { PRO_PRICES, formatPrice } from '#/features/billing/domain/plans'
 import { fmt } from '#/i18n/format'
 import { useI18n, useMessages } from '#/i18n/context'
 import { marketingMessages } from '#/i18n/messages/marketing'

@@ -14,16 +14,16 @@ import {
 import { Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import { Segmented } from '#/components/ui/segmented'
-import { data } from '#/data'
+import { taskTypesApi } from '#/features/task-types/data/api'
 import { splitArchived } from '#/domain/archive'
 import type {
   FieldRequirement,
   TaskType,
   TaskTypeInput,
-  TimeInputMode,
-} from '#/data/types'
+} from '#/features/task-types/data/dto'
+import type { TimeInputMode } from '#/features/settings/data/dto'
 import { LIMITS } from '#/domain/rules'
-import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
+import { FREE_LIMITS, hasProAccess } from '#/features/billing/domain/plans'
 import { useCurrentUser } from '#/features/auth/session'
 import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
@@ -52,7 +52,7 @@ export function WorkTypeSettings() {
   const limits = useMessages(billingMessages).limits
   const [editing, setEditing] = useState<TaskType | 'new' | null>(null)
 
-  const archive = useArchive(data.taskTypes.setArchived, {
+  const archive = useArchive(taskTypesApi.setArchived, {
     invalidate: keys.taskTypes,
     messages: t,
   })
@@ -215,9 +215,7 @@ function WorkTypeDialog({ type, onClose }: WorkTypeDialogProps) {
 
   const save = useDataMutation(
     (input: TaskTypeInput) =>
-      type
-        ? data.taskTypes.update(type.id, input)
-        : data.taskTypes.create(input),
+      type ? taskTypesApi.update(type.id, input) : taskTypesApi.create(input),
     {
       invalidate: [keys.taskTypes],
       success: type ? app.status.saved : t.created,

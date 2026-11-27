@@ -19,7 +19,7 @@ import {
   priceFor,
   stripe,
 } from '../billing/stripe'
-import { BILLING_INTERVALS } from '#/features/billing/plans'
+import { BILLING_INTERVALS } from '#/features/billing/domain/plans'
 import type { AppEnv } from '../http/context'
 import { ApiError } from '../http/errors'
 import { body } from '../http/inputs'

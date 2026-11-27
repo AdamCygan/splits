@@ -5,8 +5,11 @@ import type { KeyboardEvent } from 'react'
 import { Button } from '#/components/ui/button'
 import { Badge } from '#/components/ui/controls'
 import { Input } from '#/components/ui/input'
-import { data } from '#/data'
-import type { TaskSearchResult, TimeEntry } from '#/data/types'
+import { entriesApi } from '../data/api'
+import type {
+  TaskSearchResult,
+  TimeEntry,
+} from '#/features/time-entries/data/dto'
 import { unwrap } from '#/lib/api-client'
 import { taskTypesQuery } from '#/features/settings/queries'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
@@ -38,7 +41,7 @@ export function TaskSearch({ isToday, onUse }: TaskSearchProps) {
   const q = useDeferredValue(query.trim())
   const search = useQuery({
     queryKey: [...entryKeys.all, 'search', q],
-    queryFn: () => unwrap(data.entries.search(q)),
+    queryFn: () => unwrap(entriesApi.search(q)),
     enabled: q.length >= 2,
     staleTime: 10_000,
   })

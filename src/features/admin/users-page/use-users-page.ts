@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { data } from '#/data'
-import type { AdminUserFilter } from '#/data/types'
+import { adminApi } from '../data/api'
+import type { AdminUserFilter } from '#/features/admin/data/dto'
 import { adminUsersCsv, nextAdminSort } from '#/domain/admin'
 import type { AdminUserSort } from '#/domain/admin'
 import { useCurrentUser } from '#/features/auth/session'
@@ -76,7 +76,7 @@ export function useUsersPageViewModel({ filter, onFilter }: UsersPageOptions) {
     },
     exportCsv: async () => {
       setExporting(true)
-      const result = await data.admin.exportUsers(filter)
+      const result = await adminApi.exportUsers(filter)
       setExporting(false)
       if (!result.ok) {
         toast.error(errorText(result.error))

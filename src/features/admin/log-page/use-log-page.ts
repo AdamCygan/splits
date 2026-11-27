@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import type { AdminActionFilter } from '#/data/types'
+import type { AdminActionFilter } from '#/features/admin/data/dto'
 import { pageCount, withoutEmpty } from '../model'
 import { adminActionsQuery } from '../queries'
 

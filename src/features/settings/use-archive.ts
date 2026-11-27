@@ -1,5 +1,5 @@
 import type { QueryKey } from '@tanstack/react-query'
-import type { R } from '#/data/source'
+import type { R } from '#/shared/data/http'
 import { fmt } from '#/i18n/format'
 import { useDataMutation } from './queries'
 

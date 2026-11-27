@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { TaskType, TimeEntry } from '#/data/types'
+import type { TaskType } from '../../src/features/task-types/data/dto'
+import type { TimeEntry } from '../../src/features/time-entries/data/dto'
 import {
   afterSave,
   copyDraft,

@@ -1,6 +1,6 @@
 import { absoluteUrl, site } from '#/config/site'
-import { BILLING_INTERVALS, PRO_PRICES } from '#/features/billing/plans'
-import type { BillingInterval } from '#/features/billing/plans'
+import { BILLING_INTERVALS, PRO_PRICES } from '#/features/billing/domain/plans'
+import type { BillingInterval } from '#/features/billing/domain/plans'
 import type { Locale } from '#/i18n/config'
 import { commonMessages } from '#/i18n/messages/common'
 import { marketingMessages } from '#/i18n/messages/marketing'

@@ -1,4 +1,5 @@
-import type { TaskType, TimeEntry } from '#/data/types'
+import type { TaskType } from '#/features/task-types/data/dto'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { addDays, diffDays, weekday } from './dates'
 import { toMinutes } from './entries'
 import type { TaskRow } from './report'

@@ -3,13 +3,13 @@ import type { FormEvent, KeyboardEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { selectable } from '#/domain/archive'
-import { data } from '#/data'
+import { entriesApi } from '../../data/api'
+import type { TaskType } from '#/features/task-types/data/dto'
 import type {
-  TaskType,
   TimeEntry,
   TimeEntryInput,
   TimerStartInput,
-} from '#/data/types'
+} from '#/features/time-entries/data/dto'
 import { nowTimeIn, todayIn } from '#/domain/dates'
 import { isFutureStart, validateEntry } from '#/domain/entries'
 import type { EntryField, EntryIssue } from '#/domain/entries'
@@ -127,7 +127,7 @@ export function useEntryFormViewModel({
 
   const save = useDataMutation(
     (input: TimeEntryInput) =>
-      entry ? data.entries.update(entry.id, input) : data.entries.create(input),
+      entry ? entriesApi.update(entry.id, input) : entriesApi.create(input),
     {
       invalidate: [entryKeys.all],
       success: entry
@@ -147,7 +147,7 @@ export function useEntryFormViewModel({
   )
 
   const startTimer = useDataMutation(
-    (input: TimerStartInput) => data.entries.start(input),
+    (input: TimerStartInput) => entriesApi.start(input),
     {
       invalidate: [entryKeys.all],
       success: t.form.timerStarted,

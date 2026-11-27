@@ -1,6 +1,6 @@
 import { and, asc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
-import type { WorkBreak } from '#/data/types'
+import type { WorkBreak } from '#/features/breaks/data/dto'
 import { nowTimeIn, todayIn } from '#/domain/dates'
 import { minutesBetween } from '#/domain/entries'
 import { db } from '../db/client'

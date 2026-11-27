@@ -1,6 +1,6 @@
 import { Button } from '#/components/ui/button'
 import { Dialog, DialogContent } from '#/components/ui/dialog'
-import type { TimeEntry } from '#/data/types'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { useMessages } from '#/i18n/context'
 import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'

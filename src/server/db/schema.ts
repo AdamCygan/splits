@@ -4,7 +4,8 @@
  * Reguły (długości, formaty) są też w src/domain/* i walidacji API.
  */
 import { sql } from 'drizzle-orm'
-import type { SprintTimeGoal, TemplateSchedule } from '#/data/types'
+import type { SprintTimeGoal } from '#/features/sprints/data/dto'
+import type { TemplateSchedule } from '#/features/templates/data/dto'
 import {
   boolean,
   check,

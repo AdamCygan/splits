@@ -15,8 +15,9 @@ import { Badge, Field } from '#/components/ui/controls'
 import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import { site } from '#/config/site'
-import { data } from '#/data'
-import type { SecurityStatus, User } from '#/data/types'
+import { accountApi } from '#/features/account/data/api'
+import type { SecurityStatus } from '#/features/account/data/dto'
+import type { User } from '#/features/auth/data/dto'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
@@ -86,11 +87,11 @@ function TwoFactorCard({ security }: TwoFactorCardProps) {
     setCode('')
   }
   const disable = useDataMutation(
-    () => data.account.twoFactorDisable({ password, code }),
+    () => accountApi.twoFactorDisable({ password, code }),
     { invalidate: [keys.security], success: t.disabled, onSuccess: reset },
   )
   const regenerate = useDataMutation(
-    () => data.account.newRecoveryCodes({ password, code }),
+    () => accountApi.newRecoveryCodes({ password, code }),
     {
       invalidate: [keys.security],
       onSuccess: (result) => {
@@ -196,13 +197,13 @@ function SetupDialog({ security, onClose, onEnabled }: SetupDialogProps) {
   const [qr, setQr] = useState('')
   const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
-  const start = useDataMutation(() => data.account.twoFactorSetup(), {
+  const start = useDataMutation(() => accountApi.twoFactorSetup(), {
     invalidate: [],
     onSuccess: setSecret,
   })
   const enable = useDataMutation(
     () =>
-      data.account.twoFactorEnable({
+      accountApi.twoFactorEnable({
         secret: secret!.secret,
         code,
         password: security.hasPassword ? password : undefined,
@@ -365,14 +366,11 @@ function DevicesCard() {
   const t = useMessages(settingsMessages).security
   const { locale } = useI18n()
   const sessions = useQuery(sessionsQuery).data ?? []
-  const revoke = useDataMutation(
-    (id: string) => data.account.revokeSession(id),
-    {
-      invalidate: [keys.sessions],
-      success: t.signedOut,
-    },
-  )
-  const others = useDataMutation(() => data.account.revokeOtherSessions(), {
+  const revoke = useDataMutation((id: string) => accountApi.revokeSession(id), {
+    invalidate: [keys.sessions],
+    success: t.signedOut,
+  })
+  const others = useDataMutation(() => accountApi.revokeOtherSessions(), {
     invalidate: [keys.sessions],
     success: t.othersSignedOut,
   })

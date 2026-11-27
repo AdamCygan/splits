@@ -1,4 +1,4 @@
-import type { TimeEntry } from '#/data/types'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { CheckableNote } from '#/components/note/note-markdown'
 import { Badge, ColorDot } from '#/components/ui/controls'
 import { Panel } from '#/components/ui/panel'

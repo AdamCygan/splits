@@ -1,6 +1,6 @@
 import { ConfirmDialog } from '#/components/ui/dialog'
-import { data } from '#/data'
-import type { TaskRef } from '#/data/types'
+import { entriesApi } from '#/features/time-entries/data/api'
+import type { TaskRef } from '#/features/time-entries/data/dto'
 import { useDataMutation } from '#/features/settings/queries'
 import { entryKeys } from '#/features/time-entries/queries'
 import { useFormat, useMessages } from '#/i18n/context'
@@ -33,7 +33,7 @@ export function DeleteTaskDialog({
   const app = useMessages(appMessages)
   const format = useFormat()
   const remove = useDataMutation(
-    (ref: TaskRef) => data.entries.removeTask(ref, date),
+    (ref: TaskRef) => entriesApi.removeTask(ref, date),
     {
       invalidate: [entryKeys.all],
       success: () => fmt(t.deleted, { name: task?.title ?? '' }),

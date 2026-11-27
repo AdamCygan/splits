@@ -1,6 +1,6 @@
 import { Download, ExternalLink } from 'lucide-react'
 import { Badge } from '#/components/ui/controls'
-import type { Invoice } from '#/data/types'
+import type { Invoice } from '#/features/billing/data/dto'
 import { SettingsCard } from '#/features/settings/components/ui'
 import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'

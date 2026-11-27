@@ -1,5 +1,5 @@
 import { maxOf } from './numbers'
-import type { TimeEntry } from '#/data/types'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { extractTaskKey } from './rules'
 
 /** Pola dostępne w szablonie podsumowania zadania. Kolejność = kolejność przycisków w edytorze. */

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { Sprint, TimeEntry } from '#/data/types'
+import type { Sprint } from '../../src/features/sprints/data/dto'
+import type { TimeEntry } from '../../src/features/time-entries/data/dto'
 import {
   averageMinutesPerSp,
   estimateOf,

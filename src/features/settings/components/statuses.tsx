@@ -5,9 +5,13 @@ import { Button } from '#/components/ui/button'
 import { Badge, ColorDot, ColorPicker, Field } from '#/components/ui/controls'
 import { Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
-import { data } from '#/data'
+import { statusesApi } from '#/features/task-statuses/data/api'
 import { splitArchived } from '#/domain/archive'
-import type { StatusCategory, TaskStatus, TaskStatusInput } from '#/data/types'
+import type {
+  StatusCategory,
+  TaskStatus,
+  TaskStatusInput,
+} from '#/features/task-statuses/data/dto'
 import { LIMITS } from '#/domain/rules'
 import { useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
@@ -29,7 +33,7 @@ import {
   move,
   useAnnouncer,
 } from './ui'
-import { FREE_LIMITS } from '#/features/billing/plans'
+import { FREE_LIMITS } from '#/features/billing/domain/plans'
 import {
   PlanLimit,
   useFreePlan,
@@ -73,17 +77,17 @@ function StatusList({ statuses }: StatusListProps) {
   const atLimit = useFreePlan() && active.length >= FREE_LIMITS.statuses
 
   const reorder = useDataMutation(
-    (ids: Array<string>) => data.statuses.reorder(ids),
+    (ids: Array<string>) => statusesApi.reorder(ids),
     { invalidate: [keys.statuses] },
   )
   const makeDefault = useDataMutation(
-    ({ id }: NamedItem) => data.statuses.setDefault(id),
+    ({ id }: NamedItem) => statusesApi.setDefault(id),
     {
       invalidate: [keys.statuses],
       success: (_r, v) => fmt(t.defaultSet, { name: v.name }),
     },
   )
-  const archive = useArchive(data.statuses.setArchived, {
+  const archive = useArchive(statusesApi.setArchived, {
     invalidate: keys.statuses,
     messages: t,
   })
@@ -255,9 +259,7 @@ function StatusDialog({ status, onClose }: StatusDialogProps) {
 
   const save = useDataMutation(
     (input: TaskStatusInput) =>
-      status
-        ? data.statuses.update(status.id, input)
-        : data.statuses.create(input),
+      status ? statusesApi.update(status.id, input) : statusesApi.create(input),
     {
       invalidate: [keys.statuses],
       success: status ? app.status.saved : t.created,

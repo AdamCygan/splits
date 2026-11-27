@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
 import { addDays, todayIn } from '#/domain/dates'
-import { FREE_LIMITS } from '#/features/billing/plans'
+import { FREE_LIMITS } from '../../src/features/billing/domain/plans'
 import { db } from '#/server/db/client'
 import { users } from '#/server/db/schema'
 import { registered } from './helpers'

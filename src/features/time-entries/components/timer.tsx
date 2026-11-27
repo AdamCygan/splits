@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Check, Coffee, Pause, Pencil, Play, Square } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '#/components/ui/button'
-import { data } from '#/data'
-import type { TimeEntry } from '#/data/types'
+import { entriesApi } from '../data/api'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { elapsedSeconds } from '#/domain/entries'
 import { todayIn } from '#/domain/dates'
 import { taskGroupKey } from '#/domain/report'
@@ -49,7 +49,7 @@ export const formatClock = (seconds: number) =>
 export function useStopTimer() {
   const t = useMessages(entriesMessages)
   const format = useFormat()
-  return useDataMutation((id: string) => data.entries.stop(id), {
+  return useDataMutation((id: string) => entriesApi.stop(id), {
     invalidate: [entryKeys.all],
     success: (stopped) =>
       fmt(t.timer.stopped, { time: format.minutes(stopped.durationMinutes) }),
@@ -60,7 +60,7 @@ export function useStopTimer() {
 export function usePauseTimer() {
   const t = useMessages(entriesMessages)
   const format = useFormat()
-  return useDataMutation((id: string) => data.entries.pause(id), {
+  return useDataMutation((id: string) => entriesApi.pause(id), {
     invalidate: [entryKeys.all],
     success: (paused) =>
       fmt(t.timer.pausedDone, {
@@ -74,7 +74,7 @@ export function usePauseTimer() {
 export function useResumeTask() {
   const t = useMessages(entriesMessages)
   const format = useFormat()
-  return useDataMutation((id: string) => data.entries.resume(id), {
+  return useDataMutation((id: string) => entriesApi.resume(id), {
     invalidate: [entryKeys.all],
     success: (result) => fmt(t.timer.resumed, { name: result.started.title }),
     onSuccess: (result) => {
@@ -92,7 +92,7 @@ export function useResumeTask() {
 /** Zadanie skończone: znika z listy wstrzymanych. */
 export function useDismissPaused() {
   const t = useMessages(entriesMessages)
-  return useDataMutation((entry: TimeEntry) => data.entries.dismiss(entry.id), {
+  return useDataMutation((entry: TimeEntry) => entriesApi.dismiss(entry.id), {
     invalidate: [entryKeys.all],
     success: (_, entry) => fmt(t.timer.dismissed, { name: entry.title }),
   })

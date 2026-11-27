@@ -8,7 +8,7 @@ import {
   errorMessages,
 } from '#/components/form/form-field'
 import { Button } from '#/components/ui/button'
-import { data } from '#/data'
+import { authApi } from '#/features/auth/data/api'
 import { passwordSchema } from '#/features/auth/schemas'
 import { useMessages } from '#/i18n/context'
 import { getLocale } from '#/i18n/locale'
@@ -54,7 +54,7 @@ function ResetPasswordPage() {
     },
     onSubmit: async ({ value }) => {
       setFormError(null)
-      const result = await data.auth.resetPassword(token ?? '', value.password)
+      const result = await authApi.resetPassword(token ?? '', value.password)
       if (!result.ok) {
         setFormError(errorText(result.error))
         return

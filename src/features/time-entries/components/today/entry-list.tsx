@@ -1,5 +1,5 @@
 import { ConfirmDialog } from '#/components/ui/dialog'
-import type { TimeEntry } from '#/data/types'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { DeleteTaskDialog } from '#/features/tasks/delete-task-dialog'
 import { useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'

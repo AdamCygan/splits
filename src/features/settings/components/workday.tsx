@@ -5,8 +5,11 @@ import { useQuery } from '@tanstack/react-query'
 import { CheckboxGroup, Field, Select, Switch } from '#/components/ui/controls'
 import { TimeInput } from '#/components/ui/time-input'
 import { Input } from '#/components/ui/input'
-import { data } from '#/data'
-import type { RoundingMinutes, UserSettings } from '#/data/types'
+import { settingsApi } from '../data/api'
+import type {
+  RoundingMinutes,
+  UserSettings,
+} from '#/features/settings/data/dto'
 import { ROUNDING_OPTIONS, TIME_RE } from '#/domain/rules'
 import { useI18n, useMessages } from '#/i18n/context'
 import { fmt, weekdayNames } from '#/i18n/format'
@@ -79,7 +82,7 @@ function WorkdayForm({ settings }: WorkdayFormProps) {
   const [submitted, setSubmitted] = useState(false)
   useEffect(() => setDraft(toDraft(settings)), [settings])
 
-  const save = useDataMutation(data.settings.update, {
+  const save = useDataMutation(settingsApi.update, {
     invalidate: [keys.settings, keys.sprints],
     success: app.status.saved,
     onSuccess: () => markSetupStep('workday'),

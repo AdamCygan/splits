@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
-import { data } from '#/data'
+import { breaksApi } from '#/features/breaks/data/api'
+import { entriesApi } from './data/api'
 import { unwrap } from '#/lib/api-client'
 
 export const entryKeys = {
@@ -16,28 +17,28 @@ export const entryKeys = {
 export const rangeEntriesQuery = (from: string, to: string) =>
   queryOptions({
     queryKey: entryKeys.range(from, to),
-    queryFn: () => unwrap(data.entries.range(from, to)),
+    queryFn: () => unwrap(entriesApi.range(from, to)),
   })
 
 export const entriesQuery = (workDate: string) =>
   queryOptions({
     queryKey: entryKeys.day(workDate),
-    queryFn: () => unwrap(data.entries.list(workDate)),
+    queryFn: () => unwrap(entriesApi.list(workDate)),
   })
 
 export const pausedQuery = queryOptions({
   queryKey: entryKeys.paused,
-  queryFn: () => unwrap(data.entries.paused()),
+  queryFn: () => unwrap(entriesApi.paused()),
 })
 
 export const unfinishedQuery = queryOptions({
   queryKey: entryKeys.unfinished,
-  queryFn: () => unwrap(data.entries.unfinished()),
+  queryFn: () => unwrap(entriesApi.unfinished()),
 })
 
 export const runningQuery = queryOptions({
   queryKey: entryKeys.running,
-  queryFn: () => unwrap(data.entries.running()),
+  queryFn: () => unwrap(entriesApi.running()),
 })
 
 /** Przerwy w pracy: lista z dnia i trwająca przerwa. */
@@ -45,9 +46,9 @@ export const breakKeys = { all: ['breaks'] as const }
 export const breaksQuery = (date: string) =>
   queryOptions({
     queryKey: [...breakKeys.all, 'day', date],
-    queryFn: () => unwrap(data.breaks.list(date)),
+    queryFn: () => unwrap(breaksApi.list(date)),
   })
 export const runningBreakQuery = queryOptions({
   queryKey: [...breakKeys.all, 'running'],
-  queryFn: () => unwrap(data.breaks.running()),
+  queryFn: () => unwrap(breaksApi.running()),
 })

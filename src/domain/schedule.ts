@@ -1,4 +1,8 @@
-import type { QuickTemplate, TemplateSchedule, TimeEntry } from '#/data/types'
+import type {
+  QuickTemplate,
+  TemplateSchedule,
+} from '#/features/templates/data/dto'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { weekday } from './dates'
 import { fromMinutes, toMinutes } from './entries'
 

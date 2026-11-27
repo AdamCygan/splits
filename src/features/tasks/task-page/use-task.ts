@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { data } from '#/data'
-import type { TaskRef, TimeEntry } from '#/data/types'
+import { entriesApi } from '#/features/time-entries/data/api'
+import type { TaskRef, TimeEntry } from '#/features/time-entries/data/dto'
 import { maxEstimate, maxPoints } from '#/domain/summary'
 import { taskInsights } from '#/domain/task-insights'
 import { projectsQuery, taskTypesQuery } from '#/features/settings/queries'
@@ -27,7 +27,7 @@ export function useTaskViewModel({ task, onRename }: TaskPageProps) {
   const projects = useQuery(projectsQuery).data ?? []
   const sessions = useQuery({
     queryKey: taskQueryKey(task),
-    queryFn: () => unwrap(data.entries.forTask(task)),
+    queryFn: () => unwrap(entriesApi.forTask(task)),
   })
   const list = sessions.data ?? []
   const first = list[0]?.workDate

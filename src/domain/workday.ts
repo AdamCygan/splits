@@ -1,5 +1,6 @@
 import { percentOf } from './numbers'
-import type { TaskType, TimeEntry } from '#/data/types'
+import type { TaskType } from '#/features/task-types/data/dto'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { addDays } from './dates'
 import { groupTasks, totalsOf } from './report'
 

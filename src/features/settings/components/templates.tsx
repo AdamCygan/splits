@@ -7,8 +7,11 @@ import { Button } from '#/components/ui/button'
 import { ColorDot, Field, Select } from '#/components/ui/controls'
 import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
-import { data } from '#/data'
-import type { QuickTemplate, QuickTemplateInput } from '#/data/types'
+import { templatesApi } from '#/features/templates/data/api'
+import type {
+  QuickTemplate,
+  QuickTemplateInput,
+} from '#/features/templates/data/dto'
 import { LIMITS } from '#/domain/rules'
 import { scheduleRuns } from '#/domain/schedule'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
@@ -41,7 +44,7 @@ import {
   useAnnouncer,
 } from './ui'
 import { Kbd } from '#/components/ui/kbd'
-import { FREE_LIMITS } from '#/features/billing/plans'
+import { FREE_LIMITS } from '#/features/billing/domain/plans'
 import {
   PlanLimit,
   useFreePlan,
@@ -76,10 +79,10 @@ export function TemplateSettings() {
       .join(', ')
 
   const reorder = useDataMutation(
-    (ids: Array<string>) => data.templates.reorder(ids),
+    (ids: Array<string>) => templatesApi.reorder(ids),
     { invalidate: [keys.templates] },
   )
-  const remove = useDataMutation((id: string) => data.templates.remove(id), {
+  const remove = useDataMutation((id: string) => templatesApi.remove(id), {
     invalidate: [keys.templates],
     success: t.deleted,
     onSuccess: () => setDeleting(null),
@@ -275,8 +278,8 @@ function TemplateDialog({ template, onClose }: TemplateDialogProps) {
   const save = useDataMutation(
     (input: QuickTemplateInput) =>
       template
-        ? data.templates.update(template.id, input)
-        : data.templates.create(input),
+        ? templatesApi.update(template.id, input)
+        : templatesApi.create(input),
     {
       invalidate: [keys.templates],
       success: template ? app.status.saved : t.created,

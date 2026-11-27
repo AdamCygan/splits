@@ -7,7 +7,7 @@ import {
   errorMessages,
 } from '#/components/form/form-field'
 import { Button } from '#/components/ui/button'
-import { data } from '#/data'
+import { authApi } from '#/features/auth/data/api'
 import { forgotPasswordSchema } from '#/features/auth/schemas'
 import { useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
@@ -37,7 +37,7 @@ function ForgotPasswordPage() {
     validators: { onSubmit: forgotPasswordSchema(t.validation) },
     onSubmit: async ({ value }) => {
       setFormError(null)
-      const result = await data.auth.forgotPassword(value.email)
+      const result = await authApi.forgotPassword(value.email)
       if (!result.ok) {
         setFormError(errorText(result.error))
         return

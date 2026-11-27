@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import type { AdminAction } from '#/data/types'
+import type { AdminAction } from '#/features/admin/data/dto'
 import { ADMIN_ACTION_KINDS } from '#/domain/admin'
 import type { AdminActionKind } from '#/domain/admin'
 import { useI18n, useMessages } from '#/i18n/context'

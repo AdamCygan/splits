@@ -1,4 +1,4 @@
-import type { SpScaleStep } from '#/data/types'
+import type { SpScaleStep } from '#/features/story-points/data/dto'
 
 export type ScaleStepDraft = Omit<SpScaleStep, 'id'>
 

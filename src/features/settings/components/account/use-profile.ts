@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { data } from '#/data'
-import type { ProfileInput, User } from '#/data/types'
+import { accountApi } from '#/features/account/data/api'
+import type { ProfileInput } from '#/features/account/data/dto'
+import type { User } from '#/features/auth/data/dto'
 import { setCurrentUser } from '#/features/auth/session'
 import { useMessages } from '#/i18n/context'
 import { settingsMessages } from '#/i18n/messages/settings'
@@ -15,7 +16,7 @@ export function useProfileViewModel(user: User) {
   const [displayName, setDisplayName] = useState(user.displayName)
   const [submitted, setSubmitted] = useState(false)
   const save = useDataMutation(
-    (input: ProfileInput) => data.account.updateProfile(input),
+    (input: ProfileInput) => accountApi.updateProfile(input),
     {
       invalidate: [keys.me],
       success: t.profileSaved,

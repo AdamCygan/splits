@@ -2,11 +2,11 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { data } from '#/data'
+import { entriesApi } from '#/features/time-entries/data/api'
 import { addDays, todayIn } from '#/domain/dates'
 import { aggregateTasks } from '#/domain/task-groups'
 import { signOut, useCurrentUser } from '#/features/auth/session'
-import { hasProAccess } from '#/features/billing/plans'
+import { hasProAccess } from '#/features/billing/domain/plans'
 import {
   settingsQuery,
   sprintsQuery,
@@ -121,7 +121,7 @@ export function useCommandPaletteViewModel() {
   const searching = debounced.length >= 2 && debounced === typed
   const found = useQuery({
     queryKey: [...entryKeys.all, 'search-all', debounced],
-    queryFn: () => unwrap(data.entries.searchAll(debounced)),
+    queryFn: () => unwrap(entriesApi.searchAll(debounced)),
     enabled: open && searching,
     staleTime: 30_000,
   })

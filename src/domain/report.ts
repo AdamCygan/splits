@@ -1,4 +1,5 @@
-import type { FieldRequirement, TaskType, TimeEntry } from '#/data/types'
+import type { FieldRequirement, TaskType } from '#/features/task-types/data/dto'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { addDays, diffDays, isValidDate, startOfWeek } from './dates'
 import { toCsv } from './csv'
 import { elapsedSeconds } from './entries'

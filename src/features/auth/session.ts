@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
-import { data } from '#/data'
-import type { AuthSession, User } from '#/data/types'
+import { authApi } from './data/api'
+import type { AuthSession, User } from '#/features/auth/data/dto'
 import { identify, resetAnalytics } from '#/integrations/posthog/analytics'
 import { setUnauthorizedHandler } from '#/lib/api-client'
 import { onAccessTokenChange, setAccessToken } from '#/lib/auth-token'
@@ -54,7 +54,7 @@ export const getCurrentUser = () => currentUser
 
 /** Jedno odświeżenie naraz, nawet gdy kilka zapytań dostanie 401 równocześnie. */
 export function refreshSession(): Promise<boolean> {
-  refreshing ??= data.auth
+  refreshing ??= authApi
     .restore()
     .then((result) => {
       if (result.ok) {
@@ -79,7 +79,7 @@ export async function ensureSession(): Promise<boolean> {
 }
 
 export async function signOut() {
-  await data.auth.logout()
+  await authApi.logout()
   clearSession()
 }
 

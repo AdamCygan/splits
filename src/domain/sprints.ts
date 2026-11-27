@@ -1,4 +1,4 @@
-import type { Sprint, SprintCadence } from '#/data/types'
+import type { Sprint, SprintCadence } from '#/features/sprints/data/dto'
 import { addDays, diffDays } from './dates'
 
 export type SprintPhase = 'past' | 'current' | 'upcoming'

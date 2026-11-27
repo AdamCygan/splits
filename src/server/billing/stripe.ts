@@ -1,8 +1,8 @@
 import Stripe from 'stripe'
 import { serverEnv } from '../env'
 import { ApiError } from '../http/errors'
-import { isBillingInterval } from '#/features/billing/plans'
-import type { BillingInterval } from '#/features/billing/plans'
+import { isBillingInterval } from '#/features/billing/domain/plans'
+import type { BillingInterval } from '#/features/billing/domain/plans'
 
 /**
  * Klient Stripe tworzony leniwie (bez klucza aplikacja działa, tylko bez płatności).

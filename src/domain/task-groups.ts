@@ -1,5 +1,5 @@
 import { maxOf } from './numbers'
-import type { TimeEntry } from '#/data/types'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { taskGroupKey } from './report'
 
 /**

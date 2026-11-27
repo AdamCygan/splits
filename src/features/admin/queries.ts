@@ -1,6 +1,9 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query'
-import { data } from '#/data'
-import type { AdminActionFilter, AdminUserFilter } from '#/data/types'
+import { adminApi } from './data/api'
+import type {
+  AdminActionFilter,
+  AdminUserFilter,
+} from '#/features/admin/data/dto'
 import { unwrap } from '#/lib/api-client'
 
 export const adminKeys = {
@@ -14,7 +17,7 @@ export const adminKeys = {
 
 export const adminStatsQuery = queryOptions({
   queryKey: adminKeys.stats,
-  queryFn: () => unwrap(data.admin.stats()),
+  queryFn: () => unwrap(adminApi.stats()),
   // Brak dostępu (np. wymagane 2FA) nie jest chwilowym błędem: bez ponawiania.
   retry: false,
 })
@@ -22,26 +25,26 @@ export const adminStatsQuery = queryOptions({
 export const adminUsersQuery = (filter: AdminUserFilter) =>
   queryOptions({
     queryKey: adminKeys.users(filter),
-    queryFn: () => unwrap(data.admin.users(filter)),
+    queryFn: () => unwrap(adminApi.users(filter)),
     placeholderData: keepPreviousData,
   })
 
 export const adminUserQuery = (id: string) =>
   queryOptions({
     queryKey: adminKeys.user(id),
-    queryFn: () => unwrap(data.admin.user(id)),
+    queryFn: () => unwrap(adminApi.user(id)),
     retry: false,
   })
 
 export const adminInvoicesQuery = (id: string) =>
   queryOptions({
     queryKey: adminKeys.invoices(id),
-    queryFn: () => unwrap(data.admin.invoices(id)),
+    queryFn: () => unwrap(adminApi.invoices(id)),
   })
 
 export const adminActionsQuery = (filter: AdminActionFilter) =>
   queryOptions({
     queryKey: adminKeys.actions(filter),
-    queryFn: () => unwrap(data.admin.actions(filter)),
+    queryFn: () => unwrap(adminApi.actions(filter)),
     placeholderData: keepPreviousData,
   })

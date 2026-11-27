@@ -6,9 +6,9 @@ import { Button } from '#/components/ui/button'
 import { Field } from '#/components/ui/controls'
 import { Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
-import { data } from '#/data'
-import { DAY_OFF_KINDS } from '#/data/types'
-import type { DayOff, DayOffKind } from '#/data/types'
+import { daysOffApi } from './data/api'
+import { DAY_OFF_KINDS } from '#/features/days-off/data/dto'
+import type { DayOff, DayOffKind } from '#/features/days-off/data/dto'
 import { diffDays } from '#/domain/dates'
 import { keys, useDataMutation } from '#/features/settings/queries'
 import { useFormat, useMessages } from '#/i18n/context'
@@ -72,10 +72,10 @@ export function DayOffDialog({
   const save = useDataMutation(
     async (input: DayOffDraft) => {
       if (replacing) {
-        const removed = await data.daysOff.remove(replacing.from, replacing.to)
+        const removed = await daysOffApi.remove(replacing.from, replacing.to)
         if (!removed.ok) return removed
       }
-      return data.daysOff.set(input)
+      return daysOffApi.set(input)
     },
     {
       invalidate: [keys.daysOff],

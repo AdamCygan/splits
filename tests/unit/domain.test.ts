@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { SprintCadence } from '#/data/types'
+import type { SprintCadence } from '../../src/features/sprints/data/dto'
 import {
   addDays,
   diffDays,

@@ -255,7 +255,7 @@ function LandingPage() {
               <Link
                 to="/demo"
                 preload={false}
-                className="rounded-sm font-semibold underline underline-offset-4"
+                className="inline-flex min-h-6 items-center rounded-sm font-semibold underline underline-offset-4"
               >
                 {t.pricing.demo}
               </Link>

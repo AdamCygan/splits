@@ -1,9 +1,8 @@
+import type { FieldRequirement, TaskType } from '#/features/task-types/data/dto'
 import type {
-  FieldRequirement,
-  TaskType,
   TimeEntry,
   TimeEntryInput,
-} from '#/data/types'
+} from '#/features/time-entries/data/dto'
 import { isValidDate } from './dates'
 import { TIME_RE } from './rules'
 

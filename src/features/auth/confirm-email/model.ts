@@ -1,4 +1,4 @@
-import { data } from '#/data'
+import { authApi } from '../data/api'
 import type { ApiFailure } from '#/lib/api-client'
 import { refreshSession } from '../session'
 
@@ -11,7 +11,7 @@ export type ConfirmState =
 const attempts = new Map<string, Promise<ConfirmState>>()
 
 async function confirm(token: string): Promise<ConfirmState> {
-  const result = await data.auth.confirmEmail(token)
+  const result = await authApi.confirmEmail(token)
   // Zalogowany użytkownik od razu widzi nowy adres i znika prośba o potwierdzenie.
   const signedIn = await refreshSession()
   return result.ok

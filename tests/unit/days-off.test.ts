@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { DayOff } from '#/data/types'
+import type { DayOff } from '../../src/features/days-off/data/dto'
 import { groupDaysOff, sprintAvailability } from '#/domain/days-off'
 
 const off = (

@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { StatGrid, StatTile } from '#/components/ui/stats'
-import type { AdminStats } from '#/data/types'
+import type { AdminStats } from '#/features/admin/data/dto'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
 import { adminMessages } from '#/i18n/messages/admin'

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { data } from '#/data'
-import type { TimeEntry } from '#/data/types'
+import { entriesApi } from '../../data/api'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { extractTaskKey } from '#/domain/rules'
 import { dayTaskGroups } from '#/domain/task-groups'
 import type { DayTaskGroup } from '#/domain/task-groups'
@@ -37,7 +37,7 @@ export function useEntryListViewModel(entries: ReadonlyArray<TimeEntry>) {
   const [dialog, setDialog] = useState<EntryListDialog | null>(null)
   const close = () => setDialog(null)
 
-  const remove = useDataMutation((id: string) => data.entries.remove(id), {
+  const remove = useDataMutation((id: string) => entriesApi.remove(id), {
     invalidate: [entryKeys.all],
     success: t.list.deleted,
     onSuccess: close,

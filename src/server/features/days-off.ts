@@ -1,7 +1,7 @@
 import { and, asc, between, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { addDays, diffDays, weekday } from '#/domain/dates'
-import type { DayOff, DayOffKind } from '#/data/types'
+import type { DayOff, DayOffKind } from '#/features/days-off/data/dto'
 import { db } from '../db/client'
 import * as t from '../db/schema'
 import type { AppEnv } from '../http/context'

@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { ConfirmDialog } from '#/components/ui/dialog'
-import { data } from '#/data'
-import { DAY_OFF_KINDS } from '#/data/types'
+import { daysOffApi } from './data/api'
+import { DAY_OFF_KINDS } from '#/features/days-off/data/dto'
 import { todayIn } from '#/domain/dates'
 import { groupDaysOff } from '#/domain/days-off'
 import type { DayOffRange } from '#/domain/days-off'
@@ -58,7 +58,7 @@ export function DaysOffSettings() {
     .join(', ')
 
   const remove = useDataMutation(
-    (range: DayOffRange) => data.daysOff.remove(range.from, range.to),
+    (range: DayOffRange) => daysOffApi.remove(range.from, range.to),
     {
       invalidate: [keys.daysOff],
       success: t.settings.removed,

@@ -1,4 +1,4 @@
-import type { User } from '#/data/types'
+import type { User } from '#/features/auth/data/dto'
 import { Field } from '#/components/ui/controls'
 import { Input } from '#/components/ui/input'
 import { LIMITS } from '#/domain/rules'

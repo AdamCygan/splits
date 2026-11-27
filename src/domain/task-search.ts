@@ -1,4 +1,7 @@
-import type { TaskSearchResult, TimeEntry } from '#/data/types'
+import type {
+  TaskSearchResult,
+  TimeEntry,
+} from '#/features/time-entries/data/dto'
 import { aggregateTasks, isLaterSession } from './task-groups'
 import type { TaskAggregate } from './task-groups'
 

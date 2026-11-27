@@ -9,7 +9,7 @@ import {
 import { ActionMenu } from '#/components/ui/action-menu'
 import { Button } from '#/components/ui/button'
 import { Badge } from '#/components/ui/controls'
-import type { TimeEntry } from '#/data/types'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { TaskLink } from '#/features/tasks/task-link'
 import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'

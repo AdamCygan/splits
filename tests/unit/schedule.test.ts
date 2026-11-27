@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { QuickTemplate } from '#/data/types'
+import type { QuickTemplate } from '../../src/features/templates/data/dto'
 import {
   isLogged,
   sameTime,

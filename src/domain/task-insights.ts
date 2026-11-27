@@ -1,4 +1,4 @@
-import type { TimeEntry } from '#/data/types'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { diffDays } from './dates'
 import type { MinuteRange } from './day-summary'
 import { toMinutes } from './entries'

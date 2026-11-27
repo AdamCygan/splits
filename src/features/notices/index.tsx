@@ -1,6 +1,6 @@
 import { CreditCard, MailWarning } from 'lucide-react'
 import type { ReactNode } from 'react'
-import type { User } from '#/data/types'
+import type { User } from '#/features/auth/data/dto'
 import { useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { panelMessages } from '#/i18n/messages/panel'

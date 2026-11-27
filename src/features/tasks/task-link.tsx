@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
-import type { TaskRef } from '#/data/types'
+import type { TaskRef } from '#/features/time-entries/data/dto'
 import { cn } from '#/lib/utils'
 
 export interface TaskLinkProps {

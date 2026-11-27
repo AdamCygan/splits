@@ -1,4 +1,4 @@
-import type { TaskType } from '#/data/types'
+import type { TaskType } from '#/features/task-types/data/dto'
 import type { TypeRow } from '#/domain/report'
 import { cn } from '#/lib/utils'
 

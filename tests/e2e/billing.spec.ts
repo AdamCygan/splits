@@ -6,14 +6,24 @@ test.describe('pricing and cart: Free, Pro monthly, Pro yearly', () => {
     page,
   }) => {
     await page.goto('/pricing')
-    for (const plan of ['free', 'month', 'year'])
-      await expect(page.locator(`[data-plan="${plan}"]`)).toBeVisible()
-    await expect(page.locator('[data-plan]')).toHaveCount(3)
-    await expect(page.getByText('$6', { exact: true })).toBeVisible()
-    await expect(page.getByText('$60', { exact: true })).toBeVisible()
-    await expect(page.getByText('2 months free')).toBeVisible()
-    await expect(page.getByText(/team/i)).toHaveCount(0)
-    await expect(page.getByText(/trial/i)).toHaveCount(0)
+    expect(
+      await page
+        .locator('[data-plan]')
+        .evaluateAll((tiles) => tiles.map((tile) => tile.dataset.plan)),
+    ).toEqual(['free', 'month', 'year'])
+    const tiles = page.locator('[data-plan]')
+    await expect(
+      page.locator('[data-plan="month"]').getByText('$6', { exact: true }),
+    ).toBeVisible()
+    await expect(
+      page.locator('[data-plan="year"]').getByText('$60', { exact: true }),
+    ).toBeVisible()
+    await expect(
+      page
+        .locator('[data-plan="year"]')
+        .getByText('2 months free', { exact: true }),
+    ).toBeVisible()
+    await expect(tiles.getByText(/team|trial/i)).toHaveCount(0)
     await expectNoA11yViolations(page)
   })
 

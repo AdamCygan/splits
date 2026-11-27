@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { data } from '#/data'
-import type { User } from '#/data/types'
+import { accountApi } from '#/features/account/data/api'
+import type { User } from '#/features/auth/data/dto'
 import { useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { settingsMessages } from '#/i18n/messages/settings'
@@ -26,17 +26,17 @@ export function useEmailViewModel(user: User) {
   const [draft, setDraft] = useState<EmailChangeDraft>(EMPTY_EMAIL_CHANGE)
   const [submitted, setSubmitted] = useState(false)
 
-  const resend = useDataMutation(() => data.account.resendVerification(), {
+  const resend = useDataMutation(() => accountApi.resendVerification(), {
     invalidate: [],
     success: fmt(t.resent, { email: user.email }),
   })
-  const cancel = useDataMutation(() => data.account.cancelEmailChange(), {
+  const cancel = useDataMutation(() => accountApi.cancelEmailChange(), {
     invalidate: [keys.security],
     success: t.pendingCanceled,
   })
   const change = useDataMutation(
     (input: EmailChangeDraft) =>
-      data.account.changeEmail(emailChangeInput(input)),
+      accountApi.changeEmail(emailChangeInput(input)),
     {
       invalidate: [keys.security],
       success: (_r, input) => fmt(t.emailSent, { email: input.email.trim() }),

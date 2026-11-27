@@ -5,8 +5,18 @@ import {
 } from '@tanstack/react-query'
 import type { QueryKey } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { data } from '#/data'
-import type { R } from '#/data/source'
+import { accountApi } from '#/features/account/data/api'
+import { billingApi } from '#/features/billing/data/api'
+import { daysOffApi } from '#/features/days-off/data/api'
+import { projectsApi } from '#/features/projects/data/api'
+import { settingsApi } from './data/api'
+import { spScaleApi } from '#/features/story-points/data/api'
+import { sprintsApi } from '#/features/sprints/data/api'
+import { statusesApi } from '#/features/task-statuses/data/api'
+import { tagsApi } from '#/features/tags/data/api'
+import { taskTypesApi } from '#/features/task-types/data/api'
+import { templatesApi } from '#/features/templates/data/api'
+import type { R } from '#/shared/data/http'
 import { ApiError, unwrap } from '#/lib/api-client'
 import { useErrorText } from '#/lib/use-error-text'
 
@@ -30,61 +40,61 @@ export const keys = {
 
 export const meQuery = queryOptions({
   queryKey: keys.me,
-  queryFn: () => unwrap(data.account.me()),
+  queryFn: () => unwrap(accountApi.me()),
 })
 export const securityQuery = queryOptions({
   queryKey: keys.security,
-  queryFn: () => unwrap(data.account.security()),
+  queryFn: () => unwrap(accountApi.security()),
 })
 export const sessionsQuery = queryOptions({
   queryKey: keys.sessions,
-  queryFn: () => unwrap(data.account.sessions()),
+  queryFn: () => unwrap(accountApi.sessions()),
 })
 export const invoicesQuery = queryOptions({
   queryKey: keys.invoices,
-  queryFn: () => unwrap(data.billing.invoices()),
+  queryFn: () => unwrap(billingApi.invoices()),
 })
 export const settingsQuery = queryOptions({
   queryKey: keys.settings,
-  queryFn: () => unwrap(data.settings.get()),
+  queryFn: () => unwrap(settingsApi.get()),
 })
 export const scaleQuery = queryOptions({
   queryKey: keys.scale,
-  queryFn: () => unwrap(data.spScale.get()),
+  queryFn: () => unwrap(spScaleApi.get()),
 })
 export const taskTypesQuery = queryOptions({
   queryKey: keys.taskTypes,
-  queryFn: () => unwrap(data.taskTypes.list()),
+  queryFn: () => unwrap(taskTypesApi.list()),
 })
 export const statusesQuery = queryOptions({
   queryKey: keys.statuses,
-  queryFn: () => unwrap(data.statuses.list()),
+  queryFn: () => unwrap(statusesApi.list()),
 })
 export const cadenceQuery = queryOptions({
   queryKey: keys.cadence,
-  queryFn: () => unwrap(data.sprints.getCadence()),
+  queryFn: () => unwrap(sprintsApi.getCadence()),
 })
 export const sprintsQuery = queryOptions({
   queryKey: keys.sprints,
-  queryFn: () => unwrap(data.sprints.list()),
+  queryFn: () => unwrap(sprintsApi.list()),
 })
 /** Dni wolne w zakresie dat (urlop, L4, święta). */
 export const daysOffQuery = (from: string, to: string) =>
   queryOptions({
     queryKey: [...keys.daysOff, from, to],
-    queryFn: () => unwrap(data.daysOff.list(from, to)),
+    queryFn: () => unwrap(daysOffApi.list(from, to)),
   })
 export const projectsQuery = queryOptions({
   queryKey: keys.projects,
-  queryFn: () => unwrap(data.projects.list()),
+  queryFn: () => unwrap(projectsApi.list()),
 })
 export const tagsQuery = queryOptions({
   queryKey: keys.tags,
-  queryFn: () => unwrap(data.tags.list()),
+  queryFn: () => unwrap(tagsApi.list()),
 })
 export const templatesQuery = queryOptions({
   queryKey: keys.templates,
-  queryFn: () => unwrap(data.templates.list()),
+  queryFn: () => unwrap(templatesApi.list()),
 })
 
 interface MutationOptions<TVars, TData> {

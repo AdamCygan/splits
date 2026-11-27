@@ -7,7 +7,7 @@ import {
   errorMessages,
 } from '#/components/form/form-field'
 import { Button } from '#/components/ui/button'
-import { data } from '#/data'
+import { authApi } from '../data/api'
 import { useI18n, useMessages } from '#/i18n/context'
 import { authMessages } from '#/i18n/messages/auth'
 import { track } from '#/integrations/posthog/analytics'
@@ -15,7 +15,7 @@ import { fieldErrorsOf, useErrorText } from '#/lib/use-error-text'
 import { registerSchema } from '../schemas'
 import { startSession } from '../session'
 import type { RegisterForm as RegisterValues } from '../schemas'
-import type { BillingInterval } from '#/features/billing/plans'
+import type { BillingInterval } from '#/features/billing/domain/plans'
 
 type ServerErrors = Partial<Record<keyof RegisterValues, Array<string>>>
 
@@ -50,7 +50,7 @@ export function RegisterForm({
     onSubmit: async ({ value }) => {
       setFormError(null)
       setServerErrors({})
-      const result = await data.auth.register({
+      const result = await authApi.register({
         username: value.username,
         email: value.email,
         password: value.password,

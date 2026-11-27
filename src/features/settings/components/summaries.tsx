@@ -3,8 +3,8 @@ import type { FormEvent } from 'react'
 import { RotateCcw } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Textarea } from '#/components/ui/controls'
-import { data } from '#/data'
-import type { UserSettings } from '#/data/types'
+import { settingsApi } from '../data/api'
+import type { UserSettings } from '#/features/settings/data/dto'
 import {
   SUMMARY_PLACEHOLDERS,
   SUMMARY_TEMPLATE_MAX,
@@ -56,7 +56,7 @@ function TemplateEditor({ settings }: TemplateEditorProps) {
 
   const save = useDataMutation(
     (template: string | null) =>
-      data.settings.update({ ...settings, summaryTemplate: template }),
+      settingsApi.update({ ...settings, summaryTemplate: template }),
     { invalidate: [keys.settings], success: t.saved },
   )
 

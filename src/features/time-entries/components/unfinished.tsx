@@ -2,8 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 import { Check, Play } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Badge } from '#/components/ui/controls'
-import { data } from '#/data'
-import type { TaskRef, TimeEntry, UnfinishedTask } from '#/data/types'
+import { entriesApi } from '../data/api'
+import type {
+  TaskRef,
+  TimeEntry,
+  UnfinishedTask,
+} from '#/features/time-entries/data/dto'
 import { addDays } from '#/domain/dates'
 import { TaskLink } from '#/features/tasks/task-link'
 import {
@@ -34,7 +38,7 @@ export function useFinishTask() {
   const t = useMessages(entriesMessages).unfinished
   return useDataMutation(
     ({ ref, finished }: FinishTaskInput) =>
-      data.entries.finishTask(ref, finished),
+      entriesApi.finishTask(ref, finished),
     {
       invalidate: [entryKeys.all],
       success: (_, { ref, finished }) =>

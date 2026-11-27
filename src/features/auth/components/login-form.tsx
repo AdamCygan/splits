@@ -7,7 +7,7 @@ import {
   errorMessages,
 } from '#/components/form/form-field'
 import { Button } from '#/components/ui/button'
-import { data } from '#/data'
+import { authApi } from '../data/api'
 import { useMessages } from '#/i18n/context'
 import { authMessages } from '#/i18n/messages/auth'
 import { useErrorText } from '#/lib/use-error-text'
@@ -32,7 +32,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
     validators: { onSubmit: loginSchema(t.validation) },
     onSubmit: async ({ value }) => {
       setFormError(null)
-      const result = await data.auth.login(value)
+      const result = await authApi.login(value)
       if (!result.ok) {
         setFormError(errorText(result.error))
         return

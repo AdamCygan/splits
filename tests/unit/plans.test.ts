@@ -7,7 +7,7 @@ import {
   plans,
   renewalDate,
   yearlyFreeMonths,
-} from '#/features/billing/plans'
+} from '../../src/features/billing/domain/plans'
 
 const ymd = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`

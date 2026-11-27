@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { TimeEntryInput } from '#/data/types'
+import type { TimeEntryInput } from '../../src/features/time-entries/data/dto'
 import {
   elapsedSeconds,
   isFutureStart,

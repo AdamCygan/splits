@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import type { TimeEntry, TimeEntryInput } from '#/data/types'
+import type {
+  TimeEntry,
+  TimeEntryInput,
+} from '../../src/features/time-entries/data/dto'
 import { validateEntry, withExtension } from '#/domain/entries'
 import { groupTasks, reportCsv, totalsOf } from '#/domain/report'
 import { estimateOf } from '#/domain/sprint-stats'

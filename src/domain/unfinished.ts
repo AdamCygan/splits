@@ -1,5 +1,8 @@
 import type { WorkKind } from '#/config/work-types'
-import type { TimeEntry, UnfinishedTask } from '#/data/types'
+import type {
+  TimeEntry,
+  UnfinishedTask,
+} from '#/features/time-entries/data/dto'
 import { addDays } from './dates'
 import { aggregateTasks } from './task-groups'
 

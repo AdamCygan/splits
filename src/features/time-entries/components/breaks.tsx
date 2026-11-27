@@ -8,8 +8,8 @@ import { Field } from '#/components/ui/controls'
 import { Dialog, DialogContent } from '#/components/ui/dialog'
 import { TimeInput } from '#/components/ui/time-input'
 import { Input } from '#/components/ui/input'
-import { data } from '#/data'
-import type { WorkBreak } from '#/data/types'
+import { breaksApi } from '#/features/breaks/data/api'
+import type { WorkBreak } from '#/features/breaks/data/dto'
 import { minutesBetween, parseDuration } from '#/domain/entries'
 import { TIME_RE } from '#/domain/rules'
 import { settingsQuery, useDataMutation } from '#/features/settings/queries'
@@ -55,7 +55,7 @@ export function useBreakDay(date: string) {
 
 export function useStartBreak() {
   const t = useMessages(entriesMessages).breaks
-  return useDataMutation(() => data.breaks.start(), {
+  return useDataMutation(() => breaksApi.start(), {
     invalidate: [breakKeys.all, entryKeys.all],
     success: (result) =>
       result.paused
@@ -74,7 +74,7 @@ export function useEndBreak() {
   const t = useMessages(entriesMessages)
   const format = useFormat()
   return useDataMutation(
-    ({ id, resume }: EndBreakInput) => data.breaks.end(id, resume),
+    ({ id, resume }: EndBreakInput) => breaksApi.end(id, resume),
     {
       invalidate: [breakKeys.all, entryKeys.all],
       success: (result) =>
@@ -290,7 +290,7 @@ function BreaksDialog({ date, day, onClose }: BreaksDialogProps) {
 
   const add = useDataMutation(
     () =>
-      data.breaks.add({
+      breaksApi.add({
         workDate: date,
         startTime: hasTimes ? from : null,
         endTime: hasTimes ? to : null,
@@ -308,7 +308,7 @@ function BreaksDialog({ date, day, onClose }: BreaksDialogProps) {
       },
     },
   )
-  const remove = useDataMutation((id: string) => data.breaks.remove(id), {
+  const remove = useDataMutation((id: string) => breaksApi.remove(id), {
     invalidate: [breakKeys.all],
     success: t.removed,
   })

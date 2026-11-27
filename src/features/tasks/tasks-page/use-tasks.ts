@@ -1,6 +1,6 @@
 import { useDeferredValue, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import type { TimeEntry } from '#/data/types'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { todayIn } from '#/domain/dates'
 import { groupTasks, sortRows, totalsOf } from '#/domain/report'
 import type { TaskRow, TaskSort } from '#/domain/report'
@@ -21,7 +21,7 @@ import type {
   TaskPeriodChoice,
 } from '#/domain/task-list'
 import { historyStart } from '#/domain/workday'
-import { FREE_LIMITS, hasProAccess } from '#/features/billing/plans'
+import { FREE_LIMITS, hasProAccess } from '#/features/billing/domain/plans'
 import {
   meQuery,
   scaleQuery,

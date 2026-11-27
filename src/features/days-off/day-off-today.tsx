@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { CalendarOff } from 'lucide-react'
 import { Button } from '#/components/ui/button'
-import { data } from '#/data'
+import { daysOffApi } from './data/api'
 import {
   daysOffQuery,
   keys,
@@ -48,7 +48,7 @@ export function DayOffBanner({ date }: DayOffBannerProps) {
   const t = useMessages(daysOffMessages)
   const day = useQuery(daysOffQuery(date, date)).data?.[0]
   const [editing, setEditing] = useState(false)
-  const remove = useDataMutation(() => data.daysOff.remove(date, date), {
+  const remove = useDataMutation(() => daysOffApi.remove(date, date), {
     invalidate: [keys.daysOff],
     success: t.banner.removed,
   })

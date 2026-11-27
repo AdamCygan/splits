@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { buttonVariants } from '#/components/ui/button'
-import { FREE_LIMITS } from '#/features/billing/plans'
+import { FREE_LIMITS } from '#/features/billing/domain/plans'
 import { TaskDialog } from '#/features/time-entries/components/task-dialog'
 import { useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'

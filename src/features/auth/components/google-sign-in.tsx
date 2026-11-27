@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { data } from '#/data'
+import { authApi } from '../data/api'
 import { useMessages } from '#/i18n/context'
 import { authMessages } from '#/i18n/messages/auth'
 import { cn } from '#/lib/utils'
@@ -42,7 +42,7 @@ export function GoogleSignIn({ redirectTo, className }: GoogleSignInProps) {
   const [enabled, setEnabled] = useState(false)
   useEffect(() => {
     let active = true
-    void data.auth.providers().then((result) => {
+    void authApi.providers().then((result) => {
       if (active) setEnabled(result.ok && result.value.google)
     })
     return () => {

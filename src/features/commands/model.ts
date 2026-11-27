@@ -22,13 +22,11 @@ import {
   Timer,
   Zap,
 } from 'lucide-react'
-import type {
-  QuickTemplate,
-  Sprint,
-  TaskType,
-  TimeEntry,
-  WorkBreak,
-} from '#/data/types'
+import type { QuickTemplate } from '#/features/templates/data/dto'
+import type { Sprint } from '#/features/sprints/data/dto'
+import type { TaskType } from '#/features/task-types/data/dto'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
+import type { WorkBreak } from '#/features/breaks/data/dto'
 import { parseDateQuery } from '#/domain/date-query'
 import { addDays } from '#/domain/dates'
 import { taskGroupKey } from '#/domain/report'

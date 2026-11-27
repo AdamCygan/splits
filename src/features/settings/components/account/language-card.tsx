@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Segmented } from '#/components/ui/segmented'
-import { data } from '#/data'
+import { settingsApi } from '../../data/api'
 import { locales, localeNames } from '#/i18n/config'
 import type { Locale } from '#/i18n/config'
 import { useI18n, useMessages } from '#/i18n/context'
@@ -14,7 +14,7 @@ export function LanguageCard() {
   const { locale, setLocale } = useI18n()
   const settings = useQuery(settingsQuery).data
   const save = useDataMutation(
-    (next: Locale) => data.settings.update({ ...settings!, locale: next }),
+    (next: Locale) => settingsApi.update({ ...settings!, locale: next }),
     { invalidate: [keys.settings] },
   )
   return (

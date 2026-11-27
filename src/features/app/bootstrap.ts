@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { QueryClient } from '@tanstack/react-query'
-import { data } from '#/data'
-import type { Bootstrap } from '#/data/types'
+import { appApi } from './data/api'
+import type { Bootstrap } from '#/features/app/data/dto'
 import { setCurrentUser } from '#/features/auth/session'
 import { keys } from '#/features/settings/queries'
 import { entryKeys } from '#/features/time-entries/queries'
@@ -33,7 +33,7 @@ export function useBootstrap() {
     gcTime: Infinity,
     retry: 0,
     queryFn: async () => {
-      const result = await data.bootstrap()
+      const result = await appApi.bootstrap()
       if (!result.ok) return false
       primeCache(client, result.value)
       return true

@@ -5,9 +5,11 @@ import { Button } from '#/components/ui/button'
 import { Badge, ColorDot, ColorPicker, Field } from '#/components/ui/controls'
 import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
-import { data } from '#/data'
+import { projectsApi } from '#/features/projects/data/api'
+import { tagsApi } from '#/features/tags/data/api'
 import { splitArchived } from '#/domain/archive'
-import type { Project, ProjectInput, Tag, TagInput } from '#/data/types'
+import type { Project, ProjectInput } from '#/features/projects/data/dto'
+import type { Tag, TagInput } from '#/features/tags/data/dto'
 import { LIMITS, PROJECT_KEY_RE } from '#/domain/rules'
 import { useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
@@ -24,7 +26,7 @@ import { useArchive } from '../use-archive'
 import { usePalette, withCurrent } from './palette'
 import { QueryView, SectionHeader, SettingsCard } from './ui'
 import { useQuery } from '@tanstack/react-query'
-import { FREE_LIMITS } from '#/features/billing/plans'
+import { FREE_LIMITS } from '#/features/billing/domain/plans'
 import {
   PlanLimit,
   useFreePlan,
@@ -51,7 +53,7 @@ function Projects() {
   const activeCount = splitArchived(useQuery(projectsQuery).data ?? []).active
     .length
   const atLimit = isFree && activeCount >= FREE_LIMITS.projects
-  const archive = useArchive(data.projects.setArchived, {
+  const archive = useArchive(projectsApi.setArchived, {
     invalidate: keys.projects,
     messages: t,
   })
@@ -175,8 +177,8 @@ function ProjectDialog({ project, onClose }: ProjectDialogProps) {
   const save = useDataMutation(
     (input: ProjectInput) =>
       project
-        ? data.projects.update(project.id, input)
-        : data.projects.create(input),
+        ? projectsApi.update(project.id, input)
+        : projectsApi.create(input),
     {
       invalidate: [keys.projects],
       success: project ? app.status.saved : t.created,
@@ -304,7 +306,7 @@ function Tags() {
   const [editing, setEditing] = useState<Tag | null>(null)
   const [deleting, setDeleting] = useState<Tag | null>(null)
 
-  const create = useDataMutation((input: TagInput) => data.tags.create(input), {
+  const create = useDataMutation((input: TagInput) => tagsApi.create(input), {
     invalidate: [keys.tags],
     success: t.tagCreated,
     onSuccess: () => {
@@ -312,7 +314,7 @@ function Tags() {
       setSubmitted(false)
     },
   })
-  const remove = useDataMutation((id: string) => data.tags.remove(id), {
+  const remove = useDataMutation((id: string) => tagsApi.remove(id), {
     invalidate: [keys.tags],
     success: t.tagDeleted,
     onSuccess: () => setDeleting(null),
@@ -436,7 +438,7 @@ function TagDialog({ tag, onClose }: TagDialogProps) {
   })
   const [submitted, setSubmitted] = useState(false)
   const save = useDataMutation(
-    (input: TagInput) => data.tags.update(tag.id, input),
+    (input: TagInput) => tagsApi.update(tag.id, input),
     { invalidate: [keys.tags], success: app.status.saved, onSuccess: onClose },
   )
   const nameOk =

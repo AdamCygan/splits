@@ -2,8 +2,9 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { data } from '#/data'
-import type { AdminUserChange, PlanCode } from '#/data/types'
+import { adminApi } from '../data/api'
+import type { AdminUserChange } from '#/features/admin/data/dto'
+import type { PlanCode } from '#/features/auth/data/dto'
 import { useCurrentUser } from '#/features/auth/session'
 import {
   mutationFieldError,
@@ -62,7 +63,7 @@ export function useUserPageViewModel(id: string) {
   }
 
   const update = useDataMutation(
-    (change: AdminUserChange) => data.admin.updateUser(id, change),
+    (change: AdminUserChange) => adminApi.updateUser(id, change),
     {
       invalidate: refresh,
       success: (_, change) =>
@@ -81,30 +82,27 @@ export function useUserPageViewModel(id: string) {
       },
     },
   )
-  const revokeAll = useDataMutation(() => data.admin.revokeSessions(id), {
+  const revokeAll = useDataMutation(() => adminApi.revokeSessions(id), {
     invalidate: refresh,
     success: fmt(t.toast.revoked, { name }),
   })
   const revokeOne = useDataMutation(
-    ({ sessionId }: SessionTarget) => data.admin.revokeSession(id, sessionId),
+    ({ sessionId }: SessionTarget) => adminApi.revokeSession(id, sessionId),
     {
       invalidate: refresh,
       success: (_, v) => fmt(t.user.security.signedOut, { device: v.label }),
     },
   )
-  const resend = useDataMutation(() => data.admin.resendVerification(id), {
+  const resend = useDataMutation(() => adminApi.resendVerification(id), {
     invalidate: refresh,
     success: fmt(t.user.security.resent, { email: u?.email ?? '' }),
   })
-  const cancelPending = useDataMutation(
-    () => data.admin.cancelEmailChange(id),
-    {
-      invalidate: refresh,
-      success: t.user.security.pendingCanceled,
-    },
-  )
+  const cancelPending = useDataMutation(() => adminApi.cancelEmailChange(id), {
+    invalidate: refresh,
+    success: t.user.security.pendingCanceled,
+  })
   const disable2fa = useDataMutation(
-    (value: string) => data.admin.disableTwoFactor(id, value),
+    (value: string) => adminApi.disableTwoFactor(id, value),
     {
       invalidate: refresh,
       success: fmt(t.user.security.disabled2fa, { name }),
@@ -112,7 +110,7 @@ export function useUserPageViewModel(id: string) {
     },
   )
   const remove = useDataMutation(
-    (value: string) => data.admin.deleteUser(id, value),
+    (value: string) => adminApi.deleteUser(id, value),
     {
       invalidate: [adminKeys.all],
       success: fmt(t.toast.deleted, { name }),

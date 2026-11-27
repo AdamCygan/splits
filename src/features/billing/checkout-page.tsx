@@ -4,7 +4,7 @@ import { Link } from '@tanstack/react-router'
 import { ArrowLeft, Check, Lock, ShieldCheck } from 'lucide-react'
 import { FormAlert } from '#/components/form/form-field'
 import { Button, buttonVariants } from '#/components/ui/button'
-import { data } from '#/data'
+import { billingApi } from './data/api'
 import { useCurrentUser } from '#/features/auth/session'
 import { useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
@@ -18,8 +18,8 @@ import {
   formatPrice,
   planById,
   renewalDate,
-} from './plans'
-import type { BillingInterval } from './plans'
+} from './domain/plans'
+import type { BillingInterval } from './domain/plans'
 import { billingQuery, useStripeRedirect } from './queries'
 
 export interface CheckoutPageProps {
@@ -46,7 +46,7 @@ export function CheckoutPage({
   const [accepted, setAccepted] = useState(false)
   const consentId = useId()
   const checkout = useStripeRedirect((next: BillingInterval) =>
-    data.billing.checkout(next),
+    billingApi.checkout(next),
   )
 
   const status = billing.data

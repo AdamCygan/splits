@@ -1,7 +1,7 @@
 import { useId } from 'react'
 import { CheckboxGroup, Switch } from '#/components/ui/controls'
 import { TimeInput } from '#/components/ui/time-input'
-import type { TemplateSchedule } from '#/data/types'
+import type { TemplateSchedule } from '#/features/templates/data/dto'
 import { sameTime } from '#/domain/schedule'
 import { useI18n, useMessages } from '#/i18n/context'
 import { fmt, weekdayNames } from '#/i18n/format'

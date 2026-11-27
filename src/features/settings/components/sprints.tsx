@@ -7,8 +7,12 @@ import { Badge, Field, Switch, Textarea } from '#/components/ui/controls'
 import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import { Segmented } from '#/components/ui/segmented'
-import { data } from '#/data'
-import type { Sprint, SprintCadence, SprintInput } from '#/data/types'
+import { sprintsApi } from '#/features/sprints/data/api'
+import type {
+  Sprint,
+  SprintCadence,
+  SprintInput,
+} from '#/features/sprints/data/dto'
 import { isValidDate, startOfWeek, todayIn } from '#/domain/dates'
 import { LIMITS } from '#/domain/rules'
 import {
@@ -102,7 +106,7 @@ function ScheduleCard({ cadence }: ScheduleCardProps) {
     setEditing(cadence !== null)
   }, [cadence])
 
-  const save = useDataMutation(data.sprints.setCadence, {
+  const save = useDataMutation(sprintsApi.setCadence, {
     invalidate: [keys.cadence, keys.sprints],
     success: (result) => (result ? t.scheduleSaved : app.status.saved),
     onSuccess: () => markSetupStep('sprints'),
@@ -323,7 +327,7 @@ function SprintList() {
   const [deleting, setDeleting] = useState<Sprint | null>(null)
   const today = todayIn(settings?.timezone)
 
-  const remove = useDataMutation((id: string) => data.sprints.remove(id), {
+  const remove = useDataMutation((id: string) => sprintsApi.remove(id), {
     invalidate: [keys.sprints],
     success: t.deleted,
     onSuccess: () => setDeleting(null),
@@ -505,9 +509,7 @@ function SprintDialog({ sprint, onClose }: SprintDialogProps) {
 
   const save = useDataMutation(
     (input: SprintInput) =>
-      sprint
-        ? data.sprints.update(sprint.id, input)
-        : data.sprints.create(input),
+      sprint ? sprintsApi.update(sprint.id, input) : sprintsApi.create(input),
     {
       invalidate: [keys.sprints],
       success: sprint ? app.status.saved : t.created,

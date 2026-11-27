@@ -9,13 +9,13 @@ import { Button } from '#/components/ui/button'
 import { Badge, Field, Select } from '#/components/ui/controls'
 import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
-import { data } from '#/data'
+import { entriesApi } from '../data/api'
 import type {
   TaskRef,
-  TaskType,
   TimeEntry,
   TaskUpdateInput,
-} from '#/data/types'
+} from '#/features/time-entries/data/dto'
+import type { TaskType } from '#/features/task-types/data/dto'
 import { ENTRY_LIMITS, isUrl, parseDuration } from '#/domain/entries'
 import { maxEstimate, maxPoints } from '#/domain/summary'
 import {
@@ -56,7 +56,7 @@ export function TaskDialog({ task, onClose }: TaskDialogProps) {
   )
   const sessions = useQuery({
     queryKey: taskQueryKey(ref),
-    queryFn: () => unwrap(data.entries.forTask(ref)),
+    queryFn: () => unwrap(entriesApi.forTask(ref)),
   })
   const list = sessions.data ?? []
   const total = list.reduce((sum, e) => sum + e.durationMinutes, 0)
@@ -137,7 +137,7 @@ export function TaskDetails({ entries, type, onSaved }: TaskDetailsProps) {
   }
 
   const save = useDataMutation(
-    (input: TaskUpdateInput) => data.entries.updateTask(ref, input),
+    (input: TaskUpdateInput) => entriesApi.updateTask(ref, input),
     {
       invalidate: [entryKeys.all],
       success: t.task.saved,
@@ -331,7 +331,7 @@ export function Sessions({ entries }: SessionsProps) {
   const dayLabel = (entry: TimeEntry) =>
     format.day(entry.workDate, { year: true })
 
-  const remove = useDataMutation((id: string) => data.entries.remove(id), {
+  const remove = useDataMutation((id: string) => entriesApi.remove(id), {
     invalidate: [entryKeys.all],
     success: t.task.deleted,
     onSuccess: () => setDeleting(null),
