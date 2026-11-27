@@ -32,7 +32,9 @@ const WEBHOOK_EVENTS: Array<Stripe.WebhookEndpointCreateParams.EnabledEvent> = [
   'customer.subscription.deleted',
   'customer.subscription.paused',
   'customer.subscription.resumed',
-  // Pełny zwrot kończy subskrypcję (14 dni na zwrot z regulaminu).
+  // Wpłaty do przychodu w panelu admina (kwota zapłacona minus zwroty).
+  'charge.succeeded',
+  // Pełny zwrot kończy subskrypcję (14 dni na zwrot z regulaminu); zwroty też zmniejszają przychód.
   'charge.refunded',
 ]
 

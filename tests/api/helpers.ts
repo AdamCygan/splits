@@ -1,4 +1,7 @@
 import { api } from '#/server/app'
+import { sql } from 'drizzle-orm'
+import { db } from '#/server/db/client'
+import { users } from '#/server/db/schema'
 import { outbox } from '#/server/email'
 
 export interface ApiResponse<TBody> {
@@ -101,6 +104,16 @@ export async function registered(
       token: lastToken(`user${id}@example.com`),
     })
   return { c, username: `user${id}`, email: `user${id}@example.com` }
+}
+
+/** Konto z rolą administratora (zarejestrowane i potwierdzone jak każde inne). */
+export async function registeredAdmin() {
+  const account = await registered()
+  await db
+    .update(users)
+    .set({ role: 'admin' })
+    .where(sql`lower(${users.email}) = ${account.email}`)
+  return account
 }
 
 /** Token z ostatniego linku wysłanego na adres (z lokalnej skrzynki e-maili). */

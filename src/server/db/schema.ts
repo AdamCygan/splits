@@ -594,11 +594,40 @@ export const adminActions = pgTable(
     }),
     adminEmail: text('admin_email').notNull(),
     targetUserId: uuid('target_user_id'),
-    targetEmail: text('target_email').notNull(),
-    /** plan.changed, role.changed, user.blocked, user.unblocked, sessions.revoked, user.deleted */
+    /** Konto, którego dotyczy akcja; null przy akcjach na wielu kontach (np. eksport listy). */
+    targetEmail: text('target_email'),
+    /** Rodzaj akcji, np. plan.changed, user.blocked, two_factor.disabled (lista w adminActionKinds). */
     action: text('action').notNull(),
     detail: text('detail'),
     createdAt: createdAt(),
   },
-  (t) => [index('admin_actions_created_idx').on(t.createdAt)],
+  (t) => [
+    index('admin_actions_created_idx').on(t.createdAt),
+    index('admin_actions_target_idx').on(t.targetUserId),
+  ],
+)
+
+/**
+ * Wpłaty ze Stripe (obciążenia kart) z webhooków charge.succeeded i charge.refunded.
+ * Przychód w panelu admina liczymy z faktycznie zapłaconych kwot minus zwroty,
+ * więc uwzględnia rabaty, podatki i zwroty. Kwoty w najmniejszej jednostce waluty.
+ */
+export const payments = pgTable(
+  'payments',
+  {
+    /** Id obciążenia w Stripe (ch_…). */
+    id: text('id').primaryKey(),
+    /** Konto płacącego; po usunięciu konta wpłata zostaje w statystykach. */
+    userId: uuid('user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    stripeCustomerId: text('stripe_customer_id'),
+    amount: integer('amount').notNull(),
+    amountRefunded: integer('amount_refunded').notNull().default(0),
+    currency: text('currency').notNull(),
+    paidAt: timestamp('paid_at', { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index('payments_paid_idx').on(t.paidAt)],
 )

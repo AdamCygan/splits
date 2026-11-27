@@ -27,7 +27,7 @@ import { Route as MarketingPricingRouteImport } from './routes/_marketing/pricin
 import { Route as MarketingPrivacyRouteImport } from './routes/_marketing/privacy'
 import { Route as MarketingTermsRouteImport } from './routes/_marketing/terms'
 import { Route as AppIndexRouteImport } from './routes/app/index'
-import { Route as AppAdminRouteImport } from './routes/app/admin'
+import { Route as AppAdminRouteRouteImport } from './routes/app/admin/route'
 import { Route as AppAnalyticsRouteImport } from './routes/app/analytics'
 import { Route as AppCheckoutRouteImport } from './routes/app/checkout'
 import { Route as AppDayRouteImport } from './routes/app/day'
@@ -36,6 +36,8 @@ import { Route as AppSprintsRouteImport } from './routes/app/sprints'
 import { Route as AppTaskRouteImport } from './routes/app/task'
 import { Route as AppTasksRouteImport } from './routes/app/tasks'
 import { Route as ApiV1SplatRouteImport } from './routes/api/v1/$'
+import { Route as AppAdminIndexRouteImport } from './routes/app/admin/index'
+import { Route as AppAdminLogRouteImport } from './routes/app/admin/log'
 import { Route as AppSettingsIndexRouteImport } from './routes/app/settings/index'
 import { Route as AppSettingsAccountRouteImport } from './routes/app/settings/account'
 import { Route as AppSettingsDaysOffRouteImport } from './routes/app/settings/days-off'
@@ -48,6 +50,7 @@ import { Route as AppSettingsSummariesRouteImport } from './routes/app/settings/
 import { Route as AppSettingsTemplatesRouteImport } from './routes/app/settings/templates'
 import { Route as AppSettingsWorkTypesRouteImport } from './routes/app/settings/work-types'
 import { Route as AppSettingsWorkdayRouteImport } from './routes/app/settings/workday'
+import { Route as AppAdminUsersIdRouteImport } from './routes/app/admin/users.$id'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
@@ -137,7 +140,7 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppAdminRoute = AppAdminRouteImport.update({
+const AppAdminRouteRoute = AppAdminRouteRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AppRouteRoute,
@@ -181,6 +184,16 @@ const ApiV1SplatRoute = ApiV1SplatRouteImport.update({
   id: '/api/v1/$',
   path: '/api/v1/$',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppAdminIndexRoute = AppAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppAdminRouteRoute,
+} as any)
+const AppAdminLogRoute = AppAdminLogRouteImport.update({
+  id: '/log',
+  path: '/log',
+  getParentRoute: () => AppAdminRouteRoute,
 } as any)
 const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
   id: '/',
@@ -242,6 +255,11 @@ const AppSettingsWorkdayRoute = AppSettingsWorkdayRouteImport.update({
   path: '/workday',
   getParentRoute: () => AppSettingsRouteRoute,
 } as any)
+const AppAdminUsersIdRoute = AppAdminUsersIdRouteImport.update({
+  id: '/users/$id',
+  path: '/users/$id',
+  getParentRoute: () => AppAdminRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/app': typeof AppRouteRouteWithChildren
@@ -249,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/demo': typeof DemoRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/app/admin': typeof AppAdminRouteRouteWithChildren
   '/app/settings': typeof AppSettingsRouteRouteWithChildren
   '/confirm-email': typeof AuthConfirmEmailRoute
   '/forgot-password': typeof AuthForgotPasswordRoute
@@ -260,7 +279,6 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof MarketingPricingRoute
   '/privacy': typeof MarketingPrivacyRoute
   '/terms': typeof MarketingTermsRoute
-  '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/checkout': typeof AppCheckoutRoute
   '/app/day': typeof AppDayRoute
@@ -269,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/app/tasks': typeof AppTasksRoute
   '/app/': typeof AppIndexRoute
   '/api/v1/$': typeof ApiV1SplatRoute
+  '/app/admin/log': typeof AppAdminLogRoute
   '/app/settings/account': typeof AppSettingsAccountRoute
   '/app/settings/days-off': typeof AppSettingsDaysOffRoute
   '/app/settings/plan': typeof AppSettingsPlanRoute
@@ -280,7 +299,9 @@ export interface FileRoutesByFullPath {
   '/app/settings/templates': typeof AppSettingsTemplatesRoute
   '/app/settings/work-types': typeof AppSettingsWorkTypesRoute
   '/app/settings/workday': typeof AppSettingsWorkdayRoute
+  '/app/admin/': typeof AppAdminIndexRoute
   '/app/settings/': typeof AppSettingsIndexRoute
+  '/app/admin/users/$id': typeof AppAdminUsersIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof MarketingIndexRoute
@@ -297,7 +318,6 @@ export interface FileRoutesByTo {
   '/pricing': typeof MarketingPricingRoute
   '/privacy': typeof MarketingPrivacyRoute
   '/terms': typeof MarketingTermsRoute
-  '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/checkout': typeof AppCheckoutRoute
   '/app/day': typeof AppDayRoute
@@ -306,6 +326,7 @@ export interface FileRoutesByTo {
   '/app/tasks': typeof AppTasksRoute
   '/app': typeof AppIndexRoute
   '/api/v1/$': typeof ApiV1SplatRoute
+  '/app/admin/log': typeof AppAdminLogRoute
   '/app/settings/account': typeof AppSettingsAccountRoute
   '/app/settings/days-off': typeof AppSettingsDaysOffRoute
   '/app/settings/plan': typeof AppSettingsPlanRoute
@@ -317,7 +338,9 @@ export interface FileRoutesByTo {
   '/app/settings/templates': typeof AppSettingsTemplatesRoute
   '/app/settings/work-types': typeof AppSettingsWorkTypesRoute
   '/app/settings/workday': typeof AppSettingsWorkdayRoute
+  '/app/admin': typeof AppAdminIndexRoute
   '/app/settings': typeof AppSettingsIndexRoute
+  '/app/admin/users/$id': typeof AppAdminUsersIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -327,6 +350,7 @@ export interface FileRoutesById {
   '/demo': typeof DemoRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/app/admin': typeof AppAdminRouteRouteWithChildren
   '/app/settings': typeof AppSettingsRouteRouteWithChildren
   '/_auth/confirm-email': typeof AuthConfirmEmailRoute
   '/_auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -338,7 +362,6 @@ export interface FileRoutesById {
   '/_marketing/pricing': typeof MarketingPricingRoute
   '/_marketing/privacy': typeof MarketingPrivacyRoute
   '/_marketing/terms': typeof MarketingTermsRoute
-  '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/checkout': typeof AppCheckoutRoute
   '/app/day': typeof AppDayRoute
@@ -348,6 +371,7 @@ export interface FileRoutesById {
   '/_marketing/': typeof MarketingIndexRoute
   '/app/': typeof AppIndexRoute
   '/api/v1/$': typeof ApiV1SplatRoute
+  '/app/admin/log': typeof AppAdminLogRoute
   '/app/settings/account': typeof AppSettingsAccountRoute
   '/app/settings/days-off': typeof AppSettingsDaysOffRoute
   '/app/settings/plan': typeof AppSettingsPlanRoute
@@ -359,7 +383,9 @@ export interface FileRoutesById {
   '/app/settings/templates': typeof AppSettingsTemplatesRoute
   '/app/settings/work-types': typeof AppSettingsWorkTypesRoute
   '/app/settings/workday': typeof AppSettingsWorkdayRoute
+  '/app/admin/': typeof AppAdminIndexRoute
   '/app/settings/': typeof AppSettingsIndexRoute
+  '/app/admin/users/$id': typeof AppAdminUsersIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -369,6 +395,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/app/admin'
     | '/app/settings'
     | '/confirm-email'
     | '/forgot-password'
@@ -380,7 +407,6 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/terms'
-    | '/app/admin'
     | '/app/analytics'
     | '/app/checkout'
     | '/app/day'
@@ -389,6 +415,7 @@ export interface FileRouteTypes {
     | '/app/tasks'
     | '/app/'
     | '/api/v1/$'
+    | '/app/admin/log'
     | '/app/settings/account'
     | '/app/settings/days-off'
     | '/app/settings/plan'
@@ -400,7 +427,9 @@ export interface FileRouteTypes {
     | '/app/settings/templates'
     | '/app/settings/work-types'
     | '/app/settings/workday'
+    | '/app/admin/'
     | '/app/settings/'
+    | '/app/admin/users/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -417,7 +446,6 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/terms'
-    | '/app/admin'
     | '/app/analytics'
     | '/app/checkout'
     | '/app/day'
@@ -426,6 +454,7 @@ export interface FileRouteTypes {
     | '/app/tasks'
     | '/app'
     | '/api/v1/$'
+    | '/app/admin/log'
     | '/app/settings/account'
     | '/app/settings/days-off'
     | '/app/settings/plan'
@@ -437,7 +466,9 @@ export interface FileRouteTypes {
     | '/app/settings/templates'
     | '/app/settings/work-types'
     | '/app/settings/workday'
+    | '/app/admin'
     | '/app/settings'
+    | '/app/admin/users/$id'
   id:
     | '__root__'
     | '/app'
@@ -446,6 +477,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/app/admin'
     | '/app/settings'
     | '/_auth/confirm-email'
     | '/_auth/forgot-password'
@@ -457,7 +489,6 @@ export interface FileRouteTypes {
     | '/_marketing/pricing'
     | '/_marketing/privacy'
     | '/_marketing/terms'
-    | '/app/admin'
     | '/app/analytics'
     | '/app/checkout'
     | '/app/day'
@@ -467,6 +498,7 @@ export interface FileRouteTypes {
     | '/_marketing/'
     | '/app/'
     | '/api/v1/$'
+    | '/app/admin/log'
     | '/app/settings/account'
     | '/app/settings/days-off'
     | '/app/settings/plan'
@@ -478,7 +510,9 @@ export interface FileRouteTypes {
     | '/app/settings/templates'
     | '/app/settings/work-types'
     | '/app/settings/workday'
+    | '/app/admin/'
     | '/app/settings/'
+    | '/app/admin/users/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -623,7 +657,7 @@ declare module '@tanstack/react-router' {
       id: '/app/admin'
       path: '/admin'
       fullPath: '/app/admin'
-      preLoaderRoute: typeof AppAdminRouteImport
+      preLoaderRoute: typeof AppAdminRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/app/analytics': {
@@ -681,6 +715,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/v1/$'
       preLoaderRoute: typeof ApiV1SplatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/admin/': {
+      id: '/app/admin/'
+      path: '/'
+      fullPath: '/app/admin/'
+      preLoaderRoute: typeof AppAdminIndexRouteImport
+      parentRoute: typeof AppAdminRouteRoute
+    }
+    '/app/admin/log': {
+      id: '/app/admin/log'
+      path: '/log'
+      fullPath: '/app/admin/log'
+      preLoaderRoute: typeof AppAdminLogRouteImport
+      parentRoute: typeof AppAdminRouteRoute
     }
     '/app/settings/': {
       id: '/app/settings/'
@@ -766,8 +814,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsWorkdayRouteImport
       parentRoute: typeof AppSettingsRouteRoute
     }
+    '/app/admin/users/$id': {
+      id: '/app/admin/users/$id'
+      path: '/users/$id'
+      fullPath: '/app/admin/users/$id'
+      preLoaderRoute: typeof AppAdminUsersIdRouteImport
+      parentRoute: typeof AppAdminRouteRoute
+    }
   }
 }
+
+interface AppAdminRouteRouteChildren {
+  AppAdminLogRoute: typeof AppAdminLogRoute
+  AppAdminIndexRoute: typeof AppAdminIndexRoute
+  AppAdminUsersIdRoute: typeof AppAdminUsersIdRoute
+}
+
+const AppAdminRouteRouteChildren: AppAdminRouteRouteChildren = {
+  AppAdminLogRoute: AppAdminLogRoute,
+  AppAdminIndexRoute: AppAdminIndexRoute,
+  AppAdminUsersIdRoute: AppAdminUsersIdRoute,
+}
+
+const AppAdminRouteRouteWithChildren = AppAdminRouteRoute._addFileChildren(
+  AppAdminRouteRouteChildren,
+)
 
 interface AppSettingsRouteRouteChildren {
   AppSettingsAccountRoute: typeof AppSettingsAccountRoute
@@ -803,8 +874,8 @@ const AppSettingsRouteRouteWithChildren =
   AppSettingsRouteRoute._addFileChildren(AppSettingsRouteRouteChildren)
 
 interface AppRouteRouteChildren {
+  AppAdminRouteRoute: typeof AppAdminRouteRouteWithChildren
   AppSettingsRouteRoute: typeof AppSettingsRouteRouteWithChildren
-  AppAdminRoute: typeof AppAdminRoute
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppCheckoutRoute: typeof AppCheckoutRoute
   AppDayRoute: typeof AppDayRoute
@@ -815,8 +886,8 @@ interface AppRouteRouteChildren {
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppAdminRouteRoute: AppAdminRouteRouteWithChildren,
   AppSettingsRouteRoute: AppSettingsRouteRouteWithChildren,
-  AppAdminRoute: AppAdminRoute,
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppCheckoutRoute: AppCheckoutRoute,
   AppDayRoute: AppDayRoute,

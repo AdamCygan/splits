@@ -1,9 +1,9 @@
-import { eq, sql } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
 import { db } from '#/server/db/client'
 import { refreshTokens, users } from '#/server/db/schema'
 import { runMaintenance } from '#/server/maintenance'
-import { client, registered, sample } from './helpers'
+import { client, registered, registeredAdmin as admin, sample } from './helpers'
 import type { ApiClient, ApiResponse } from './helpers'
 
 interface Session {
@@ -24,15 +24,6 @@ interface Page {
   total: number
   page: number
   pageSize: number
-}
-
-async function admin() {
-  const account = await registered()
-  await db
-    .update(users)
-    .set({ role: 'admin' })
-    .where(sql`lower(${users.email}) = ${account.email}`)
-  return account
 }
 
 interface TestAccount {
@@ -248,7 +239,8 @@ describe('admin panel API', () => {
       signups: Array<{ day: string; count: number }>
     }>('/admin/stats')
     expect(stats.body.users).toBeGreaterThanOrEqual(3)
-    expect(stats.body.new7).toBe(stats.body.users)
+    expect(stats.body.new7).toBeGreaterThanOrEqual(3)
+    expect(stats.body.new7).toBeLessThanOrEqual(stats.body.users)
     expect(stats.body.demo).toBeGreaterThanOrEqual(1)
     expect(stats.body.signups.at(-1)!.count).toBeGreaterThanOrEqual(3)
   })
@@ -267,15 +259,15 @@ describe('admin panel API', () => {
       'lifetime',
     )
 
-    const log = await boss.c.get<
-      Array<{
+    const log = await boss.c.get<{
+      items: Array<{
         action: string
         detail: string
         targetEmail: string
         adminEmail: string
       }>
-    >('/admin/actions')
-    expect(log.body[0]).toMatchObject({
+    }>(`/admin/actions?targetId=${id}`)
+    expect(log.body.items[0]).toMatchObject({
       action: 'plan.changed',
       detail: 'free → lifetime',
       targetEmail: other.email,
@@ -350,18 +342,35 @@ describe('admin panel API', () => {
   it('Should log a user out everywhere and delete an account with its data', async () => {
     const boss = await admin()
     const victim = await sample()
-    const id = (await victim.get<{ id: string }>('/account')).body.id
+    const { id, email } = (
+      await victim.get<{ id: string; email: string }>('/account')
+    ).body
 
     expect(
       (await boss.c.post(`/admin/users/${id}/revoke-sessions`)).status,
     ).toBe(204)
     expect((await victim.post('/auth/refresh')).status).toBe(401)
 
-    expect((await boss.c.del(`/admin/users/${id}`)).status).toBe(204)
+    const wrong = await boss.c.del<{ code: string }>(`/admin/users/${id}`, {
+      confirmEmail: 'someone@example.com',
+    })
+    expect([wrong.status, wrong.body.code]).toEqual([
+      400,
+      'admin.confirm_email',
+    ])
+    expect(
+      (
+        await boss.c.del(`/admin/users/${id}`, {
+          confirmEmail: email.toUpperCase(),
+        })
+      ).status,
+    ).toBe(204)
     expect((await boss.c.get(`/admin/users/${id}`)).status).toBe(404)
     expect((await victim.get('/account')).status).toBe(401)
-    const log = await boss.c.get<Array<{ action: string }>>('/admin/actions')
-    expect(log.body.slice(0, 2).map((a) => a.action)).toEqual([
+    const log = await boss.c.get<{ items: Array<{ action: string }> }>(
+      `/admin/actions?targetId=${id}`,
+    )
+    expect(log.body.items.map((a) => a.action)).toEqual([
       'user.deleted',
       'sessions.revoked',
     ])

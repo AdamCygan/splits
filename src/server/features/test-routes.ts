@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
+import { encryptSecret, newTotpSecret } from '../auth/totp'
 import { db } from '../db/client'
 import { subscriptions, users } from '../db/schema'
 import { outbox } from '../email'
@@ -16,6 +17,10 @@ const sampleInput = z.object({
   emailVerified: z.boolean().default(true),
   /** Subskrypcja Pro w danym stanie Stripe (np. past_due = nieudana płatność). */
   subscription: z.enum(['active', 'past_due']).optional(),
+  /** Konto administratora (panel admina w testach e2e). */
+  role: z.enum(['client', 'admin']).default('client'),
+  /** Włączone logowanie dwuetapowe (bez ekranu włączania). */
+  twoFactor: z.boolean().default(false),
 })
 
 /**
@@ -37,6 +42,20 @@ export const testRoutes = new Hono<AppEnv>()
         timezone: input.timezone ?? 'UTC',
         withSamples: true,
       })
+      if (input.role === 'admin' || input.twoFactor)
+        await tx
+          .update(users)
+          .set({
+            role: input.role,
+            ...(input.twoFactor
+              ? {
+                  totpSecret: encryptSecret(newTotpSecret()),
+                  totpEnabledAt: new Date(),
+                  recoveryCodes: [],
+                }
+              : {}),
+          })
+          .where(eq(users.id, user.id))
       if (input.subscription) {
         await tx.update(users).set({ plan: 'pro' }).where(eq(users.id, user.id))
         await tx.insert(subscriptions).values({
@@ -51,6 +70,7 @@ export const testRoutes = new Hono<AppEnv>()
       }
       return sessionFor(c, tx, {
         ...user,
+        role: input.role,
         plan: input.subscription ? 'pro' : user.plan,
       })
     })

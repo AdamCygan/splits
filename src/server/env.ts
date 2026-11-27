@@ -68,7 +68,6 @@ export const serverEnv = {
   /** Wersja aplikacji w zgłoszeniach błędów (Fly ustawia FLY_IMAGE_REF przy każdym deployu). */
   release: env.APP_RELEASE ?? env.FLY_IMAGE_REF ?? null,
   emailFrom: env.EMAIL_FROM ?? 'Pointhours <no-reply@pointhours.com>',
-  /** Limity prób logowania/rejestracji w pamięci; RATE_LIMITS=off tylko w testach. */
   /**
    * Właściciele aplikacji (ADMIN_EMAILS, po przecinku): konto z takim potwierdzonym adresem
    * dostaje rolę admina przy logowaniu, a inni administratorzy nie mogą go zablokować ani usunąć.
@@ -79,6 +78,12 @@ export const serverEnv = {
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),
   ),
+  /**
+   * Panel admina tylko z logowaniem dwuetapowym (ADMIN_REQUIRE_2FA=true). Włącz, gdy
+   * administratorzy mają już 2FA: bez niego API admina odpowiada 403 admin.two_factor_required.
+   */
+  adminRequire2fa: env.ADMIN_REQUIRE_2FA === 'true',
+  /** Limity prób logowania/rejestracji w pamięci; RATE_LIMITS=off tylko w testach. */
   rateLimits: env.RATE_LIMITS !== 'off' || isProduction,
   /** Tylko testy e2e: endpoint z danymi przykładowymi. Nigdy w produkcji. */
   testRoutes:

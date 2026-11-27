@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test } from '@playwright/test'
+import { expect, request, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 
 export interface SampleAccountOptions {
@@ -8,10 +8,16 @@ export interface SampleAccountOptions {
   emailVerified?: boolean
   /** Subskrypcja Pro w danym stanie Stripe. */
   subscription?: 'active' | 'past_due'
+  /** Konto administratora. */
+  role?: 'client' | 'admin'
+  /** Włączone logowanie dwuetapowe. */
+  twoFactor?: boolean
 }
 
 export interface SampleAccount {
+  id: string
   email: string
+  displayName: string
 }
 
 /**
@@ -32,13 +38,41 @@ export async function signInWithSamples(
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
       emailVerified: options.emailVerified ?? true,
       subscription: options.subscription,
+      role: options.role ?? 'client',
+      twoFactor: options.twoFactor ?? false,
     },
   })
   expect(response.status()).toBe(201)
   const session = (await response.json()) as { user: SampleAccount }
   await page.goto('/app')
   await expect(page).toHaveURL(/\/app/)
-  return { email: session.user.email }
+  return session.user
+}
+
+/**
+ * Drugie konto z przykładowymi danymi w osobnym kontekście (bez ciasteczek strony), np. klient
+ * oglądany w panelu admina. Jego logowanie to jedno zalogowane urządzenie.
+ */
+export async function createSampleAccount(
+  options: SampleAccountOptions = {},
+): Promise<SampleAccount> {
+  const context = await request.newContext({
+    baseURL: test.info().project.use.baseURL,
+  })
+  const response = await context.post('/api/v1/test/sample-account', {
+    data: {
+      locale: options.locale ?? 'en',
+      timezone: 'UTC',
+      emailVerified: options.emailVerified ?? true,
+      subscription: options.subscription,
+      role: options.role ?? 'client',
+      twoFactor: options.twoFactor ?? false,
+    },
+  })
+  expect(response.status()).toBe(201)
+  const session = (await response.json()) as { user: SampleAccount }
+  await context.dispose()
+  return session.user
 }
 
 export interface SentEmail {

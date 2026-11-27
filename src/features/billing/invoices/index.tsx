@@ -23,42 +23,57 @@ export function InvoicesCard({ isDemo }: InvoicesCardProps) {
       ) : vm.invoices.length === 0 ? (
         <p className="text-ink-soft">{t.empty}</p>
       ) : (
-        <div
-          className="relative -mx-1 overflow-x-auto px-1"
-          role="region"
-          tabIndex={0}
-          aria-label={t.caption}
-        >
-          <table className="w-full min-w-[34rem] text-left text-sm">
-            <caption className="sr-only">{t.caption}</caption>
-            <thead className="text-ink-soft">
-              <tr className="border-b border-line">
-                <th scope="col" className="py-2 pr-3 font-medium">
-                  {t.date}
-                </th>
-                <th scope="col" className="px-3 py-2 font-medium">
-                  {t.number}
-                </th>
-                <th scope="col" className="px-3 py-2 text-right font-medium">
-                  {t.amount}
-                </th>
-                <th scope="col" className="px-3 py-2 font-medium">
-                  {t.status}
-                </th>
-                <th scope="col" className="py-2 pl-3 text-right font-medium">
-                  {t.actions}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {vm.invoices.map((invoice) => (
-                <InvoiceRow key={invoice.id} invoice={invoice} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <InvoicesTable invoices={vm.invoices} />
       )}
     </SettingsCard>
+  )
+}
+
+export interface InvoicesTableProps {
+  invoices: ReadonlyArray<Invoice>
+  /** Podpis tabeli i obszaru przewijania; domyślnie „Twoje faktury…”. */
+  caption?: string
+}
+
+/** Tabela faktur (strona planu klienta i strona konta w panelu admina). */
+export function InvoicesTable({ invoices, caption }: InvoicesTableProps) {
+  const t = useMessages(billingMessages).plan.invoices
+  const label = caption ?? t.caption
+  return (
+    <div
+      className="relative -mx-1 overflow-x-auto px-1"
+      role="region"
+      tabIndex={0}
+      aria-label={label}
+    >
+      <table className="w-full min-w-[34rem] text-left text-sm">
+        <caption className="sr-only">{label}</caption>
+        <thead className="text-ink-soft">
+          <tr className="border-b border-line">
+            <th scope="col" className="py-2 pr-3 font-medium">
+              {t.date}
+            </th>
+            <th scope="col" className="px-3 py-2 font-medium">
+              {t.number}
+            </th>
+            <th scope="col" className="px-3 py-2 text-right font-medium">
+              {t.amount}
+            </th>
+            <th scope="col" className="px-3 py-2 font-medium">
+              {t.status}
+            </th>
+            <th scope="col" className="py-2 pl-3 text-right font-medium">
+              {t.actions}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {invoices.map((invoice) => (
+            <InvoiceRow key={invoice.id} invoice={invoice} />
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
 

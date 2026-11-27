@@ -99,6 +99,13 @@
       "when": 1795781357958,
       "tag": "0013_client_panel",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795792967019,
+      "tag": "0014_admin_panel",
+      "breakpoints": true
     }
   ]
 }

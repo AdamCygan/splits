@@ -194,6 +194,35 @@ export const bootstrapSchema = z.object({
   running: timeEntrySchema.nullable(),
 })
 
+export const securityStatusSchema = z.object({
+  emailVerified: z.boolean(),
+  pendingEmail: z.string().nullable(),
+  twoFactor: z.boolean(),
+  recoveryCodesLeft: z.number(),
+  google: z.boolean(),
+  hasPassword: z.boolean(),
+})
+
+export const activeSessionSchema = z.object({
+  id: z.string(),
+  userAgent: z.string().nullable(),
+  ip: z.string().nullable(),
+  startedAt: z.string(),
+  lastActiveAt: z.string(),
+  current: z.boolean(),
+})
+
+export const invoiceSchema = z.object({
+  id: z.string(),
+  number: z.string().nullable(),
+  date: z.string(),
+  total: z.number(),
+  currency: z.string(),
+  status: z.string(),
+  pdfUrl: z.string().nullable(),
+  url: z.string().nullable(),
+})
+
 export const adminUserSchema = z.object({
   id,
   username: z.string(),
@@ -204,20 +233,33 @@ export const adminUserSchema = z.object({
   isDemo: z.boolean(),
   hasPassword: z.boolean(),
   emailVerified: z.boolean(),
+  twoFactor: z.boolean().default(false),
   isOwner: z.boolean().default(false),
   disabledAt: z.string().nullable(),
   createdAt: z.string(),
   lastLoginAt: z.string().nullable(),
+  lastActiveAt: z.string().nullable().default(null),
   entries: z.number().int(),
   lastEntryOn: z.string().nullable(),
   subscription: z
     .object({
       status: z.string(),
+      plan: planSchema.default('pro'),
       active: z.boolean(),
       currentPeriodEnd: z.string().nullable(),
       cancelAtPeriodEnd: z.boolean(),
     })
     .nullable(),
+})
+
+export const adminUserDetailSchema = adminUserSchema.extend({
+  security: securityStatusSchema,
+  sessions: z.array(activeSessionSchema),
+  billing: z.object({
+    enabled: z.boolean(),
+    stripeCustomerId: z.string().nullable(),
+    stripeUrl: z.string().nullable(),
+  }),
 })
 
 export const adminUserPageSchema = z.object({
@@ -232,23 +274,40 @@ export const adminStatsSchema = z.object({
   new7: z.number().int(),
   new30: z.number().int(),
   active7: z.number().int(),
+  active30: z.number().int(),
   free: z.number().int(),
   pro: z.number().int(),
   lifetime: z.number().int(),
   blocked: z.number().int(),
   demo: z.number().int(),
   activeSubscriptions: z.number().int(),
-  yearlyRevenue: z.number(),
+  paymentProblems: z.number().int(),
+  revenue: z.array(
+    z.object({
+      currency: z.string(),
+      last30: z.number().int(),
+      last365: z.number().int(),
+      refunded365: z.number().int(),
+    }),
+  ),
   signups: z.array(z.object({ day: date, count: z.number().int() })),
 })
 
 export const adminActionSchema = z.object({
   id,
   adminEmail: z.string(),
-  targetEmail: z.string(),
+  targetUserId: z.string().nullable(),
+  targetEmail: z.string().nullable(),
   action: z.string(),
   detail: z.string().nullable(),
   createdAt: z.string(),
+})
+
+export const adminActionPageSchema = z.object({
+  items: z.array(adminActionSchema),
+  total: z.number().int(),
+  page: z.number().int(),
+  pageSize: z.number().int(),
 })
 
 export const dayOffSchema = z.object({

@@ -1,9 +1,8 @@
-import { and, asc, desc, eq, gt, isNull, ne, sql } from 'drizzle-orm'
+import { and, asc, eq, ne, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { getCookie } from 'hono/cookie'
 import { cutAccess } from '../auth/access'
 import { hashPassword, verifyPassword } from '../auth/passwords'
-import { activeSessions } from '../auth/sessions'
 import { REFRESH_COOKIE, revokeOtherSessions, sha256 } from '../auth/tokens'
 import {
   encryptSecret,
@@ -33,11 +32,16 @@ import { clearRefreshCookie } from './auth'
 import { cancelSubscriptionsFor } from './billing'
 import { toUser } from './dto'
 import {
+  cancelPendingEmail,
   confirmIdentity,
+  consumeDeletionCode,
+  disableTwoFactor,
   notify,
+  revokeSession,
+  securityStatus,
   sendDeletionCode,
   sendEmailConfirmation,
-  consumeDeletionCode,
+  sessionsOf,
 } from './security'
 
 export async function currentUser(userId: string) {
@@ -207,16 +211,7 @@ export const accountRoutes = new Hono<AppEnv>()
 
   /** Rezygnacja ze zmiany e-maila (link przestaje działać). */
   .delete('/email/pending', async (c) => {
-    await db
-      .update(t.authTokens)
-      .set({ usedAt: new Date() })
-      .where(
-        and(
-          eq(t.authTokens.userId, c.get('userId')),
-          eq(t.authTokens.purpose, 'email_change'),
-          isNull(t.authTokens.usedAt),
-        ),
-      )
+    await db.transaction((tx) => cancelPendingEmail(tx, c.get('userId')))
     return c.body(null, 204)
   })
 
@@ -232,40 +227,9 @@ export const accountRoutes = new Hono<AppEnv>()
   })
 
   /** Stan bezpieczeństwa: potwierdzenie adresu, oczekująca zmiana, 2FA, Google, kody. */
-  .get('/security', async (c) => {
-    const userId = c.get('userId')
-    const user = await currentUser(userId)
-    const [pending] = await db
-      .select({ email: t.authTokens.newEmail })
-      .from(t.authTokens)
-      .where(
-        and(
-          eq(t.authTokens.userId, userId),
-          eq(t.authTokens.purpose, 'email_change'),
-          isNull(t.authTokens.usedAt),
-          gt(t.authTokens.expiresAt, new Date()),
-        ),
-      )
-      .orderBy(desc(t.authTokens.createdAt))
-      .limit(1)
-    const [google] = await db
-      .select({ id: t.externalLogins.providerUserId })
-      .from(t.externalLogins)
-      .where(
-        and(
-          eq(t.externalLogins.userId, userId),
-          eq(t.externalLogins.provider, 'google'),
-        ),
-      )
-    return c.json({
-      emailVerified: user.emailVerifiedAt !== null,
-      pendingEmail: pending?.email ?? null,
-      twoFactor: user.totpEnabledAt !== null,
-      recoveryCodesLeft: user.recoveryCodes.length,
-      google: Boolean(google),
-      hasPassword: user.passwordHash !== null,
-    })
-  })
+  .get('/security', async (c) =>
+    c.json(await securityStatus(await currentUser(c.get('userId')))),
+  )
 
   /** Początek włączania 2FA: nowy sekret do zeskanowania (zapisuje się dopiero po kodzie). */
   .post('/2fa/setup', async (c) => {
@@ -317,15 +281,7 @@ export const accountRoutes = new Hono<AppEnv>()
       const account = await currentUser(userId)
       if (!account.totpEnabledAt) return account
       await confirmIdentity(tx, account, input)
-      await tx
-        .update(users)
-        .set({
-          totpSecret: null,
-          totpEnabledAt: null,
-          totpLastStep: null,
-          recoveryCodes: [],
-        })
-        .where(eq(users.id, userId))
+      await disableTwoFactor(tx, userId)
       return account
     })
     await notify(user, 'twoFactorOff')
@@ -353,31 +309,17 @@ export const accountRoutes = new Hono<AppEnv>()
 
   /** Urządzenia z aktywną sesją (rodziny refresh tokenów), bieżące oznaczone. */
   .get('/sessions', async (c) => {
-    const userId = c.get('userId')
-    const rows = await db
-      .select()
-      .from(t.refreshTokens)
-      .where(eq(t.refreshTokens.userId, userId))
-      .orderBy(asc(t.refreshTokens.createdAt))
     const current = getCookie(c, REFRESH_COOKIE)
-    const currentFamily = current
-      ? rows.find((r) => r.tokenHash === sha256(current))?.familyId
-      : undefined
-    return c.json(activeSessions(rows, currentFamily ?? null))
+    return c.json(
+      await sessionsOf(c.get('userId'), current ? sha256(current) : null),
+    )
   })
 
   /** Wylogowanie jednego urządzenia. */
   .delete('/sessions/:id', async (c) => {
-    await db
-      .update(t.refreshTokens)
-      .set({ revokedAt: new Date() })
-      .where(
-        and(
-          eq(t.refreshTokens.userId, c.get('userId')),
-          eq(t.refreshTokens.familyId, c.req.param('id')),
-          isNull(t.refreshTokens.revokedAt),
-        ),
-      )
+    await db.transaction((tx) =>
+      revokeSession(tx, c.get('userId'), c.req.param('id')),
+    )
     return c.body(null, 204)
   })
 

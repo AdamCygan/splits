@@ -1,13 +1,20 @@
 import { randomInt } from 'node:crypto'
-import { and, eq, gt, isNull } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, isNull } from 'drizzle-orm'
 import type { Locale } from '#/i18n/config'
 import { site } from '#/config/site'
 import { verifyPassword } from '../auth/passwords'
+import { activeSessions } from '../auth/sessions'
 import { randomToken, sha256 } from '../auth/tokens'
 import { decryptSecret, hashRecoveryCode, verifyTotp } from '../auth/totp'
 import type { Tx } from '../db/client'
 import { db } from '../db/client'
-import { authTokens, userSettings, users } from '../db/schema'
+import {
+  authTokens,
+  externalLogins,
+  refreshTokens,
+  userSettings,
+  users,
+} from '../db/schema'
 import { accountEmail, sendEmail } from '../email'
 import { serverEnv } from '../env'
 import { ApiError } from '../http/errors'
@@ -200,4 +207,104 @@ export async function consumeDeletionCode(
     )
     .returning({ id: authTokens.id })
   if (!row) throw new ApiError('auth.invalid_delete_code', 400, 'code')
+}
+
+/** Adres czekający na potwierdzenie (zmiana e-maila), jeśli link jeszcze działa. */
+export async function pendingEmailOf(userId: string) {
+  const [pending] = await db
+    .select({ email: authTokens.newEmail })
+    .from(authTokens)
+    .where(
+      and(
+        eq(authTokens.userId, userId),
+        eq(authTokens.purpose, 'email_change'),
+        isNull(authTokens.usedAt),
+        gt(authTokens.expiresAt, new Date()),
+      ),
+    )
+    .orderBy(desc(authTokens.createdAt))
+    .limit(1)
+  return pending?.email ?? null
+}
+
+/** Stan bezpieczeństwa konta (ustawienia klienta i panel admina). */
+export async function securityStatus(user: UserRow) {
+  const [pendingEmail, [google]] = await Promise.all([
+    pendingEmailOf(user.id),
+    db
+      .select({ id: externalLogins.providerUserId })
+      .from(externalLogins)
+      .where(
+        and(
+          eq(externalLogins.userId, user.id),
+          eq(externalLogins.provider, 'google'),
+        ),
+      ),
+  ])
+  return {
+    emailVerified: user.emailVerifiedAt !== null,
+    pendingEmail,
+    twoFactor: user.totpEnabledAt !== null,
+    recoveryCodesLeft: user.recoveryCodes.length,
+    google: Boolean(google),
+    hasPassword: user.passwordHash !== null,
+  }
+}
+
+/** Anuluje oczekującą zmianę e-maila; zwraca adres, na który czekała (albo null). */
+export async function cancelPendingEmail(tx: Tx, userId: string) {
+  const rows = await tx
+    .update(authTokens)
+    .set({ usedAt: new Date() })
+    .where(
+      and(
+        eq(authTokens.userId, userId),
+        eq(authTokens.purpose, 'email_change'),
+        isNull(authTokens.usedAt),
+      ),
+    )
+    .returning({ email: authTokens.newEmail })
+  return rows.at(-1)?.email ?? null
+}
+
+/** Wyłącza logowanie dwuetapowe razem z kodami zapasowymi. */
+export function disableTwoFactor(tx: Tx, userId: string) {
+  return tx
+    .update(users)
+    .set({
+      totpSecret: null,
+      totpEnabledAt: null,
+      totpLastStep: null,
+      recoveryCodes: [],
+    })
+    .where(eq(users.id, userId))
+}
+
+/** Zalogowane urządzenia konta; `currentHash` = refresh token bieżącego urządzenia. */
+export async function sessionsOf(userId: string, currentHash: string | null) {
+  const rows = await db
+    .select()
+    .from(refreshTokens)
+    .where(eq(refreshTokens.userId, userId))
+    .orderBy(asc(refreshTokens.createdAt))
+  const currentFamily = currentHash
+    ? rows.find((r) => r.tokenHash === currentHash)?.familyId
+    : undefined
+  return activeSessions(rows, currentFamily ?? null)
+}
+
+/** Wylogowuje jedno urządzenie (rodzinę refresh tokenów); true, jeśli było aktywne. */
+export async function revokeSession(tx: Tx, userId: string, familyId: string) {
+  const rows = await tx
+    .update(refreshTokens)
+    .set({ revokedAt: new Date() })
+    .where(
+      and(
+        eq(refreshTokens.userId, userId),
+        eq(refreshTokens.familyId, familyId),
+        isNull(refreshTokens.revokedAt),
+      ),
+    )
+    .returning({ id: refreshTokens.id })
+  return rows.length > 0
 }

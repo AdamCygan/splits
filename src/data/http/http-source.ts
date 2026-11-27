@@ -22,6 +22,15 @@ const auth = <T>(path: string, schema: z.ZodType<T>, body?: unknown) =>
     retryOnUnauthorized: false,
   })
 
+/** Parametry zapytania bez pustych wartości („?a=1&b=x” albo pusty tekst). */
+const queryString = (params: Record<string, string | number | undefined>) => {
+  const query = new URLSearchParams()
+  for (const [key, value] of Object.entries(params))
+    if (value !== undefined && value !== '') query.set(key, String(value))
+  const text = query.toString()
+  return text ? `?${text}` : ''
+}
+
 const archive = <T>(
   resource: string,
   id: string,
@@ -69,18 +78,7 @@ export const httpSource: DataSource = {
     sendDeleteCode: () => send('POST', '/account/delete-code', emptyResponse),
     deleteAccount: (code) =>
       send('DELETE', '/account', emptyResponse, { code }),
-    security: () =>
-      get(
-        '/account/security',
-        z.object({
-          emailVerified: z.boolean(),
-          pendingEmail: z.string().nullable(),
-          twoFactor: z.boolean(),
-          recoveryCodesLeft: z.number(),
-          google: z.boolean(),
-          hasPassword: z.boolean(),
-        }),
-      ),
+    security: () => get('/account/security', s.securityStatusSchema),
     changeEmail: (input) =>
       send('POST', '/account/email', emptyResponse, input),
     cancelEmailChange: () =>
@@ -109,20 +107,7 @@ export const httpSource: DataSource = {
         z.object({ recoveryCodes: z.array(z.string()) }),
         input,
       ),
-    sessions: () =>
-      get(
-        '/account/sessions',
-        z.array(
-          z.object({
-            id: z.string(),
-            userAgent: z.string().nullable(),
-            ip: z.string().nullable(),
-            startedAt: z.string(),
-            lastActiveAt: z.string(),
-            current: z.boolean(),
-          }),
-        ),
-      ),
+    sessions: () => get('/account/sessions', z.array(s.activeSessionSchema)),
     revokeSession: (id) =>
       send('DELETE', `/account/sessions/${id}`, emptyResponse),
     revokeOtherSessions: () =>
@@ -380,40 +365,42 @@ export const httpSource: DataSource = {
         { sessionId },
       ),
     portal: () => send('POST', '/billing/portal', z.object({ url: z.url() })),
-    invoices: () =>
-      get(
-        '/billing/invoices',
-        z.array(
-          z.object({
-            id: z.string(),
-            number: z.string().nullable(),
-            date: z.string(),
-            total: z.number(),
-            currency: z.string(),
-            status: z.string(),
-            pdfUrl: z.string().nullable(),
-            url: z.string().nullable(),
-          }),
-        ),
-      ),
+    invoices: () => get('/billing/invoices', z.array(s.invoiceSchema)),
   },
 
   admin: {
     stats: () => get('/admin/stats', s.adminStatsSchema),
-    users: (filter) => {
-      const query = new URLSearchParams()
-      if (filter.q) query.set('q', filter.q)
-      if (filter.plan) query.set('plan', filter.plan)
-      if (filter.status) query.set('status', filter.status)
-      if (filter.page && filter.page > 1) query.set('page', String(filter.page))
-      const qs = query.toString()
-      return get(`/admin/users${qs ? `?${qs}` : ''}`, s.adminUserPageSchema)
-    },
+    users: (filter) =>
+      get(
+        `/admin/users${queryString({ ...filter, page: filter.page && filter.page > 1 ? filter.page : undefined })}`,
+        s.adminUserPageSchema,
+      ),
+    exportUsers: (filter) =>
+      get(
+        `/admin/users/export${queryString({ ...filter, page: undefined })}`,
+        z.array(s.adminUserSchema),
+      ),
+    user: (id) => get(`/admin/users/${id}`, s.adminUserDetailSchema),
     updateUser: (id, change) =>
       send('PATCH', `/admin/users/${id}`, s.adminUserSchema, change),
     revokeSessions: (id) =>
       send('POST', `/admin/users/${id}/revoke-sessions`, emptyResponse),
-    deleteUser: (id) => send('DELETE', `/admin/users/${id}`, emptyResponse),
-    actions: () => get('/admin/actions', z.array(s.adminActionSchema)),
+    revokeSession: (id, sessionId) =>
+      send('DELETE', `/admin/users/${id}/sessions/${sessionId}`, emptyResponse),
+    resendVerification: (id) =>
+      send('POST', `/admin/users/${id}/email/verify`, emptyResponse),
+    cancelEmailChange: (id) =>
+      send('DELETE', `/admin/users/${id}/email/pending`, emptyResponse),
+    disableTwoFactor: (id, reason) =>
+      send('POST', `/admin/users/${id}/2fa/disable`, emptyResponse, { reason }),
+    invoices: (id) =>
+      get(`/admin/users/${id}/invoices`, z.array(s.invoiceSchema)),
+    deleteUser: (id, confirmEmail) =>
+      send('DELETE', `/admin/users/${id}`, emptyResponse, { confirmEmail }),
+    actions: (filter) =>
+      get(
+        `/admin/actions${queryString({ ...filter, page: filter.page && filter.page > 1 ? filter.page : undefined })}`,
+        s.adminActionPageSchema,
+      ),
   },
 }

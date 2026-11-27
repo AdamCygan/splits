@@ -1,5 +1,6 @@
 import type { FieldRequirement, TaskType, TimeEntry } from '#/data/types'
 import { addDays, diffDays, isValidDate, startOfWeek } from './dates'
+import { toCsv } from './csv'
 import { elapsedSeconds } from './entries'
 import { extractTaskKey } from './rules'
 import { maxEstimate, maxPoints } from './summary'
@@ -339,13 +340,6 @@ export function isValidRange(range: ReportRange) {
 
 // ---------- Eksport ----------
 
-const csvCell = (value: string | number) => {
-  const text = String(value)
-  // Formuły w arkuszu (=, +, -, @) neutralizujemy apostrofem, żeby tytuł nie wykonał się w Excelu.
-  const safe = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text
-  return /[",;\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
-}
-
 export interface ReportCsvLabels {
   head: ReadonlyArray<string>
   typeName: (id: string) => string
@@ -357,33 +351,28 @@ export function reportCsv(
   rows: ReadonlyArray<TaskRow>,
   labels: ReportCsvLabels,
 ): string {
-  const lines = [labels.head.map(csvCell).join(',')]
-  for (const r of rows) {
-    lines.push(
-      [
-        r.title,
-        r.taskKey ?? '',
-        r.link ?? '',
-        labels.typeName(r.taskTypeId),
-        labels.projectName(r.projectId),
-        r.storyPoints ?? '',
-        r.minutes,
-        (r.minutes / 60).toFixed(2),
-        r.sessions,
-        r.days,
-        r.first,
-        r.last,
-        r.overtimeMinutes,
-        (r.overtimeMinutes / 60).toFixed(2),
-        r.overtimeNotes.join(' | '),
-        r.estimateMinutes ?? '',
-        r.estimateMinutes === null ? '' : r.minutes - r.estimateMinutes,
-        r.extensionMinutes,
-        r.extensionNotes.join(' | '),
-      ]
-        .map(csvCell)
-        .join(','),
-    )
-  }
-  return `${lines.join('\r\n')}\r\n`
+  return toCsv([
+    labels.head,
+    ...rows.map((r) => [
+      r.title,
+      r.taskKey ?? '',
+      r.link ?? '',
+      labels.typeName(r.taskTypeId),
+      labels.projectName(r.projectId),
+      r.storyPoints ?? '',
+      r.minutes,
+      (r.minutes / 60).toFixed(2),
+      r.sessions,
+      r.days,
+      r.first,
+      r.last,
+      r.overtimeMinutes,
+      (r.overtimeMinutes / 60).toFixed(2),
+      r.overtimeNotes.join(' | '),
+      r.estimateMinutes ?? '',
+      r.estimateMinutes === null ? '' : r.minutes - r.estimateMinutes,
+      r.extensionMinutes,
+      r.extensionNotes.join(' | '),
+    ]),
+  ])
 }

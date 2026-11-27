@@ -1,9 +1,9 @@
 import Stripe from 'stripe'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
-import { sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { planForPrice, setStripeClient } from '#/server/billing/stripe'
 import { db } from '#/server/db/client'
-import { users } from '#/server/db/schema'
+import { payments, users } from '#/server/db/schema'
 import { client, lastDeleteCode, registered } from './helpers'
 
 /**
@@ -432,6 +432,43 @@ describe('billing (Stripe, yearly plans only)', () => {
     expect((await c.get<Billing>('/billing')).body.subscription).toMatchObject({
       status: 'canceled',
       active: false,
+    })
+  })
+
+  it('Should record each payment and its refunds for the revenue numbers', async () => {
+    const { c, customer } = await buyPro()
+    const me = await c.get<{ id: string }>('/account')
+    const chargeId = `ch_revenue_${++n}`
+    const charge = (type: string, refunded: number) => ({
+      id: `evt_${++n}`,
+      type,
+      data: {
+        object: {
+          id: chargeId,
+          object: 'charge',
+          customer,
+          status: 'succeeded',
+          refunded: false,
+          amount: 4900,
+          amount_refunded: refunded,
+          currency: 'usd',
+          created: Date.UTC(2026, 10, 20) / 1000,
+        },
+      },
+    })
+    await webhook(charge('charge.succeeded', 0))
+    await webhook(charge('charge.refunded', 1000))
+    const [row] = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.id, chargeId))
+    expect(row).toMatchObject({
+      userId: me.body.id,
+      stripeCustomerId: customer,
+      amount: 4900,
+      amountRefunded: 1000,
+      currency: 'usd',
+      paidAt: new Date(Date.UTC(2026, 10, 20)),
     })
   })
 

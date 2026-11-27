@@ -24,6 +24,9 @@ const en = {
   'auth.already_verified': 'Your email address is already confirmed.',
   'auth.invalid_delete_code':
     'That code isn’t right or has expired. Send a new one and try again.',
+  'admin.two_factor_required':
+    'The admin panel needs two-step login. Turn it on for your account first.',
+  'admin.confirm_email': 'Type the account’s email address exactly to confirm.',
   'auth.google_unavailable':
     'Signing in with Google isn’t available right now.',
   'auth.google_failed': 'We couldn’t sign you in with Google. Try again.',
@@ -91,6 +94,10 @@ const pl: ErrorMessages = {
   'auth.already_verified': 'Twój adres e-mail jest już potwierdzony.',
   'auth.invalid_delete_code':
     'Ten kod jest nieprawidłowy albo wygasł. Wyślij nowy i spróbuj ponownie.',
+  'admin.two_factor_required':
+    'Panel admina wymaga logowania dwuetapowego. Najpierw włącz je na swoim koncie.',
+  'admin.confirm_email':
+    'Wpisz dokładnie adres e-mail tego konta, żeby potwierdzić.',
   'auth.google_unavailable': 'Logowanie przez Google jest teraz niedostępne.',
   'auth.google_failed':
     'Nie udało się zalogować przez Google. Spróbuj ponownie.',

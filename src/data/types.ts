@@ -2,8 +2,11 @@
  * Typy domenowe — 1:1 ze schematem bazy (docs/database/schema.sql) i kontraktem API.
  * Daty dzienne jako 'YYYY-MM-DD', znaczniki czasu jako ISO 8601.
  */
+import type { z } from 'zod'
+import type { AdminActionKind, AdminUserSort, SortDir } from '#/domain/admin'
 import type { WorkKind } from '#/config/work-types'
 import type { Locale } from '#/i18n/config'
+import type * as schemas from './http/schemas'
 
 export type UserRole = 'client' | 'manager' | 'admin'
 export type PlanCode = 'free' | 'pro' | 'lifetime'
@@ -386,45 +389,25 @@ export interface Bootstrap {
 
 // ---------- Panel administratora ----------
 
-export interface AdminUser {
-  id: string
-  username: string
-  email: string
-  displayName: string
-  role: UserRole
-  plan: PlanCode
-  isDemo: boolean
-  hasPassword: boolean
-  emailVerified: boolean
-  /** Właściciel aplikacji (ADMIN_EMAILS): nie da się go zablokować, usunąć ani zdegradować. */
-  isOwner: boolean
-  /** Data blokady konta albo null. */
-  disabledAt: string | null
-  createdAt: string
-  lastLoginAt: string | null
-  /** Liczba wpisów czasu (treści wpisów administrator nie widzi). */
-  entries: number
-  lastEntryOn: string | null
-  subscription: {
-    status: string
-    active: boolean
-    currentPeriodEnd: string | null
-    cancelAtPeriodEnd: boolean
-  } | null
-}
+export type AdminUser = z.infer<typeof schemas.adminUserSchema>
+export type AdminUserDetail = z.infer<typeof schemas.adminUserDetailSchema>
+export type AdminUserPage = z.infer<typeof schemas.adminUserPageSchema>
+export type AdminStats = z.infer<typeof schemas.adminStatsSchema>
+export type AdminAction = z.infer<typeof schemas.adminActionSchema>
+export type AdminActionPage = z.infer<typeof schemas.adminActionPageSchema>
 
+/** Filtry listy kont (te same w adresie strony, w API i w eksporcie CSV). */
 export interface AdminUserFilter {
   q?: string
   plan?: PlanCode
   status?: 'active' | 'blocked' | 'demo'
+  payment?: 'problem'
+  email?: 'unverified'
+  twoFactor?: 'on' | 'off'
+  inactiveDays?: number
+  sort?: AdminUserSort
+  dir?: SortDir
   page?: number
-}
-
-export interface AdminUserPage {
-  items: Array<AdminUser>
-  total: number
-  page: number
-  pageSize: number
 }
 
 export interface AdminUserChange {
@@ -433,28 +416,11 @@ export interface AdminUserChange {
   disabled?: boolean
 }
 
-export interface AdminStats {
-  users: number
-  new7: number
-  new30: number
-  active7: number
-  free: number
-  pro: number
-  lifetime: number
-  blocked: number
-  demo: number
-  activeSubscriptions: number
-  /** Roczny przychód z aktywnych subskrypcji (USD). */
-  yearlyRevenue: number
-  /** Rejestracje z ostatnich 14 dni (tylko dni z rejestracjami). */
-  signups: Array<{ day: string; count: number }>
-}
-
-export interface AdminAction {
-  id: string
-  adminEmail: string
-  targetEmail: string
-  action: string
-  detail: string | null
-  createdAt: string
+/** Filtry dziennika zmian; `targetId` = historia jednego konta. */
+export interface AdminActionFilter {
+  admin?: string
+  target?: string
+  targetId?: string
+  action?: AdminActionKind
+  page?: number
 }

@@ -4,7 +4,13 @@ import type Stripe from 'stripe'
 import { z } from 'zod'
 import { db } from '../db/client'
 import type { Tx } from '../db/client'
-import { stripeEvents, subscriptions, userSettings, users } from '../db/schema'
+import {
+  payments,
+  stripeEvents,
+  subscriptions,
+  userSettings,
+  users,
+} from '../db/schema'
 import { serverEnv } from '../env'
 import {
   billingEnabled,
@@ -148,25 +154,7 @@ export const billingRoutes = new Hono<AppEnv>()
   /** Faktury i paragony ze Stripe (ostatnie 24), z linkami do PDF i strony płatności. */
   .get('/invoices', async (c) => {
     const user = await currentUser(c.get('userId'))
-    if (!billingEnabled() || !user.stripeCustomerId) return c.json([])
-    const list = await stripe()
-      .invoices.list({ customer: user.stripeCustomerId, limit: 24 })
-      .catch((error: unknown) => {
-        console.error('[billing] invoices', error)
-        throw new ApiError('billing.failed', 502)
-      })
-    return c.json(
-      list.data.map((i) => ({
-        id: i.id,
-        number: i.number ?? null,
-        date: new Date(i.created * 1000).toISOString(),
-        total: i.total,
-        currency: i.currency,
-        status: i.status ?? 'draft',
-        pdfUrl: i.invoice_pdf ?? null,
-        url: i.hosted_invoice_url ?? null,
-      })),
-    )
+    return c.json(await listInvoices(user.stripeCustomerId))
   })
 
   /** Koszyk → Stripe Checkout: subskrypcja płatna z góry za rok. */
@@ -258,6 +246,68 @@ export const billingRoutes = new Hono<AppEnv>()
     return c.json({ url: session.url })
   })
 
+/** Faktury klienta Stripe (ostatnie 24); bez płatności albo bez klienta pusta lista. */
+export async function listInvoices(customerId: string | null) {
+  if (!billingEnabled() || !customerId) return []
+  const list = await stripe()
+    .invoices.list({ customer: customerId, limit: 24 })
+    .catch((error: unknown) => {
+      console.error('[billing] invoices', error)
+      throw new ApiError('billing.failed', 502)
+    })
+  return list.data.map((i) => ({
+    id: i.id,
+    number: i.number ?? null,
+    date: new Date(i.created * 1000).toISOString(),
+    total: i.total,
+    currency: i.currency,
+    status: i.status ?? 'draft',
+    pdfUrl: i.invoice_pdf ?? null,
+    url: i.hosted_invoice_url ?? null,
+  }))
+}
+
+/** Karta klienta w panelu Stripe (tryb testowy dla kluczy sk_test/rk_test). */
+export function stripeCustomerUrl(customerId: string | null) {
+  const key = serverEnv.stripe?.secretKey
+  if (!key || !customerId) return null
+  const test = /^(sk|rk)_test_/.test(key)
+  return `https://dashboard.stripe.com/${test ? 'test/' : ''}customers/${customerId}`
+}
+
+/**
+ * Wpłata do statystyk przychodu: zapłacona kwota i zwroty z obciążenia Stripe. To samo
+ * obciążenie przychodzi przy zapłacie i przy każdym zwrocie, więc zapis jest idempotentny.
+ */
+export async function recordCharge(charge: Stripe.Charge) {
+  if (charge.status !== 'succeeded') return
+  const customerId =
+    typeof charge.customer === 'string'
+      ? charge.customer
+      : (charge.customer?.id ?? null)
+  const [owner] = customerId
+    ? await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.stripeCustomerId, customerId))
+    : []
+  const values = {
+    userId: owner?.id ?? null,
+    stripeCustomerId: customerId,
+    amount: charge.amount,
+    amountRefunded: charge.amount_refunded,
+    currency: charge.currency,
+    paidAt: new Date(charge.created * 1000),
+  }
+  await db
+    .insert(payments)
+    .values({ id: charge.id, ...values })
+    .onConflictDoUpdate({
+      target: payments.id,
+      set: { amountRefunded: values.amountRefunded, updatedAt: new Date() },
+    })
+}
+
 const SUBSCRIPTION_EVENTS = new Set([
   'customer.subscription.created',
   'customer.subscription.updated',
@@ -338,7 +388,10 @@ export const stripeWebhookRoutes = new Hono<AppEnv>().post(
             syncSubscription(tx, sub, session.client_reference_id),
           )
         }
+      } else if (event.type === 'charge.succeeded') {
+        await recordCharge(event.data.object)
       } else if (event.type === 'charge.refunded') {
+        await recordCharge(event.data.object)
         await endAfterRefund(event.data.object)
       } else if (SUBSCRIPTION_EVENTS.has(event.type)) {
         const { id } = event.data.object as Stripe.Subscription

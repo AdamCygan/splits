@@ -41,9 +41,11 @@ import type {
   UserSettings,
   BillingStatus,
   PlanCode,
-  AdminAction,
+  AdminActionFilter,
+  AdminActionPage,
   AdminStats,
   AdminUser,
+  AdminUserDetail,
   AdminUserChange,
   AdminUserFilter,
   AdminUserPage,
@@ -246,9 +248,19 @@ export interface DataSource {
   admin: {
     stats: () => R<AdminStats>
     users: (filter: AdminUserFilter) => R<AdminUserPage>
+    /** Wszystkie konta z filtrami (eksport CSV; serwer zapisuje go w dzienniku). */
+    exportUsers: (filter: AdminUserFilter) => R<Array<AdminUser>>
+    user: (id: string) => R<AdminUserDetail>
     updateUser: (id: string, change: AdminUserChange) => R<AdminUser>
     revokeSessions: (id: string) => R<undefined>
-    deleteUser: (id: string) => R<undefined>
-    actions: () => R<Array<AdminAction>>
+    revokeSession: (id: string, sessionId: string) => R<undefined>
+    resendVerification: (id: string) => R<undefined>
+    cancelEmailChange: (id: string) => R<undefined>
+    /** Wyłączenie 2FA po utracie telefonu; powód (jak sprawdzono tożsamość) do dziennika. */
+    disableTwoFactor: (id: string, reason: string) => R<undefined>
+    invoices: (id: string) => R<Array<Invoice>>
+    /** Usunięcie konta; `confirmEmail` musi być adresem tego konta. */
+    deleteUser: (id: string, confirmEmail: string) => R<undefined>
+    actions: (filter: AdminActionFilter) => R<AdminActionPage>
   }
 }

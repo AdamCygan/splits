@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { AdminPage } from '#/features/admin/admin-page'
+import { AdminLayout } from '#/features/admin/admin-layout'
 import { getLocale } from '#/i18n/locale'
-import { panelMessages } from '#/i18n/messages/panel'
+import { adminMessages } from '#/i18n/messages/admin'
 
 /**
  * Panel administratora. Przekierowanie to tylko wygoda: dostępu pilnuje serwer,
@@ -13,9 +13,7 @@ export const Route = createFileRoute('/app/admin')({
     if (getCurrentUser()?.role !== 'admin') throw redirect({ to: '/app' })
   },
   head: () => ({
-    meta: [
-      { title: `${panelMessages[getLocale()].admin.seoTitle} | Pointhours` },
-    ],
+    meta: [{ title: `${adminMessages[getLocale()].seoTitle} | Pointhours` }],
   }),
-  component: AdminPage,
+  component: AdminLayout,
 })

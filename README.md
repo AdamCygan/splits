@@ -124,8 +124,13 @@ Wyłączysz to zmienną `MIGRATE_ON_START=false`.
   w przedziale skali SP, wyszukiwanie, filtry, „Kontynuuj” i podsumowanie.
 - **Sprints** – bieżący sprint (dzień sprintu, czas, SP względem pojemności, czas na SP, podział
   na typy pracy) i porównanie zakończonych sprintów ze średnim czasem na SP.
-- **Admin** (rola `admin`) – statystyki, lista kont z wyszukiwaniem i filtrami, zmiana planu i roli,
-  blokada (od razu wylogowuje), wylogowanie ze wszystkich urządzeń, usunięcie konta, dziennik działań.
+- **Admin** (rola `admin`) – statystyki (aktywni wg wpisów czasu, przychód z faktycznych wpłat minus
+  zwroty, problemy z płatnością), lista kont z sortowaniem, filtrami w adresie strony i eksportem CSV.
+  Osobna strona konta (`/app/admin/users/:id`): plan, rola, blokada, bezpieczeństwo (potwierdzenie
+  e-maila, oczekująca zmiana adresu, 2FA z wyłączeniem po utracie telefonu, zalogowane urządzenia),
+  płatności (subskrypcja, link do Stripe, faktury), historia zmian i usunięcie po wpisaniu adresu konta.
+  Dziennik zmian (`/app/admin/log`) z filtrami i stronicowaniem; trafia do niego każda zmiana i wgląd
+  w faktury. `ADMIN_REQUIRE_2FA=true` zamyka panel adminom bez logowania dwuetapowego.
   Administrator nie widzi treści wpisów i ma wszystko z Pro bez płacenia.
   Siebie (właściciela) ustawiasz zmienną `ADMIN_EMAILS=ty@firma.pl`: po zalogowaniu z potwierdzonym
   adresem (Google albo reset hasła) konto dostaje rolę admin, a inni administratorzy nie mogą go
@@ -162,7 +167,9 @@ Jak to działa:
    podsumowanie, data odnowienia, zgoda na regulamin i 14 dni na pełny zwrot.
 2. „Przejdź do płatności” otwiera **Stripe Checkout** (karta, adres, NIP firmy, kod rabatowy).
 3. Po płatności wracasz do Ustawienia → Plan; plan włącza się od razu (`POST /api/v1/billing/sync`),
-   a webhook (`/api/v1/stripe/webhook`) pilnuje odnowień, nieudanych płatności i anulowania.
+   a webhook (`/api/v1/stripe/webhook`) pilnuje odnowień, nieudanych płatności i anulowania, a wpłaty
+   i zwroty (`charge.succeeded`, `charge.refunded`) zapisuje do przychodu w panelu admina.
+   Po aktualizacji uruchom ponownie `pnpm stripe:setup`, żeby webhook dostał nowe zdarzenie.
 4. Ustawienia → Plan → „Zarządzaj subskrypcją” otwiera **Stripe Customer Portal**: faktury, karta,
    dane do faktury, wyłączenie odnowienia (dostęp zostaje do końca opłaconego roku).
 5. **Zwrot** (14 dni z regulaminu): zrób pełny zwrot płatności w panelu Stripe. Webhook `charge.refunded`

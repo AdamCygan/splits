@@ -1,9 +1,7 @@
 import type { User } from '#/data/types'
+import { isPaymentProblem } from '#/domain/admin'
 
 export type AccountNotice = 'unverified' | 'pastDue'
-
-/** Statusy Stripe, przy których płatność się nie udała, a subskrypcja jeszcze trwa. */
-const FAILED_PAYMENT = new Set(['past_due', 'unpaid'])
 
 export interface AccountNoticesInput {
   user: Pick<User, 'emailVerified' | 'isDemo'>
@@ -21,9 +19,7 @@ export function accountNotices({
 }: AccountNoticesInput): Array<AccountNotice> {
   if (user.isDemo) return []
   return [
-    ...(subscriptionStatus && FAILED_PAYMENT.has(subscriptionStatus)
-      ? (['pastDue'] as const)
-      : []),
+    ...(isPaymentProblem(subscriptionStatus) ? (['pastDue'] as const) : []),
     ...(user.emailVerified ? [] : (['unverified'] as const)),
   ]
 }

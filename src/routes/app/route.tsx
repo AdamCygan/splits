@@ -34,6 +34,7 @@ import {
 import { useMessages } from '#/i18n/context'
 import { appMessages } from '#/i18n/messages/app'
 import { commonMessages } from '#/i18n/messages/common'
+import { adminMessages } from '#/i18n/messages/admin'
 import { panelMessages } from '#/i18n/messages/panel'
 import { AccountNotices } from '#/features/notices'
 import { TimerBar } from '#/features/time-entries/components/timer'
@@ -126,7 +127,7 @@ function AppShell() {
   const pathname = useLocation({ select: (l) => l.pathname })
   const t = useMessages(appMessages)
   const common = useMessages(commonMessages)
-  const panel = useMessages(panelMessages)
+  const admin = useMessages(adminMessages)
   // Konto, konfiguracja i dzisiejszy dzień jednym żądaniem, zanim ekrany zaczną pytać osobno.
   const boot = useBootstrap()
 
@@ -218,7 +219,7 @@ function AppShell() {
                 className="mt-3 flex items-center gap-3 rounded-lg border border-dashed border-line px-3 py-2.5 text-[0.9375rem] font-medium text-ink-soft hover:bg-muted hover:text-ink data-[status=active]:border-transparent data-[status=active]:bg-[var(--selected)] data-[status=active]:text-[var(--on-selected)]"
               >
                 <ShieldCheck aria-hidden className="size-[1.125rem]" />
-                {panel.admin.nav}
+                {admin.nav}
               </Link>
             )}
           </nav>
@@ -253,7 +254,7 @@ function AppShell() {
                   className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-ink-soft data-[status=active]:text-ink"
                 >
                   <ShieldCheck aria-hidden className="size-4" />
-                  {panel.admin.nav}
+                  {admin.nav}
                 </Link>
               )}
               {user && (
