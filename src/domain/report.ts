@@ -5,7 +5,7 @@ import { extractTaskKey } from './rules'
 import { maxEstimate, maxPoints } from './summary'
 
 /** Jeden wiersz raportu: zadanie (wszystkie jego wpisy w okresie) z SP i czasem. */
-export type TaskRow = {
+export interface TaskRow {
   key: string
   title: string
   link: string | null
@@ -31,7 +31,7 @@ export type TaskRow = {
   running: boolean
 }
 
-export type TypeRow = {
+export interface TypeRow {
   taskTypeId: string
   minutes: number
   storyPoints: number
@@ -40,7 +40,7 @@ export type TypeRow = {
   withoutSp: number
 }
 
-export type ReportTotals = {
+export interface ReportTotals {
   minutes: number
   /** Nadgodziny w okresie (część `minutes`). */
   overtimeMinutes: number
@@ -217,7 +217,10 @@ export function sortRows(
   })
 }
 
-export type SortState = { by: TaskSort; dir: 'asc' | 'desc' }
+export interface SortState {
+  by: TaskSort
+  dir: 'asc' | 'desc'
+}
 
 /** Klik w nagłówek: ta sama kolumna odwraca kierunek, nowa startuje od naturalnego (tytuł A→Z, liczby malejąco). */
 export const nextSort = (sort: SortState, by: TaskSort): SortState =>
@@ -241,7 +244,10 @@ export const withElapsed = (
 
 // ---------- Okresy raportu ----------
 
-export type ReportRange = { from: string; to: string }
+export interface ReportRange {
+  from: string
+  to: string
+}
 
 export type PeriodPreset =
   'this_week' | 'last_week' | 'this_month' | 'last_month' | 'last_30'
@@ -294,18 +300,23 @@ export const REPORT_PRESETS: ReadonlyArray<PeriodPreset> = [
 /** Okres raportu: sprint, gotowy zakres kalendarza albo własne daty. */
 export type ReportPeriod = `sprint:${string}` | PeriodPreset | 'custom'
 
-/**
- * Daty raportu dla wybranego okresu, przycięte do historii planu (`oldest`, null = bez
- * limitu). `clamped` mówi, że część okresu jest poza planem (pokazujemy wtedy informację).
- */
-export function reportRange(options: {
+export interface ReportRangeOptions {
   period: ReportPeriod
   sprint: { startsOn: string; endsOn: string } | undefined
   custom: ReportRange
   today: string
   weekStartsOn: number
   oldest: string | null
-}): { range: ReportRange; clamped: boolean } {
+}
+
+/**
+ * Daty raportu dla wybranego okresu, przycięte do historii planu (`oldest`, null = bez
+ * limitu). `clamped` mówi, że część okresu jest poza planem (pokazujemy wtedy informację).
+ */
+export function reportRange(options: ReportRangeOptions): {
+  range: ReportRange
+  clamped: boolean
+} {
   const { period, sprint, oldest } = options
   const requested: ReportRange = sprint
     ? { from: sprint.startsOn, to: sprint.endsOn }
@@ -335,14 +346,16 @@ const csvCell = (value: string | number) => {
   return /[",;\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
 }
 
+export interface ReportCsvLabels {
+  head: ReadonlyArray<string>
+  typeName: (id: string) => string
+  projectName: (id: string | null) => string
+}
+
 /** CSV raportu: separator przecinek, czas w minutach i godzinach dziesiętnych (do faktur i arkuszy). */
 export function reportCsv(
   rows: ReadonlyArray<TaskRow>,
-  labels: {
-    head: ReadonlyArray<string>
-    typeName: (id: string) => string
-    projectName: (id: string | null) => string
-  },
+  labels: ReportCsvLabels,
 ): string {
   const lines = [labels.head.map(csvCell).join(',')]
   for (const r of rows) {

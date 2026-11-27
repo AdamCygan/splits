@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { addDays, todayIn } from '#/domain/dates'
 import { registered } from './helpers'
 
-type Result = {
+interface Result {
   entry: { id: string; title: string }
   workedMinutes: number
   sessions: number
@@ -11,7 +11,7 @@ type Result = {
 }
 
 describe('task search', () => {
-  it('finds tasks by title or link, finished ones too, and only your own', async () => {
+  it('Should find tasks by title or link, finished ones too, and only your own', async () => {
     const { c } = await registered()
     const types =
       await c.get<
@@ -63,7 +63,7 @@ describe('task search', () => {
     ).toEqual([])
   })
 
-  it('palette search covers notes, every word and ranks title matches first', async () => {
+  it('Should search notes and every word, ranking title matches first', async () => {
     const { c } = await registered()
     const types =
       await c.get<

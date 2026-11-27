@@ -13,8 +13,12 @@ import { fmt } from '#/i18n/format'
 import { daysOffMessages } from '#/i18n/messages/days-off'
 import { DAY_OFF_COLORS, DAY_OFF_ICONS, DayOffDialog } from './day-off-dialog'
 
+export interface DayOffButtonProps {
+  date: string
+}
+
 /** Przycisk „Dzień wolny” w nagłówku Dziś (gdy wybrany dzień nie jest jeszcze wolny). */
-export function DayOffButton({ date }: { date: string }) {
+export function DayOffButton({ date }: DayOffButtonProps) {
   const t = useMessages(daysOffMessages)
   const day = useQuery(daysOffQuery(date, date)).data?.[0]
   const [open, setOpen] = useState(false)
@@ -35,8 +39,12 @@ export function DayOffButton({ date }: { date: string }) {
   )
 }
 
+export interface DayOffBannerProps {
+  date: string
+}
+
 /** Baner na Dziś, gdy wybrany dzień jest wolny: rodzaj, notatka, zmiana albo usunięcie. */
-export function DayOffBanner({ date }: { date: string }) {
+export function DayOffBanner({ date }: DayOffBannerProps) {
   const t = useMessages(daysOffMessages)
   const day = useQuery(daysOffQuery(date, date)).data?.[0]
   const [editing, setEditing] = useState(false)

@@ -2,6 +2,16 @@ import { useId } from 'react'
 import type { ReactNode } from 'react'
 import { cn } from '#/lib/utils'
 
+export interface PanelProps {
+  title: string
+  lead?: string
+  level?: 2 | 3
+  /** Treść pod opisem, przed zawartością (np. legenda wykresu). */
+  headerExtra?: ReactNode
+  className?: string
+  children: ReactNode
+}
+
 /**
  * Karta sekcji strony: nagłówek (h2 domyślnie), krótki opis i treść. Sekcja jest
  * nazwanym regionem (aria-labelledby), więc czytniki ekranu mogą do niej przeskoczyć.
@@ -13,15 +23,7 @@ export function Panel({
   headerExtra,
   className,
   children,
-}: {
-  title: string
-  lead?: string
-  level?: 2 | 3
-  /** Treść pod opisem, przed zawartością (np. legenda wykresu). */
-  headerExtra?: ReactNode
-  className?: string
-  children: ReactNode
-}) {
+}: PanelProps) {
   const id = useId()
   const Heading = level === 2 ? 'h2' : 'h3'
   return (

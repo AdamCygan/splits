@@ -12,7 +12,11 @@ import { settingsMessages } from '#/i18n/messages/settings'
 import { taskTypesQuery } from '../queries'
 
 /** Wiersz formularza: rodzaj pracy i czas wpisany po ludzku („6h”, „1h 30m”, „90”). */
-export type GoalDraft = { key: string; taskTypeId: string; time: string }
+export interface GoalDraft {
+  key: string
+  taskTypeId: string
+  time: string
+}
 
 export const goalDrafts = (
   goals: ReadonlyArray<SprintTimeGoal>,
@@ -35,6 +39,12 @@ export function goalsFromDrafts(
   return goals.every((g) => g.taskTypeId && g.minutes > 0) ? goals : null
 }
 
+export interface TimeGoalsFieldProps {
+  rows: Array<GoalDraft>
+  onChange: (rows: Array<GoalDraft>) => void
+  showErrors: boolean
+}
+
 /**
  * Cele czasowe sprintu: ile czasu chcesz poświęcić na dany rodzaj pracy
  * (np. Code Review 6h, spotkania najwyżej 8h). Każdy rodzaj pracy raz.
@@ -43,11 +53,7 @@ export function TimeGoalsField({
   rows,
   onChange,
   showErrors,
-}: {
-  rows: Array<GoalDraft>
-  onChange: (rows: Array<GoalDraft>) => void
-  showErrors: boolean
-}) {
+}: TimeGoalsFieldProps) {
   const t = useMessages(settingsMessages).sprints.timeGoals
   const format = useFormat()
   const types = useQuery(taskTypesQuery).data ?? []

@@ -23,11 +23,11 @@ import { cn } from '#/lib/utils'
 import { keys as settingsKeys, meQuery, taskTypesQuery } from '../queries'
 import { DemoNotice, QueryView, SectionHeader, SettingsCard } from './ui'
 
-export function PlanSettings({
-  checkoutSession,
-}: {
+export interface PlanSettingsProps {
   checkoutSession: string | null
-}) {
+}
+
+export function PlanSettings({ checkoutSession }: PlanSettingsProps) {
   const t = useMessages(settingsMessages)
   return (
     <div className="space-y-6">
@@ -48,11 +48,15 @@ export function PlanSettings({
   )
 }
 
+interface CheckoutReturnProps {
+  sessionId: string
+}
+
 /**
  * Powrót z płatności: od razu pytamy serwer o sesję (webhook bywa wolniejszy),
  * odświeżamy plan i czyścimy adres, żeby odświeżenie strony nie powtarzało tego kroku.
  */
-function CheckoutReturn({ sessionId }: { sessionId: string }) {
+function CheckoutReturn({ sessionId }: CheckoutReturnProps) {
   const t = useMessages(billingMessages).plan
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -96,13 +100,12 @@ function CheckoutReturn({ sessionId }: { sessionId: string }) {
 
 type PlanCode = 'free' | 'pro' | 'lifetime'
 
-function PlanDetails({
-  planId,
-  admin = false,
-}: {
+interface PlanDetailsProps {
   planId: PlanCode
   admin?: boolean
-}) {
+}
+
+function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
   const t = useMessages(settingsMessages).plan
   const b = useMessages(billingMessages).plan
   const pricing = useMessages(marketingMessages).pricing

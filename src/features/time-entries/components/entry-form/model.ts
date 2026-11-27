@@ -22,14 +22,14 @@ import {
 export type DraftMode = TimeInputMode | 'timer'
 
 /** Zadanie z wyszukiwarki albo palety do wpisania w formularz (`key` zmienia się przy każdym wyborze). */
-export type EntryPrefill = {
+export interface EntryPrefill {
   key: number
   entry?: TimeEntry
   title?: string
   mode?: DraftMode
 }
 
-export type Draft = {
+export interface Draft {
   taskTypeId: string
   title: string
   link: string
@@ -217,6 +217,11 @@ export function withType(d: Draft, next: TaskType, editing: boolean): Draft {
   }
 }
 
+export interface WithModeOptions {
+  now: string
+  entryStart?: string | null
+}
+
 /**
  * Zmiana sposobu podania czasu: timer zaczyna od teraz (albo od startu edytowanego
  * wpisu), a „czas trwania” przejmuje policzone już minuty z godzin.
@@ -224,7 +229,7 @@ export function withType(d: Draft, next: TaskType, editing: boolean): Draft {
 export function withMode(
   d: Draft,
   mode: DraftMode,
-  options: { now: string; entryStart?: string | null },
+  options: WithModeOptions,
 ): Draft {
   const minutes = draftMinutes(d)
   return {
@@ -241,17 +246,27 @@ export function withMode(
   }
 }
 
+export interface WithQuickLogOptions {
+  now: string
+  editing: boolean
+}
+
 /** Szybki wpis z menu typu: typ i czas trwania (albo timer od teraz). */
 export function withQuickLog(
   d: Draft,
   type: TaskType,
   minutes: number | 'timer',
-  options: { now: string; editing: boolean },
+  options: WithQuickLogOptions,
 ): Draft {
   const typed = withType(d, type, options.editing)
   return minutes === 'timer'
     ? { ...typed, mode: 'timer', start: options.now }
     : { ...typed, mode: 'duration', duration: String(minutes) }
+}
+
+export interface WithPrefillOptions {
+  timerAllowed: boolean
+  now: string
 }
 
 /**
@@ -261,7 +276,7 @@ export function withQuickLog(
 export function withPrefill(
   d: Draft,
   prefill: EntryPrefill,
-  options: { timerAllowed: boolean; now: string },
+  options: WithPrefillOptions,
 ): Draft {
   const e = prefill.entry
   if (!e) {

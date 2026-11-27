@@ -4,8 +4,12 @@ import { fmt, formatDate } from '#/i18n/format'
 import { taskViewMessages } from '#/i18n/messages/task-view'
 import type { TaskViewModel } from './use-task'
 
+export interface TaskStatsProps {
+  vm: TaskViewModel
+}
+
 /** Czas (wobec estymaty albo na SP), sesje, dni i przerwania w pracy nad zadaniem. */
-export function TaskStats({ vm }: { vm: TaskViewModel }) {
+export function TaskStats({ vm }: TaskStatsProps) {
   const t = useMessages(taskViewMessages).stats
   const format = useFormat()
   const { locale } = useI18n()

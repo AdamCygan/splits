@@ -1,4 +1,7 @@
-type Archivable = { id: string; archivedAt: string | null }
+interface Archivable {
+  id: string
+  archivedAt: string | null
+}
 
 /** Aktywne i zarchiwizowane pozycje listy (rodzaje pracy, projekty, statusy). */
 export function splitArchived<TItem extends Archivable>(

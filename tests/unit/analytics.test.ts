@@ -14,7 +14,7 @@ const e = (workDate: string, taskTypeId: string, durationMinutes: number) => ({
 })
 
 describe('analytics', () => {
-  it('buckets time per day with every day of the period', () => {
+  it('Should bucket time per day with every day of the period', () => {
     const { unit, buckets } = timeBuckets(
       [
         e('2026-11-16', 'a', 60),
@@ -32,7 +32,7 @@ describe('analytics', () => {
     ])
   })
 
-  it('switches to weeks starting on Monday for long periods', () => {
+  it('Should switch to weeks starting on Monday for long periods', () => {
     const { unit, buckets } = timeBuckets(
       [
         e('2026-09-02', 'a', 60),
@@ -51,7 +51,7 @@ describe('analytics', () => {
     })
   })
 
-  it('spreads timed entries over the hours of the weekday grid', () => {
+  it('Should spread timed entries over the hours of the weekday grid', () => {
     const map = hourHeatmap([
       { workDate: '2026-11-16', startTime: '09:30', endTime: '11:00' }, // poniedziałek
       { workDate: '2026-11-21', startTime: '22:15', endTime: '22:45' }, // sobota
@@ -62,7 +62,7 @@ describe('analytics', () => {
     expect(map).toMatchObject({ max: 60, firstHour: 9, lastHour: 22 })
   })
 
-  it('lists the biggest estimate misses first', () => {
+  it('Should list the biggest estimate misses first', () => {
     const rows = [
       { key: 'a', title: 'A', minutes: 300, estimateMinutes: 240 },
       { key: 'b', title: 'B', minutes: 60, estimateMinutes: 180 },
@@ -74,7 +74,7 @@ describe('analytics', () => {
     ])
   })
 
-  it('orders stack layers so neighbours are easy to tell apart', () => {
+  it('Should order stack layers so neighbours are easy to tell apart', () => {
     const order = stackOrder([
       { kind: 'meeting', sortOrder: 0 },
       { kind: 'task', sortOrder: 1 },
@@ -89,14 +89,14 @@ describe('analytics', () => {
     ])
   })
 
-  it('makes round hour ticks', () => {
+  it('Should make round hour ticks', () => {
     expect(hourTicks(7 * 60).map((m) => m / 60)).toEqual([0, 2, 4, 6, 8])
     expect(hourTicks(30).map((m) => m / 60)).toEqual([0, 1])
   })
 })
 
 describe('story points earned by time worked', () => {
-  it('uses the estimate first, then the SP scale', async () => {
+  it('Should use the estimate first, then the SP scale', async () => {
     const { earnedPoints, taskBudget } = await import('#/domain/sp-scale')
     const scale = [
       { points: 3, maxMinutes: 240 },

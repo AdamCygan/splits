@@ -12,7 +12,7 @@ export type TimeInputMode = 'range' | 'duration'
 export type StatusCategory = 'todo' | 'in_progress' | 'done'
 export type RoundingMinutes = 0 | 1 | 5 | 10 | 15 | 30
 
-export type User = {
+export interface User {
   id: string
   username: string
   email: string
@@ -25,7 +25,11 @@ export type User = {
   isDemo: boolean
 }
 
-export type AuthSession = { accessToken: string; expiresAt: string; user: User }
+export interface AuthSession {
+  accessToken: string
+  expiresAt: string
+  user: User
+}
 
 /** Rodzaj dnia wolnego: urlop, zwolnienie lekarskie (L4), święto, inne wolne. */
 export type DayOffKind = 'vacation' | 'sick' | 'holiday' | 'other'
@@ -35,20 +39,20 @@ export const DAY_OFF_KINDS: ReadonlyArray<DayOffKind> = [
   'holiday',
   'other',
 ]
-export type DayOff = {
+export interface DayOff {
   date: string
   kind: DayOffKind
   note: string | null
 }
 /** Zakres dni wolnych: dni pracy z ustawień w tym zakresie dostają ten sam rodzaj. */
-export type DayOffInput = {
+export interface DayOffInput {
   from: string
   to: string
   kind: DayOffKind
   note: string | null
 }
 
-export type UserSettings = {
+export interface UserSettings {
   workdayTargetMinutes: number
   /** 0 = niedziela … 6 = sobota (jak .NET DayOfWeek). */
   workingDays: Array<number>
@@ -65,7 +69,7 @@ export type UserSettings = {
 }
 
 /** Przerwa w pracy: nie jest czasem pracy, liczy się względem dziennego limitu. */
-export type WorkBreak = {
+export interface WorkBreak {
   id: string
   workDate: string
   startTime: string | null
@@ -76,16 +80,20 @@ export type WorkBreak = {
   /** Zadanie wstrzymane na czas przerwy. */
   resumeEntryId: string | null
 }
-export type WorkBreakInput = {
+export interface WorkBreakInput {
   workDate: string
   startTime: string | null
   endTime: string | null
   durationMinutes: number
 }
 
-export type SpScaleStep = { id: string; points: number; maxMinutes: number }
+export interface SpScaleStep {
+  id: string
+  points: number
+  maxMinutes: number
+}
 
-export type TaskType = {
+export interface TaskType {
   id: string
   kind: WorkKind
   name: string
@@ -105,7 +113,7 @@ export type TaskType = {
   archivedAt: string | null
 }
 
-export type TaskStatus = {
+export interface TaskStatus {
   id: string
   name: string
   category: StatusCategory
@@ -116,14 +124,14 @@ export type TaskStatus = {
   archivedAt: string | null
 }
 
-export type SprintCadence = {
+export interface SprintCadence {
   lengthDays: number
   anchorDate: string
   namePattern: string
   autoCreate: boolean
 }
 
-export type Sprint = {
+export interface Sprint {
   id: string
   number: number | null
   name: string
@@ -136,9 +144,12 @@ export type Sprint = {
   timeGoals: Array<SprintTimeGoal>
 }
 
-export type SprintTimeGoal = { taskTypeId: string; minutes: number }
+export interface SprintTimeGoal {
+  taskTypeId: string
+  minutes: number
+}
 
-export type Project = {
+export interface Project {
   id: string
   name: string
   key: string | null
@@ -146,9 +157,13 @@ export type Project = {
   archivedAt: string | null
 }
 
-export type Tag = { id: string; name: string; color: string }
+export interface Tag {
+  id: string
+  name: string
+  color: string
+}
 
-export type QuickTemplate = {
+export interface QuickTemplate {
   id: string
   taskTypeId: string
   projectId: string | null
@@ -174,7 +189,7 @@ export type TemplateSchedule = Array<{ day: number; time: string }>
  * Wpis czasu. Tytuł, link i SP opisują zadanie (w API: tabela tasks, wpis wskazuje task_id),
  * a notatka należy do wpisu: co konkretnie zostało zrobione w tym czasie.
  */
-export type TimeEntry = {
+export interface TimeEntry {
   id: string
   taskTypeId: string
   projectId: string | null
@@ -255,7 +270,10 @@ export type TaskUpdateInput = Pick<
   TimeEntry,
   'title' | 'link' | 'projectId' | 'storyPoints'
 > & { estimateMinutes?: number | null }
-export type TimerStartResult = { started: TimeEntry; stopped: TimeEntry | null }
+export interface TimerStartResult {
+  started: TimeEntry
+  stopped: TimeEntry | null
+}
 
 /** Zadanie z wyszukiwarki: najświeższa sesja, sumy i stan (zakończone / trwa). */
 export type TaskSearchResult = UnfinishedTask & {
@@ -264,7 +282,7 @@ export type TaskSearchResult = UnfinishedTask & {
 }
 
 /** Zadanie z poprzednich dni, którego nie zakończono (lista „Do dokończenia”). */
-export type UnfinishedTask = {
+export interface UnfinishedTask {
   /** Najświeższa sesja zadania (z niej „Kontynuuj” startuje nową sesję). */
   entry: TimeEntry
   /** Cały przepracowany czas zadania (wszystkie sesje). */
@@ -274,12 +292,12 @@ export type UnfinishedTask = {
   lastDate: string
 }
 export type ProfileInput = Pick<User, 'displayName' | 'email'>
-export type PasswordChangeInput = {
+export interface PasswordChangeInput {
   currentPassword: string
   newPassword: string
 }
 
-export type RegisterInput = {
+export interface RegisterInput {
   username: string
   email: string
   password: string
@@ -287,10 +305,13 @@ export type RegisterInput = {
   /** Strefa IANA przeglądarki: od niej zależy „dziś” i sprinty. */
   timezone?: string
 }
-export type LoginInput = { login: string; password: string }
+export interface LoginInput {
+  login: string
+  password: string
+}
 
 /** Stan płatności konta (GET /billing). Wszystkie płatne plany są roczne, płatne z góry. */
-export type BillingStatus = {
+export interface BillingStatus {
   /** false = serwer nie ma klucza Stripe; zakup jest wyłączony. */
   enabled: boolean
   plan: PlanCode
@@ -305,7 +326,7 @@ export type BillingStatus = {
 }
 
 /** Start panelu jednym żądaniem (GET /bootstrap): konto, konfiguracja i dzisiejszy dzień. */
-export type Bootstrap = {
+export interface Bootstrap {
   user: User
   settings: UserSettings
   taskTypes: Array<TaskType>
@@ -321,7 +342,7 @@ export type Bootstrap = {
 
 // ---------- Panel administratora ----------
 
-export type AdminUser = {
+export interface AdminUser {
   id: string
   username: string
   email: string
@@ -348,27 +369,27 @@ export type AdminUser = {
   } | null
 }
 
-export type AdminUserFilter = {
+export interface AdminUserFilter {
   q?: string
   plan?: PlanCode
   status?: 'active' | 'blocked' | 'demo'
   page?: number
 }
 
-export type AdminUserPage = {
+export interface AdminUserPage {
   items: Array<AdminUser>
   total: number
   page: number
   pageSize: number
 }
 
-export type AdminUserChange = {
+export interface AdminUserChange {
   plan?: PlanCode
   role?: 'client' | 'admin'
   disabled?: boolean
 }
 
-export type AdminStats = {
+export interface AdminStats {
   users: number
   new7: number
   new30: number
@@ -385,7 +406,7 @@ export type AdminStats = {
   signups: Array<{ day: string; count: number }>
 }
 
-export type AdminAction = {
+export interface AdminAction {
   id: string
   adminEmail: string
   targetEmail: string

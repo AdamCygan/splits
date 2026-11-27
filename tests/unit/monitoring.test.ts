@@ -11,7 +11,7 @@ const DSN = 'https://abc123@o42.ingest.de.sentry.io/7'
 afterEach(() => setMonitoringForTests({ fetch: fetch, dsn: undefined }))
 
 describe('monitoring (Sentry envelope)', () => {
-  it('reads the EU ingest endpoint and key from the DSN', () => {
+  it('Should read the EU ingest endpoint and key from the DSN', () => {
     expect(parseDsn(DSN)).toEqual({
       endpoint: 'https://o42.ingest.de.sentry.io/api/7/envelope/',
       publicKey: 'abc123',
@@ -22,7 +22,7 @@ describe('monitoring (Sentry envelope)', () => {
     expect(parseDsn('https://o42.ingest.de.sentry.io/7')).toBeNull()
   })
 
-  it('turns a V8 stack into frames, oldest first', () => {
+  it('Should turn a V8 stack into frames, oldest first', () => {
     const frames = stackFrames(
       [
         'Error: boom',
@@ -48,7 +48,7 @@ describe('monitoring (Sentry envelope)', () => {
     ])
   })
 
-  it('sends one envelope with the error and no personal request data', async () => {
+  it('Should send one envelope with the error and no personal request data', async () => {
     const calls: Array<{ url: string; init: RequestInit }> = []
     setMonitoringForTests({
       dsn: DSN,
@@ -88,7 +88,7 @@ describe('monitoring (Sentry envelope)', () => {
     expect(raw).not.toMatch(/ip_address|cookie|authorization/i)
   })
 
-  it('does nothing without a DSN and never throws when Sentry is down', async () => {
+  it('Should do nothing without a DSN and never throw when Sentry is down', async () => {
     let called = 0
     setMonitoringForTests({
       dsn: null,

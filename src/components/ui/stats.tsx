@@ -8,19 +8,17 @@ const COLS = {
   5: 'lg:grid-cols-5',
 } as const
 
+export interface StatGridProps {
+  cols?: keyof typeof COLS
+  className?: string
+  children: ReactNode
+}
+
 /**
  * Pasek liczb nad stroną (Dziś, Zadania, Raporty, Sprinty, dzień, zadanie): lista opisów
  * <dl> w kafelkach rozdzielonych 1-pikselową linią. Na telefonie zawsze 2 kolumny.
  */
-export function StatGrid({
-  cols = 4,
-  className,
-  children,
-}: {
-  cols?: keyof typeof COLS
-  className?: string
-  children: ReactNode
-}) {
+export function StatGrid({ cols = 4, className, children }: StatGridProps) {
   return (
     <dl
       className={cn(
@@ -32,6 +30,16 @@ export function StatGrid({
       {children}
     </dl>
   )
+}
+
+export interface StatTileProps {
+  label: string
+  value: ReactNode
+  hint?: string
+  warn?: boolean
+  action?: ReactNode
+  className?: string
+  children?: ReactNode
 }
 
 /**
@@ -47,15 +55,7 @@ export function StatTile({
   action,
   className,
   children,
-}: {
-  label: string
-  value: ReactNode
-  hint?: string
-  warn?: boolean
-  action?: ReactNode
-  className?: string
-  children?: ReactNode
-}) {
+}: StatTileProps) {
   return (
     <div className={cn('bg-surface px-4 py-3 sm:px-5', className)}>
       <dt className="flex items-center justify-between gap-2 text-sm text-ink-soft">

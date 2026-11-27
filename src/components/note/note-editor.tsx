@@ -31,7 +31,7 @@ import { isApplePlatform } from '#/lib/platform'
 import { cn } from '#/lib/utils'
 import { NoteMarkdown } from './note-markdown'
 
-type Action = {
+interface Action {
   id: string
   icon: LucideIcon
   label: string
@@ -388,8 +388,12 @@ const PART_CLASS: Record<NonNullable<Part['kind']>, string> = {
   type: 'tok-type',
 }
 
+interface EditorLineProps {
+  line: MarkdownLine
+}
+
 /** Jedna linia warstwy podświetlenia; pusta linia dostaje znak zerowej szerokości (wysokość). */
-function EditorLine({ line }: { line: MarkdownLine }) {
+function EditorLine({ line }: EditorLineProps) {
   const empty = line.parts.every((p) => p.text === '')
   return (
     <span

@@ -3,11 +3,15 @@ import { site } from '#/config/site'
 
 const C = 69.115 // obwód okręgu r=11
 
+export interface LogoMarkProps {
+  className?: string
+}
+
 /**
  * Znak Pointhours: stoper, którego tarcza to międzyczasy w kolorach rodzajów pracy.
  * Ten sam znak jest w filmie, obrazie OG i ikonach (marketing/brand).
  */
-export function LogoMark({ className }: { className?: string }) {
+export function LogoMark({ className }: LogoMarkProps) {
   return (
     <svg
       viewBox="0 0 32 32"
@@ -68,7 +72,11 @@ export function LogoMark({ className }: { className?: string }) {
   )
 }
 
-export function Logo({ className }: { className?: string }) {
+export interface LogoProps {
+  className?: string
+}
+
+export function Logo({ className }: LogoProps) {
   return (
     <span
       role="img"

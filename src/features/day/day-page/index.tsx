@@ -12,11 +12,15 @@ import { DayTimeline } from './day-timeline'
 import { TypeShare } from './type-share'
 import { useDayViewModel } from './use-day'
 
+export interface DayPageProps {
+  date: string
+}
+
 /**
  * Podsumowanie jednego dnia (widok w MVVM), otwierane z wykresu „Czas dzień po dniu”
  * w Raportach: sumy, oś dnia, podział na rodzaje pracy i zadania z notatkami.
  */
-export function DayPage({ date }: { date: string }) {
+export function DayPage({ date }: DayPageProps) {
   const t = useMessages(dayViewMessages)
   const format = useFormat()
   const { locale } = useI18n()

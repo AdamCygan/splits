@@ -24,32 +24,34 @@ export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0] | Db
 
 let ready: Promise<void> | null = null
 
+/** Wgrywa migracje pod blokadą doradczą (jedna maszyna naraz). */
+async function migrateLocked() {
+  const client = new pg.Client({
+    connectionString: serverEnv.migrationUrl,
+    connectionTimeoutMillis: 15_000,
+  })
+  await client.connect()
+  try {
+    await client.query("select pg_advisory_lock(hashtext('splits:migrations'))")
+    await migrate(drizzle(client), {
+      migrationsFolder: path.resolve(serverEnv.migrationsDir),
+    })
+  } finally {
+    await client
+      .query("select pg_advisory_unlock(hashtext('splits:migrations'))")
+      .catch(() => undefined)
+    await client.end()
+  }
+}
+
 /**
  * Migracje przy starcie (raz na proces). Blokada doradcza w Postgresie sprawia, że przy kilku
  * maszynach migracje wykonuje tylko jedna. Wyłączysz to zmienną MIGRATE_ON_START=false.
  */
 export function ensureMigrated(): Promise<void> {
   if (!serverEnv.migrateOnStart) return Promise.resolve()
-  ready ??= (async () => {
-    const client = new pg.Client({
-      connectionString: serverEnv.migrationUrl,
-      connectionTimeoutMillis: 15_000,
-    })
-    await client.connect()
-    try {
-      await client.query(
-        "select pg_advisory_lock(hashtext('splits:migrations'))",
-      )
-      await migrate(drizzle(client), {
-        migrationsFolder: path.resolve(serverEnv.migrationsDir),
-      })
-    } finally {
-      await client
-        .query("select pg_advisory_unlock(hashtext('splits:migrations'))")
-        .catch(() => undefined)
-      await client.end()
-    }
-  })().catch((error: unknown) => {
+  ready ??= migrateLocked().catch((error: unknown) => {
+    // Nieudana próba nie zostaje w pamięci: następne wywołanie spróbuje jeszcze raz.
     ready = null
     throw error
   })

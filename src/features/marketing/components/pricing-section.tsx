@@ -8,8 +8,12 @@ import { useI18n, useMessages } from '#/i18n/context'
 import { marketingMessages } from '#/i18n/messages/marketing'
 import { cn } from '#/lib/utils'
 
+export interface PricingSectionProps {
+  headingLevel?: 2 | 3
+}
+
 /** headingLevel: 3 pod nagłówkiem sekcji (landing), 2 gdy cennik jest całą stroną. */
-export function PricingSection({ headingLevel = 3 }: { headingLevel?: 2 | 3 }) {
+export function PricingSection({ headingLevel = 3 }: PricingSectionProps) {
   const PlanHeading = headingLevel === 2 ? 'h2' : 'h3'
   const t = useMessages(marketingMessages).pricing
   const { tag } = useI18n()

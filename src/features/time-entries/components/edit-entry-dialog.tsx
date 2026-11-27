@@ -6,6 +6,13 @@ import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { EntryForm } from './entry-form'
 
+export interface EditEntryDialogProps {
+  entry: TimeEntry
+  focusNotes?: boolean
+  duplicate?: boolean
+  onClose: () => void
+}
+
 /**
  * Edycja wpisu w oknie: z listy dnia i z paska działającego timera (wtedy wpis dalej
  * trwa — zmienia się tytuł, typ, link, SP czy notatka, a licznik biegnie dalej).
@@ -16,12 +23,7 @@ export function EditEntryDialog({
   focusNotes = false,
   duplicate = false,
   onClose,
-}: {
-  entry: TimeEntry
-  focusNotes?: boolean
-  duplicate?: boolean
-  onClose: () => void
-}) {
+}: EditEntryDialogProps) {
   const t = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   return (

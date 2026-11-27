@@ -10,7 +10,7 @@ test.describe('today: pick up unfinished tasks', () => {
     ).toBeVisible()
   })
 
-  test('continues yesterday’s task in one click', async ({ page }) => {
+  test('Should continue yesterday’s task in one click', async ({ page }) => {
     const section = page.getByRole('region', {
       name: 'Pick up where you left off',
     })
@@ -35,7 +35,7 @@ test.describe('today: pick up unfinished tasks', () => {
     ).toContainText('MOB-77 Push notification settings')
   })
 
-  test('“Done” takes the task off the list, and the task page can reopen it', async ({
+  test('Should take a “Done” task off the list and reopen it from the task page', async ({
     page,
   }) => {
     const section = page.getByRole('region', {

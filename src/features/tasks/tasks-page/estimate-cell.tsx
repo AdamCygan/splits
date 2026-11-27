@@ -6,14 +6,13 @@ import { fmt } from '#/i18n/format'
 import { panelMessages } from '#/i18n/messages/panel'
 import { cn } from '#/lib/utils'
 
-/** Wycena słowami z ikoną; szczegóły (przedział SP albo własna estymata) w dymku. */
-export function EstimateCell({
-  row,
-  estimate: e,
-}: {
+export interface EstimateCellProps {
   row: TaskRow
   estimate: ReturnType<typeof estimateOf>
-}) {
+}
+
+/** Wycena słowami z ikoną; szczegóły (przedział SP albo własna estymata) w dymku. */
+export function EstimateCell({ row, estimate: e }: EstimateCellProps) {
   const t = useMessages(panelMessages).tasks
   const format = useFormat()
   if (!e)

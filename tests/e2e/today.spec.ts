@@ -10,12 +10,12 @@ test.describe('today: log time with notes', () => {
     ).toBeVisible()
   })
 
-  test('page has no axe violations', async ({ page }) => {
+  test('Should have no axe violations', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Log time' })).toBeVisible()
     await expectNoA11yViolations(page)
   })
 
-  test('logs a code review with notes', async ({ page }) => {
+  test('Should log a code review with notes', async ({ page }) => {
     const form = page.getByRole('region', { name: 'Log time' })
     await form.getByText('Code review', { exact: true }).click()
     await form.getByLabel('Title').fill('CR !486 Webhook retries')
@@ -37,7 +37,7 @@ test.describe('today: log time with notes', () => {
     await expect(form.getByLabel('Title')).toBeFocused()
   })
 
-  test('a meeting logged as a duration shows just the time', async ({
+  test('Should show just the time for a meeting logged as a duration', async ({
     page,
   }) => {
     const form = page.getByRole('region', { name: 'Log time' })
@@ -58,7 +58,7 @@ test.describe('today: log time with notes', () => {
     await expect(item).not.toContainText('duration only')
   })
 
-  test('logs overtime with a description of what was done', async ({
+  test('Should log overtime with a description of what was done', async ({
     page,
   }) => {
     const form = page.getByRole('region', { name: 'Log time' })
@@ -90,7 +90,7 @@ test.describe('today: log time with notes', () => {
     await expectNoA11yViolations(page)
   })
 
-  test('adds notes to an existing entry later', async ({ page }) => {
+  test('Should add notes to an existing entry later', async ({ page }) => {
     const list = page.getByRole('region', { name: 'Today’s entries' })
     await list
       .getByRole('button', {
@@ -106,7 +106,7 @@ test.describe('today: log time with notes', () => {
     await expect(list.getByText('Rotated the cert with certbot.')).toBeVisible()
   })
 
-  test('starts a timer without an end time and stops it from the bar', async ({
+  test('Should start a timer without an end time and stop it from the bar', async ({
     page,
   }) => {
     const form = page.getByRole('region', { name: 'Log time' })
@@ -127,7 +127,7 @@ test.describe('today: log time with notes', () => {
     await expect(page.getByText(/timer stopped/i)).toBeVisible()
   })
 
-  test('edits the running task from the timer bar', async ({ page }) => {
+  test('Should edit the running task from the timer bar', async ({ page }) => {
     const form = page.getByRole('region', { name: 'Log time' })
     await form
       .locator('label')
@@ -155,7 +155,7 @@ test.describe('today: log time with notes', () => {
     await expectNoA11yViolations(page)
   })
 
-  test('time fields take quick typing and follow the time format setting', async ({
+  test('Should accept quick typing in time fields and follow the time format setting', async ({
     page,
   }) => {
     const form = page.getByRole('region', { name: 'Log time' })
@@ -192,7 +192,7 @@ test.describe('today: log time with notes', () => {
     ).toContainText('12:30–13:30')
   })
 
-  test('duplicates an entry and saves the edited copy as a new one', async ({
+  test('Should duplicate an entry and save the edited copy as a new one', async ({
     page,
   }) => {
     const form = page.getByRole('region', { name: 'Log time' })
@@ -233,7 +233,7 @@ test.describe('today: log time with notes', () => {
     await expect(list).toContainText('PAY-191 Edited copy')
   })
 
-  test('switches to an urgent task and comes back as a new interval', async ({
+  test('Should switch to an urgent task and come back as a new interval', async ({
     page,
   }) => {
     const form = page.getByRole('region', { name: 'Log time' })
@@ -286,7 +286,7 @@ test.describe('today: log time with notes', () => {
     ).toBeVisible()
   })
 
-  test('right-click on a work type opens quick durations', async ({
+  test('Should open quick durations on right-click on a work type', async ({
     page,
     isMobile,
   }) => {
@@ -318,7 +318,7 @@ test.describe('today: log time with notes', () => {
     )
   })
 
-  test('builds a task summary from all its entries', async ({ page }) => {
+  test('Should build a task summary from all its entries', async ({ page }) => {
     const list = page.getByRole('region', { name: 'Today’s entries' })
     await list.getByRole('button', { name: /summary.*PAY-142/i }).click()
     const text = page
@@ -334,7 +334,7 @@ test.describe('today: log time with notes', () => {
     await expectNoA11yViolations(page)
   })
 
-  test('a code review template asks for the project and the MR link', async ({
+  test('Should ask for the project and the MR link in a code review template', async ({
     page,
   }) => {
     await page
@@ -364,7 +364,9 @@ test.describe('today: log time with notes', () => {
     await expect(dialog).toBeHidden()
   })
 
-  test('an any-project template is one click per project', async ({ page }) => {
+  test('Should log an any-project template in one click per project', async ({
+    page,
+  }) => {
     await page.goto('/app/settings/templates')
     await page.getByRole('button', { name: 'Add template' }).click()
     const form = page.getByRole('dialog', { name: 'Add template' })
@@ -392,7 +394,7 @@ test.describe('today: log time with notes', () => {
     await expect(page.getByText('Logged “Team sync”, 20m')).toBeVisible()
   })
 
-  test('adds a forgotten entry to yesterday', async ({ page }) => {
+  test('Should add a forgotten entry to yesterday', async ({ page }) => {
     await page.getByRole('button', { name: 'Previous day' }).click()
     await expect(page).toHaveURL(/[?&]date=\d{4}-\d{2}-\d{2}/)
     await expect(
@@ -429,7 +431,9 @@ test.describe('today: log time with notes', () => {
     await expect(page.getByRole('button', { name: 'Next day' })).toBeDisabled()
   })
 
-  test('a timer template asks for the time on a past day', async ({ page }) => {
+  test('Should ask for the time when a timer template is used on a past day', async ({
+    page,
+  }) => {
     await page.goto('/app/settings/templates')
     await page.getByRole('button', { name: 'Add template' }).click()
     const form = page.getByRole('dialog', { name: 'Add template' })
@@ -458,7 +462,7 @@ test.describe('today: log time with notes', () => {
     await expect(page.getByText('Logged “Focus block”, 1h 30m')).toBeVisible()
   })
 
-  test('a meeting that ran over gets the extra time and a reason', async ({
+  test('Should add the extra time and a reason to a meeting that ran over', async ({
     page,
   }) => {
     await page.getByRole('button', { name: /^Stand-up/ }).click()
@@ -494,7 +498,9 @@ test.describe('today: log time with notes', () => {
     await expect(item.getByText('30m', { exact: true }).first()).toBeVisible()
   })
 
-  test('logs a task with an estimate for the whole task', async ({ page }) => {
+  test('Should log a task with an estimate for the whole task', async ({
+    page,
+  }) => {
     const form = page.getByRole('region', { name: 'Log time' })
     await form.getByText('Task', { exact: true }).click()
     await form.getByLabel('Title').fill('PAY-170 Invoice numbering')
@@ -521,7 +527,7 @@ test.describe('today: log time with notes', () => {
     ).toBeVisible()
   })
 
-  test('custom summary template is used', async ({ page }) => {
+  test('Should use the custom summary template', async ({ page }) => {
     await page.goto('/app/settings/summaries')
     const field = page.getByRole('textbox', { name: 'Template' })
     await field.fill('{key}: {total}. ')

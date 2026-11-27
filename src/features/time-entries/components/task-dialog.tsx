@@ -10,7 +10,12 @@ import { Badge, Field, Select } from '#/components/ui/controls'
 import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import { data } from '#/data'
-import type { TaskRef, TaskType, TimeEntry } from '#/data/types'
+import type {
+  TaskRef,
+  TaskType,
+  TimeEntry,
+  TaskUpdateInput,
+} from '#/data/types'
 import { ENTRY_LIMITS, isUrl, parseDuration } from '#/domain/entries'
 import { maxEstimate, maxPoints } from '#/domain/summary'
 import {
@@ -31,17 +36,16 @@ import { EntryForm } from './entry-form'
 export const taskQueryKey = (ref: TaskRef) =>
   [...entryKeys.all, 'task', ref.taskTypeId, ref.link ?? '', ref.title] as const
 
+export interface TaskDialogProps {
+  task: TaskRef
+  onClose: () => void
+}
+
 /**
  * Zadanie z raportu: wspólne dane (tytuł, link, projekt, SP) zmieniane we wszystkich
  * sesjach naraz oraz lista sesji z edycją czasu, usuwaniem i przejściem do dnia.
  */
-export function TaskDialog({
-  task,
-  onClose,
-}: {
-  task: TaskRef
-  onClose: () => void
-}) {
+export function TaskDialog({ task, onClose }: TaskDialogProps) {
   const t = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   const format = useFormat()
@@ -100,15 +104,13 @@ export function TaskDialog({
   )
 }
 
-export function TaskDetails({
-  entries,
-  type,
-  onSaved,
-}: {
+export interface TaskDetailsProps {
   entries: Array<TimeEntry>
   type: TaskType | undefined
   onSaved: (saved: Array<TimeEntry>) => void
-}) {
+}
+
+export function TaskDetails({ entries, type, onSaved }: TaskDetailsProps) {
   const t = useMessages(entriesMessages)
   const format = useFormat()
   const latest = entries.at(-1)!
@@ -135,13 +137,7 @@ export function TaskDetails({
   }
 
   const save = useDataMutation(
-    (input: {
-      title: string
-      link: string | null
-      projectId: string | null
-      storyPoints: number | null
-      estimateMinutes: number | null
-    }) => data.entries.updateTask(ref, input),
+    (input: TaskUpdateInput) => data.entries.updateTask(ref, input),
     {
       invalidate: [entryKeys.all],
       success: t.task.saved,
@@ -322,7 +318,11 @@ export function TaskDetails({
   )
 }
 
-export function Sessions({ entries }: { entries: Array<TimeEntry> }) {
+export interface SessionsProps {
+  entries: Array<TimeEntry>
+}
+
+export function Sessions({ entries }: SessionsProps) {
   const t = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   const format = useFormat()

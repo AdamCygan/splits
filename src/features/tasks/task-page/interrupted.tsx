@@ -5,8 +5,12 @@ import { fmt, formatDate } from '#/i18n/format'
 import { taskViewMessages } from '#/i18n/messages/task-view'
 import type { TaskViewModel } from './use-task'
 
+export interface InterruptedProps {
+  vm: TaskViewModel
+}
+
 /** Co wpisało się między sesje: zbiorczo wg zadania, a pod spodem każda luka po kolei. */
-export function Interrupted({ vm }: { vm: TaskViewModel }) {
+export function Interrupted({ vm }: InterruptedProps) {
   const t = useMessages(taskViewMessages).interrupted
   const format = useFormat()
   const { locale } = useI18n()

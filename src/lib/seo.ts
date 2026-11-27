@@ -3,7 +3,7 @@ import { localeTags } from '#/i18n/config'
 import { getLocale } from '#/i18n/locale'
 import { commonMessages } from '#/i18n/messages/common'
 
-type SeoInput = {
+interface SeoInput {
   title: string
   description?: string
   /** Ścieżka strony, np. "/pricing" — z niej powstaje canonical i og:url. */

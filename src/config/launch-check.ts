@@ -5,7 +5,7 @@ import { site } from './site'
  * Co jeszcze blokuje publiczny start: placeholdery w danych firmy i przykładowe adresy e-mail.
  * Dokumenty prawne pokazują te wartości dosłownie, a Stripe sprawdza dane sprzedawcy na stronie.
  */
-export type LaunchInput = {
+export interface LaunchInput {
   legal: {
     operator: { name: string; address: string; ids: string }
     email: { privacy: string }

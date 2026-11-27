@@ -7,7 +7,7 @@ import { taskGroupKey } from './report'
  * zadanie. Tu jest jedno źródło prawdy dla „ostatnia sesja”, „ile czasu w sumie”,
  * „czy zakończone” — używają go wyszukiwarki, lista „Do dokończenia”, Zadania i paleta.
  */
-export type TaskAggregate = {
+export interface TaskAggregate {
   key: string
   /** Najświeższa sesja: z niej startuje „Kontynuuj”, z niej bierzemy tytuł i link. */
   latest: TimeEntry
@@ -61,7 +61,7 @@ export function aggregateTasks(
 }
 
 /** Zadanie na liście dnia: sesje chronologicznie i fakty pokazywane na karcie. */
-export type DayTaskGroup = {
+export interface DayTaskGroup {
   key: string
   /** Sesje od najwcześniejszej (wpisy bez godzin na końcu). */
   sessions: Array<TimeEntry>

@@ -5,8 +5,12 @@ import { fmt } from '#/i18n/format'
 import { BreakTile } from '../breaks'
 import type { TodayViewModel } from './use-today'
 
+export interface DayStatsProps {
+  vm: TodayViewModel
+}
+
 /** Liczby dnia: czas względem celu (z paskiem), story pointy, wpisy i przerwy. */
-export function DayStats({ vm }: { vm: TodayViewModel }) {
+export function DayStats({ vm }: DayStatsProps) {
   const { t, totals } = vm
   const format = useFormat()
   const hasTarget = totals.targetMinutes > 0

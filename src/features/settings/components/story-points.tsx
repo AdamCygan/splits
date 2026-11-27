@@ -22,7 +22,12 @@ import {
   useUnsavedWarning,
 } from './ui'
 
-type Row = { key: number; points: string; hours: string; minutes: string }
+interface Row {
+  key: number
+  points: string
+  hours: string
+  minutes: string
+}
 
 let rowKey = 0
 const toRows = (
@@ -54,7 +59,11 @@ export function StoryPointSettings() {
   )
 }
 
-function ScaleEditor({ scale }: { scale: Array<SpScaleStep> }) {
+interface ScaleEditorProps {
+  scale: Array<SpScaleStep>
+}
+
+function ScaleEditor({ scale }: ScaleEditorProps) {
   const t = useMessages(settingsMessages).storyPoints
   const format = useFormat()
   const [rows, setRows] = useState(() => toRows(scale))

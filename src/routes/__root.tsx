@@ -98,7 +98,11 @@ function SkipLink() {
   )
 }
 
-function RootDocument({ children }: { children: ReactNode }) {
+interface RootDocumentProps {
+  children: ReactNode
+}
+
+function RootDocument({ children }: RootDocumentProps) {
   const { locale, consent } = Route.useLoaderData()
 
   return (

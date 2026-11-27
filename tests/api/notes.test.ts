@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { todayIn } from '#/domain/dates'
 import { registered } from './helpers'
 
-type Entry = { id: string; note: string | null; title: string }
+interface Entry {
+  id: string
+  note: string | null
+  title: string
+}
 
 async function setup() {
   const { c } = await registered()
@@ -33,7 +37,7 @@ async function setup() {
 }
 
 describe('markdown notes', () => {
-  it('keeps long markdown notes exactly as written', async () => {
+  it('Should keep long markdown notes exactly as written', async () => {
     const { add } = await setup()
     const note =
       '## Done\n- [x] **tests**\n- [ ] _review_\n\n```ts\nconst a = 1\n```\n' +
@@ -43,13 +47,13 @@ describe('markdown notes', () => {
     expect(res.body.note).toBe(note)
   })
 
-  it('still rejects notes over the limit', async () => {
+  it('Should still reject notes over the limit', async () => {
     const { add } = await setup()
     const res = await add('x'.repeat(20_001))
     expect(res.status).toBe(400)
   })
 
-  it('updates only the note (ticking a checkbox on the list)', async () => {
+  it('Should update only the note (ticking a checkbox on the list)', async () => {
     const { c, add } = await setup()
     const created = await add('- [ ] tests\n- [ ] review')
     const res = await c.patch<Entry>(`/time-entries/${created.body.id}/note`, {
@@ -63,7 +67,7 @@ describe('markdown notes', () => {
     })
   })
 
-  it('note updates are limited to your own entries', async () => {
+  it('Should limit note updates to your own entries', async () => {
     const { add } = await setup()
     const created = await add('- [ ] mine')
     const other = await registered()

@@ -4,7 +4,9 @@ import { expectNoA11yViolations, signInWithSamples } from './helpers'
 test.describe('days off', () => {
   test.beforeEach(async ({ page }) => signInWithSamples(page))
 
-  test('marks today as sick leave and removes it again', async ({ page }) => {
+  test('Should mark today as sick leave and remove it again', async ({
+    page,
+  }) => {
     await page.goto('/app')
     await page.getByRole('button', { name: 'Day off', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: 'Mark a day off' })
@@ -28,7 +30,7 @@ test.describe('days off', () => {
     ).toBeVisible()
   })
 
-  test('plans a vacation in settings and counts it in the sprint', async ({
+  test('Should plan a vacation in settings and count it in the sprint', async ({
     page,
   }) => {
     await page.goto('/app/settings/days-off')
@@ -60,7 +62,9 @@ test.describe('days off', () => {
     await expect(page.getByText(/No days off yet/)).toBeVisible()
   })
 
-  test('the current sprint shows its working days', async ({ page }) => {
+  test('Should show the working days of the current sprint', async ({
+    page,
+  }) => {
     await page.goto('/app/sprints')
     await expect(page.getByText('Working days')).toBeVisible()
     await expect(page.getByText('No days off')).toBeVisible()

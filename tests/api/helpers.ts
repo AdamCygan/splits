@@ -1,5 +1,11 @@
 import { api } from '#/server/app'
 
+export interface ApiResponse<TBody> {
+  status: number
+  body: TBody
+  headers: Headers
+}
+
 /** Klient testowy: woła aplikację Hono bez serwera HTTP i pamięta ciasteczka jak przeglądarka. */
 export function client() {
   const cookies = new Map<string, string>()
@@ -10,7 +16,7 @@ export function client() {
     path: string,
     body?: unknown,
     headers: Record<string, string> = {},
-  ): Promise<{ status: number; body: T; headers: Headers }> {
+  ): Promise<ApiResponse<T>> {
     // __raw: ciało wysyłane dosłownie (np. podpisany webhook Stripe).
     const { __raw: raw, ...extra } = headers
     headers = extra
@@ -67,6 +73,8 @@ export function client() {
   }
 }
 
+export type ApiClient = ReturnType<typeof client>
+
 let n = 0
 export async function registered(locale: 'en' | 'pl' = 'en') {
   const c = client()
@@ -90,3 +98,5 @@ export async function sample() {
   if (res.status !== 201) throw new Error(`sample failed ${res.status}`)
   return c
 }
+
+export { inSequence, numbered } from '../support/sequence'

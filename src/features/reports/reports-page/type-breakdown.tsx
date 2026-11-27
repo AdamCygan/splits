@@ -5,8 +5,12 @@ import { fmt } from '#/i18n/format'
 import { reportsMessages } from '#/i18n/messages/reports'
 import type { ReportsViewModel } from './use-reports'
 
+export interface TypeBreakdownProps {
+  vm: ReportsViewModel
+}
+
 /** Podział czasu na rodzaje pracy: pasek udziałów i lista; klik w rodzaj filtruje raport. */
-export function TypeBreakdown({ vm }: { vm: ReportsViewModel }) {
+export function TypeBreakdown({ vm }: TypeBreakdownProps) {
   const t = useMessages(reportsMessages)
   const format = useFormat()
   return (

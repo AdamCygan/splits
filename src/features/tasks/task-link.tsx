@@ -3,18 +3,15 @@ import type { ReactNode } from 'react'
 import type { TaskRef } from '#/data/types'
 import { cn } from '#/lib/utils'
 
-/** Link do strony zadania (/app/task): typ pracy, tytuł i link jak w grupowaniu raportu. */
-export function TaskLink({
-  task,
-  children,
-  className,
-  label,
-}: {
+export interface TaskLinkProps {
   task: TaskRef
   children: ReactNode
   className?: string
   label?: string
-}) {
+}
+
+/** Link do strony zadania (/app/task): typ pracy, tytuł i link jak w grupowaniu raportu. */
+export function TaskLink({ task, children, className, label }: TaskLinkProps) {
   return (
     <Link
       to="/app/task"

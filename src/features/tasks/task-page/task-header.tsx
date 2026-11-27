@@ -13,8 +13,12 @@ import { entriesMessages } from '#/i18n/messages/entries'
 import { taskViewMessages } from '#/i18n/messages/task-view'
 import type { TaskViewModel } from './use-task'
 
+export interface TaskHeaderProps {
+  vm: TaskViewModel
+}
+
 /** Rodzaj, projekt, SP i stan zadania, tytuł z linkiem oraz akcje. */
-export function TaskHeader({ vm }: { vm: TaskViewModel }) {
+export function TaskHeader({ vm }: TaskHeaderProps) {
   const t = useMessages(taskViewMessages)
   const tu = useMessages(entriesMessages).unfinished
   const format = useFormat()

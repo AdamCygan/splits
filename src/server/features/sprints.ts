@@ -2,6 +2,7 @@ import { and, asc, eq, gte, ne } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { todayIn } from '#/domain/dates'
 import { missingCadenceSprints, rangesOverlap } from '#/domain/sprints'
+import type { DateSpan } from '#/domain/sprints'
 import { db } from '../db/client'
 import type { Tx } from '../db/client'
 import * as t from '../db/schema'
@@ -76,7 +77,7 @@ async function assertOwnTypes(
 async function assertNoOverlap(
   tx: Tx,
   userId: string,
-  range: { startsOn: string; endsOn: string },
+  range: DateSpan,
   exceptId?: string,
 ) {
   if (range.endsOn < range.startsOn)

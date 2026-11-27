@@ -1,5 +1,11 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import type {
+  TimeEntryInput,
+  SprintTimeGoal,
+  QuickTemplateInput,
+} from '#/data/types'
 import { api } from '#/server/app'
+import { inSequence, numbered } from './helpers'
 
 /**
  * Prawdziwy adapter frontendu (httpSource + api-client + schematy Zod) na prawdziwym API i bazie.
@@ -41,6 +47,57 @@ async function errorCode(
   return result.error?.code
 }
 
+/** Sprint z celami czasu (daty daleko w przyszłości, żeby nie wejść na kadencję). */
+const goalsSprint = (timeGoals: Array<SprintTimeGoal>) => ({
+  name: 'Goals',
+  goal: null,
+  startsOn: '2031-03-01',
+  endsOn: '2031-03-14',
+  capacityStoryPoints: null,
+  timeGoals,
+})
+
+/** Codzienne spotkanie z różną godziną w poniedziałek i wtorek. */
+const dailyTemplate = (taskTypeId: string): QuickTemplateInput => ({
+  label: 'Daily',
+  taskTypeId,
+  title: 'Daily stand-up',
+  defaultDurationMinutes: 15,
+  storyPoints: null,
+  projectId: null,
+  askProject: false,
+  hotkey: null,
+  schedule: [
+    { day: 2, time: '09:30' },
+    { day: 1, time: '10:00' },
+  ],
+})
+
+/** Wpis z 90 minutami nadgodzin w 2,5-godzinnej pracy dodatkowej. */
+const overtimeEntry = (taskTypeId: string): TimeEntryInput => ({
+  taskTypeId,
+  projectId: null,
+  title: 'Checkout hotfix',
+  link: null,
+  storyPoints: null,
+  workDate: '2026-11-12',
+  startTime: '17:00',
+  endTime: '19:30',
+  durationMinutes: 150,
+  note: null,
+  overtimeMinutes: 90,
+  overtimeNote: '  Rolled back the cache change.  ',
+  estimateMinutes: null,
+  extensionMinutes: null,
+  extensionNote: null,
+  running: false,
+})
+
+const extraWorkTypeId = async () =>
+  (await value(data.taskTypes.list())).find(
+    (t) => t.kind === 'additional_work',
+  )!.id
+
 let n = 0
 const stamp = Date.now().toString(36)
 beforeAll(() => {
@@ -61,7 +118,7 @@ beforeEach(async () => {
 })
 
 describe('API contract (frontend adapter against the real server)', () => {
-  it('rejects a duplicate username and a wrong password', async () => {
+  it('Should reject a duplicate username and a wrong password', async () => {
     expect(
       await errorCode(
         data.auth.register({
@@ -86,7 +143,7 @@ describe('API contract (frontend adapter against the real server)', () => {
     expect(session.user.hasPassword).toBe(true)
   })
 
-  it('creates the default workspace on sign-up', async () => {
+  it('Should create the default workspace on sign-up', async () => {
     const types = await value(data.taskTypes.list())
     expect(types.map((t) => [t.kind, t.storyPointsRequirement])).toEqual([
       ['task', 'required'],
@@ -105,10 +162,11 @@ describe('API contract (frontend adapter against the real server)', () => {
     expect((await value(data.sprints.list())).length).toBeGreaterThanOrEqual(2)
   })
 
-  it('enforces the Free plan limit on custom work types', async () => {
+  it('Should enforce the Free plan limit on custom work types', async () => {
     const base = (await value(data.taskTypes.list()))[1]!
-    for (let i = 1; i <= 3; i++)
-      await value(data.taskTypes.create({ ...base, name: `Custom ${i}` }))
+    await inSequence(numbered(3), (i) =>
+      value(data.taskTypes.create({ ...base, name: `Custom ${i}` })),
+    )
     expect(
       await errorCode(data.taskTypes.create({ ...base, name: 'Custom 4' })),
     ).toBe('plan.limit_custom_types')
@@ -126,7 +184,7 @@ describe('API contract (frontend adapter against the real server)', () => {
     ).toBe('validation.invalid')
   })
 
-  it('protects default and system statuses', async () => {
+  it('Should protect default and system statuses', async () => {
     const statuses = await value(data.statuses.list())
     const def = statuses.find((s) => s.isDefault)!
     expect(await errorCode(data.statuses.setArchived(def.id, true))).toMatch(
@@ -150,7 +208,7 @@ describe('API contract (frontend adapter against the real server)', () => {
     expect(reordered[0]!.id).toBe(after.at(-1)!.id)
   })
 
-  it('rejects overlapping and inverted sprints', async () => {
+  it('Should reject overlapping and inverted sprints', async () => {
     await value(data.sprints.setCadence(null))
     const input = {
       name: 'Manual',
@@ -181,41 +239,47 @@ describe('API contract (frontend adapter against the real server)', () => {
     ).toBe('sprint.dates')
   })
 
-  it('stores time goals per kind of work on a sprint', async () => {
+  it('Should store time goals per kind of work on a sprint', async () => {
     await value(data.sprints.setCadence(null))
     const [type] = await value(data.taskTypes.list())
-    const input = {
-      name: 'Goals',
-      goal: null,
-      startsOn: '2031-03-01',
-      endsOn: '2031-03-14',
-      capacityStoryPoints: null,
-      timeGoals: [{ taskTypeId: type!.id, minutes: 360 }],
-    }
+    const input = goalsSprint([{ taskTypeId: type!.id, minutes: 360 }])
     const created = await value(data.sprints.create(input))
     expect(created.timeGoals).toEqual([{ taskTypeId: type!.id, minutes: 360 }])
     const updated = await value(
       data.sprints.update(created.id, { ...input, timeGoals: [] }),
     )
     expect(updated.timeGoals).toEqual([])
-
-    // Cudzy albo nieistniejący rodzaj pracy, ten sam rodzaj dwa razy, zero minut: odrzucone.
-    for (const timeGoals of [
-      [{ taskTypeId: crypto.randomUUID(), minutes: 60 }],
-      [
-        { taskTypeId: type!.id, minutes: 60 },
-        { taskTypeId: type!.id, minutes: 90 },
-      ],
-      [{ taskTypeId: type!.id, minutes: 0 }],
-    ])
-      expect(
-        await errorCode(
-          data.sprints.update(created.id, { ...input, timeGoals }),
-        ),
-      ).toBe('validation.invalid')
   })
 
-  it('does not delete sprints that the cadence recreates', async () => {
+  it.each<[string, (typeId: string) => Array<SprintTimeGoal>]>([
+    [
+      'an unknown kind of work',
+      () => [{ taskTypeId: crypto.randomUUID(), minutes: 60 }],
+    ],
+    [
+      'the same kind of work twice',
+      (typeId) => [
+        { taskTypeId: typeId, minutes: 60 },
+        { taskTypeId: typeId, minutes: 90 },
+      ],
+    ],
+    ['zero minutes', (typeId) => [{ taskTypeId: typeId, minutes: 0 }]],
+  ])('Should reject a sprint time goal with %s', async (_case, goals) => {
+    await value(data.sprints.setCadence(null))
+    const [type] = await value(data.taskTypes.list())
+    const input = goalsSprint([])
+    const created = await value(data.sprints.create(input))
+    expect(
+      await errorCode(
+        data.sprints.update(created.id, {
+          ...input,
+          timeGoals: goals(type!.id),
+        }),
+      ),
+    ).toBe('validation.invalid')
+  })
+
+  it('Should not delete sprints that the cadence recreates', async () => {
     await value(
       data.sprints.setCadence({
         lengthDays: 14,
@@ -232,7 +296,7 @@ describe('API contract (frontend adapter against the real server)', () => {
     )
   })
 
-  it('keeps hotkeys unique and projects keyed', async () => {
+  it('Should keep hotkeys unique and projects keyed', async () => {
     const type = (await value(data.taskTypes.list()))[0]!
     const input = {
       label: 'Standup',
@@ -259,23 +323,9 @@ describe('API contract (frontend adapter against the real server)', () => {
     ).toBe('key_taken')
   })
 
-  it('stores a recurring template with its own time per day', async () => {
+  it('Should store a recurring template with its own time per day', async () => {
     const type = (await value(data.taskTypes.list()))[0]!
-    const input = {
-      label: 'Daily',
-      taskTypeId: type.id,
-      title: 'Daily stand-up',
-      defaultDurationMinutes: 15,
-      storyPoints: null,
-      projectId: null,
-      askProject: false,
-      hotkey: null,
-      schedule: [
-        { day: 2, time: '09:30' },
-        { day: 1, time: '10:00' },
-      ],
-    }
-    const created = await value(data.templates.create(input))
+    const created = await value(data.templates.create(dailyTemplate(type.id)))
     // Zapisane w kolejności dni tygodnia.
     expect(created.schedule).toEqual([
       { day: 1, time: '10:00' },
@@ -283,26 +333,31 @@ describe('API contract (frontend adapter against the real server)', () => {
     ])
     const listed = await value(data.templates.list())
     expect(listed.find((x) => x.id === created.id)!.schedule).toHaveLength(2)
+  })
 
-    // Powtarzane spotkanie bez czasu trwania, dzień dwa razy, zła godzina: odrzucone.
-    for (const bad of [
-      { ...input, defaultDurationMinutes: null },
+  it.each<[string, Partial<QuickTemplateInput>]>([
+    ['without a duration', { defaultDurationMinutes: null }],
+    [
+      'with the same day twice',
       {
-        ...input,
         schedule: [
           { day: 1, time: '10:00' },
           { day: 1, time: '11:00' },
         ],
       },
-      { ...input, schedule: [{ day: 7, time: '10:00' }] },
-      { ...input, schedule: [{ day: 1, time: '25:00' }] },
-    ])
-      expect(await errorCode(data.templates.create(bad))).toBe(
-        'validation.invalid',
-      )
+    ],
+    ['with a day out of range', { schedule: [{ day: 7, time: '10:00' }] }],
+    ['with a wrong hour', { schedule: [{ day: 1, time: '25:00' }] }],
+  ])('Should reject a recurring template %s', async (_case, bad) => {
+    const type = (await value(data.taskTypes.list()))[0]!
+    expect(
+      await errorCode(
+        data.templates.create({ ...dailyTemplate(type.id), ...bad }),
+      ),
+    ).toBe('validation.invalid')
   })
 
-  it('stores an any-project template without a fixed project', async () => {
+  it('Should store an any-project template without a fixed project', async () => {
     const type = (await value(data.taskTypes.list()))[1]!
     const project = await value(
       data.projects.create({ name: 'Repo A', key: null, color: '#3D3BF3' }),
@@ -332,7 +387,7 @@ describe('API contract (frontend adapter against the real server)', () => {
     expect(fixed).toMatchObject({ askProject: false, projectId: project.id })
   })
 
-  it('validates the story point scale', async () => {
+  it('Should validate the story point scale', async () => {
     expect(
       await errorCode(
         data.spScale.replace([
@@ -350,27 +405,8 @@ describe('API contract (frontend adapter against the real server)', () => {
     expect(saved.map((s) => s.points)).toEqual([2, 3])
   })
 
-  it('stores overtime with its description and rejects invalid overtime', async () => {
-    const types = await value(data.taskTypes.list())
-    const extra = types.find((t) => t.kind === 'additional_work')!
-    const input = {
-      taskTypeId: extra.id,
-      projectId: null,
-      title: 'Checkout hotfix',
-      link: null,
-      storyPoints: null,
-      workDate: '2026-11-12',
-      startTime: '17:00',
-      endTime: '19:30',
-      durationMinutes: 150,
-      note: null,
-      overtimeMinutes: 90,
-      overtimeNote: '  Rolled back the cache change.  ',
-      estimateMinutes: null,
-      extensionMinutes: null,
-      extensionNote: null,
-      running: false,
-    }
+  it('Should store overtime with its description', async () => {
+    const input = overtimeEntry(await extraWorkTypeId())
     const created = await value(data.entries.create(input))
     expect(created).toMatchObject({
       durationMinutes: 150,
@@ -386,33 +422,36 @@ describe('API contract (frontend adapter against the real server)', () => {
       }),
     )
     expect(cleared).toMatchObject({ overtimeMinutes: null, overtimeNote: null })
-
-    for (const bad of [
-      { overtimeMinutes: 151 },
-      { overtimeNote: null },
-      { overtimeNote: ' ' },
-      { overtimeMinutes: 0 },
-      { overtimeMinutes: null, overtimeNote: 'Orphan note' },
-    ])
-      expect(await errorCode(data.entries.create({ ...input, ...bad }))).toBe(
-        'validation.invalid',
-      )
-    // Działający timer nie ma jeszcze czasu, więc nie ma też nadgodzin.
-    expect(
-      await errorCode(
-        data.entries.create({
-          ...input,
-          workDate: '2026-11-01',
-          startTime: '06:00',
-          endTime: null,
-          durationMinutes: 0,
-          running: true,
-        }),
-      ),
-    ).toBe('validation.invalid')
   })
 
-  it('stores entries with notes, SP rules per work type and ranges', async () => {
+  it.each<[string, Partial<TimeEntryInput>]>([
+    ['longer than the entry', { overtimeMinutes: 151 }],
+    ['without a description', { overtimeNote: null }],
+    ['with a blank description', { overtimeNote: ' ' }],
+    ['of zero minutes', { overtimeMinutes: 0 }],
+    [
+      'given only as a description',
+      { overtimeMinutes: null, overtimeNote: 'Orphan note' },
+    ],
+    // Działający timer nie ma jeszcze czasu, więc nie ma też nadgodzin.
+    [
+      'on a running timer',
+      {
+        workDate: '2026-11-01',
+        startTime: '06:00',
+        endTime: null,
+        durationMinutes: 0,
+        running: true,
+      },
+    ],
+  ])('Should reject overtime %s', async (_case, bad) => {
+    const input = overtimeEntry(await extraWorkTypeId())
+    expect(await errorCode(data.entries.create({ ...input, ...bad }))).toBe(
+      'validation.invalid',
+    )
+  })
+
+  it('Should store entries with notes, SP rules per work type and ranges', async () => {
     const types = await value(data.taskTypes.list())
     const review = types.find((t) => t.kind === 'code_review')!
     const meeting = types.find((t) => t.kind === 'meeting')!
@@ -481,7 +520,7 @@ describe('API contract (frontend adapter against the real server)', () => {
     expect(await errorCode(data.entries.remove(created.id))).toBe('not_found')
   })
 
-  it('runs one timer at a time and stops it on demand', async () => {
+  it('Should run one timer at a time and stop it on demand', async () => {
     const type = (await value(data.taskTypes.list()))[0]!
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC' }).format(
       new Date(),
@@ -508,7 +547,7 @@ describe('API contract (frontend adapter against the real server)', () => {
     expect(await value(data.entries.running())).toBeNull()
   })
 
-  it('pauses a task when you switch, then resumes it as a new interval', async () => {
+  it('Should pause a task when you switch, then resume it as a new interval', async () => {
     const type = (await value(data.taskTypes.list()))[0]!
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC' }).format(
       new Date(),
@@ -570,7 +609,7 @@ describe('API contract (frontend adapter against the real server)', () => {
     expect(await value(data.entries.paused())).toEqual([])
   })
 
-  it('keeps every account’s data private', async () => {
+  it('Should keep every account’s data private', async () => {
     const mine = (await value(data.taskTypes.list()))[0]!
     // Drugie konto nie widzi ani nie zmienia cudzych danych.
     jar.clear()
@@ -616,7 +655,7 @@ describe('API contract (frontend adapter against the real server)', () => {
     expect((await value(data.taskTypes.list()))[0]!.name).toBe('Zadanie')
   })
 
-  it('updates profile, changes the password and deletes the account', async () => {
+  it('Should update profile, change the password and delete the account', async () => {
     const user = await value(
       data.account.updateProfile({
         displayName: 'Ada',

@@ -29,7 +29,7 @@ const e = (over: Partial<TimeEntry>): TimeEntry => ({
 })
 
 describe('task insights', () => {
-  it('counts sessions, days and what interrupted the task', () => {
+  it('Should count sessions, days and what interrupted the task', () => {
     const a = e({ startTime: '09:00', endTime: '09:40', durationMinutes: 40 })
     const b = e({ startTime: '10:30', endTime: '12:00', durationMinutes: 90 })
     const c = e({ startTime: '13:00', endTime: '13:30', durationMinutes: 30 })
@@ -98,7 +98,7 @@ describe('task insights', () => {
     ])
   })
 
-  it('has no interruptions for one session and nothing for no sessions', () => {
+  it('Should have no interruptions for one session and nothing for no sessions', () => {
     expect(taskInsights([], [])).toBeNull()
     const one = taskInsights([e({ durationMinutes: 45 })], [])!
     expect(one).toMatchObject({

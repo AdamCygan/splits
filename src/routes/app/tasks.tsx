@@ -3,7 +3,9 @@ import { TasksPage } from '#/features/tasks/tasks-page'
 import { getLocale } from '#/i18n/locale'
 import { panelMessages } from '#/i18n/messages/panel'
 
-type TasksSearch = { sprint?: string }
+interface TasksSearch {
+  sprint?: string
+}
 
 export const Route = createFileRoute('/app/tasks')({
   /** ?sprint=<id>: zadania z danego sprintu (np. link ze strony Sprinty). */

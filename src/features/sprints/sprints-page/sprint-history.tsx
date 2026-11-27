@@ -6,8 +6,12 @@ import { panelMessages } from '#/i18n/messages/panel'
 import { TypeBar } from './type-bar'
 import type { SprintsViewModel } from './use-sprints'
 
+export interface SprintHistoryProps {
+  vm: SprintsViewModel
+}
+
 /** Zakończone sprinty w tabeli (czas, SP, czas na SP, podział) ze średnią na SP. */
-export function SprintHistory({ vm }: { vm: SprintsViewModel }) {
+export function SprintHistory({ vm }: SprintHistoryProps) {
   const t = useMessages(panelMessages).sprints
   const off = useMessages(daysOffMessages)
   const format = useFormat()

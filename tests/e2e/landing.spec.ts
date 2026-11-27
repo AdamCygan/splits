@@ -1,14 +1,16 @@
 import { expect, test } from '@playwright/test'
 import { expectNoA11yViolations } from './helpers'
 
-test('landing is English by default and accessible', async ({ page }) => {
+test('Should show the landing page in English by default without axe violations', async ({
+  page,
+}) => {
   await page.goto('/')
   await expect(page.locator('html')).toHaveAttribute('lang', 'en')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   await expectNoA11yViolations(page)
 })
 
-test('language switcher changes the UI to Polish and remembers it', async ({
+test('Should switch the UI to Polish and remember the choice', async ({
   page,
 }) => {
   await page.goto('/')
@@ -19,7 +21,7 @@ test('language switcher changes the UI to Polish and remembers it', async ({
   await expectNoA11yViolations(page)
 })
 
-test('skip link moves focus to the main content', async ({
+test('Should move focus to the main content with the skip link', async ({
   page,
   isMobile,
 }) => {

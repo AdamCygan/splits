@@ -76,7 +76,7 @@ const template = (patch: Partial<QuickTemplate> = {}): QuickTemplate => ({
 })
 
 describe('task groups', () => {
-  it('aggregates sessions into tasks, latest first', () => {
+  it('Should aggregate sessions into tasks, latest first', () => {
     const tasks = aggregateTasks([
       entry({ title: 'A', workDate: '2026-11-24' }),
       entry({
@@ -99,7 +99,7 @@ describe('task groups', () => {
     ])
   })
 
-  it('orders a day: running task on top, sessions chronologically', () => {
+  it('Should order a day: running task on top, sessions chronologically', () => {
     const groups = dayTaskGroups([
       entry({
         title: 'A',
@@ -122,7 +122,7 @@ describe('task groups', () => {
 })
 
 describe('workday', () => {
-  it('keeps the shown day within today and the plan history', () => {
+  it('Should keep the shown day within today and the plan history', () => {
     const min = historyStart('2026-11-26', 30)
     expect(min).toBe('2026-10-28')
     expect(clampWorkDate(undefined, '2026-11-26', min)).toBe('2026-11-26')
@@ -131,7 +131,7 @@ describe('workday', () => {
     expect(clampWorkDate('2026-01-01', '2026-11-26', null)).toBe('2026-01-01')
   })
 
-  it('totals the day and counts a task’s points once', () => {
+  it('Should total the day and count a task’s points once', () => {
     const totals = dayTotals(
       [
         entry({ title: 'A' }),
@@ -157,7 +157,7 @@ describe('templates', () => {
     storyPointsRequirement: 'hidden',
   })
 
-  it('asks only for what is missing', () => {
+  it('Should ask only for what is missing', () => {
     const needs = templateNeeds(
       template({ defaultDurationMinutes: null }),
       meeting,
@@ -170,7 +170,7 @@ describe('templates', () => {
     expect(templateNeedsDialog(needs, true)).toBe(false)
   })
 
-  it('plans an entry, a scheduled meeting and a timer', () => {
+  it('Should plan an entry, a scheduled meeting and a timer', () => {
     const opts = { workDate: '2026-11-26', now: '09:31' }
     expect(
       templatePlan(template(), meeting, defaultChoice(template()), opts),
@@ -197,7 +197,7 @@ describe('templates', () => {
   })
 })
 
-it('folds text for comparisons', () => {
+it('Should fold text for comparisons', () => {
   expect(foldText('Źródło ŁÓDŹ')).toBe('zrodlo lodz')
 })
 
@@ -210,14 +210,14 @@ describe('sprint lists', () => {
   ]
   const today = '2026-11-27'
 
-  it('lists started sprints newest first, optionally within the plan history', () => {
+  it('Should list started sprints newest first, optionally within the plan history', () => {
     expect(startedSprints(sprints, today).map((s) => s.id)).toEqual(['b', 'a'])
     expect(
       startedSprints(sprints, today, '2026-10-29').map((s) => s.id),
     ).toEqual(['b'])
   })
 
-  it('finds the current and the next sprint', () => {
+  it('Should find the current and the next sprint', () => {
     expect(currentSprint(sprints, today)?.id).toBe('b')
     expect(upcomingSprint(sprints, today)?.id).toBe('c')
     expect(currentSprint(sprints, '2026-11-01')).toBeUndefined()
@@ -233,7 +233,7 @@ describe('report period', () => {
     oldest: null,
   }
 
-  it('uses a sprint, a preset or custom dates', () => {
+  it('Should use a sprint, a preset or custom dates', () => {
     expect(
       reportRange({
         ...base,
@@ -250,7 +250,7 @@ describe('report period', () => {
     )
   })
 
-  it('clamps to the plan history and says so', () => {
+  it('Should clamp to the plan history and say so', () => {
     const result = reportRange({
       ...base,
       period: 'custom',
@@ -262,7 +262,7 @@ describe('report period', () => {
     })
   })
 
-  it('toggles the sort direction or starts from the natural one', () => {
+  it('Should toggle the sort direction or start from the natural one', () => {
     expect(nextSort({ by: 'minutes', dir: 'desc' }, 'minutes')).toEqual({
       by: 'minutes',
       dir: 'asc',
@@ -279,7 +279,7 @@ describe('report period', () => {
 })
 
 describe('numbers', () => {
-  it('computes a share and the largest known value', () => {
+  it('Should compute a share and the largest known value', () => {
     expect(percentOf(30, 120)).toBe(25)
     expect(percentOf(5, 0)).toBe(0)
     expect(percentOf(200, 100, true)).toBe(100)
@@ -308,7 +308,7 @@ describe('day and task timelines', () => {
       ...extra,
     }) as TimeEntry
 
-  it('builds an hour-aligned day axis with ticks', () => {
+  it('Should build an hour-aligned day axis with ticks', () => {
     const axis = timelineAxis({ start: 9 * 60 + 20, end: 17 * 60 + 10 })
     expect(axis.from).toBe(540)
     expect(axis.to).toBe(1080)
@@ -323,7 +323,7 @@ describe('day and task timelines', () => {
     expect(blockIndexAt(blocks, 630)).toBe(-1)
   })
 
-  it('places task sessions and other work on the day line', () => {
+  it('Should place task sessions and other work on the day line', () => {
     const own = [
       session('a', '09:00', '10:00', 60),
       session('b', null, null, 15),
@@ -338,7 +338,7 @@ describe('day and task timelines', () => {
     expect(line.place({ start: 540, end: 585 })).toEqual({ left: 0, width: 50 })
   })
 
-  it('lists notes, overtime and extension reasons in order', () => {
+  it('Should list notes, overtime and extension reasons in order', () => {
     const notes = taskNotes([
       session('a', '09:00', '10:00', 60, {
         note: 'Done',

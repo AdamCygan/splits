@@ -143,22 +143,21 @@ async function assertAvailable(tx: Tx, username: string, email: string) {
   if (byEmail) throw conflict('auth.email_taken', 'email')
 }
 
+export interface NewAccount {
+  username: string
+  email: string
+  displayName: string
+  passwordHash: string | null
+  locale: Locale
+  timezone: string
+  emailVerified?: boolean
+  withSamples?: boolean
+  /** Konto demo: plan Pro na czas pokazu, usuwane po 24 h. */
+  demo?: boolean
+}
+
 /** Tworzy konto z danymi startowymi; używane przez rejestrację, Google i testy e2e. */
-export async function createAccount(
-  tx: Tx,
-  input: {
-    username: string
-    email: string
-    displayName: string
-    passwordHash: string | null
-    locale: Locale
-    timezone: string
-    emailVerified?: boolean
-    withSamples?: boolean
-    /** Konto demo: plan Pro na czas pokazu, usuwane po 24 h. */
-    demo?: boolean
-  },
-) {
+export async function createAccount(tx: Tx, input: NewAccount) {
   const [user] = await tx
     .insert(users)
     .values({

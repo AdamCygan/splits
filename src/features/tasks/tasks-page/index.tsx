@@ -62,8 +62,12 @@ export function TasksPage(props: TasksProps = {}) {
   )
 }
 
+interface SprintBannerProps {
+  vm: TasksViewModel
+}
+
 /** Wybrany sprint: nazwa, daty, dzień sprintu, cel i postęp czasu. */
-function SprintBanner({ vm }: { vm: TasksViewModel }) {
+function SprintBanner({ vm }: SprintBannerProps) {
   const t = useMessages(panelMessages).tasks
   const { locale } = useI18n()
   const { sprint, today } = vm
@@ -85,8 +89,12 @@ function SprintBanner({ vm }: { vm: TasksViewModel }) {
   )
 }
 
+interface TaskStatsProps {
+  vm: TasksViewModel
+}
+
 /** Liczby nad listą: zadania (zakończone), SP (wobec pojemności), czas, ponad wycenę. */
-function TaskStats({ vm }: { vm: TasksViewModel }) {
+function TaskStats({ vm }: TaskStatsProps) {
   const t = useMessages(panelMessages).tasks
   const format = useFormat()
   const { totals, sprint } = vm
@@ -130,8 +138,12 @@ function TaskStats({ vm }: { vm: TasksViewModel }) {
   )
 }
 
+interface TaskListProps {
+  vm: TasksViewModel
+}
+
 /** Lista w grupach (rodzaj, dzień albo jedna), ładowanie, pusty stan i „Pokaż więcej”. */
-function TaskList({ vm }: { vm: TasksViewModel }) {
+function TaskList({ vm }: TaskListProps) {
   const t = useMessages(panelMessages).tasks
   const format = useFormat()
   const { locale } = useI18n()

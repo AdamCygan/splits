@@ -28,17 +28,16 @@ function GoogleMark() {
   )
 }
 
+export interface GoogleSignInProps {
+  redirectTo?: string
+  className?: string
+}
+
 /**
  * „Kontynuuj z Google”: zwykły link do /api/v1/auth/google (pełne przekierowanie, bez okienek).
  * Pokazujemy go tylko, gdy serwer ma ustawione GOOGLE_CLIENT_ID i GOOGLE_CLIENT_SECRET.
  */
-export function GoogleSignIn({
-  redirectTo,
-  className,
-}: {
-  redirectTo?: string
-  className?: string
-}) {
+export function GoogleSignIn({ redirectTo, className }: GoogleSignInProps) {
   const t = useMessages(authMessages)
   const [enabled, setEnabled] = useState(false)
   useEffect(() => {

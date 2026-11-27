@@ -1,12 +1,13 @@
 import { expect, test } from '@playwright/test'
-import { expectNoA11yViolations } from './helpers'
+import { expectNoA11yViolations, testEach } from './helpers'
 
-for (const [path, heading] of [
-  ['/terms', 'Terms of Service'],
-  ['/privacy', 'Privacy Policy'],
-  ['/cookies', 'Cookie Policy'],
-] as const) {
-  test(`${path} renders and has no axe violations`, async ({ page }) => {
+testEach([
+  { path: '/terms', heading: 'Terms of Service' },
+  { path: '/privacy', heading: 'Privacy Policy' },
+  { path: '/cookies', heading: 'Cookie Policy' },
+])(
+  'Should render $path without axe violations',
+  async ({ path, heading }, page) => {
     await page.goto(path)
     await expect(
       page.getByRole('heading', { level: 1, name: heading }),
@@ -15,13 +16,13 @@ for (const [path, heading] of [
       page.getByRole('navigation', { name: 'On this page' }),
     ).toBeVisible()
     await expectNoA11yViolations(page)
-  })
-}
+  },
+)
 
 test.describe('cookie consent', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
-  test('asks once, remembers the choice and can be reopened', async ({
+  test('Should ask once, remember the choice and open again on request', async ({
     page,
     context,
   }) => {
@@ -52,7 +53,7 @@ test.describe('cookie consent', () => {
     ).toBe('v1:analytics')
   })
 
-  test('the banner is rendered on the server (no flash)', async ({
+  test('Should render the banner on the server (no flash)', async ({
     request,
   }) => {
     const html = await (await request.get('/')).text()

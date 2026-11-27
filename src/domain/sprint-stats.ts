@@ -10,7 +10,7 @@ import { byType, groupTasks, totalsOf } from './report'
 import type { TaskRow, TypeRow } from './report'
 import { rangeFor } from './sp-scale'
 
-export type SprintStats = {
+export interface SprintStats {
   sprint: Sprint
   minutes: number
   /** Nadgodziny w sprincie (część `minutes`). */
@@ -123,7 +123,7 @@ export function estimateOf(
   }
 }
 
-export type GoalProgress = {
+export interface GoalProgress {
   taskTypeId: string
   goal: number
   minutes: number

@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { addDays, todayIn } from '#/domain/dates'
 import { registered } from './helpers'
 
-type Entry = { id: string; title: string; finishedAt: string | null }
-type Unfinished = {
+interface Entry {
+  id: string
+  title: string
+  finishedAt: string | null
+}
+interface Unfinished {
   entry: Entry
   workedMinutes: number
   sessions: number
@@ -45,7 +49,7 @@ async function setup() {
 }
 
 describe('unfinished tasks from previous days', () => {
-  it('lists open tasks, and “done” takes them off the list', async () => {
+  it('Should list open tasks, and “done” takes them off the list', async () => {
     const { c, task, meeting, log } = await setup()
     expect((await log('Checkout refactor', task.id, 3, 60)).status).toBe(201)
     expect((await log('Checkout refactor', task.id, 1, 30)).status).toBe(201)
@@ -81,7 +85,7 @@ describe('unfinished tasks from previous days', () => {
     ).toHaveLength(1)
   })
 
-  it('continuing starts a new session today and reopens a finished task', async () => {
+  it('Should start a new session today and reopen a finished task when continuing', async () => {
     const { c, task, log } = await setup()
     const old = await log('Payments API', task.id, 1, 45)
     const ref = { taskTypeId: task.id, title: 'Payments API', link: null }
@@ -106,7 +110,7 @@ describe('unfinished tasks from previous days', () => {
     ).toEqual([])
   })
 
-  it('“done” on a paused task marks the whole task finished', async () => {
+  it('Should mark the whole task finished when a paused task is marked “done”', async () => {
     const { c, task } = await setup()
     const started = await c.post<{ started: Entry }>('/time-entries/timer', {
       taskTypeId: task.id,
@@ -131,7 +135,7 @@ describe('unfinished tasks from previous days', () => {
     expect(sessions.body[0]!.finishedAt).not.toBeNull()
   })
 
-  it('rejects an unknown task', async () => {
+  it('Should reject an unknown task', async () => {
     const { c, task } = await setup()
     const res = await c.post('/time-entries/task/finish', {
       ref: { taskTypeId: task.id, title: 'Nope', link: null },

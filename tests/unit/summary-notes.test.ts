@@ -30,7 +30,7 @@ const e = (over: Partial<TimeEntry>): TimeEntry => ({
 })
 
 describe('summary notes', () => {
-  it('shows the day and the hours of the session each note comes from', () => {
+  it('Should show the day and the hours of the session each note comes from', () => {
     const stats = taskStats([
       e({
         workDate: '2026-11-24',

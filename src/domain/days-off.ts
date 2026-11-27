@@ -1,7 +1,7 @@
 import type { DayOff, DayOffKind, Sprint } from '#/data/types'
 import { addDays, diffDays, weekday } from './dates'
 
-export type DayOffRange = {
+export interface DayOffRange {
   from: string
   to: string
   kind: DayOffKind

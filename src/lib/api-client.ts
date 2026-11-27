@@ -8,7 +8,7 @@ import type { Result } from './result'
  * Ujednolicony błąd z API. Backend zawsze zwraca Problem Details (RFC 9457)
  * z polem "code"; błędy sieci i nieoczekiwane odpowiedzi mapujemy na ten sam kształt.
  */
-export type ApiFailure = {
+export interface ApiFailure {
   /** Kod HTTP; 0 = brak połączenia z serwerem. */
   status: number
   /** Stabilny kod błędu z backendu, np. "task.not_found", "http.404". */
@@ -31,7 +31,7 @@ const problemDetailsSchema = z.object({
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
-type RequestOptions<T> = {
+interface RequestOptions<T> {
   method?: HttpMethod
   body?: unknown
   /** Schemat odpowiedzi — dane z API są walidowane, a nie "rzutowane na ślepo". */

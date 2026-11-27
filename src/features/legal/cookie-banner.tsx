@@ -108,8 +108,12 @@ export function CookieBanner() {
   )
 }
 
+export interface CookieSettingsButtonProps {
+  className?: string
+}
+
 /** Przycisk w stopce: ponownie otwiera baner z bieżącym wyborem. */
-export function CookieSettingsButton({ className }: { className?: string }) {
+export function CookieSettingsButton({ className }: CookieSettingsButtonProps) {
   const t = useMessages(commonMessages).legal
   const { openSettings } = useConsent()
   return (

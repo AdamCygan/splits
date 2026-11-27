@@ -15,7 +15,7 @@ import type {
   UserSettings,
 } from '#/data/types'
 
-export type Workspace = {
+export interface Workspace {
   settings: UserSettings
   spScale: Array<SpScaleStep>
   taskTypes: Array<TaskType>

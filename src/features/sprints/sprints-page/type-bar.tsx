@@ -2,16 +2,14 @@ import type { TaskType } from '#/data/types'
 import type { TypeRow } from '#/domain/report'
 import { cn } from '#/lib/utils'
 
-/** Pasek „na co poszedł czas”: segmenty w kolorach rodzajów pracy (ozdobny, treść obok). */
-export function TypeBar({
-  rows,
-  types,
-  className,
-}: {
+export interface TypeBarProps {
   rows: ReadonlyArray<TypeRow>
   types: ReadonlyArray<TaskType>
   className?: string
-}) {
+}
+
+/** Pasek „na co poszedł czas”: segmenty w kolorach rodzajów pracy (ozdobny, treść obok). */
+export function TypeBar({ rows, types, className }: TypeBarProps) {
   const total = rows.reduce((sum, r) => sum + r.minutes, 0)
   if (total === 0)
     return (

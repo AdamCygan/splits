@@ -31,16 +31,14 @@ const adminKeys = {
 const PLANS: ReadonlyArray<PlanCode> = ['free', 'pro', 'lifetime']
 const planTone = { free: 'muted', pro: 'info', lifetime: 'success' } as const
 
-/** Rejestracje z 14 dni jako małe słupki; dokładne liczby są w podpisach dla czytników i w title. */
-function Signups({
-  rows,
-  label,
-  dayLabel,
-}: {
+interface SignupsProps {
   rows: ReadonlyArray<{ day: string; count: number }>
   label: string
   dayLabel: (day: string, count: number) => string
-}) {
+}
+
+/** Rejestracje z 14 dni jako małe słupki; dokładne liczby są w podpisach dla czytników i w title. */
+function Signups({ rows, label, dayLabel }: SignupsProps) {
   const days = Array.from({ length: 14 }, (_, i) => {
     const d = new Date(Date.now() - (13 - i) * 86_400_000)
     return d.toISOString().slice(0, 10)
@@ -439,6 +437,15 @@ export function AdminPage() {
   )
 }
 
+interface ManageDialogProps {
+  user: AdminUser
+  self: boolean
+  day: (value: string | null) => string
+  onClose: () => void
+  closeLabel: string
+  cancelLabel: string
+}
+
 function ManageDialog({
   user,
   self,
@@ -446,14 +453,7 @@ function ManageDialog({
   onClose,
   closeLabel,
   cancelLabel,
-}: {
-  user: AdminUser
-  self: boolean
-  day: (value: string | null) => string
-  onClose: () => void
-  closeLabel: string
-  cancelLabel: string
-}) {
+}: ManageDialogProps) {
   const t = useMessages(panelMessages).admin
   const { locale } = useI18n()
   const [plan, setPlan] = useState<PlanCode>(user.plan)

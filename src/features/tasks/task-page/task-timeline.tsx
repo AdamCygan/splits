@@ -6,11 +6,15 @@ import { taskViewMessages } from '#/i18n/messages/task-view'
 import { cn } from '#/lib/utils'
 import type { TaskViewModel } from './use-task'
 
+export interface TaskTimelineProps {
+  vm: TaskViewModel
+}
+
 /**
  * Oś dnia: sesje zadania w kolorze rodzaju, inna praca na szaro, luki widać jako puste
  * miejsca. Zakres osi: od najwcześniejszego do najpóźniejszego wpisu z godzinami tego dnia.
  */
-export function TaskTimeline({ vm }: { vm: TaskViewModel }) {
+export function TaskTimeline({ vm }: TaskTimelineProps) {
   const t = useMessages(taskViewMessages).timeline
   const format = useFormat()
   if (!vm.insights) return null

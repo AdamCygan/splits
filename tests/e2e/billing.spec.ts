@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { expectNoA11yViolations, signInWithSamples } from './helpers'
 
 test.describe('pricing and cart: yearly plans only', () => {
-  test('pricing shows yearly prices only, without monthly billing', async ({
+  test('Should show only yearly prices on the pricing page', async ({
     page,
   }) => {
     await page.goto('/pricing')
@@ -18,7 +18,7 @@ test.describe('pricing and cart: yearly plans only', () => {
     await expectNoA11yViolations(page)
   })
 
-  test('choosing Pro leads through sign-up straight to the cart', async ({
+  test('Should lead from choosing Pro through sign-up straight to the cart', async ({
     page,
   }) => {
     await page.goto('/pricing')
@@ -37,7 +37,7 @@ test.describe('pricing and cart: yearly plans only', () => {
     ).toBeVisible()
   })
 
-  test('cart summary, consent and a clear notice when payments are off', async ({
+  test('Should show the cart summary, consent and a clear notice when payments are off', async ({
     page,
   }) => {
     await signInWithSamples(page)

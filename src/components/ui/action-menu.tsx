@@ -11,11 +11,19 @@ import {
 } from './dropdown-menu'
 import { cn } from '#/lib/utils'
 
-export type Action = {
+export interface Action {
   label: string
   icon: ComponentType<{ 'aria-hidden'?: boolean }>
   onSelect: () => void
   destructive?: boolean
+}
+
+export interface ActionMenuProps {
+  /** Pełna nazwa dla czytników, np. „Więcej akcji: PAY-142, 9:00–10:00”. */
+  label: string
+  title: string
+  actions: ReadonlyArray<Action | null | false>
+  className?: string
 }
 
 /**
@@ -28,13 +36,7 @@ export function ActionMenu({
   title,
   actions,
   className,
-}: {
-  /** Pełna nazwa dla czytników, np. „Więcej akcji: PAY-142, 9:00–10:00”. */
-  label: string
-  title: string
-  actions: ReadonlyArray<Action | null | false>
-  className?: string
-}) {
+}: ActionMenuProps) {
   const pending = useRef<(() => void) | null>(null)
   const items = actions.filter((a): a is Action => !!a)
   const plain = items.filter((a) => !a.destructive)

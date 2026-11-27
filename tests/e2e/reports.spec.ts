@@ -10,7 +10,7 @@ test.describe('reports: story points and time per task', () => {
     ).toBeVisible()
   })
 
-  test('shows the current sprint with SP and time for each task', async ({
+  test('Should show the current sprint with SP and time for each task', async ({
     page,
   }) => {
     await expect(page.getByLabel('Period')).toHaveValue(/^sprint:/)
@@ -34,7 +34,7 @@ test.describe('reports: story points and time per task', () => {
     await expectNoA11yViolations(page)
   })
 
-  test('filters by kind of work and sorts by story points', async ({
+  test('Should filter by kind of work and sort by story points', async ({
     page,
   }) => {
     await page
@@ -53,7 +53,7 @@ test.describe('reports: story points and time per task', () => {
     await expect(rows.last()).toContainText('No SP')
   })
 
-  test('custom range validates dates', async ({ page }) => {
+  test('Should validate the dates of a custom range', async ({ page }) => {
     await page.getByLabel('Period').selectOption('custom')
     await page.getByLabel('From').fill('2030-01-10')
     await page.getByLabel('To').fill('2030-01-01')
@@ -62,7 +62,7 @@ test.describe('reports: story points and time per task', () => {
     ).toBeVisible()
   })
 
-  test('compares the estimate with the real time', async ({ page }) => {
+  test('Should compare the estimate with the real time', async ({ page }) => {
     await expect(page.getByText('Estimate vs. real time')).toBeVisible()
     const row = page
       .getByRole('table')
@@ -92,7 +92,7 @@ test.describe('reports: story points and time per task', () => {
     await expect(row.getByText('est. 6h, 5m under est.')).toBeVisible()
   })
 
-  test('opens a task from the report to edit it and its time', async ({
+  test('Should open a task from the report to edit it and its time', async ({
     page,
   }) => {
     await page
@@ -148,7 +148,7 @@ test.describe('story points per kind of work', () => {
     await signInWithSamples(page)
   })
 
-  test('tasks need SP, reviews have them optional, meetings have none', async ({
+  test('Should require SP for tasks, keep them optional for reviews and hide them for meetings', async ({
     page,
   }) => {
     await page.goto('/app')
@@ -162,7 +162,9 @@ test.describe('story points per kind of work', () => {
     await expect(sp).toBeHidden()
   })
 
-  test('making SP required for code reviews in settings', async ({ page }) => {
+  test('Should make SP required for code reviews in settings', async ({
+    page,
+  }) => {
     await page.goto('/app/settings/work-types')
     await page.getByRole('button', { name: /^Edit\s*: Code review$/ }).click()
     const dialog = page.getByRole('dialog')
@@ -184,7 +186,7 @@ test.describe('story points per kind of work', () => {
   })
 })
 
-test('tasks and sprints pages show real numbers and link to reports', async ({
+test('Should show real numbers on the Tasks and Sprints pages with links to reports', async ({
   page,
 }) => {
   await signInWithSamples(page)

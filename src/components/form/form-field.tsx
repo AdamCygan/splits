@@ -71,8 +71,12 @@ export function TextField({
   )
 }
 
+export interface FormAlertProps {
+  children: ReactNode
+}
+
 /** Komunikat dla całego formularza (np. zły login/hasło, brak połączenia). */
-export function FormAlert({ children }: { children: ReactNode }) {
+export function FormAlert({ children }: FormAlertProps) {
   return (
     <div
       role="alert"

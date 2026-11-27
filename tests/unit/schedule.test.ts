@@ -36,7 +36,7 @@ const retro: QuickTemplate = {
 }
 
 describe('recurring meetings', () => {
-  it('uses the time set for that weekday', () => {
+  it('Should use the time set for that weekday', () => {
     // 2026-11-23 to poniedziałek, 2026-11-27 piątek.
     expect(scheduledOn([daily], '2026-11-23')).toEqual([
       { template: daily, start: '10:00', end: '10:15' },
@@ -54,7 +54,7 @@ describe('recurring meetings', () => {
     expect(scheduledOn([daily], '2026-11-22')).toEqual([])
   })
 
-  it('needs a duration and stays within the day', () => {
+  it('Should need a duration and stay within the day', () => {
     expect(
       scheduledOn([{ ...daily, defaultDurationMinutes: null }], '2026-11-23'),
     ).toEqual([])
@@ -62,7 +62,7 @@ describe('recurring meetings', () => {
     expect(scheduledOn([late], '2026-11-27')[0]!.end).toBe('23:59')
   })
 
-  it('knows when the meeting is already logged that day', () => {
+  it('Should know when the meeting is already logged that day', () => {
     expect(
       isLogged([{ taskTypeId: 'meet', title: ' daily stand-up ' }], daily),
     ).toBe(true)
@@ -71,7 +71,7 @@ describe('recurring meetings', () => {
     ).toBe(false)
   })
 
-  it('describes the schedule in week order, joining days with the same time', () => {
+  it('Should describe the schedule in week order, joining days with the same time', () => {
     expect(scheduleRuns(daily.schedule, 1)).toEqual([
       { from: 1, to: 1, time: '10:00' },
       { from: 2, to: 5, time: '09:30' },

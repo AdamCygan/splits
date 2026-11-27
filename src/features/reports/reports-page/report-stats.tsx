@@ -4,8 +4,12 @@ import { fmt } from '#/i18n/format'
 import { reportsMessages } from '#/i18n/messages/reports'
 import type { ReportsViewModel } from './use-reports'
 
+export interface ReportStatsProps {
+  vm: ReportsViewModel
+}
+
 /** Liczby okresu: czas (z nadgodzinami i przedłużeniami), SP, zadania, czas na SP, estymaty. */
-export function ReportStats({ vm }: { vm: ReportsViewModel }) {
+export function ReportStats({ vm }: ReportStatsProps) {
   const t = useMessages(reportsMessages)
   const format = useFormat()
   const { totals } = vm

@@ -9,16 +9,18 @@ import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { cn } from '#/lib/utils'
 
+export interface CustomDurationDialogProps {
+  type: TaskType
+  onClose: () => void
+  onApply: (minutes: number) => void
+}
+
 /** Własny czas z menu kontekstowego typu: jedno pole, te same formaty co w formularzu. */
 export function CustomDurationDialog({
   type,
   onClose,
   onApply,
-}: {
-  type: TaskType
-  onClose: () => void
-  onApply: (minutes: number) => void
-}) {
+}: CustomDurationDialogProps) {
   const t = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   const format = useFormat()

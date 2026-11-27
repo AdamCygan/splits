@@ -2,14 +2,13 @@ import { ArrowLeft } from 'lucide-react'
 import { useMessages } from '#/i18n/context'
 import { appMessages } from '#/i18n/messages/app'
 
-/** Lista skrótów klawiszowych w palecie (polecenie „Skróty klawiszowe”). */
-export function ShortcutsHelp({
-  mod,
-  onBack,
-}: {
+export interface ShortcutsHelpProps {
   mod: string
   onBack: () => void
-}) {
+}
+
+/** Lista skrótów klawiszowych w palecie (polecenie „Skróty klawiszowe”). */
+export function ShortcutsHelp({ mod, onBack }: ShortcutsHelpProps) {
   const c = useMessages(appMessages).commands
   const rows: Array<[string, string]> = [
     [`${mod} K`, c.keys.palette],

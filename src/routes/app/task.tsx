@@ -4,7 +4,11 @@ import { getLocale } from '#/i18n/locale'
 import { taskViewMessages } from '#/i18n/messages/task-view'
 
 /** Zadanie nie ma własnego id: adres to typ pracy, tytuł i link (jak grupowanie w raporcie). */
-type TaskSearch = { type: string; title: string; link?: string }
+interface TaskSearch {
+  type: string
+  title: string
+  link?: string
+}
 
 export const Route = createFileRoute('/app/task')({
   validateSearch: (search: Record<string, unknown>): TaskSearch => ({

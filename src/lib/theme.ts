@@ -59,4 +59,4 @@ export function useTheme(): Theme {
  * Skrypt w <head>: ustawia motyw przed pierwszym malowaniem panelu, żeby ciemny
  * motyw nie mignął jasnym ekranem ładowania.
  */
-export const themeBootScript = `(function(){try{if(location.pathname.indexOf('/app')!==0)return;var t=localStorage.getItem('${store.key}');var d=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);if(d){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark'}}catch(e){}})()`
+export const themeBootScript = `try{if(location.pathname.indexOf('/app')===0){const t=localStorage.getItem('${store.key}');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark'}}}catch{}`

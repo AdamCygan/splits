@@ -90,7 +90,11 @@ function ExportData() {
   )
 }
 
-function Profile({ user }: { user: User }) {
+interface ProfileProps {
+  user: User
+}
+
+function Profile({ user }: ProfileProps) {
   const t = useMessages(settingsMessages).account
   const [draft, setDraft] = useState<ProfileInput>({
     displayName: user.displayName,
@@ -223,8 +227,12 @@ function Language() {
   )
 }
 
+interface PasswordProps {
+  hasPassword: boolean
+}
+
 /** Konto założone przez Google nie ma hasła: pierwsze hasło ustawia się bez podawania obecnego. */
-function Password({ hasPassword }: { hasPassword: boolean }) {
+function Password({ hasPassword }: PasswordProps) {
   const t = useMessages(settingsMessages).account
   const v = useMessages(authMessages).validation
   const [draft, setDraft] = useState({ current: '', next: '', confirm: '' })
@@ -321,7 +329,11 @@ function Password({ hasPassword }: { hasPassword: boolean }) {
   )
 }
 
-function DeleteAccount({ user }: { user: User }) {
+interface DeleteAccountProps {
+  user: User
+}
+
+function DeleteAccount({ user }: DeleteAccountProps) {
   const t = useMessages(settingsMessages).account
   const app = useMessages(appMessages)
   const navigate = useNavigate()

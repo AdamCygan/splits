@@ -75,7 +75,7 @@ export const ORDER: ReadonlyArray<Group> = [
   'new',
 ]
 
-export type Command = {
+export interface Command {
   id: string
   group: Group
   label: string
@@ -122,7 +122,7 @@ type AppText = (typeof appMessages)['en']
 type SettingsText = (typeof settingsMessages)['en']
 
 /** Wszystko, czego model potrzebuje z aplikacji: dane, teksty, formatowanie i akcje. */
-export type PaletteContext = {
+export interface PaletteContext {
   text: AppText
   settingsText: SettingsText
   locale: Locale
@@ -443,17 +443,19 @@ export function buildCommands(ctx: PaletteContext): Array<Command> {
   return list
 }
 
+export interface TaskCommandMeta {
+  minutes?: number
+  finished?: boolean
+  running?: boolean
+  snippet?: string | null
+}
+
 /** Zadanie jako polecenie: Enter otwiera stronę zadania, Ctrl+Enter kontynuuje pracę. */
 export function taskCommand(
   ctx: PaletteContext,
   entry: TimeEntry,
   group: Extract<Group, 'tasks' | 'found'>,
-  meta: {
-    minutes?: number
-    finished?: boolean
-    running?: boolean
-    snippet?: string | null
-  } = {},
+  meta: TaskCommandMeta = {},
 ): Command {
   const c = ctx.text.commands
   return {

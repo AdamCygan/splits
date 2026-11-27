@@ -27,8 +27,12 @@ export async function currentUser(userId: string) {
   return user
 }
 
+export interface DemoFlag {
+  isDemo: boolean
+}
+
 /** Konto demo jest tylko do oglądania aplikacji: bez zmian danych konta i bez płatności. */
-export function assertNotDemo(user: { isDemo: boolean }) {
+export function assertNotDemo(user: DemoFlag) {
   if (user.isDemo) throw new ApiError('demo.restricted', 403)
 }
 

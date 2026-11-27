@@ -10,6 +10,15 @@ import { appMessages } from '#/i18n/messages/app'
 import { panelMessages } from '#/i18n/messages/panel'
 import { cn } from '#/lib/utils'
 
+export interface SettingsCardProps {
+  title: string
+  lead?: ReactNode
+  actions?: ReactNode
+  children: ReactNode
+  className?: string
+  tone?: 'danger'
+}
+
 /** Karta sekcji ustawień: nagłówek h2, opis, opcjonalne akcje. */
 export function SettingsCard({
   title,
@@ -18,14 +27,7 @@ export function SettingsCard({
   children,
   className,
   tone,
-}: {
-  title: string
-  lead?: ReactNode
-  actions?: ReactNode
-  children: ReactNode
-  className?: string
-  tone?: 'danger'
-}) {
+}: SettingsCardProps) {
   const id = useId()
   return (
     <section
@@ -54,20 +56,27 @@ export function SettingsCard({
   )
 }
 
-/** Nagłówek strony sekcji (h1). */
-export function SectionHeader({
-  title,
-  lead,
-}: {
+export interface SectionHeaderProps {
   title: string
   lead?: ReactNode
-}) {
+}
+
+/** Nagłówek strony sekcji (h1). */
+export function SectionHeader({ title, lead }: SectionHeaderProps) {
   return (
     <div className="mb-6">
       <h1 className="type-display text-4xl sm:text-5xl">{title}</h1>
       {lead && <p className="mt-3 max-w-[62ch] text-ink-soft">{lead}</p>}
     </div>
   )
+}
+
+export interface SaveBarProps {
+  dirty: boolean
+  saving: boolean
+  onDiscard: () => void
+  onSave?: () => void
+  saveLabel?: string
 }
 
 /**
@@ -80,13 +89,7 @@ export function SaveBar({
   onDiscard,
   onSave,
   saveLabel,
-}: {
-  dirty: boolean
-  saving: boolean
-  onDiscard: () => void
-  onSave?: () => void
-  saveLabel?: string
-}) {
+}: SaveBarProps) {
   const t = useMessages(appMessages)
   return (
     <div
@@ -134,16 +137,18 @@ export function SaveBar({
   )
 }
 
+export interface QueryViewProps<T, TKey extends QueryKey> {
+  query: UseQueryOptions<T, Error, T, TKey>
+  children: (data: T) => ReactNode
+  skeletonRows?: number
+}
+
 /** Stan ładowania i błędu dla zapytania — dane trafiają do children dopiero, gdy są. */
 export function QueryView<T, TKey extends QueryKey>({
   query,
   children,
   skeletonRows = 3,
-}: {
-  query: UseQueryOptions<T, Error, T, TKey>
-  children: (data: T) => ReactNode
-  skeletonRows?: number
-}) {
+}: QueryViewProps<T, TKey>) {
   const t = useMessages(appMessages)
   const result = useQuery(query)
   if (result.isPending) {
@@ -181,18 +186,20 @@ export function QueryView<T, TKey extends QueryKey>({
   return <>{children(result.data)}</>
 }
 
+export interface ReorderButtonsProps {
+  index: number
+  total: number
+  onMove: (from: number, to: number) => void
+  itemName: string
+}
+
 /** Przyciski zmiany kolejności — klawiaturowa alternatywa dla przeciągania. */
 export function ReorderButtons({
   index,
   total,
   onMove,
   itemName,
-}: {
-  index: number
-  total: number
-  onMove: (from: number, to: number) => void
-  itemName: string
-}) {
+}: ReorderButtonsProps) {
   const t = useMessages(appMessages)
   return (
     <div className="flex">

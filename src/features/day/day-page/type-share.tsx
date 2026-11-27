@@ -5,8 +5,12 @@ import { fmt } from '#/i18n/format'
 import { dayViewMessages } from '#/i18n/messages/day-view'
 import type { DayViewModel } from './use-day'
 
+export interface TypeShareProps {
+  vm: DayViewModel
+}
+
 /** Udział rodzajów pracy: poziome paski od największego, z czasem i procentem. */
-export function TypeShare({ vm }: { vm: DayViewModel }) {
+export function TypeShare({ vm }: TypeShareProps) {
   const t = useMessages(dayViewMessages).types
   const format = useFormat()
   const { summary } = vm

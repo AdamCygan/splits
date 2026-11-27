@@ -5,8 +5,14 @@
  *   if (!result.ok) return showError(result.error)   // TS wie, że to Failure
  *   result.value                                     // TS wie, że to Success
  */
-export type Success<TValue> = { readonly ok: true; readonly value: TValue }
-export type Failure<TError> = { readonly ok: false; readonly error: TError }
+export interface Success<TValue> {
+  readonly ok: true
+  readonly value: TValue
+}
+export interface Failure<TError> {
+  readonly ok: false
+  readonly error: TError
+}
 export type Result<TError, TValue> = Failure<TError> | Success<TValue>
 
 export const success = <TValue>(value: TValue): Success<TValue> => ({
@@ -26,12 +32,14 @@ export const isFailure = <TError, TValue>(
   result: Result<TError, TValue>,
 ): result is Failure<TError> => !result.ok
 
+export interface MatchHandlers<TError, TValue, TOut> {
+  success: (value: TValue) => TOut
+  failure: (error: TError) => TOut
+}
+
 export function match<TError, TValue, TOut>(
   result: Result<TError, TValue>,
-  handlers: {
-    success: (value: TValue) => TOut
-    failure: (error: TError) => TOut
-  },
+  handlers: MatchHandlers<TError, TValue, TOut>,
 ): TOut {
   return result.ok
     ? handlers.success(result.value)

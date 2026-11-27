@@ -10,7 +10,7 @@ test.describe('reports: day details', () => {
     ).toBeVisible()
   })
 
-  test('a day column opens the day summary', async ({ page }) => {
+  test('Should open the day summary from a day column', async ({ page }) => {
     const chart = page.getByRole('group', {
       name: /move between columns, Enter opens the details/,
     })
@@ -44,7 +44,7 @@ test.describe('reports: day details', () => {
     await expect(page).toHaveURL(/\/app\/task\?/)
   })
 
-  test('moves between days and back to editing', async ({ page }) => {
+  test('Should move between days and back to editing', async ({ page }) => {
     await page.goto('/app/day')
     await page.getByRole('link', { name: 'Previous day' }).click()
     await expect(page).toHaveURL(/date=/)

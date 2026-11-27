@@ -12,11 +12,15 @@ import { panelMessages } from '#/i18n/messages/panel'
 import { cn } from '#/lib/utils'
 import type { TasksViewModel } from './use-tasks'
 
+export interface TaskFiltersProps {
+  vm: TasksViewModel
+}
+
 /**
  * Wyszukiwanie, filtry (rodzaj, wycena, okres lub sprint) i widok (grupowanie, stan,
  * sortowanie). Na telefonie wszystko poza wyszukiwaniem zwija się pod „Filtry (n)”.
  */
-export function TaskFilters({ vm }: { vm: TasksViewModel }) {
+export function TaskFilters({ vm }: TaskFiltersProps) {
   const t = useMessages(panelMessages).tasks
   const hidden = !vm.filtersOpen && 'max-sm:hidden'
   return (

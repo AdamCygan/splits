@@ -1,15 +1,16 @@
 import type { TimeEntry } from '#/data/types'
 import { diffDays } from './dates'
+import type { MinuteRange } from './day-summary'
 import { toMinutes } from './entries'
 
-export type TaskDay = {
+export interface TaskDay {
   date: string
   minutes: number
   sessions: number
 }
 
 /** Coś, co wcisnęło się między dwie sesje zadania tego samego dnia. */
-export type Interrupter = {
+export interface Interrupter {
   title: string
   taskTypeId: string
   minutes: number
@@ -18,7 +19,7 @@ export type Interrupter = {
 }
 
 /** Przerwa w zadaniu: koniec jednej sesji, start kolejnej tego samego dnia, i co było pomiędzy. */
-export type TaskGap = {
+export interface TaskGap {
   date: string
   from: string
   to: string
@@ -28,7 +29,7 @@ export type TaskGap = {
   >
 }
 
-export type TaskInsights = {
+export interface TaskInsights {
   minutes: number
   sessions: number
   days: Array<TaskDay>
@@ -160,7 +161,7 @@ export function taskInsights(
 }
 
 /** Odcinek na osi dnia zadania: wpis z godzinami (`own` = sesja tego zadania). */
-export type TaskDaySegment<TEntry> = {
+export interface TaskDaySegment<TEntry> {
   entry: TEntry
   start: number
   end: number
@@ -206,7 +207,7 @@ export function taskDayTimeline<
       .filter((s) => s.workDate === date && !(s.startTime && s.endTime))
       .reduce((sum, s) => sum + s.durationMinutes, 0),
     /** Pozycja i szerokość odcinka na osi (w procentach). */
-    place: (x: { start: number; end: number }) => ({
+    place: (x: MinuteRange) => ({
       left: ((x.start - from) / span) * 100,
       width: (Math.max(1, x.end - x.start) / span) * 100,
     }),

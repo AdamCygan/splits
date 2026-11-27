@@ -15,16 +15,14 @@ import { entriesMessages } from '#/i18n/messages/entries'
 import { unwrap } from '#/lib/api-client'
 import { defaultSummaryTemplate, summaryValues } from '../summary'
 
-/** Podsumowanie zadania z wszystkich jego wpisów, według szablonu użytkownika. */
-export function SummaryDialog({
-  entry,
-  type,
-  onClose,
-}: {
+export interface SummaryDialogProps {
   entry: TimeEntry
   type: TaskType | undefined
   onClose: () => void
-}) {
+}
+
+/** Podsumowanie zadania z wszystkich jego wpisów, według szablonu użytkownika. */
+export function SummaryDialog({ entry, type, onClose }: SummaryDialogProps) {
   const t = useMessages(entriesMessages).taskSummary
   const app = useMessages(appMessages)
   const { locale } = useI18n()

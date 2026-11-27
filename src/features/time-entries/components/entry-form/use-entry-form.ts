@@ -44,7 +44,7 @@ import {
 } from './model'
 import type { Draft, DraftMode, EntryPrefill } from './model'
 
-export type EntryFormProps = {
+export interface EntryFormProps {
   workDate: string
   entry?: TimeEntry | null
   /** Id formularza, gdy przycisk zapisu jest poza nim (stopka okna dialogowego). */

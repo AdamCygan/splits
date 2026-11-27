@@ -12,7 +12,7 @@ import { rangeEntriesQuery } from '#/features/time-entries/queries'
 import { useUpdateNote } from '#/features/time-entries/use-update-note'
 import { unwrap } from '#/lib/api-client'
 
-export type TaskPageProps = {
+export interface TaskPageProps {
   task: TaskRef
   /** Po zmianie tytułu albo linku zadanie ma nowy adres strony. */
   onRename: (ref: TaskRef) => void

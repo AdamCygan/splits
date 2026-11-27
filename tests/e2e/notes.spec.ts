@@ -10,7 +10,7 @@ test.describe('notes: formatting', () => {
     ).toBeVisible()
   })
 
-  test('formats a note with the toolbar and ticks a checkbox on the list', async ({
+  test('Should format a note with the toolbar and tick a checkbox on the list', async ({
     page,
   }) => {
     const form = page.getByRole('region', { name: 'Log time' })
@@ -79,7 +79,7 @@ test.describe('notes: formatting', () => {
     ).toBeChecked()
   })
 
-  test('nests list items with Tab and colours code while typing', async ({
+  test('Should nest list items with Tab and colour code while typing', async ({
     page,
   }) => {
     const form = page.getByRole('region', { name: 'Log time' })
@@ -136,7 +136,7 @@ test.describe('notes: formatting', () => {
     await expectNoA11yViolations(page)
   })
 
-  test('plain notes written before markdown look the same', async ({
+  test('Should show plain notes written before markdown unchanged', async ({
     page,
   }) => {
     await page.goto('/app/tasks')

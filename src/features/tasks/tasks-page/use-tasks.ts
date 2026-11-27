@@ -35,7 +35,7 @@ import { rangeEntriesQuery } from '#/features/time-entries/queries'
 /** Ile zadań pokazujemy naraz (dalej „Pokaż więcej”). */
 export const PAGE = 30
 
-export type TasksProps = {
+export interface TasksProps {
   /** Sprint z adresu (?sprint=): od razu pokazuje jego zadania. */
   sprint?: string
   onSprintChange?: (sprintId: string | undefined) => void

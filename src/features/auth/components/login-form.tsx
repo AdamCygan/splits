@@ -17,7 +17,11 @@ import type { LoginForm as LoginValues } from '../schemas'
 
 const defaultValues: LoginValues = { login: '', password: '' }
 
-export function LoginForm({ redirectTo }: { redirectTo?: string }) {
+export interface LoginFormProps {
+  redirectTo?: string
+}
+
+export function LoginForm({ redirectTo }: LoginFormProps) {
   const navigate = useNavigate()
   const t = useMessages(authMessages)
   const errorText = useErrorText()

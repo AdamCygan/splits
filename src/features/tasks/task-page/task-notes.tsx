@@ -6,8 +6,12 @@ import { useFormat, useMessages } from '#/i18n/context'
 import { taskViewMessages } from '#/i18n/messages/task-view'
 import type { TaskViewModel } from './use-task'
 
+export interface TaskNotesProps {
+  vm: TaskViewModel
+}
+
 /** Notatki z sesji, z nadgodzinami i przedłużeniami, od najstarszej. */
-export function TaskNotes({ vm }: { vm: TaskViewModel }) {
+export function TaskNotes({ vm }: TaskNotesProps) {
   const t = useMessages(taskViewMessages).notes
   const format = useFormat()
   const notes = taskNotes(vm.sessions)

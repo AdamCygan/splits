@@ -10,7 +10,7 @@ test.describe('log time: find a task and continue it', () => {
     ).toBeVisible()
   })
 
-  test('continues a finished task from the search', async ({ page }) => {
+  test('Should continue a finished task from the search', async ({ page }) => {
     const form = page.getByRole('region', { name: 'Log time' })
     const search = form.getByRole('combobox', { name: 'Continue a task' })
     await search.fill('refund')
@@ -32,7 +32,7 @@ test.describe('log time: find a task and continue it', () => {
     await expect(selected).toHaveCount(0)
   })
 
-  test('fills the form with the chosen task', async ({ page }) => {
+  test('Should fill the form with the chosen task', async ({ page }) => {
     const form = page.getByRole('region', { name: 'Log time' })
     const search = form.getByRole('combobox', { name: 'Continue a task' })
     await search.fill('MOB-77')

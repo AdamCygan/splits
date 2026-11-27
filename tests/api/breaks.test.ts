@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { addDays, todayIn } from '#/domain/dates'
 import { registered } from './helpers'
 
-type Break = {
+interface Break {
   id: string
   workDate: string
   startTime: string | null
@@ -11,7 +11,12 @@ type Break = {
   running: boolean
   resumeEntryId: string | null
 }
-type Entry = { id: string; title: string; running: boolean; paused: boolean }
+interface Entry {
+  id: string
+  title: string
+  running: boolean
+  paused: boolean
+}
 
 async function withTimer() {
   const a = await registered()
@@ -35,7 +40,7 @@ async function withTimer() {
 }
 
 describe('breaks', () => {
-  it('pauses the running task and resumes it when the break ends', async () => {
+  it('Should pause the running task and resume it when the break ends', async () => {
     const { c, entry } = await withTimer()
     const started = await c.post<{ break: Break; paused: Entry | null }>(
       '/breaks/start',
@@ -73,7 +78,7 @@ describe('breaks', () => {
     expect((await c.get<Break | null>('/breaks/running')).body).toBeNull()
   })
 
-  it('can end a break without resuming the task', async () => {
+  it('Should end a break without resuming the task', async () => {
     const { c } = await withTimer()
     const started = await c.post<{ break: Break }>('/breaks/start')
     const ended = await c.post<{ resumed: Entry | null }>(
@@ -84,7 +89,7 @@ describe('breaks', () => {
     expect((await c.get<Entry | null>('/time-entries/running')).body).toBeNull()
   })
 
-  it('adds a forgotten break, lists the day and deletes it', async () => {
+  it('Should add a forgotten break, list the day and delete it', async () => {
     const { c } = await registered()
     const today = todayIn('Europe/Warsaw')
     const byTimes = await c.post<Break>('/breaks', {
@@ -129,7 +134,7 @@ describe('breaks', () => {
     ).toHaveLength(1)
   })
 
-  it('keeps the daily break limit in the settings', async () => {
+  it('Should keep the daily break limit in the settings', async () => {
     const { c } = await registered()
     const settings = await c.get<Record<string, unknown>>('/settings')
     expect(settings.body.breakMinutes).toBe(30)

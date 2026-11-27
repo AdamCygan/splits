@@ -370,10 +370,15 @@ export const statusRoutes = new Hono<AppEnv>()
     return c.json(toStatus(row))
   })
 
+interface ProjectIdentity {
+  name: string
+  key: string | null
+}
+
 async function assertProjectUnique(
   tx: Tx,
   userId: string,
-  input: { name: string; key: string | null },
+  input: ProjectIdentity,
   exceptId?: string,
 ) {
   const others = await tx
@@ -498,14 +503,16 @@ const listTemplates = (tx: Tx, userId: string) =>
     .where(eq(t.quickTemplates.userId, userId))
     .orderBy(asc(t.quickTemplates.sortOrder))
 
+interface TemplateRefs {
+  taskTypeId: string
+  projectId: string | null
+  hotkey: number | null
+}
+
 async function checkTemplate(
   tx: Tx,
   userId: string,
-  input: {
-    taskTypeId: string
-    projectId: string | null
-    hotkey: number | null
-  },
+  input: TemplateRefs,
   exceptId?: string,
 ) {
   if (!(await ownTaskType(tx, userId, input.taskTypeId)))

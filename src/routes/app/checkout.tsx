@@ -3,7 +3,10 @@ import { CheckoutPage } from '#/features/billing/checkout-page'
 import { getLocale } from '#/i18n/locale'
 import { billingMessages } from '#/i18n/messages/billing'
 
-type CheckoutSearch = { plan: 'pro'; canceled?: boolean }
+interface CheckoutSearch {
+  plan: 'pro'
+  canceled?: boolean
+}
 
 export const Route = createFileRoute('/app/checkout')({
   validateSearch: (search: Record<string, unknown>): CheckoutSearch => ({

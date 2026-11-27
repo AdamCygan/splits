@@ -41,8 +41,13 @@ const h2 = 'type-heading text-[clamp(2rem,4.5vw,3.25rem)]'
 const cta = 'h-12 px-6 text-base'
 const visuals = [EntryFormDemo, IntervalsVisual, TimesheetVisual] as const
 
+interface DemoLinkProps {
+  label: string
+  dark?: boolean
+}
+
 /** Przyciski „załóż konto” i „demo”: te same w hero, pod cennikiem i na końcu strony. */
-function DemoLink({ label, dark }: { label: string; dark?: boolean }) {
+function DemoLink({ label, dark }: DemoLinkProps) {
   return (
     <Button
       size="lg"

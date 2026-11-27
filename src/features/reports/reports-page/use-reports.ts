@@ -38,9 +38,14 @@ import { useI18n, useMessages } from '#/i18n/context'
 import { formatDateRange } from '#/i18n/format'
 import { reportsMessages } from '#/i18n/messages/reports'
 import { downloadFile } from '#/lib/download'
+import type { ChartBucket } from '../charts'
 
 /** Ile ostatnich sprintów pokazujemy w wyborze okresu. */
 const RECENT_SPRINTS = 8
+
+export interface ReportsViewModelOptions {
+  initialSprintId?: string
+}
 
 /**
  * ViewModel Raportów: okres (sprint, kalendarz, własne daty) przycięty do planu, filtr
@@ -48,9 +53,7 @@ const RECENT_SPRINTS = 8
  */
 export function useReportsViewModel({
   initialSprintId,
-}: {
-  initialSprintId?: string
-}) {
+}: ReportsViewModelOptions) {
   const t = useMessages(reportsMessages)
   const { locale } = useI18n()
   const navigate = useNavigate()
@@ -162,7 +165,7 @@ export function useReportsViewModel({
     edit: setEditing,
     closeEdit: () => setEditing(null),
     /** Słupek wykresu: dzień otwiera widok dnia, tydzień/miesiąc zawęża raport. */
-    openBucket: (b: { unit: string; from: string; to: string }) => {
+    openBucket: (b: ChartBucket) => {
       if (b.unit === 'day')
         void navigate({ to: '/app/day', search: { date: b.from } })
       else {

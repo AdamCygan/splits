@@ -112,7 +112,7 @@ export function DialogContent({
   )
 }
 
-type ConfirmProps = {
+interface ConfirmProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string

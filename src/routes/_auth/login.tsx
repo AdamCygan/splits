@@ -8,7 +8,7 @@ import { authMessages } from '#/i18n/messages/auth'
 import { errorMessages } from '#/i18n/messages/errors'
 import { seo } from '#/lib/seo'
 
-type LoginSearch = {
+interface LoginSearch {
   redirect?: string
   error?: 'google' | 'google_unavailable' | 'disabled'
   /** Po ustawieniu nowego hasła z linku w e-mailu. */

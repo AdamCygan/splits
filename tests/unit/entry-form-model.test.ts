@@ -67,7 +67,7 @@ const entry = (patch: Partial<TimeEntry> = {}): TimeEntry => ({
 })
 
 describe('entry form model', () => {
-  it('starts a new draft from the work type and the current time', () => {
+  it('Should start a new draft from the work type and the current time', () => {
     const d = initialDraft(null, type(), 10 * 60 + 5)
     expect(d).toMatchObject({
       taskTypeId: 'task',
@@ -82,7 +82,7 @@ describe('entry form model', () => {
     })
   })
 
-  it('edits an entry as it was saved', () => {
+  it('Should edit an entry as it was saved', () => {
     const d = initialDraft(entry(), undefined)
     expect(d).toMatchObject({
       mode: 'range',
@@ -96,7 +96,7 @@ describe('entry form model', () => {
     expect(draftMinutes(d)).toBe(90)
   })
 
-  it('copies an entry into the next slot without overtime', () => {
+  it('Should copy an entry into the next slot without overtime', () => {
     const d = copyDraft(entry())
     expect(d).toMatchObject({
       mode: 'range',
@@ -110,7 +110,7 @@ describe('entry form model', () => {
     )
   })
 
-  it('turns a draft into API input and a timer start', () => {
+  it('Should turn a draft into API input and a timer start', () => {
     const d = {
       ...initialDraft(null, type(), 600),
       title: '  Fix  ',
@@ -138,7 +138,7 @@ describe('entry form model', () => {
     expect(timer).not.toHaveProperty('durationMinutes')
   })
 
-  it('switches type, mode and quick logs', () => {
+  it('Should switch type, mode and quick logs', () => {
     const d = initialDraft(null, type(), 600)
     expect(withType(d, meeting, false)).toMatchObject({
       taskTypeId: 'meeting',
@@ -158,7 +158,7 @@ describe('entry form model', () => {
     ).toMatchObject({ mode: 'timer', start: '10:07' })
   })
 
-  it('takes a task from search, or a title and mode from the palette', () => {
+  it('Should take a task from search, or a title and mode from the palette', () => {
     const d = initialDraft(null, type(), 600)
     expect(
       withPrefill(
@@ -183,7 +183,7 @@ describe('entry form model', () => {
     ).toMatchObject({ title: 'Docs', mode: 'duration' })
   })
 
-  it('continues where the saved entry ended', () => {
+  it('Should continue where the saved entry ended', () => {
     const d = {
       ...initialDraft(null, type(), 600),
       start: '09:00',
@@ -196,7 +196,7 @@ describe('entry form model', () => {
     })
   })
 
-  it('offers time modes and keeps an outdated SP value selectable', () => {
+  it('Should offer time modes and keep an outdated SP value selectable', () => {
     expect(timeModesFor(null, true)).toEqual(['range', 'duration', 'timer'])
     expect(timeModesFor(null, false)).toEqual(['range', 'duration'])
     expect(timeModesFor(entry({ running: true }), false)).toEqual([

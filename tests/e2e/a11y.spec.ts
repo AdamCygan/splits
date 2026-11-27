@@ -1,7 +1,8 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { signInWithSamples } from './helpers'
+import { inSequence, numbered } from '../support/sequence'
+import { signInWithSamples, testEach } from './helpers'
 
 /**
  * Przegląd dostępności całej aplikacji (WCAG 2.2 AA + dobre praktyki axe): każda strona
@@ -39,6 +40,19 @@ const appPages = [
   '/app/settings/plan',
 ]
 
+const themedAppPages = (['light', 'dark'] as const).flatMap((theme) =>
+  appPages.map((path) => ({ path, theme })),
+)
+const settingsPages = appPages.filter((p) => p.startsWith('/app/settings'))
+
+/** O ile piksli strona daje się przewinąć w bok (0 = mieści się w szerokości). */
+async function sidewaysScroll(page: Page) {
+  return page.evaluate(() => {
+    window.scrollTo(400, window.scrollY)
+    return window.scrollX
+  })
+}
+
 async function violations(page: Page) {
   const result = await new AxeBuilder({ page })
     .withTags([
@@ -64,52 +78,50 @@ test.describe('accessibility sweep', () => {
   // Animacje wyłączone: axe ocenia stan końcowy, nie klatkę w połowie przejścia.
   test.use({ reducedMotion: 'reduce' })
 
-  test('public pages pass WCAG 2.2 AA and best practices', async ({ page }) => {
-    test.setTimeout(180_000)
-    const found: Array<string> = []
-    for (const path of publicPages) {
+  testEach(publicPages)(
+    'Should pass WCAG 2.2 AA and best practices on %s',
+    async (path, page) => {
       await page.goto(path)
       await settle(page)
-      for (const v of await violations(page)) found.push(`${path} → ${v}`)
-    }
-    expect(found).toEqual([])
-  })
+      expect(await violations(page)).toEqual([])
+    },
+  )
 
-  for (const theme of ['light', 'dark'] as const) {
-    test(`every app page passes in the ${theme} theme`, async ({ page }) => {
-      test.setTimeout(240_000)
+  testEach(themedAppPages)(
+    'Should pass WCAG 2.2 AA and best practices on $path in the $theme theme',
+    async ({ path, theme }, page) => {
       await signInWithSamples(page)
       await page.evaluate((t) => localStorage.setItem('ph-theme', t), theme)
-      const found: Array<string> = []
-      for (const path of appPages) {
-        await page.goto(path)
-        await settle(page)
-        for (const v of await violations(page)) found.push(`${path} → ${v}`)
-      }
-      expect(found).toEqual([])
-    })
-  }
-
-  test('pages reflow at 320 px without sideways scrolling', async ({
-    page,
-  }) => {
-    test.setTimeout(180_000)
-    await signInWithSamples(page)
-    await page.setViewportSize({ width: 320, height: 640 })
-    const scrolled: Array<string> = []
-    for (const path of [...publicPages, ...appPages]) {
       await page.goto(path)
       await settle(page)
-      const x = await page.evaluate(() => {
-        window.scrollTo(400, window.scrollY)
-        return window.scrollX
-      })
-      if (x > 0) scrolled.push(`${path} scrolls ${x}px sideways`)
-    }
-    expect(scrolled).toEqual([])
-  })
+      expect(await violations(page)).toEqual([])
+    },
+  )
 
-  test('skip link moves focus to the main content', async ({ page }) => {
+  testEach(publicPages)(
+    'Should reflow %s at 320 px without sideways scrolling',
+    async (path, page) => {
+      await page.setViewportSize({ width: 320, height: 640 })
+      await page.goto(path)
+      await settle(page)
+      expect(await sidewaysScroll(page)).toBe(0)
+    },
+  )
+
+  testEach(appPages)(
+    'Should reflow %s at 320 px without sideways scrolling',
+    async (path, page) => {
+      await signInWithSamples(page)
+      await page.setViewportSize({ width: 320, height: 640 })
+      await page.goto(path)
+      await settle(page)
+      expect(await sidewaysScroll(page)).toBe(0)
+    },
+  )
+
+  test('Should move focus to the main content with the skip link', async ({
+    page,
+  }) => {
     await signInWithSamples(page)
     await settle(page)
     await page.keyboard.press('Tab')
@@ -120,25 +132,23 @@ test.describe('accessibility sweep', () => {
     await expect(page.locator('#main')).toBeFocused()
   })
 
-  test('settings open without a false “unsaved changes” bar', async ({
-    page,
-  }) => {
-    await signInWithSamples(page)
-    for (const path of appPages.filter((p) => p.startsWith('/app/settings'))) {
+  testEach(settingsPages)(
+    'Should open %s without a false “unsaved changes” bar',
+    async (path, page) => {
+      await signInWithSamples(page)
       await page.goto(path)
       await settle(page)
       await expect(
         page.getByRole('region', { name: 'You have unsaved changes' }),
-        path,
       ).toHaveCount(0)
-    }
-  })
+    },
+  )
 })
 
 test.describe('high-contrast mode', () => {
   test.use({ forcedColors: 'active', reducedMotion: 'reduce' })
 
-  test('focus and the selected item stay visible', async ({ page }) => {
+  test('Should keep focus and the selected item visible', async ({ page }) => {
     await signInWithSamples(page)
     await settle(page)
     // Fokus: system usuwa cienie (ring), więc musi zostać obrys.
@@ -163,7 +173,7 @@ test.describe('high-contrast mode', () => {
 test.describe('focus is not hidden under sticky bars', () => {
   test.use({ reducedMotion: 'reduce' })
 
-  test('tabbing through a settings page keeps every stop visible', async ({
+  test('Should keep every stop visible when tabbing through a settings page', async ({
     page,
   }, info) => {
     test.setTimeout(120_000)
@@ -178,10 +188,9 @@ test.describe('focus is not hidden under sticky bars', () => {
     await form.getByRole('button', { name: 'Start timer' }).click()
     await page.goto('/app/settings/workday')
     await settle(page)
-    const hidden: Array<string> = []
-    for (let i = 0; i < 45; i++) {
+    const stops = await inSequence(numbered(45), async () => {
       await page.keyboard.press('Tab')
-      const r = await page.evaluate(() => {
+      return page.evaluate(() => {
         const el = document.activeElement
         if (!(el instanceof HTMLElement) || el === document.body) return null
         // Ukryte pole (np. checkbox w etykiecie) sprawdzamy po widocznej etykiecie.
@@ -207,8 +216,8 @@ test.describe('focus is not hidden under sticky bars', () => {
           ? `${el.tagName} "${(el.getAttribute('aria-label') ?? el.textContent).trim().slice(0, 40)}" under ${top?.closest('header, nav, [role="region"]')?.getAttribute('aria-label') ?? top?.tagName}`
           : null
       })
-      if (r) hidden.push(r)
-    }
+    })
+    const hidden = stops.filter((stop) => stop !== null)
     expect(hidden, info.project.name).toEqual([])
   })
 })

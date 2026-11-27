@@ -32,7 +32,7 @@ const fields = (input: TimeEntryInput) =>
   validateEntry(input, type).map((i) => `${i.field}:${i.code}`)
 
 describe('overtime validation', () => {
-  it('accepts overtime that is part of the entry, up to the whole entry', () => {
+  it('Should accept overtime that is part of the entry, up to the whole entry', () => {
     expect(fields(base)).toEqual([])
     expect(fields({ ...base, overtimeMinutes: 150 })).toEqual([])
     expect(
@@ -40,7 +40,7 @@ describe('overtime validation', () => {
     ).toEqual([])
   })
 
-  it('needs a description of what was done', () => {
+  it('Should need a description of what was done', () => {
     expect(fields({ ...base, overtimeNote: null })).toEqual([
       'overtimeNote:required',
     ])
@@ -52,7 +52,7 @@ describe('overtime validation', () => {
     ])
   })
 
-  it('cannot be longer than the entry, zero or set on a running timer', () => {
+  it('Should not be longer than the entry, zero or set on a running timer', () => {
     expect(fields({ ...base, overtimeMinutes: 151 })).toEqual([
       'overtime:over_duration',
     ])
@@ -67,7 +67,7 @@ describe('overtime validation', () => {
     ).toEqual(['overtime:running'])
   })
 
-  it('rejects a description without overtime', () => {
+  it('Should reject a description without overtime', () => {
     expect(fields({ ...base, overtimeMinutes: null })).toEqual([
       'overtime:required',
     ])
@@ -111,7 +111,7 @@ describe('overtime in reports and summaries', () => {
   ]
   const types = [{ id: 't', storyPointsRequirement: 'optional' as const }]
 
-  it('sums overtime per task and in totals, as part of the time', () => {
+  it('Should sum overtime per task and in totals, as part of the time', () => {
     const rows = groupTasks(entries, types)
     const hotfix = rows.find((r) => r.title === 'Checkout hotfix')!
     expect(hotfix).toMatchObject({
@@ -122,7 +122,7 @@ describe('overtime in reports and summaries', () => {
     expect(totalsOf(rows)).toMatchObject({ minutes: 420, overtimeMinutes: 120 })
   })
 
-  it('adds overtime columns to the CSV', () => {
+  it('Should add overtime columns to the CSV', () => {
     const rows = groupTasks(entries, types).filter(
       (r) => r.title === 'Checkout hotfix',
     )
@@ -136,7 +136,7 @@ describe('overtime in reports and summaries', () => {
     )
   })
 
-  it('fills {overtime} in the task summary', () => {
+  it('Should fill {overtime} in the task summary', () => {
     const own = entries.slice(0, 2)
     const values = summaryValues('en', taskStats(own), own[0]!, {
       name: 'Extra work',

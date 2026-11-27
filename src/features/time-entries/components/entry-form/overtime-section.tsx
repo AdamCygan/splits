@@ -5,8 +5,12 @@ import { fmt } from '#/i18n/format'
 import { FieldError, FieldLabel, chipClass, fieldA11y } from './fields'
 import type { EntryFormViewModel } from './use-entry-form'
 
+export interface OvertimeSectionProps {
+  vm: EntryFormViewModel
+}
+
 /** Nadgodziny: ile z czasu wpisu było po godzinach i co wtedy zostało zrobione. */
-export function OvertimeSection({ vm }: { vm: EntryFormViewModel }) {
+export function OvertimeSection({ vm }: OvertimeSectionProps) {
   const { t, format, draft, minutes, overtimeMinutes } = vm
   const timer = draft.mode === 'timer'
   const open = draft.overtime && !timer

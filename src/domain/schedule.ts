@@ -2,7 +2,7 @@ import type { QuickTemplate, TemplateSchedule, TimeEntry } from '#/data/types'
 import { weekday } from './dates'
 import { fromMinutes, toMinutes } from './entries'
 
-export type ScheduledMeeting = {
+export interface ScheduledMeeting {
   template: QuickTemplate
   start: string
   end: string

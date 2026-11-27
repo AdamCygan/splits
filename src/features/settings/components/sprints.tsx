@@ -58,7 +58,7 @@ export function SprintSettings() {
 
 // ---------------------------------------------------------------- harmonogram
 
-type ScheduleDraft = {
+interface ScheduleDraft {
   length: LengthChoice
   customDays: string
   anchorDate: string
@@ -83,7 +83,11 @@ function toDraft(
   }
 }
 
-function ScheduleCard({ cadence }: { cadence: SprintCadence | null }) {
+interface ScheduleCardProps {
+  cadence: SprintCadence | null
+}
+
+function ScheduleCard({ cadence }: ScheduleCardProps) {
   const t = useMessages(settingsMessages).sprints
   const app = useMessages(appMessages)
   const { locale } = useI18n()
@@ -476,13 +480,12 @@ function SprintList() {
   )
 }
 
-function SprintDialog({
-  sprint,
-  onClose,
-}: {
+interface SprintDialogProps {
   sprint: Sprint | null
   onClose: () => void
-}) {
+}
+
+function SprintDialog({ sprint, onClose }: SprintDialogProps) {
   const t = useMessages(settingsMessages).sprints
   const app = useMessages(appMessages)
   const format = useFormat()

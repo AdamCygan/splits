@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { ComponentProps, ReactNode } from 'react'
+import type { ComponentProps, PropsWithChildren } from 'react'
 import Markdown from 'react-markdown'
 import type { Components, ExtraProps } from 'react-markdown'
 import remarkBreaks from 'remark-breaks'
@@ -9,7 +9,7 @@ import { cn } from '#/lib/utils'
 import { highlightCodeLine } from '#/domain/highlight'
 import { toggleTaskAt } from '#/domain/markdown'
 
-type HastNode = {
+interface HastNode {
   type: string
   value?: string
   tagName?: string
@@ -39,6 +39,13 @@ const textOf = (node: HastNode | undefined): string =>
 
 type Level = 1 | 2 | 3 | 4 | 5 | 6
 
+export interface NoteMarkdownProps {
+  text: string
+  headingLevel?: Level
+  onChange?: (next: string) => void
+  className?: string
+}
+
 /**
  * Notatka w Markdown: nagłówki, pogrubienie, kursywa, listy, checkboxy, kod, linki.
  * `headingLevel` to poziom, od którego zaczynają się nagłówki notatki (żeby nie łamać
@@ -49,15 +56,10 @@ export function NoteMarkdown({
   headingLevel = 4,
   onChange,
   className,
-}: {
-  text: string
-  headingLevel?: Level
-  onChange?: (next: string) => void
-  className?: string
-}) {
+}: NoteMarkdownProps) {
   const heading =
     (depth: number) =>
-    ({ children }: { children?: ReactNode }) => {
+    ({ children }: PropsWithChildren) => {
       // # i ## to ten sam poziom (pasek wstawia ##), ### i dalej schodzą niżej.
       const level = Math.min(6, headingLevel + Math.max(0, depth - 2))
       const Tag = `h${level}` as 'h4'

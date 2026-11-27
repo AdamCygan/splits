@@ -7,8 +7,12 @@ import type { EntryFormViewModel } from './use-entry-form'
 const optionClass =
   'grid h-10 cursor-pointer place-items-center rounded-lg border border-line text-sm hover:border-ink/40 has-checked:border-transparent has-checked:bg-[var(--selected)] has-checked:text-[var(--on-selected)] has-focus-visible:ring-[3px] has-focus-visible:ring-ring/40'
 
+export interface StoryPointsFieldProps {
+  vm: EntryFormViewModel
+}
+
 /** Story pointy ze skali; typ pracy decyduje, czy są wymagane, opcjonalne, czy ukryte. */
-export function StoryPointsField({ vm }: { vm: EntryFormViewModel }) {
+export function StoryPointsField({ vm }: StoryPointsFieldProps) {
   const { t, format, uid, type, chosenSp, suggestedSp } = vm
   const requirement = type?.storyPointsRequirement
   if (!requirement || requirement === 'hidden') return null

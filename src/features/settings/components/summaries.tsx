@@ -40,7 +40,11 @@ export function SummarySettings() {
   )
 }
 
-function TemplateEditor({ settings }: { settings: UserSettings }) {
+interface TemplateEditorProps {
+  settings: UserSettings
+}
+
+function TemplateEditor({ settings }: TemplateEditorProps) {
   const t = useMessages(settingsMessages).summaries
   const { locale } = useI18n()
   const fallback = defaultSummaryTemplate(locale)

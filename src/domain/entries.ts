@@ -46,7 +46,10 @@ export type EntryIssueCode =
   | 'over_duration'
   | 'running'
   | 'invalid'
-export type EntryIssue = { field: EntryField; code: EntryIssueCode }
+export interface EntryIssue {
+  field: EntryField
+  code: EntryIssueCode
+}
 
 export const toMinutes = (time: string) => {
   const [h, m] = time.split(':').map(Number)
@@ -214,16 +217,18 @@ export function startedAtFor(
   return new Date(at.getTime() - back * 60_000).toISOString()
 }
 
+export interface StoppableEntry {
+  workDate: string
+  startTime: string | null
+  startedAt: string | null
+}
+
 /**
  * Wartości po zatrzymaniu timera. Ten sam dzień: koniec = teraz (minimum 1 minuta).
  * Po północy: zostaje sam czas trwania (maks. 24 h), bo przedział 'HH:MM' nie mieści dwóch dni.
  */
 export function stoppedValues(
-  entry: {
-    workDate: string
-    startTime: string | null
-    startedAt: string | null
-  },
+  entry: StoppableEntry,
   today: string,
   nowTime: string,
   now: Date = new Date(),

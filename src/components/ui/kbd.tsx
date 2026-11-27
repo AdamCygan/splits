@@ -1,18 +1,16 @@
 import { cn } from '#/lib/utils'
 
+export interface KbdProps {
+  children: string
+  variant?: 'inline' | 'key'
+  className?: string
+}
+
 /**
  * Klawisz w podpisach skrótów. `key` = wyraźny klawisz (lista szablonów), `inline` =
  * mały znacznik w tekście (podpowiedzi pod paletą poleceń).
  */
-export function Kbd({
-  children,
-  variant = 'inline',
-  className,
-}: {
-  children: string
-  variant?: 'inline' | 'key'
-  className?: string
-}) {
+export function Kbd({ children, variant = 'inline', className }: KbdProps) {
   return (
     <kbd
       className={cn(

@@ -41,7 +41,7 @@ const entry = (over: Partial<TimeEntry>): TimeEntry => ({
 })
 
 describe('extension (a meeting that ran over)', () => {
-  it('is part of the entry time and always comes with a reason', () => {
+  it('Should be part of the entry time and always come with a reason', () => {
     const ok = { ...meeting, durationMinutes: 80, endTime: '11:20' }
     expect(
       fields({ ...ok, extensionMinutes: 20, extensionNote: 'Scope talk' }),
@@ -64,7 +64,7 @@ describe('extension (a meeting that ran over)', () => {
     ).toEqual(['extensionNote:too_long'])
   })
 
-  it('moves the end time by the extra time and keeps the plan', () => {
+  it('Should move the end time by the extra time and keep the plan', () => {
     const planned = entry({})
     const extended = withExtension(planned, 20, 'Scope talk')
     expect(extended).toMatchObject({
@@ -91,7 +91,7 @@ describe('extension (a meeting that ran over)', () => {
     })
   })
 
-  it('falls back to a duration when the end would pass midnight', () => {
+  it('Should fall back to a duration when the end would pass midnight', () => {
     const late = entry({
       startTime: '23:30',
       endTime: '23:50',
@@ -106,7 +106,7 @@ describe('extension (a meeting that ran over)', () => {
 })
 
 describe('task estimate', () => {
-  it('rejects estimates outside 1 minute to 1000 hours', () => {
+  it('Should reject estimates outside 1 minute to 1000 hours', () => {
     expect(fields({ ...meeting, estimateMinutes: 240 })).toEqual([])
     expect(fields({ ...meeting, estimateMinutes: 0 })).toEqual([
       'estimate:invalid',
@@ -116,7 +116,7 @@ describe('task estimate', () => {
     ])
   })
 
-  it('belongs to the task and is compared with the real time of all sessions', () => {
+  it('Should belong to the task and be compared with the real time of all sessions', () => {
     const task = { taskTypeId: 'm', title: 'PAY-1', link: null }
     const rows = groupTasks(
       [

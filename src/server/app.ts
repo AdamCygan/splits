@@ -174,9 +174,12 @@ for (const [path, routes] of Object.entries(protectedRoutes)) {
   api.route(path, routes)
 }
 
+interface LocaleContext {
+  get: (key: 'locale') => Locale | undefined
+}
+
 /** Locale z middleware; przy błędzie przed middleware (np. zły nagłówek) — angielski. */
-const localeOf = (c: { get: (key: 'locale') => Locale | undefined }) =>
-  c.get('locale') ?? 'en'
+const localeOf = (c: LocaleContext) => c.get('locale') ?? 'en'
 
 api.notFound((c) => c.json(problem(localeOf(c), 'not_found', 404), 404))
 

@@ -50,7 +50,7 @@ const entry = (over: Partial<TimeEntry>): TimeEntry => ({
 })
 
 describe('sprintStats', () => {
-  it('counts only entries inside the sprint and SP once per task', () => {
+  it('Should count only entries inside the sprint and SP once per task', () => {
     const stats = sprintStats(
       sprint,
       [
@@ -79,7 +79,7 @@ describe('sprintStats', () => {
     ])
   })
 
-  it('is empty for a sprint without entries', () => {
+  it('Should be empty for a sprint without entries', () => {
     expect(sprintStats(sprint, [], types)).toMatchObject({
       minutes: 0,
       storyPoints: 0,
@@ -90,7 +90,7 @@ describe('sprintStats', () => {
 })
 
 describe('averageMinutesPerSp', () => {
-  it('weights sprints by their story points', () => {
+  it('Should weight sprints by their story points', () => {
     expect(
       averageMinutesPerSp([
         { minutesPerSp: 120, storyPoints: 30 },
@@ -105,7 +105,7 @@ describe('averageMinutesPerSp', () => {
 })
 
 describe('sprintDay', () => {
-  it('clamps to the sprint', () => {
+  it('Should clamp to the sprint', () => {
     expect(sprintDay(sprint, '2026-11-02')).toEqual({ day: 1, total: 14 })
     expect(sprintDay(sprint, '2026-11-10')).toEqual({ day: 9, total: 14 })
     expect(sprintDay(sprint, '2026-12-01')).toEqual({ day: 14, total: 14 })
@@ -119,7 +119,7 @@ describe('estimateOf', () => {
     { points: 3, maxMinutes: 480 },
     { points: 5, maxMinutes: 960 },
   ]
-  it('compares time with the range for the task’s story points', () => {
+  it('Should compare time with the range for the task’s story points', () => {
     expect(estimateOf({ storyPoints: 3, minutes: 300 }, scale)).toMatchObject({
       status: 'within',
       min: 120,
@@ -140,14 +140,14 @@ describe('estimateOf', () => {
       'within',
     )
   })
-  it('has no verdict without story points or outside the scale', () => {
+  it('Should have no verdict without story points or outside the scale', () => {
     expect(estimateOf({ storyPoints: null, minutes: 300 }, scale)).toBeNull()
     expect(estimateOf({ storyPoints: 8, minutes: 300 }, scale)).toBeNull()
   })
 })
 
 describe('sprint time goals', () => {
-  it('compares time per kind of work with the goal and the pace', () => {
+  it('Should compare time per kind of work with the goal and the pace', () => {
     const progress = timeGoalProgress(
       [
         { taskTypeId: 'review', minutes: 360 },

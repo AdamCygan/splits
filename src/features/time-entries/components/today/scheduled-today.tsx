@@ -9,12 +9,16 @@ import { fmt } from '#/i18n/format'
 import { entriesQuery } from '../../queries'
 import type { QuickTemplatesViewModel } from './use-quick-templates'
 
+export interface ScheduledTodayProps {
+  vm: QuickTemplatesViewModel
+}
+
 /**
  * Spotkania z harmonogramu na ten dzień (np. daily o 9:30, a w poniedziałki o 10:00):
  * już wpisane mają znacznik, te, które się zaczęły, wpisuje się jednym kliknięciem
  * z godzinami od–do. W dzień wolny lista się nie pokazuje.
  */
-export function ScheduledToday({ vm }: { vm: QuickTemplatesViewModel }) {
+export function ScheduledToday({ vm }: ScheduledTodayProps) {
   const t = vm.t.scheduled
   const format = useFormat()
   const timeZone = useQuery(settingsQuery).data?.timezone

@@ -6,17 +6,16 @@ import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { panelMessages } from '#/i18n/messages/panel'
 
+export interface TimeGoalsProps {
+  progress: ReadonlyArray<GoalProgress>
+  types: ReadonlyArray<TaskType>
+}
+
 /**
  * Cele czasowe bieżącego sprintu: pasek postępu na rodzaj pracy, ile zostało
  * i czy tempo się zgadza (cel rozłożony równo na dni sprintu).
  */
-export function TimeGoals({
-  progress,
-  types,
-}: {
-  progress: ReadonlyArray<GoalProgress>
-  types: ReadonlyArray<TaskType>
-}) {
+export function TimeGoals({ progress, types }: TimeGoalsProps) {
   const t = useMessages(panelMessages).sprints.timeGoals
   const format = useFormat()
   return (

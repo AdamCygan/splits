@@ -97,17 +97,14 @@ function buildForms(t: Copy, tabLabel: (k: FormKind) => string) {
 
 const spScale = [0.5, 1, 2, 3, 5, 8, 13]
 
-function FakeInput({
-  label,
-  value,
-  required,
-  requiredLabel,
-}: {
+interface FakeInputProps {
   label: string
   value: string
   required?: boolean
   requiredLabel: string
-}) {
+}
+
+function FakeInput({ label, value, required, requiredLabel }: FakeInputProps) {
   return (
     <div>
       <p className="mb-1 text-sm font-medium">
@@ -121,7 +118,12 @@ function FakeInput({
   )
 }
 
-function Field({ spec, t }: { spec: FieldSpec; t: Copy }) {
+interface FieldProps {
+  spec: FieldSpec
+  t: Copy
+}
+
+function Field({ spec, t }: FieldProps) {
   switch (spec.kind) {
     case 'text':
       return (

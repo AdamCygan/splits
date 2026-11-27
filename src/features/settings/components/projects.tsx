@@ -140,13 +140,12 @@ function Projects() {
   )
 }
 
-function ProjectDialog({
-  project,
-  onClose,
-}: {
+interface ProjectDialogProps {
   project: Project | null
   onClose: () => void
-}) {
+}
+
+function ProjectDialog({ project, onClose }: ProjectDialogProps) {
   const t = useMessages(settingsMessages).projects
   const app = useMessages(appMessages)
   const palette = usePalette()
@@ -405,7 +404,12 @@ function Tags() {
   )
 }
 
-function TagDialog({ tag, onClose }: { tag: Tag; onClose: () => void }) {
+interface TagDialogProps {
+  tag: Tag
+  onClose: () => void
+}
+
+function TagDialog({ tag, onClose }: TagDialogProps) {
   const t = useMessages(settingsMessages).projects
   const app = useMessages(appMessages)
   const palette = usePalette()

@@ -12,8 +12,12 @@ import { TimeGoals } from './time-goals'
 import { TypeBar } from './type-bar'
 import type { SprintsViewModel } from './use-sprints'
 
+export interface CurrentSprintProps {
+  vm: SprintsViewModel
+}
+
 /** Bieżący sprint: dzień sprintu, liczby, dostępność, cele czasu, podział i linki. */
-export function CurrentSprint({ vm }: { vm: SprintsViewModel }) {
+export function CurrentSprint({ vm }: CurrentSprintProps) {
   const t = useMessages(panelMessages).sprints
   const { locale } = useI18n()
   const { current } = vm
@@ -58,7 +62,11 @@ export function CurrentSprint({ vm }: { vm: SprintsViewModel }) {
   )
 }
 
-function CurrentSprintBody({ vm }: { vm: SprintsViewModel }) {
+interface CurrentSprintBodyProps {
+  vm: SprintsViewModel
+}
+
+function CurrentSprintBody({ vm }: CurrentSprintBodyProps) {
   const t = useMessages(panelMessages).sprints
   const tasks = useMessages(panelMessages).tasks
   const off = useMessages(daysOffMessages)

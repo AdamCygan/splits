@@ -6,7 +6,9 @@ import { settingsQuery } from '#/features/settings/queries'
 import { getLocale } from '#/i18n/locale'
 import { dayViewMessages } from '#/i18n/messages/day-view'
 
-type DaySearch = { date?: string }
+interface DaySearch {
+  date?: string
+}
 
 export const Route = createFileRoute('/app/day')({
   /** ?date=YYYY-MM-DD: dzień z wykresu w Raportach; bez daty = dziś. */

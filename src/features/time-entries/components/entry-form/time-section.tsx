@@ -9,8 +9,12 @@ import { QUICK_DURATIONS } from './model'
 import type { DraftMode } from './model'
 import type { EntryFormViewModel } from './use-entry-form'
 
+export interface TimeSectionProps {
+  vm: EntryFormViewModel
+}
+
 /** Czas wpisu: timer od teraz, godziny od–do albo czas trwania z szybkimi wartościami. */
-export function TimeSection({ vm }: { vm: EntryFormViewModel }) {
+export function TimeSection({ vm }: TimeSectionProps) {
   const { t, format, draft, minutes } = vm
   const timeId = vm.fieldId('time')
   return (

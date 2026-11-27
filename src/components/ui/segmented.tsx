@@ -1,13 +1,13 @@
 import { useId } from 'react'
 import { cn } from '#/lib/utils'
 
-type Option<T extends string> = {
+interface Option<T extends string> {
   value: T
   label: string
   description?: string
 }
 
-type SegmentedProps<T extends string> = {
+interface SegmentedProps<T extends string> {
   label: string
   /** Etykieta tylko dla czytników ekranu (np. gdy obok jest widoczny nagłówek). */
   hideLabel?: boolean

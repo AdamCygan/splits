@@ -23,7 +23,18 @@ import { fmt } from '#/i18n/format'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { entryKeys } from '../../queries'
 
-type Picking = { template: QuickTemplate; at?: ScheduledMeeting }
+interface Picking {
+  template: QuickTemplate
+  at?: ScheduledMeeting
+}
+
+export interface QuickTemplatesViewModelOptions {
+  workDate: string
+  isToday: boolean
+  /** Szablon wybrany w palecie poleceń (id), użyty raz po wczytaniu szablonów. */
+  requested?: string
+  onRequestDone?: () => void
+}
 
 /**
  * ViewModel szybkich szablonów: klik, Alt+1…9 albo wybór z palety zapisuje wpis od razu
@@ -35,13 +46,7 @@ export function useQuickTemplatesViewModel({
   isToday,
   requested,
   onRequestDone,
-}: {
-  workDate: string
-  isToday: boolean
-  /** Szablon wybrany w palecie poleceń (id), użyty raz po wczytaniu szablonów. */
-  requested?: string
-  onRequestDone?: () => void
-}) {
+}: QuickTemplatesViewModelOptions) {
   const t = useMessages(entriesMessages)
   const format = useFormat()
   const templates = useQuery(templatesQuery).data ?? []

@@ -52,7 +52,11 @@ export function CommandPalette() {
   )
 }
 
-function SearchField({ vm }: { vm: CommandPaletteViewModel }) {
+interface SearchFieldProps {
+  vm: CommandPaletteViewModel
+}
+
+function SearchField({ vm }: SearchFieldProps) {
   const c = vm.t.commands
   return (
     <div className="flex items-center gap-3 border-b border-line px-4">
@@ -82,8 +86,12 @@ function SearchField({ vm }: { vm: CommandPaletteViewModel }) {
   )
 }
 
+interface ResultsProps {
+  vm: CommandPaletteViewModel
+}
+
 /** Wyniki w grupach (role="group"), każda opcja z id dla aria-activedescendant. */
-function Results({ vm }: { vm: CommandPaletteViewModel }) {
+function Results({ vm }: ResultsProps) {
   const c = vm.t.commands
   return (
     <ul
@@ -175,8 +183,12 @@ function Results({ vm }: { vm: CommandPaletteViewModel }) {
   )
 }
 
+interface FooterProps {
+  vm: CommandPaletteViewModel
+}
+
 /** Podpowiedzi klawiszy i wejście do listy skrótów. */
-function Footer({ vm }: { vm: CommandPaletteViewModel }) {
+function Footer({ vm }: FooterProps) {
   const c = vm.t.commands
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line px-4 py-2 text-xs text-ink-soft">

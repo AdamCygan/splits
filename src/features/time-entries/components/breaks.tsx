@@ -64,12 +64,17 @@ export function useStartBreak() {
   })
 }
 
+interface EndBreakInput {
+  id: string
+  /** Po przerwie wznowić wstrzymane zadanie. */
+  resume: boolean
+}
+
 export function useEndBreak() {
   const t = useMessages(entriesMessages)
   const format = useFormat()
   return useDataMutation(
-    ({ id, resume }: { id: string; resume: boolean }) =>
-      data.breaks.end(id, resume),
+    ({ id, resume }: EndBreakInput) => data.breaks.end(id, resume),
     {
       invalidate: [breakKeys.all, entryKeys.all],
       success: (result) =>
@@ -84,11 +89,15 @@ export function useEndBreak() {
   )
 }
 
+export interface BreakBarProps {
+  running: WorkBreak
+}
+
 /**
  * Pasek trwającej przerwy (zamiast paska timera): licznik, ile zostało z dziennego limitu
  * i „Koniec przerwy”, które od razu wznawia zadanie wstrzymane na jej czas.
  */
-export function BreakBar({ running }: { running: WorkBreak }) {
+export function BreakBar({ running }: BreakBarProps) {
   const t = useMessages(entriesMessages)
   const format = useFormat()
   const day = useBreakDay(running.workDate)
@@ -167,8 +176,12 @@ export function BreakBar({ running }: { running: WorkBreak }) {
   )
 }
 
+export interface BreakTileProps {
+  date: string
+}
+
 /** Kafelek „Przerwy” na Dziś: ile wykorzystane z limitu, start przerwy i lista. */
-export function BreakTile({ date }: { date: string }) {
+export function BreakTile({ date }: BreakTileProps) {
   const t = useMessages(entriesMessages).breaks
   const format = useFormat()
   const day = useBreakDay(date)
@@ -225,8 +238,12 @@ export function BreakTile({ date }: { date: string }) {
   )
 }
 
+export interface StartBreakButtonProps {
+  date: string
+}
+
 /** „Zacznij przerwę” w pasku nad dniem: tylko dziś i gdy przerwa nie trwa. */
-export function StartBreakButton({ date }: { date: string }) {
+export function StartBreakButton({ date }: StartBreakButtonProps) {
   const t = useMessages(entriesMessages).breaks
   const day = useBreakDay(date)
   const start = useStartBreak()
@@ -243,16 +260,14 @@ export function StartBreakButton({ date }: { date: string }) {
   )
 }
 
-/** Lista przerw z dnia z usuwaniem i dopisaniem zapomnianej przerwy. */
-function BreaksDialog({
-  date,
-  day,
-  onClose,
-}: {
+interface BreaksDialogProps {
   date: string
   day: ReturnType<typeof useBreakDay>
   onClose: () => void
-}) {
+}
+
+/** Lista przerw z dnia z usuwaniem i dopisaniem zapomnianej przerwy. */
+function BreaksDialog({ date, day, onClose }: BreaksDialogProps) {
   const t = useMessages(entriesMessages).breaks
   const app = useMessages(appMessages)
   const format = useFormat()

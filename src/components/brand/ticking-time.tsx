@@ -1,16 +1,15 @@
 import { cn } from '#/lib/utils'
 
+export interface TickingTimeProps {
+  seconds: number
+  className?: string
+}
+
 /**
  * Czas HH:MM:SS. Font Pointhours ma cyfry proporcjonalne, więc każda cyfra
  * dostaje pole o stałej szerokości: tykający timer nie "skacze".
  */
-export function TickingTime({
-  seconds,
-  className,
-}: {
-  seconds: number
-  className?: string
-}) {
+export function TickingTime({ seconds, className }: TickingTimeProps) {
   const h = Math.floor(seconds / 3600)
   const m = Math.floor((seconds % 3600) / 60)
   const s = seconds % 60

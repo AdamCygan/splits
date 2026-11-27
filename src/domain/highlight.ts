@@ -5,7 +5,10 @@
  */
 
 export type CodeKind = 'keyword' | 'string' | 'comment' | 'number' | 'type'
-export type Part = { text: string; kind?: CodeKind | InlineKind }
+export interface Part {
+  text: string
+  kind?: CodeKind | InlineKind
+}
 
 const KEYWORDS = new Set(
   (
@@ -117,7 +120,7 @@ export type InlineKind =
   | 'checkbox'
   | 'quote'
 
-export type MarkdownLine = {
+export interface MarkdownLine {
   /** text: zwykła linia; fence: ``` otwierające/zamykające; code: linia w bloku kodu. */
   kind: 'text' | 'fence' | 'code'
   parts: Array<Part>

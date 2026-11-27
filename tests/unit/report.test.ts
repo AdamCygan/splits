@@ -71,7 +71,7 @@ describe('report', () => {
     }),
   ]
 
-  it('groups sessions of a task and counts its SP once', () => {
+  it('Should group sessions of a task and count its SP once', () => {
     const rows = groupTasks(entries, types)
     expect(rows).toHaveLength(4)
     const pay = rows.find((r) => r.taskKey === 'PAY-142')!
@@ -87,7 +87,7 @@ describe('report', () => {
     expect(rows.find((r) => r.title === 'CR !481')!.storyPoints).toBeNull()
   })
 
-  it('totals time and SP, with time per SP from tasks that have SP', () => {
+  it('Should total time and SP, with time per SP from tasks that have SP', () => {
     const totals = totalsOf(groupTasks(entries, types))
     expect(totals).toEqual({
       minutes: 330,
@@ -102,7 +102,7 @@ describe('report', () => {
     expect(totalsOf([]).minutesPerSp).toBeNull()
   })
 
-  it('splits by kind of work in the order of work types', () => {
+  it('Should split by kind of work in the order of work types', () => {
     const rows = byType(groupTasks(entries, types), ['task', 'cr', 'meeting'])
     expect(
       rows.map((r) => [r.taskTypeId, r.minutes, r.storyPoints, r.withoutSp]),
@@ -113,12 +113,12 @@ describe('report', () => {
     ])
   })
 
-  it('sorts tasks without SP below the ones with SP', () => {
+  it('Should sort tasks without SP below the ones with SP', () => {
     const rows = sortRows(groupTasks(entries, types), 'storyPoints', 'desc')
     expect(rows.map((r) => r.storyPoints)).toEqual([5, 0.5, null, null])
   })
 
-  it('picks SP for a work type', () => {
+  it('Should pick SP for a work type', () => {
     const review = {
       storyPointsRequirement: 'optional',
       defaultStoryPoints: null,
@@ -139,7 +139,7 @@ describe('report', () => {
     ).toBe(2)
   })
 
-  it('builds calendar ranges', () => {
+  it('Should build calendar ranges', () => {
     // 2026-11-04 to środa; tydzień od poniedziałku.
     expect(presetRange('this_week', '2026-11-04', 1)).toEqual({
       from: '2026-11-02',
@@ -165,7 +165,7 @@ describe('report', () => {
     expect(isValidRange({ from: '2026-02-30', to: '2026-03-04' })).toBe(false)
   })
 
-  it('exports CSV safe for spreadsheets', () => {
+  it('Should export CSV safe for spreadsheets', () => {
     const csv = reportCsv(
       groupTasks(
         [entry({ title: '=HYPERLINK("x"), "quoted"', link: null })],
@@ -180,7 +180,7 @@ describe('report', () => {
 })
 
 describe('task summary intervals', () => {
-  it('lists time ranges per day for {intervals}', async () => {
+  it('Should list time ranges per day for {intervals}', async () => {
     const { sampleValues } = await import('#/features/time-entries/summary')
     const en = sampleValues('en').intervals
     expect(en).toContain('9:15 AM–11:25 AM (2h 10m)')

@@ -12,13 +12,13 @@ import { entriesQuery } from '../../queries'
 import type { EntryPrefill } from '../entry-form'
 
 /** Polecenie z palety (adres ?log=…&mode=… albo ?template=…), wykonywane raz po wejściu. */
-export type TodayRequest = {
+export interface TodayRequest {
   log?: string
   mode?: 'timer' | 'range' | 'duration'
   template?: string
 }
 
-export type TodayProps = {
+export interface TodayProps {
   /** Wybrany dzień z adresu (?date=); brak = dziś. */
   date?: string
   onDateChange?: (date: string, today: string) => void

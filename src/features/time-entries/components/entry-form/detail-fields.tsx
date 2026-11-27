@@ -7,14 +7,13 @@ import { cn } from '#/lib/utils'
 import { FieldError, FieldLabel, fieldA11y } from './fields'
 import type { EntryFormViewModel } from './use-entry-form'
 
-/** Projekt, estymata zadania (nie dla spotkań) i notatki. */
-export function DetailFields({
-  vm,
-  focusNotes,
-}: {
+export interface DetailFieldsProps {
   vm: EntryFormViewModel
   focusNotes?: boolean
-}) {
+}
+
+/** Projekt, estymata zadania (nie dla spotkań) i notatki. */
+export function DetailFields({ vm, focusNotes }: DetailFieldsProps) {
   const { t, format, type, draft } = vm
   if (!type) return null
   const estimateMinutes = draft.estimate.trim()

@@ -10,8 +10,12 @@ import { fmt } from '#/i18n/format'
 import { reportsMessages } from '#/i18n/messages/reports'
 import type { ReportsViewModel } from './use-reports'
 
+export interface ReportFiltersProps {
+  vm: ReportsViewModel
+}
+
 /** Okres (sprinty i kalendarz, własne daty), rodzaj pracy i eksport CSV. */
-export function ReportFilters({ vm }: { vm: ReportsViewModel }) {
+export function ReportFilters({ vm }: ReportFiltersProps) {
   const t = useMessages(reportsMessages)
   return (
     <section

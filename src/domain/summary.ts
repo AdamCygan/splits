@@ -37,7 +37,7 @@ export function sameTask(
   )
 }
 
-export type TaskStats = {
+export interface TaskStats {
   totalMinutes: number
   sessions: number
   days: Array<{ date: string; minutes: number }>

@@ -11,11 +11,15 @@ import { fmt } from '#/i18n/format'
 import { QUICK_DURATIONS } from './model'
 import type { EntryFormViewModel } from './use-entry-form'
 
+export interface TypePickerProps {
+  vm: EntryFormViewModel
+}
+
 /**
  * Rodzaj pracy: natywne radio (strzałki, Tab i czytniki ekranu działają same),
  * a prawy przycisk otwiera szybkie czasy dla danego rodzaju.
  */
-export function TypePicker({ vm }: { vm: EntryFormViewModel }) {
+export function TypePicker({ vm }: TypePickerProps) {
   const { t, format, uid, type } = vm
   if (!type) return null
   return (

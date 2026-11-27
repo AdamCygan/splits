@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 
 /**
@@ -36,4 +36,25 @@ export async function expectNoA11yViolations(page: Page) {
 export async function openTaskFilters(page: Page) {
   const toggle = page.getByRole('button', { name: /^Filters/ })
   if (await toggle.isVisible()) await toggle.click()
+}
+
+/** Tytuł przypadku jak w it.each: `%s` = wartość, `$pole` = pole obiektu. */
+function caseTitle<TCase>(title: string, item: TCase) {
+  if (typeof item === 'object' && item !== null)
+    return title.replace(/\$(\w+)/g, (_, key: string) =>
+      String((item as Record<string, unknown>)[key]),
+    )
+  return title.replace('%s', String(item))
+}
+
+/**
+ * Odpowiednik it.each dla Playwrighta (który go nie ma): osobny test na każdy przypadek,
+ * więc raport pokazuje, która strona albo który wariant nie przeszedł.
+ */
+export function testEach<TCase>(cases: ReadonlyArray<TCase>) {
+  return (title: string, body: (item: TCase, page: Page) => Promise<void>) => {
+    cases.forEach((item) => {
+      test(caseTitle(title, item), async ({ page }) => body(item, page))
+    })
+  }
 }

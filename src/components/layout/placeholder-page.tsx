@@ -6,7 +6,7 @@ import { Badge } from '#/components/ui/controls'
 import { useMessages } from '#/i18n/context'
 import { appMessages } from '#/i18n/messages/app'
 
-type PlaceholderPageProps = {
+interface PlaceholderPageProps {
   title: string
   description: string
   children?: ReactNode

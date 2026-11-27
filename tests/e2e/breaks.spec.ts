@@ -4,7 +4,7 @@ import { expectNoA11yViolations, signInWithSamples } from './helpers'
 test.describe('breaks', () => {
   test.beforeEach(async ({ page }) => signInWithSamples(page))
 
-  test('sets the daily break limit in settings', async ({ page }) => {
+  test('Should set the daily break limit in settings', async ({ page }) => {
     await page.goto('/app/settings/workday')
     await page.getByLabel('Breaks per day').selectOption('45')
     await page.getByRole('button', { name: 'Save changes' }).click()
@@ -13,7 +13,7 @@ test.describe('breaks', () => {
     await expect(page.getByText('0m of 45m')).toBeVisible()
   })
 
-  test('a break pauses the running task and ending it resumes', async ({
+  test('Should pause the running task during a break and resume it afterwards', async ({
     page,
   }) => {
     await page.goto('/app')
@@ -42,7 +42,7 @@ test.describe('breaks', () => {
     await expect(page.getByText('1m of 30m')).toBeVisible()
   })
 
-  test('adds a forgotten break and deletes it', async ({ page }) => {
+  test('Should add a forgotten break and delete it', async ({ page }) => {
     await page.goto('/app')
     await page.getByRole('button', { name: 'Manage breaks' }).click()
     const dialog = page.getByRole('dialog', { name: 'Breaks' })

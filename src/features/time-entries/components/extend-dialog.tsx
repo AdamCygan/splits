@@ -16,14 +16,13 @@ import { entryKeys } from '../queries'
 
 const QUICK = [15, 30, 45, 60]
 
-/** „Przedłużyło się”: spotkanie trwało dłużej niż plan; dopisujemy ile i dlaczego. */
-export function ExtendDialog({
-  entry,
-  onClose,
-}: {
+export interface ExtendDialogProps {
   entry: TimeEntry
   onClose: () => void
-}) {
+}
+
+/** „Przedłużyło się”: spotkanie trwało dłużej niż plan; dopisujemy ile i dlaczego. */
+export function ExtendDialog({ entry, onClose }: ExtendDialogProps) {
   const t = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   const format = useFormat()

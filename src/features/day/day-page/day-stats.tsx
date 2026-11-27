@@ -5,8 +5,12 @@ import { fmt } from '#/i18n/format'
 import { dayViewMessages } from '#/i18n/messages/day-view'
 import type { DayViewModel } from './use-day'
 
+export interface DayStatsProps {
+  vm: DayViewModel
+}
+
 /** Sumy dnia: praca (wobec celu), skupienie, spotkania i przerwy. */
-export function DayStats({ vm }: { vm: DayViewModel }) {
+export function DayStats({ vm }: DayStatsProps) {
   const t = useMessages(dayViewMessages).stats
   const format = useFormat()
   const { summary, target } = vm

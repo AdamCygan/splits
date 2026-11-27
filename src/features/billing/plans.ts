@@ -5,7 +5,7 @@
  */
 export type PlanId = 'free' | 'pro' | 'team'
 
-export type Plan = {
+export interface Plan {
   id: PlanId
   name: string
   /** Cena za rok w USD (Team: za osobę); null = darmowy. */

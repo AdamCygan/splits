@@ -1,7 +1,11 @@
 import type { Locale } from '#/i18n/config'
 import { serverEnv } from './env'
 
-type Email = { to: string; subject: string; text: string }
+interface Email {
+  to: string
+  subject: string
+  text: string
+}
 
 /**
  * Wysyłka e-maili transakcyjnych przez Resend (HTTP API). Bez RESEND_API_KEY e-mail trafia

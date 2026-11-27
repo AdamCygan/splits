@@ -10,7 +10,7 @@ const off = (
 const WEEK = [1, 2, 3, 4, 5]
 
 describe('days off', () => {
-  it('joins a vacation across the weekend and splits by kind', () => {
+  it('Should join a vacation across the weekend and split by kind', () => {
     // pt 2026-11-13, pn 2026-11-16, wt 17; śr 18 to L4.
     const ranges = groupDaysOff(
       [
@@ -41,7 +41,7 @@ describe('days off', () => {
     ])
   })
 
-  it('does not join days with a working day between them', () => {
+  it('Should not join days with a working day between them', () => {
     const ranges = groupDaysOff([off('2026-11-16'), off('2026-11-18')], WEEK)
     expect(ranges.map((r) => [r.from, r.to])).toEqual([
       ['2026-11-16', '2026-11-16'],
@@ -49,7 +49,7 @@ describe('days off', () => {
     ])
   })
 
-  it('counts the working days a sprint really had', () => {
+  it('Should count the working days a sprint really had', () => {
     const sprint = { startsOn: '2026-11-09', endsOn: '2026-11-20' }
     expect(
       sprintAvailability(sprint, WEEK, [

@@ -31,11 +31,19 @@ export const DAY_OFF_COLORS: Record<DayOffKind, string> = {
   other: 'var(--wt-meeting)',
 }
 
-export type DayOffDraft = {
+export interface DayOffDraft {
   from: string
   to: string
   kind: DayOffKind
   note: string | null
+}
+
+export interface DayOffDialogProps {
+  initial: DayOffDraft
+  replacing?: { from: string; to: string }
+  /** Najpóźniejsza data do wyboru (brak = bez limitu, urlop można zaplanować z góry). */
+  max?: string
+  onClose: () => void
 }
 
 /**
@@ -47,13 +55,7 @@ export function DayOffDialog({
   replacing,
   max,
   onClose,
-}: {
-  initial: DayOffDraft
-  replacing?: { from: string; to: string }
-  /** Najpóźniejsza data do wyboru (brak = bez limitu, urlop można zaplanować z góry). */
-  max?: string
-  onClose: () => void
-}) {
+}: DayOffDialogProps) {
   const t = useMessages(daysOffMessages)
   const app = useMessages(appMessages)
   const format = useFormat()

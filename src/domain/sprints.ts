@@ -12,7 +12,13 @@ export function sprintPhase(
   return 'current'
 }
 
-type Dated = Pick<Sprint, 'startsOn' | 'endsOn'>
+/** Przedział dat włącznie (sprint, okres raportu). */
+export interface DateSpan {
+  startsOn: string
+  endsOn: string
+}
+
+type Dated = DateSpan
 
 /** Sprinty, które już się zaczęły, od najnowszego (opcjonalnie nie starsze niż `oldest`). */
 export function startedSprints<TSprint extends Dated>(
@@ -41,10 +47,7 @@ export const upcomingSprint = <TSprint extends Dated>(
     .sort((a, b) => a.startsOn.localeCompare(b.startsOn))[0]
 
 /** Czy dwa przedziały dat (włącznie) nachodzą na siebie — to samo co EXCLUDE w bazie. */
-export function rangesOverlap(
-  a: { startsOn: string; endsOn: string },
-  b: { startsOn: string; endsOn: string },
-) {
+export function rangesOverlap(a: DateSpan, b: DateSpan) {
   return a.startsOn <= b.endsOn && b.startsOn <= a.endsOn
 }
 

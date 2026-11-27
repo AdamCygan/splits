@@ -51,10 +51,16 @@ export const sha256 = (value: string) =>
 
 export const randomToken = () => randomBytes(32).toString('base64url')
 
+/** Skąd przyszło logowanie (lista sesji w ustawieniach). */
+export interface ClientMeta {
+  userAgent: string | null
+  ip: string | null
+}
+
 export async function issueRefreshToken(
   tx: Tx,
   userId: string,
-  meta: { userAgent: string | null; ip: string | null },
+  meta: ClientMeta,
   familyId: string = randomUUID(),
 ) {
   const token = randomToken()
@@ -79,7 +85,7 @@ export type RotateResult =
 export async function rotateRefreshToken(
   tx: Tx,
   token: string,
-  meta: { userAgent: string | null; ip: string | null },
+  meta: ClientMeta,
 ): Promise<RotateResult> {
   const [row] = await tx
     .select()

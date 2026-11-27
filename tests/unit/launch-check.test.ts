@@ -23,11 +23,11 @@ const ready = {
 }
 
 describe('launchProblems', () => {
-  it('passes with real company data', () => {
+  it('Should pass with real company data', () => {
     expect(launchProblems(ready)).toEqual([])
   })
 
-  it('lists every placeholder and example address', () => {
+  it('Should list every placeholder and example address', () => {
     const problems = launchProblems({
       ...ready,
       legal: {

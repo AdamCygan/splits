@@ -14,17 +14,16 @@ import { cn } from '#/lib/utils'
 import { formatPrice, planById, renewalDate } from './plans'
 import { billingQuery, useStripeRedirect } from './queries'
 
+export interface CheckoutPageProps {
+  planId: 'pro'
+  canceled: boolean
+}
+
 /**
  * Koszyk: podsumowanie zamówienia (plan roczny płatny z góry), zgoda na regulamin
  * i przejście do Stripe Checkout. Kartę, adres, NIP i kod rabatowy podaje się już w Stripe.
  */
-export function CheckoutPage({
-  planId,
-  canceled,
-}: {
-  planId: 'pro'
-  canceled: boolean
-}) {
+export function CheckoutPage({ planId, canceled }: CheckoutPageProps) {
   const t = useMessages(billingMessages).checkout
   const features = useMessages(marketingMessages).pricing.features
   const { tag, locale } = useI18n()
@@ -180,16 +179,14 @@ export function CheckoutPage({
   )
 }
 
-/** Zgoda z linkami do dokumentów (otwierają się w nowej karcie, koszyk zostaje). */
-function Consent({
-  text,
-  terms,
-  privacy,
-}: {
+interface ConsentProps {
   text: string
   terms: string
   privacy: string
-}) {
+}
+
+/** Zgoda z linkami do dokumentów (otwierają się w nowej karcie, koszyk zostaje). */
+function Consent({ text, terms, privacy }: ConsentProps) {
   const link = (to: '/terms' | '/privacy', label: string) => (
     <a
       href={to}

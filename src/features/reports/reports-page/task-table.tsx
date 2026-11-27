@@ -15,8 +15,12 @@ import { reportsMessages } from '#/i18n/messages/reports'
 import { cn } from '#/lib/utils'
 import type { ReportsViewModel } from './use-reports'
 
+export interface TaskTableProps {
+  vm: ReportsViewModel
+}
+
 /** Tabela zadań okresu z sortowaniem po kolumnach i sumą w stopce. */
-export function TaskTable({ vm }: { vm: ReportsViewModel }) {
+export function TaskTable({ vm }: TaskTableProps) {
   const t = useMessages(reportsMessages)
   const format = useFormat()
   const sortProps = {
@@ -116,8 +120,13 @@ export function TaskTable({ vm }: { vm: ReportsViewModel }) {
   )
 }
 
+interface TaskTableRowProps {
+  row: TaskRow
+  vm: ReportsViewModel
+}
+
 /** Wiersz zadania: tytuł z edycją, rodzaj, projekt, link, SP, czas z estymatą, sesje, data. */
-function TaskTableRow({ row: r, vm }: { row: TaskRow; vm: ReportsViewModel }) {
+function TaskTableRow({ row: r, vm }: TaskTableRowProps) {
   const t = useMessages(reportsMessages)
   const format = useFormat()
   const { locale } = useI18n()
@@ -241,6 +250,16 @@ function TaskTableRow({ row: r, vm }: { row: TaskRow; vm: ReportsViewModel }) {
   )
 }
 
+interface SortHeaderProps {
+  column: TaskSort
+  label: string
+  sort: SortState
+  onSort: (column: TaskSort) => void
+  sortLabel: string
+  numeric?: boolean
+  className?: string
+}
+
 /** Nagłówek kolumny z przyciskiem sortowania i aria-sort. */
 function SortHeader({
   column,
@@ -250,15 +269,7 @@ function SortHeader({
   sortLabel,
   numeric = false,
   className,
-}: {
-  column: TaskSort
-  label: string
-  sort: SortState
-  onSort: (column: TaskSort) => void
-  sortLabel: string
-  numeric?: boolean
-  className?: string
-}) {
+}: SortHeaderProps) {
   const active = sort.by === column
   const Icon = !active ? ArrowUpDown : sort.dir === 'asc' ? ArrowUp : ArrowDown
   return (

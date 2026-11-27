@@ -50,8 +50,12 @@ export function SprintsPage() {
   )
 }
 
+interface SprintTrendProps {
+  vm: SprintsViewModel
+}
+
 /** Trend sprint po sprincie: SP i czas na SP (dwie skale, więc dwa wykresy). */
-function SprintTrend({ vm }: { vm: SprintsViewModel }) {
+function SprintTrend({ vm }: SprintTrendProps) {
   const charts = useMessages(reportsMessages).charts
   const format = useFormat()
   if (vm.stats.length < 2) return null

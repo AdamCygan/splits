@@ -72,7 +72,7 @@ export const templatesQuery = queryOptions({
   queryFn: () => unwrap(data.templates.list()),
 })
 
-type MutationOptions<TVars, TData> = {
+interface MutationOptions<TVars, TData> {
   /** Które dane odświeżyć po sukcesie. */
   invalidate: ReadonlyArray<QueryKey>
   /** Komunikat po sukcesie (toast, ogłaszany też czytnikom ekranu). */

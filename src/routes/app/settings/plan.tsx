@@ -4,7 +4,10 @@ import { getLocale } from '#/i18n/locale'
 import { settingsMessages } from '#/i18n/messages/settings'
 
 /** Powrót ze Stripe Checkout: ?checkout=success&session_id=cs_… */
-type PlanSearch = { checkout?: 'success'; session_id?: string }
+interface PlanSearch {
+  checkout?: 'success'
+  session_id?: string
+}
 
 export const Route = createFileRoute('/app/settings/plan')({
   validateSearch: (search: Record<string, unknown>): PlanSearch =>

@@ -16,17 +16,16 @@ import { cn } from '#/lib/utils'
 import { entryKeys } from '../queries'
 import { useResumeTask } from './timer'
 
+export interface TaskSearchProps {
+  isToday: boolean
+  onUse: (entry: TimeEntry) => void
+}
+
 /**
  * Wyszukiwarka zadań nad formularzem: dowolne zadanie, także zakończone, po tytule albo
  * linku. Wybrane można kontynuować od razu (nowa sesja z timerem) albo wpisać w formularz.
  */
-export function TaskSearch({
-  isToday,
-  onUse,
-}: {
-  isToday: boolean
-  onUse: (entry: TimeEntry) => void
-}) {
+export function TaskSearch({ isToday, onUse }: TaskSearchProps) {
   const t = useMessages(entriesMessages).search
   const format = useFormat()
   const { locale } = useI18n()

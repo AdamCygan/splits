@@ -5,6 +5,16 @@ import { addDays } from '#/domain/dates'
 import { useFormat, useMessages } from '#/i18n/context'
 import { entriesMessages } from '#/i18n/messages/entries'
 
+export interface DayPickerProps {
+  value: string
+  today: string
+  /** Najstarszy dzień, do którego można dopisać wpis; null = bez limitu. */
+  min: string | null
+  /** Limit planu Free: przy najstarszym dniu pokazujemy, skąd się bierze. */
+  limited: boolean
+  onChange: (date: string) => void
+}
+
 /**
  * Wybór dnia na stronie Dziś: poprzedni / następny dzień, kalendarz i powrót do dziś.
  * Przyszłych dni nie ma (nie ma jeszcze przepracowanego czasu), a plan Free kończy się na `min`.
@@ -15,15 +25,7 @@ export function DayPicker({
   min,
   limited,
   onChange,
-}: {
-  value: string
-  today: string
-  /** Najstarszy dzień, do którego można dopisać wpis; null = bez limitu. */
-  min: string | null
-  /** Limit planu Free: przy najstarszym dniu pokazujemy, skąd się bierze. */
-  limited: boolean
-  onChange: (date: string) => void
-}) {
+}: DayPickerProps) {
   const t = useMessages(entriesMessages).day
   const format = useFormat()
   const isToday = value === today

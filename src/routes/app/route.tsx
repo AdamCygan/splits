@@ -95,8 +95,12 @@ function AppLayout() {
   )
 }
 
+interface DemoBannerProps {
+  onRegister: () => void
+}
+
 /** Pasek konta demo: jasno mówi, że dane są przykładowe, i prowadzi do rejestracji. */
-function DemoBanner({ onRegister }: { onRegister: () => void }) {
+function DemoBanner({ onRegister }: DemoBannerProps) {
   const t = useMessages(panelMessages).demo
   return (
     <div
@@ -289,7 +293,7 @@ function AppShell() {
                   activeOptions={{ exact }}
                   className="flex h-16 flex-col items-center justify-center gap-1 text-xs font-medium text-ink-soft data-[status=active]:text-ink"
                 >
-                  {({ isActive }: { isActive: boolean }) => (
+                  {({ isActive }) => (
                     <>
                       <span
                         className={

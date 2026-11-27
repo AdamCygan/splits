@@ -13,11 +13,15 @@ import type { DayViewModel } from './use-day'
 const BREAK_FILL =
   'repeating-linear-gradient(135deg, var(--ink-faint) 0 2px, transparent 2px 6px)'
 
+export interface DayTimelineProps {
+  vm: DayViewModel
+}
+
 /**
  * Oś dnia: sesje w kolorze rodzaju pracy, przerwy w paski. Mysz albo strzałki wybierają
  * odcinek (dymek ze szczegółami), kliknięcie albo Enter otwiera zadanie.
  */
-export function DayTimeline({ vm }: { vm: DayViewModel }) {
+export function DayTimeline({ vm }: DayTimelineProps) {
   const t = useMessages(dayViewMessages).timeline
   const format = useFormat()
   const [active, setActive] = useState<number | null>(null)

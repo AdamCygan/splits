@@ -3,12 +3,15 @@ import { describe, expect, it } from 'vitest'
 import { sha256 } from '#/server/auth/tokens'
 import { db } from '#/server/db/client'
 import { refreshTokens } from '#/server/db/schema'
-import { client, registered, sample } from './helpers'
+import { client, inSequence, numbered, registered, sample } from './helpers'
 
-type Session = { accessToken: string; user: { id: string } }
+interface Session {
+  accessToken: string
+  user: { id: string }
+}
 
 describe('auth', () => {
-  it('rotates the refresh token and detects reuse of an old one', async () => {
+  it('Should rotate the refresh token and detect reuse of an old one', async () => {
     const { c } = await registered()
     const first = c.cookies.get('refresh_token')!
     expect(first).toBeTruthy()
@@ -35,7 +38,7 @@ describe('auth', () => {
     expect((await tab.post('/auth/refresh')).status).toBe(401)
   })
 
-  it('sets the refresh cookie as HttpOnly and scoped to the auth API', async () => {
+  it('Should set the refresh cookie as HttpOnly and scoped to the auth API', async () => {
     const c = client()
     const res = await c.post('/auth/register', {
       username: `cookie${Date.now().toString(36)}`,
@@ -49,7 +52,7 @@ describe('auth', () => {
     expect(header).toMatch(/SameSite=Lax/)
   })
 
-  it('logs out and blocks the old session', async () => {
+  it('Should log out and block the old session', async () => {
     const { c } = await registered()
     const token = c.cookies.get('refresh_token')!
     expect((await c.post('/auth/logout')).status).toBe(204)
@@ -58,7 +61,7 @@ describe('auth', () => {
     expect((await again.post('/auth/refresh')).status).toBe(401)
   })
 
-  it('rejects cookie requests from other sites (CSRF)', async () => {
+  it('Should reject cookie requests from other sites (CSRF)', async () => {
     const { c } = await registered()
     const res = await c.post('/auth/refresh', undefined, {
       Origin: 'https://evil.example',
@@ -66,7 +69,7 @@ describe('auth', () => {
     expect(res.status).toBe(403)
   })
 
-  it('requires a valid access token for app data', async () => {
+  it('Should require a valid access token for app data', async () => {
     const c = client()
     expect((await c.get('/task-types')).status).toBe(401)
     c.setToken('not-a-jwt')
@@ -75,7 +78,7 @@ describe('auth', () => {
     expect(res.body.code).toBe('auth.no_session')
   })
 
-  it('validates sign-up input and answers in the user’s language', async () => {
+  it('Should validate sign-up input and answer in the user’s language', async () => {
     const c = client()
     const res = await c.post<{
       code: string
@@ -92,7 +95,7 @@ describe('auth', () => {
     expect(Object.keys(res.body.errors)).toEqual(['username'])
   })
 
-  it('resets a password with a one-time link', async () => {
+  it('Should reset a password with a one-time link', async () => {
     const { c, email } = await registered()
     const logs: Array<string> = []
     const original = console.info
@@ -135,25 +138,20 @@ describe('auth', () => {
     expect(login.status).toBe(200)
   })
 
-  it('locks the account for a while after many wrong passwords', async () => {
+  it('Should lock the account for a while after many wrong passwords', async () => {
     const { username } = await registered()
     const c = client()
-    let last = 0
-    for (let i = 0; i < 11; i++) {
-      last = (
-        await c.post(
-          '/auth/login',
-          { login: username, password: `wrong ${i}` },
-          {
-            'X-Forwarded-For': `10.0.0.${i}`,
-          },
-        )
-      ).status
-    }
-    expect(last).toBe(429)
+    const attempts = await inSequence(numbered(11), (i) =>
+      c.post(
+        '/auth/login',
+        { login: username, password: `wrong ${i}` },
+        { 'X-Forwarded-For': `10.0.0.${i}` },
+      ),
+    )
+    expect(attempts.at(-1)?.status).toBe(429)
   })
 
-  it('creates a sample account for end-to-end tests', async () => {
+  it('Should create a sample account for end-to-end tests', async () => {
     const c = await sample()
     const entries = await c.get<Array<{ title: string }>>(
       '/time-entries?from=2000-01-01&to=2100-01-01',
@@ -162,7 +160,7 @@ describe('auth', () => {
     expect((await c.get<Array<unknown>>('/projects')).body).toHaveLength(2)
   })
 
-  it('reports health and app info', async () => {
+  it('Should report health and app info', async () => {
     const c = client()
     expect((await c.get<{ status: string }>('/health')).body.status).toBe('ok')
     expect((await c.get<{ name: string }>('/meta')).body.name).toBe(

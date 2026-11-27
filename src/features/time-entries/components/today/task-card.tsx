@@ -19,27 +19,25 @@ import { useElapsed } from '../timer'
 import { SessionRow } from './session-row'
 import type { DayTask, EntryListViewModel } from './use-entry-list'
 
-/** Suma czasu zadania dziś: zakończone odcinki plus działający (odświeżany co sekundę). */
-function TaskTotal({
-  done,
-  running,
-}: {
+interface TaskTotalProps {
   done: number
   running: TimeEntry | undefined
-}) {
+}
+
+/** Suma czasu zadania dziś: zakończone odcinki plus działający (odświeżany co sekundę). */
+function TaskTotal({ done, running }: TaskTotalProps) {
   const format = useFormat()
   const seconds = useElapsed(running)
   return <span>{format.minutes(done + Math.floor(seconds / 60))}</span>
 }
 
-/** Karta zadania na liście dnia: nagłówek, opis, postęp SP, sesje i akcje timera. */
-export function TaskCard({
-  task,
-  vm,
-}: {
+export interface TaskCardProps {
   task: DayTask
   vm: EntryListViewModel
-}) {
+}
+
+/** Karta zadania na liście dnia: nagłówek, opis, postęp SP, sesje i akcje timera. */
+export function TaskCard({ task, vm }: TaskCardProps) {
   const t = useMessages(entriesMessages)
   const format = useFormat()
   const { latest, running, paused, type, project } = task

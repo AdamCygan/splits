@@ -16,6 +16,16 @@ import { entriesMessages } from '#/i18n/messages/entries'
 
 export type { TemplateChoice } from '#/domain/templates'
 
+export interface UseTemplateDialogProps {
+  template: QuickTemplate
+  type: TaskType | undefined
+  projects: Array<Project>
+  isToday: boolean
+  pending: boolean
+  onSubmit: (choice: TemplateChoice) => void
+  onClose: () => void
+}
+
 /**
  * Okno przed zapisem wpisu z szablonu. Sam wybór projektu: lista przycisków (klik zapisuje).
  * Gdy typ pracy wymaga linku albo notatki (np. code review i link do MR) albo trzeba podać czas
@@ -29,15 +39,7 @@ export function UseTemplateDialog({
   pending,
   onSubmit,
   onClose,
-}: {
-  template: QuickTemplate
-  type: TaskType | undefined
-  projects: Array<Project>
-  isToday: boolean
-  pending: boolean
-  onSubmit: (choice: TemplateChoice) => void
-  onClose: () => void
-}) {
+}: UseTemplateDialogProps) {
   const t = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   const needs = templateNeeds(template, type, projects, isToday)

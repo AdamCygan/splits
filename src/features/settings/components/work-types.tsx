@@ -213,13 +213,12 @@ const blankType = (titleLabel: string): TaskTypeInput => ({
   countsAsFocusWork: true,
 })
 
-function WorkTypeDialog({
-  type,
-  onClose,
-}: {
+interface WorkTypeDialogProps {
   type: TaskType | null
   onClose: () => void
-}) {
+}
+
+function WorkTypeDialog({ type, onClose }: WorkTypeDialogProps) {
   const t = useMessages(settingsMessages).workTypes
   const app = useMessages(appMessages)
   const format = useFormat()
@@ -478,14 +477,13 @@ function WorkTypeDialog({
   )
 }
 
-/** Podgląd formularza wpisu na żywo — widać od razu, co zobaczy użytkownik przy logowaniu czasu. */
-function EntryPreview({
-  draft,
-  scale,
-}: {
+interface EntryPreviewProps {
   draft: TaskTypeInput
   scale: Array<number>
-}) {
+}
+
+/** Podgląd formularza wpisu na żywo — widać od razu, co zobaczy użytkownik przy logowaniu czasu. */
+function EntryPreview({ draft, scale }: EntryPreviewProps) {
   const t = useMessages(settingsMessages).workTypes
   const app = useMessages(appMessages)
   const label = (text: string, requirement: FieldRequirement) => (

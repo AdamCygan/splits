@@ -14,7 +14,7 @@ import {
 import { persistConsent } from './consent'
 import type { Consent } from './consent'
 
-type ConsentState = {
+interface ConsentState {
   consent: Consent | null
   settingsOpen: boolean
   save: (value: Consent) => void
@@ -24,18 +24,17 @@ type ConsentState = {
 
 const Ctx = createContext<ConsentState | null>(null)
 
+export interface ConsentProviderProps {
+  initial: Consent | null
+  children: ReactNode
+}
+
 /**
  * Stan zgody na cookies dla całej aplikacji. Wartość startowa pochodzi z loadera
  * (ciasteczko czytane na serwerze), więc SSR i hydracja pokazują to samo.
  * Statystyki (PostHog) ładują się wyłącznie po zgodzie i wyłączają po jej wycofaniu.
  */
-export function ConsentProvider({
-  initial,
-  children,
-}: {
-  initial: Consent | null
-  children: ReactNode
-}) {
+export function ConsentProvider({ initial, children }: ConsentProviderProps) {
   const [consent, setConsent] = useState(initial)
   const [settingsOpen, setSettingsOpen] = useState(false)
 

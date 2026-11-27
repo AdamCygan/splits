@@ -8,7 +8,7 @@ import {
 test.describe('progress, quick delete, sprint tasks and charts', () => {
   test.beforeEach(async ({ page }) => signInWithSamples(page))
 
-  test('Today shows the story points earned by the time worked', async ({
+  test('Should show on Today the story points earned by the time worked', async ({
     page,
   }) => {
     await page.goto('/app')
@@ -30,7 +30,7 @@ test.describe('progress, quick delete, sprint tasks and charts', () => {
     )
   })
 
-  test('deletes a whole task from the day after a warning', async ({
+  test('Should delete a whole task from the day after a warning', async ({
     page,
   }) => {
     await page.goto('/app')
@@ -57,7 +57,7 @@ test.describe('progress, quick delete, sprint tasks and charts', () => {
     ).toHaveCount(0)
   })
 
-  test('lists the tasks of a sprint', async ({ page }) => {
+  test('Should list the tasks of a sprint', async ({ page }) => {
     await page.goto('/app/sprints')
     await page.getByRole('link', { name: 'Sprint tasks' }).click()
     await expect(page).toHaveURL(/\/app\/tasks\?sprint=/)
@@ -78,7 +78,7 @@ test.describe('progress, quick delete, sprint tasks and charts', () => {
     await expect(page).not.toHaveURL(/sprint=/)
   })
 
-  test('deletes a whole task from the Tasks page', async ({ page }) => {
+  test('Should delete a whole task from the Tasks page', async ({ page }) => {
     await page.goto('/app/tasks')
     // Usuwanie siedzi w menu „Więcej akcji” wiersza.
     await page
@@ -101,9 +101,7 @@ test.describe('progress, quick delete, sprint tasks and charts', () => {
     ).toHaveCount(0)
   })
 
-  test('reports show the analysis charts with a table view', async ({
-    page,
-  }) => {
+  test('Should show the report charts with a table view', async ({ page }) => {
     await page.goto('/app/analytics')
     const charts = page.getByRole('region', { name: 'Analysis' })
     await expect(
@@ -135,7 +133,7 @@ test.describe('tasks list', () => {
     await signInWithSamples(page)
   })
 
-  test('groups a sprint’s tasks by kind of work and filters by status', async ({
+  test('Should group a sprint’s tasks by kind of work and filter by status', async ({
     page,
   }) => {
     await page.goto('/app/sprints')

@@ -11,8 +11,12 @@ import { SummaryDialog } from '../summary-dialog'
 import { TaskCard } from './task-card'
 import { useEntryListViewModel } from './use-entry-list'
 
+export interface EntryListProps {
+  entries: ReadonlyArray<TimeEntry>
+}
+
 /** Wpisy dnia jako karty zadań i okna otwierane z nich (jedno naraz). */
-export function EntryList({ entries }: { entries: ReadonlyArray<TimeEntry> }) {
+export function EntryList({ entries }: EntryListProps) {
   const t = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   const vm = useEntryListViewModel(entries)

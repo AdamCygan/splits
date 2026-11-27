@@ -6,7 +6,11 @@
  * Tu są czyste operacje edytora: zaznaczenie wchodzi, nowy tekst i zaznaczenie wychodzą.
  */
 
-export type TextState = { value: string; start: number; end: number }
+export interface TextState {
+  value: string
+  start: number
+  end: number
+}
 
 /** Początek i koniec linii obejmujących zaznaczenie. */
 function lineRange(value: string, start: number, end: number) {

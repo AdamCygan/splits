@@ -60,7 +60,11 @@ const toDraft = (s: UserSettings): Draft => ({
   reminderTime: s.dailyReminderAt ?? '17:00',
 })
 
-function WorkdayForm({ settings }: { settings: UserSettings }) {
+interface WorkdayFormProps {
+  settings: UserSettings
+}
+
+function WorkdayForm({ settings }: WorkdayFormProps) {
   const t = useMessages(settingsMessages).workday
   const app = useMessages(appMessages)
   const { locale, tag } = useI18n()

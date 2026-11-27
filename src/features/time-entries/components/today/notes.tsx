@@ -1,16 +1,14 @@
 import { useState } from 'react'
 import { CheckableNote } from '#/components/note/note-markdown'
 
-/** Notatka w Markdown; długa zwija się z przyciskiem „pokaż całość”. Checkboxy odhacza się w miejscu. */
-export function Notes({
-  text,
-  moreLabel,
-  onSave,
-}: {
+export interface NotesProps {
   text: string
   moreLabel: string
   onSave?: (next: string) => Promise<unknown>
-}) {
+}
+
+/** Notatka w Markdown; długa zwija się z przyciskiem „pokaż całość”. Checkboxy odhacza się w miejscu. */
+export function Notes({ text, moreLabel, onSave }: NotesProps) {
   const [open, setOpen] = useState(false)
   // Krótka lista kontrolna mieści się bez zwijania, żeby dało się ją odhaczać od razu.
   const long = text.length > 500 || text.split('\n').length > 8

@@ -5,7 +5,7 @@ import { Check, ChevronDown } from 'lucide-react'
 import { cn } from '#/lib/utils'
 
 /** Wspólna oprawa pola: etykieta, podpowiedź i błędy podpięte przez aria-describedby. */
-type FieldProps = {
+interface FieldProps {
   label: ReactNode
   hint?: ReactNode
   error?: string | null
@@ -99,7 +99,7 @@ export function Textarea({ className, ...props }: ComponentProps<'textarea'>) {
   )
 }
 
-type SwitchProps = {
+interface SwitchProps {
   label: ReactNode
   description?: ReactNode
   checked: boolean
@@ -146,7 +146,7 @@ export function Switch({
   )
 }
 
-type CheckboxGroupProps<T extends string | number> = {
+interface CheckboxGroupProps<T extends string | number> {
   legend: string
   hint?: string
   error?: string | null
@@ -216,7 +216,17 @@ export function CheckboxGroup<T extends string | number>({
   )
 }
 
-type Swatch = { value: string; label: string }
+interface Swatch {
+  value: string
+  label: string
+}
+
+export interface ColorPickerProps {
+  legend: string
+  value: string
+  onChange: (v: string) => void
+  swatches: ReadonlyArray<Swatch>
+}
 
 /** Wybór koloru jako grupa radio: każdy kolor ma nazwę dla czytnika ekranu. */
 export function ColorPicker({
@@ -224,12 +234,7 @@ export function ColorPicker({
   value,
   onChange,
   swatches,
-}: {
-  legend: string
-  value: string
-  onChange: (v: string) => void
-  swatches: ReadonlyArray<Swatch>
-}) {
+}: ColorPickerProps) {
   const id = useId()
   return (
     <fieldset>
@@ -271,16 +276,14 @@ export function ColorPicker({
   )
 }
 
-/** Plakietka statusu — zawsze z tekstem, kolor jest tylko dodatkiem. */
-export function Badge({
-  children,
-  tone = 'neutral',
-  className,
-}: {
+export interface BadgeProps {
   children: ReactNode
   tone?: 'neutral' | 'success' | 'info' | 'warning' | 'muted'
   className?: string
-}) {
+}
+
+/** Plakietka statusu — zawsze z tekstem, kolor jest tylko dodatkiem. */
+export function Badge({ children, tone = 'neutral', className }: BadgeProps) {
   const tones = {
     neutral: 'bg-muted text-ink',
     success: 'bg-[color-mix(in_oklab,var(--wt-pair)_14%,white)] text-[#0b6b5b]',
@@ -302,14 +305,13 @@ export function Badge({
   )
 }
 
-/** Kolorowa kropka z tekstem obok (kolor nigdy nie jest jedyną informacją). */
-export function ColorDot({
-  color,
-  className,
-}: {
+export interface ColorDotProps {
   color: string
   className?: string
-}) {
+}
+
+/** Kolorowa kropka z tekstem obok (kolor nigdy nie jest jedyną informacją). */
+export function ColorDot({ color, className }: ColorDotProps) {
   return (
     <span
       aria-hidden

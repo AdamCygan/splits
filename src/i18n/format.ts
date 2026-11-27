@@ -2,7 +2,12 @@ import { localeTags } from './config'
 import type { Locale } from './config'
 
 /** Formy liczby mnogiej. Polski potrzebuje few/many ("2 wpisy", "5 wpisów"). */
-export type Plural = { one: string; few?: string; many?: string; other: string }
+export interface Plural {
+  one: string
+  few?: string
+  many?: string
+  other: string
+}
 
 /** Podstawia {nazwa} w tekście: fmt('Hi {name}', { name: 'Adam' }). */
 export function fmt(

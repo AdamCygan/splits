@@ -14,11 +14,15 @@ import { TypeBreakdown } from './type-breakdown'
 import { useReportsViewModel } from './use-reports'
 import type { ReportsViewModel } from './use-reports'
 
+export interface ReportsPageProps {
+  initialSprintId?: string
+}
+
 /**
  * Strona Raporty (widok w MVVM): filtry, liczby, wykresy i tabela zadań okresu.
  * Stan i dane: `useReportsViewModel`; obliczenia: domain/report.
  */
-export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
+export function ReportsPage({ initialSprintId }: ReportsPageProps) {
   const t = useMessages(reportsMessages)
   const vm = useReportsViewModel({ initialSprintId })
   return (
@@ -85,8 +89,12 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
   )
 }
 
+interface FreeLimitNoteProps {
+  vm: ReportsViewModel
+}
+
 /** Plan Free: okres sięga dalej niż historia planu, więc pokazujemy tylko ostatnie dni. */
-function FreeLimitNote({ vm }: { vm: ReportsViewModel }) {
+function FreeLimitNote({ vm }: FreeLimitNoteProps) {
   const t = useMessages(reportsMessages)
   const { locale } = useI18n()
   if (!vm.clamped || !vm.oldest) return null

@@ -17,7 +17,7 @@ test.describe('command palette', () => {
     await signInWithSamples(page)
   })
 
-  test('finds a task by title and opens it, then a settings page', async ({
+  test('Should find a task by title and open it, then a settings page', async ({
     page,
   }) => {
     const { palette, input } = await openPalette(page)
@@ -45,7 +45,7 @@ test.describe('command palette', () => {
     await expect(page).toHaveURL(/\/app\/settings\/work-types/)
   })
 
-  test('finds a task by a word from its notes and shows the snippet', async ({
+  test('Should find a task by a word from its notes and show the snippet', async ({
     page,
   }) => {
     const { palette, input } = await openPalette(page)
@@ -58,7 +58,7 @@ test.describe('command palette', () => {
     await expectNoA11yViolations(page)
   })
 
-  test('“create task” leads to the log form, and typed text becomes the title', async ({
+  test('Should lead “create task” to the log form and use the typed text as the title', async ({
     page,
   }) => {
     await page.goto('/app/tasks')
@@ -85,7 +85,7 @@ test.describe('command palette', () => {
     ).toBeVisible()
   })
 
-  test('runs a quick template and opens a typed day', async ({ page }) => {
+  test('Should run a quick template and open a typed day', async ({ page }) => {
     const { palette, input } = await openPalette(page)
     await input.fill('stand-up')
     await palette.getByRole('option', { name: /^Log “Daily stand-up”/ }).click()
@@ -97,7 +97,7 @@ test.describe('command palette', () => {
     await expect(page).toHaveURL(/\/app\/day\?date=/)
   })
 
-  test('controls the running timer and shows keyboard shortcuts', async ({
+  test('Should control the running timer and show keyboard shortcuts', async ({
     page,
   }) => {
     const form = page.getByRole('region', { name: 'Log time' })
@@ -127,7 +127,7 @@ test.describe('command palette', () => {
     await expectNoA11yViolations(page)
   })
 
-  test('opens from the search button and switches the theme', async ({
+  test('Should open from the search button and switch the theme', async ({
     page,
   }) => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()

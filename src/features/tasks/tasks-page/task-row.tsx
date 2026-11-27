@@ -24,17 +24,16 @@ import { EstimateCell } from './estimate-cell'
 import { StatusIcon } from './status-icon'
 import type { TaskListItem, TasksViewModel } from './use-tasks'
 
+export interface TaskRowViewProps {
+  item: TaskListItem
+  vm: TasksViewModel
+}
+
 /**
  * Wiersz zadania: stan, tytuł z linkiem, opis (rodzaj, ostatnia praca, sesje), SP, czas
  * z paskiem względem najdłuższego zadania, wycena i akcje („Kontynuuj”, menu „⋯”).
  */
-export function TaskRowView({
-  item: { row, estimate },
-  vm,
-}: {
-  item: TaskListItem
-  vm: TasksViewModel
-}) {
+export function TaskRowView({ item: { row, estimate }, vm }: TaskRowViewProps) {
   const t = useMessages(panelMessages).tasks
   const format = useFormat()
   const type = vm.typeOf(row.taskTypeId)

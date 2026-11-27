@@ -14,7 +14,11 @@ const QueryDevtools = import.meta.env.DEV
     )
   : () => null
 
-export function QueryProvider({ children }: { children: ReactNode }) {
+export interface QueryProviderProps {
+  children: ReactNode
+}
+
+export function QueryProvider({ children }: QueryProviderProps) {
   const [client] = useState(
     () =>
       new QueryClient({

@@ -20,7 +20,7 @@ const DAY_TARGET = 8 * 60
 
 type TitleKey = keyof MarketingMessages['demo']['titles']
 
-type DemoEntry = {
+interface DemoEntry {
   id: string
   kind: WorkKind
   title: TitleKey

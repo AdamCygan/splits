@@ -247,8 +247,12 @@ export function TimerBar() {
   )
 }
 
+interface PausedBarProps {
+  paused: Array<TimeEntry>
+}
+
 /** Nic nie działa, ale są wstrzymane zadania: „Wznów” albo „Gotowe” jednym kliknięciem. */
-function PausedBar({ paused }: { paused: Array<TimeEntry> }) {
+function PausedBar({ paused }: PausedBarProps) {
   const t = useMessages(entriesMessages)
   const format = useFormat()
   const types = useQuery(taskTypesQuery).data ?? []
@@ -316,8 +320,12 @@ function PausedBar({ paused }: { paused: Array<TimeEntry> }) {
   )
 }
 
+interface RunningProgressProps {
+  entry: TimeEntry
+}
+
 /** „≈ 1,9 z 5 SP” na pasku timera: ile zadania już zrobione wg przepracowanego czasu. */
-function RunningProgress({ entry }: { entry: TimeEntry }) {
+function RunningProgress({ entry }: RunningProgressProps) {
   const t = useMessages(entriesMessages).progress
   const format = useFormat()
   const p = useTaskProgress(entry)

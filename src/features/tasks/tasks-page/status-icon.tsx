@@ -1,14 +1,13 @@
 import { Circle, CircleCheck } from 'lucide-react'
 import type { TaskStatus } from '#/domain/task-list'
 
-/** Stan zadania jako ikona z tekstem dla czytników ekranu. */
-export function StatusIcon({
-  state,
-  label,
-}: {
+export interface StatusIconProps {
   state: TaskStatus
   label: string
-}) {
+}
+
+/** Stan zadania jako ikona z tekstem dla czytników ekranu. */
+export function StatusIcon({ state, label }: StatusIconProps) {
   return (
     <span className="mt-0.5 flex size-5 items-center justify-center lg:mt-0">
       {state === 'done' ? (

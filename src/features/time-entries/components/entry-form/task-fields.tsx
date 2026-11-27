@@ -5,8 +5,12 @@ import { fmt } from '#/i18n/format'
 import { FieldError, FieldLabel, fieldA11y } from './fields'
 import type { EntryFormViewModel } from './use-entry-form'
 
+export interface TaskFieldsProps {
+  vm: EntryFormViewModel
+}
+
 /** Tytuł zadania i link (link wg ustawień typu: ukryty, opcjonalny albo wymagany). */
-export function TaskFields({ vm }: { vm: EntryFormViewModel }) {
+export function TaskFields({ vm }: TaskFieldsProps) {
   const { t, type, draft } = vm
   if (!type) return null
   const linkHint = Boolean(vm.taskKey) && !vm.issueText('link')

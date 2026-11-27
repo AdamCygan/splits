@@ -12,25 +12,27 @@ import { formatClock, useElapsed } from '../timer'
 import { Notes } from './notes'
 import type { DayTask, EntryListViewModel } from './use-entry-list'
 
+interface RunningClockProps {
+  entry: TimeEntry
+}
+
 /** Czas działającego odcinka (role="timer", bez ogłaszania co sekundę). */
-function RunningClock({ entry }: { entry: TimeEntry }) {
+function RunningClock({ entry }: RunningClockProps) {
   const seconds = useElapsed(entry)
   return <span role="timer">{formatClock(seconds)}</span>
+}
+
+export interface SessionRowProps {
+  entry: TimeEntry
+  task: DayTask
+  vm: EntryListViewModel
 }
 
 /**
  * Jedna sesja zadania: godziny od–do (albo sam czas, gdy wpisano bez godzin), znaczniki
  * nadgodzin i przedłużenia, edycja, menu „⋯” i notatki pod spodem.
  */
-export function SessionRow({
-  entry,
-  task,
-  vm,
-}: {
-  entry: TimeEntry
-  task: DayTask
-  vm: EntryListViewModel
-}) {
+export function SessionRow({ entry, task, vm }: SessionRowProps) {
   const t = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   const format = useFormat()

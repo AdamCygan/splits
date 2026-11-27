@@ -2,7 +2,7 @@
  * Zmienne środowiskowe sprawdzane przy starcie — brak/literówka = czytelny błąd od razu.
  * Bez Zod, bo ten moduł trafia do każdej strony, a landing ma ładować jak najmniej JS.
  */
-type Env = {
+interface Env {
   /** Pusty = API pod tym samym adresem co strona (/api/v1). */
   VITE_API_URL: string
   VITE_APP_URL: string

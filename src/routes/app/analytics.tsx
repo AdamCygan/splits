@@ -3,7 +3,9 @@ import { ReportsPage } from '#/features/reports/reports-page'
 import { getLocale } from '#/i18n/locale'
 import { reportsMessages } from '#/i18n/messages/reports'
 
-type ReportsSearch = { sprint?: string }
+interface ReportsSearch {
+  sprint?: string
+}
 
 export const Route = createFileRoute('/app/analytics')({
   /** ?sprint=<id>: raport otwarty od razu na wybranym sprincie (linki ze strony Sprinty). */

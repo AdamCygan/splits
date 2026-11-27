@@ -4,7 +4,7 @@ import { expectNoA11yViolations, signInWithSamples } from './helpers'
 test.describe('task page', () => {
   test.beforeEach(async ({ page }) => signInWithSamples(page))
 
-  test('shows everything about one task, opened from the report', async ({
+  test('Should show everything about one task, opened from the report', async ({
     page,
   }) => {
     await page.goto('/app/analytics')
@@ -45,7 +45,9 @@ test.describe('task page', () => {
     ).toContainText('PAY-142 Payment gateway integration')
   })
 
-  test('renaming the task keeps you on its page', async ({ page }) => {
+  test('Should keep you on the task page after renaming it', async ({
+    page,
+  }) => {
     await page.goto('/app/tasks')
     await page
       .getByRole('link', { name: 'PAY-139 Refund API endpoint' })
@@ -66,7 +68,9 @@ test.describe('task page', () => {
     await expect(page).toHaveURL(/title=PAY-139\+Refund\+API(&|$)/)
   })
 
-  test('the task title on Today opens the task page', async ({ page }) => {
+  test('Should open the task page from the task title on Today', async ({
+    page,
+  }) => {
     await page.goto('/app')
     await page
       .getByRole('region', { name: 'Today’s entries' })

@@ -8,7 +8,11 @@
 import { randomUUID } from 'node:crypto'
 import { serverEnv } from './env'
 
-type Dsn = { endpoint: string; publicKey: string; dsn: string }
+interface Dsn {
+  endpoint: string
+  publicKey: string
+  dsn: string
+}
 
 export function parseDsn(dsn: string | null): Dsn | null {
   if (!dsn) return null
@@ -26,7 +30,7 @@ export function parseDsn(dsn: string | null): Dsn | null {
   }
 }
 
-type Frame = {
+interface Frame {
   function?: string
   filename?: string
   lineno?: number
@@ -56,7 +60,7 @@ export function stackFrames(stack: string | undefined): Array<Frame> {
   return frames.reverse()
 }
 
-export type ErrorContext = {
+export interface ErrorContext {
   traceId?: string
   method?: string
   path?: string
@@ -69,11 +73,13 @@ export type ErrorContext = {
 let fetcher: typeof fetch = (...args) => fetch(...args)
 let dsnOverride: string | null | undefined
 
-/** Tylko testy: własny fetch i DSN. */
-export function setMonitoringForTests(options: {
+export interface MonitoringTestOptions {
   fetch?: typeof fetch
   dsn?: string | null
-}) {
+}
+
+/** Tylko testy: własny fetch i DSN. */
+export function setMonitoringForTests(options: MonitoringTestOptions) {
   if (options.fetch) fetcher = options.fetch
   dsnOverride = options.dsn
 }

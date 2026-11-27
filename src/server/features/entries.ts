@@ -52,7 +52,11 @@ import { ownProject, ownTaskType } from './config'
 import { toEntry } from './dto'
 
 type Row = typeof t.timeEntries.$inferSelect
-type TaskRef = { link: string | null; taskTypeId: string; title: string }
+interface TaskRef {
+  link: string | null
+  taskTypeId: string
+  title: string
+}
 
 export async function userTimezone(tx: Tx, userId: string) {
   const [s] = await tx
@@ -247,7 +251,12 @@ async function startTimer(
   return { started: started!, stopped }
 }
 
-const timerResult = (r: { started: Row; stopped: Row | null }) => ({
+interface TimerRows {
+  started: Row
+  stopped: Row | null
+}
+
+const timerResult = (r: TimerRows) => ({
   started: toEntry(r.started),
   stopped: r.stopped ? toEntry(r.stopped) : null,
 })

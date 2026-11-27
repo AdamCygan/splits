@@ -5,7 +5,7 @@ const joined = (lines: ReturnType<typeof markdownLines>) =>
   lines.map((l) => l.parts.map((p) => p.text).join('')).join('\n')
 
 describe('code highlighting', () => {
-  it('marks keywords, strings, numbers, comments and types', () => {
+  it('Should mark keywords, strings, numbers, comments and types', () => {
     const parts = highlightCodeLine(
       "const retries = 3 // max\nawait send('x')".split('\n')[0]!,
       'ts',
@@ -27,7 +27,7 @@ describe('code highlighting', () => {
     ])
   })
 
-  it('knows hash comments and SQL keywords', () => {
+  it('Should know hash comments and SQL keywords', () => {
     expect(highlightCodeLine('x = 1  # note', 'py').at(-1)).toEqual({
       text: '# note',
       kind: 'comment',
@@ -54,12 +54,12 @@ describe('markdown in the editor', () => {
   ].join('\n')
   const lines = markdownLines(text)
 
-  it('keeps every character, so the layer lines up with the text field', () => {
+  it('Should keep every character, so the layer lines up with the text field', () => {
     expect(joined(lines)).toBe(text)
     expect(lines).toHaveLength(8)
   })
 
-  it('styles headings, list markers, checked items, code blocks and links', () => {
+  it('Should style headings, list markers, checked items, code blocks and links', () => {
     expect(lines[0]!.parts).toEqual([
       { text: '## ', kind: 'marker' },
       { text: 'Plan', kind: 'heading' },
@@ -87,12 +87,12 @@ describe('markdown in the editor', () => {
     })
   })
 
-  it('treats an unclosed code block as code until the end', () => {
+  it('Should treat an unclosed code block as code until the end', () => {
     const open = markdownLines('```\nlet x\n- not a list')
     expect(open.map((l) => l.kind)).toEqual(['fence', 'code', 'code'])
   })
 
-  it('leaves snake_case and plain text alone', () => {
+  it('Should leave snake_case and plain text alone', () => {
     expect(markdownLines('Fix snake_case_var now')[0]!.parts).toEqual([
       { text: 'Fix snake_case_var now' },
     ])

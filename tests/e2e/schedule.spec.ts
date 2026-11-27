@@ -6,7 +6,9 @@ test.describe('recurring meetings', () => {
     await signInWithSamples(page)
   })
 
-  test('the sample daily has its own time on Mondays', async ({ page }) => {
+  test('Should give the sample daily its own time on Mondays', async ({
+    page,
+  }) => {
     await page.goto('/app/settings/templates')
     const daily = page.getByRole('listitem').filter({ hasText: 'Stand-up' })
     await expect(daily).toContainText('Repeats Mon 10:00 AM, Tue–Fri 9:30 AM')
@@ -28,7 +30,7 @@ test.describe('recurring meetings', () => {
     await expectNoA11yViolations(page)
   })
 
-  test('a recurring meeting shows up on Today and logs in one click', async ({
+  test('Should show a recurring meeting on Today and log it in one click', async ({
     page,
   }) => {
     await page.goto('/app/settings/templates')
@@ -47,8 +49,8 @@ test.describe('recurring meetings', () => {
     await dialog.getByLabel('Duration in minutes').fill('20')
 
     // Każdy dzień tygodnia o północy, żeby spotkanie dziś już „się zaczęło”.
-    for (const day of ['Sat', 'Sun'])
-      await dialog.getByText(day, { exact: true }).click()
+    await dialog.getByText('Sat', { exact: true }).click()
+    await dialog.getByText('Sun', { exact: true }).click()
     await dialog.getByLabel('Start time', { exact: true }).fill('00:00')
     await dialog.getByRole('button', { name: 'Add template' }).click()
     await expect(dialog).toHaveCount(0)

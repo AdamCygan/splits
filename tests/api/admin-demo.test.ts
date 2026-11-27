@@ -4,12 +4,13 @@ import { db } from '#/server/db/client'
 import { refreshTokens, users } from '#/server/db/schema'
 import { runMaintenance } from '#/server/maintenance'
 import { client, registered, sample } from './helpers'
+import type { ApiClient, ApiResponse } from './helpers'
 
-type Session = {
+interface Session {
   accessToken: string
   user: { id: string; isDemo: boolean; plan: string; role: string }
 }
-type AdminUser = {
+interface AdminUser {
   id: string
   email: string
   plan: string
@@ -18,7 +19,7 @@ type AdminUser = {
   entries: number
   isDemo: boolean
 }
-type Page = {
+interface Page {
   items: Array<AdminUser>
   total: number
   page: number
@@ -34,14 +35,18 @@ async function admin() {
   return account
 }
 
-const login = (c: ReturnType<typeof client>, account: { username: string }) =>
+interface TestAccount {
+  username: string
+}
+
+const login = (c: ReturnType<typeof client>, account: TestAccount) =>
   c.post<Session>('/auth/login', {
     login: account.username,
     password: 'correct horse 42',
   })
 
 describe('demo account', () => {
-  it('opens a ready workspace without signing up', async () => {
+  it('Should open a ready workspace without signing up', async () => {
     const c = client()
     const res = await c.post<Session>('/auth/demo', {
       locale: 'pl',
@@ -76,25 +81,42 @@ describe('demo account', () => {
     expect(range.body.length).toBeGreaterThan(10)
   })
 
-  it('cannot buy, change the account or open the billing portal', async () => {
+  it.each<[string, (c: ApiClient) => Promise<ApiResponse<{ code: string }>>]>([
+    [
+      'buy Pro',
+      (c) => c.post<{ code: string }>('/billing/checkout', { plan: 'pro' }),
+    ],
+    [
+      'open the billing portal',
+      (c) => c.post<{ code: string }>('/billing/portal'),
+    ],
+    [
+      'change the profile',
+      (c) =>
+        c.put<{ code: string }>('/account/profile', {
+          displayName: 'X',
+          email: 'x@example.com',
+        }),
+    ],
+    [
+      'change the password',
+      (c) =>
+        c.post<{ code: string }>('/account/password', {
+          currentPassword: '',
+          newPassword: 'new password 42',
+        }),
+    ],
+  ])('Should not let a demo account %s', async (_action, request) => {
     const c = client()
     await c.post('/auth/demo', {})
-    for (const res of [
-      await c.post<{ code: string }>('/billing/checkout', { plan: 'pro' }),
-      await c.post<{ code: string }>('/billing/portal'),
-      await c.put<{ code: string }>('/account/profile', {
-        displayName: 'X',
-        email: 'x@example.com',
-      }),
-      await c.post<{ code: string }>('/account/password', {
-        currentPassword: '',
-        newPassword: 'new password 42',
-      }),
-    ]) {
-      expect(res.status).toBe(403)
-      expect(res.body.code).toBe('demo.restricted')
-    }
-    // Zwykła praca w demo działa: wpis czasu da się dodać.
+    const res = await request(c)
+    expect(res.status).toBe(403)
+    expect(res.body.code).toBe('demo.restricted')
+  })
+
+  it('Should let a demo account log time as usual', async () => {
+    const c = client()
+    await c.post('/auth/demo', {})
     const types =
       await c.get<Array<{ id: string; kind: string }>>('/task-types')
     const meeting = types.body.find((x) => x.kind === 'meeting')!
@@ -115,7 +137,7 @@ describe('demo account', () => {
     expect(created.status).toBe(201)
   })
 
-  it('is removed after 24 hours together with its data', async () => {
+  it('Should be removed after 24 hours together with its data', async () => {
     const c = client()
     const res = await c.post<Session>('/auth/demo', {})
     const id = res.body.user.id
@@ -130,7 +152,7 @@ describe('demo account', () => {
 })
 
 describe('maintenance', () => {
-  it('deletes expired and long-revoked refresh tokens, keeps live ones', async () => {
+  it('Should delete expired and long-revoked refresh tokens and keep live ones', async () => {
     const { c } = await registered()
     const me = await c.get<{ id: string }>('/account')
     const day = 86_400_000
@@ -171,17 +193,21 @@ describe('maintenance', () => {
 })
 
 describe('admin panel API', () => {
-  it('is closed to regular users and to guests', async () => {
-    const { c } = await registered()
-    for (const path of ['/admin/stats', '/admin/users', '/admin/actions']) {
+  it.each(['/admin/stats', '/admin/users', '/admin/actions'])(
+    'Should forbid %s to regular users',
+    async (path) => {
+      const { c } = await registered()
       const res = await c.get<{ code: string }>(path)
       expect(res.status).toBe(403)
       expect(res.body.code).toBe('auth.forbidden')
-    }
+    },
+  )
+
+  it('Should ask guests to log in', async () => {
     expect((await client().get('/admin/users')).status).toBe(401)
   })
 
-  it('lists and searches users with entry counts, hiding demo accounts by default', async () => {
+  it('Should list and search users with entry counts, hiding demo accounts by default', async () => {
     const boss = await admin()
     const c = boss.c
     const other = await registered()
@@ -227,7 +253,7 @@ describe('admin panel API', () => {
     expect(stats.body.signups.at(-1)!.count).toBeGreaterThanOrEqual(3)
   })
 
-  it('changes a plan and writes it to the audit log', async () => {
+  it('Should change a plan and write it to the audit log', async () => {
     const boss = await admin()
     const other = await registered()
     const id = (await other.c.get<{ id: string }>('/account')).body.id
@@ -264,7 +290,7 @@ describe('admin panel API', () => {
     ).toBe(404)
   })
 
-  it('blocks a user at once and lets them back in after unblocking', async () => {
+  it('Should block a user at once and let them back in after unblocking', async () => {
     const boss = await admin()
     const other = await registered()
     const id = (await other.c.get<{ id: string }>('/account')).body.id
@@ -294,23 +320,24 @@ describe('admin panel API', () => {
     expect((await back.get('/account')).status).toBe(200)
   })
 
-  it('protects the admin from locking themselves out', async () => {
+  it('Should protect the admin from locking themselves out', async () => {
     const boss = await admin()
     const id = (await boss.c.get<{ id: string }>('/account')).body.id
-    for (const change of [{ role: 'client' }, { disabled: true }]) {
-      const res = await boss.c.patch<{ code: string }>(
-        `/admin/users/${id}`,
-        change,
-      )
-      expect(res.status).toBe(400)
-      expect(res.body.code).toBe('admin.self')
-    }
+    const refused = await Promise.all(
+      [{ role: 'client' }, { disabled: true }].map((change) =>
+        boss.c.patch<{ code: string }>(`/admin/users/${id}`, change),
+      ),
+    )
+    expect(refused.map((res) => [res.status, res.body.code])).toEqual([
+      [400, 'admin.self'],
+      [400, 'admin.self'],
+    ])
     expect(
       (await boss.c.del<{ code: string }>(`/admin/users/${id}`)).body.code,
     ).toBe('admin.self')
   })
 
-  it('grants and removes the admin role with immediate effect', async () => {
+  it('Should grant and remove the admin role with immediate effect', async () => {
     const boss = await admin()
     const other = await registered()
     const id = (await other.c.get<{ id: string }>('/account')).body.id
@@ -320,7 +347,7 @@ describe('admin panel API', () => {
     expect((await other.c.get('/admin/stats')).status).toBe(403)
   })
 
-  it('logs a user out everywhere and deletes an account with its data', async () => {
+  it('Should log a user out everywhere and delete an account with its data', async () => {
     const boss = await admin()
     const victim = await sample()
     const id = (await victim.get<{ id: string }>('/account')).body.id
@@ -342,7 +369,7 @@ describe('admin panel API', () => {
 })
 
 describe('account data export', () => {
-  it('returns every part of the workspace without secrets', async () => {
+  it('Should return every part of the workspace without secrets', async () => {
     const c = await sample()
     const res = await c.get<Record<string, unknown>>('/account/export')
     expect(res.status).toBe(200)
@@ -352,14 +379,8 @@ describe('account data export', () => {
     expect(res.body).toMatchObject({ format: 'splits-export', version: 1 })
     expect((res.body.timeEntries as Array<unknown>).length).toBeGreaterThan(10)
     expect((res.body.taskTypes as Array<unknown>).length).toBeGreaterThan(3)
-    const text = JSON.stringify(res.body)
-    for (const secret of [
-      'passwordHash',
-      'password_hash',
-      'tokenHash',
-      'stripeCustomerId',
-      'userId',
-    ])
-      expect(text).not.toContain(secret)
+    expect(JSON.stringify(res.body)).not.toMatch(
+      /passwordHash|password_hash|tokenHash|stripeCustomerId|userId/,
+    )
   })
 })

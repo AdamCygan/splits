@@ -1,3 +1,4 @@
+import type { TimeEntry } from '#/data/types'
 import { CheckableNote } from '#/components/note/note-markdown'
 import { Badge, ColorDot } from '#/components/ui/controls'
 import { Panel } from '#/components/ui/panel'
@@ -6,11 +7,15 @@ import { useFormat, useMessages } from '#/i18n/context'
 import { dayViewMessages } from '#/i18n/messages/day-view'
 import type { DayViewModel } from './use-day'
 
+export interface DayTasksProps {
+  vm: DayViewModel
+}
+
 /** Zadania dnia od najdłuższego: czas, sesje z godzinami, SP i notatki z tego dnia. */
-export function DayTasks({ vm }: { vm: DayViewModel }) {
+export function DayTasks({ vm }: DayTasksProps) {
   const t = useMessages(dayViewMessages).tasks
   const format = useFormat()
-  const when = (s: { startTime: string | null; endTime: string | null }) =>
+  const when = (s: Pick<TimeEntry, 'startTime' | 'endTime'>) =>
     s.startTime && s.endTime ? format.timeRange(s.startTime, s.endTime) : null
   return (
     <Panel title={t.title} lead={t.lead}>

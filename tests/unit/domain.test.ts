@@ -32,21 +32,21 @@ import {
 } from '#/domain/sprints'
 
 describe('dates', () => {
-  it('adds days across month and year boundaries', () => {
+  it('Should add days across month and year boundaries', () => {
     expect(addDays('2026-12-30', 3)).toBe('2027-01-02')
     expect(addDays('2026-03-01', -1)).toBe('2026-02-28')
   })
-  it('counts days without DST drift', () => {
+  it('Should count days without DST drift', () => {
     expect(diffDays('2026-03-27', '2026-03-30')).toBe(3)
     expect(diffDays('2026-10-23', '2026-10-26')).toBe(3)
   })
-  it('validates real calendar dates only', () => {
+  it('Should validate real calendar dates only', () => {
     expect(isValidDate('2028-02-29')).toBe(true)
     expect(isValidDate('2026-02-29')).toBe(false)
     expect(isValidDate('2026-13-01')).toBe(false)
     expect(isValidDate('02-11-2026')).toBe(false)
   })
-  it('finds the start of the week', () => {
+  it('Should find the start of the week', () => {
     expect(weekday('2026-11-02')).toBe(1) // poniedziałek
     expect(startOfWeek('2026-11-05', 1)).toBe('2026-11-02')
     expect(startOfWeek('2026-11-05', 0)).toBe('2026-11-01')
@@ -61,12 +61,12 @@ describe('sprints', () => {
     autoCreate: true,
   }
 
-  it('names sprints from a pattern', () => {
+  it('Should name sprints from a pattern', () => {
     expect(sprintName('Sprint {n}', 4)).toBe('Sprint 4')
     expect(sprintName('S{n}-{n}', 2)).toBe('S2-2')
     expect(sprintName('Iteration', 7)).toBe('Iteration 7')
   })
-  it('computes the n-th sprint of a cadence', () => {
+  it('Should compute the n-th sprint of a cadence', () => {
     expect(cadenceSprint(cadence, 1)).toEqual({
       number: 1,
       name: 'Sprint 1',
@@ -78,16 +78,16 @@ describe('sprints', () => {
       endsOn: '2026-11-15',
     })
   })
-  it('maps a day to a sprint number', () => {
+  it('Should map a day to a sprint number', () => {
     expect(cadenceNumberAt(cadence, '2026-10-04')).toBe(0)
     expect(cadenceNumberAt(cadence, '2026-10-18')).toBe(1)
     expect(cadenceNumberAt(cadence, '2026-10-19')).toBe(2)
   })
-  it('previews upcoming sprints starting with the current one', () => {
+  it('Should preview upcoming sprints starting with the current one', () => {
     const preview = previewCadence(cadence, '2026-11-02', 3)
     expect(preview.map((s) => s.number)).toEqual([3, 4, 5])
   })
-  it('creates missing cadence sprints without overlapping manual ones', () => {
+  it('Should create missing cadence sprints without overlapping manual ones', () => {
     const manual = [
       { number: null, startsOn: '2026-10-19', endsOn: '2026-10-25' },
     ]
@@ -101,7 +101,7 @@ describe('sprints', () => {
       ),
     ).toEqual([])
   })
-  it('detects overlap with inclusive ends', () => {
+  it('Should detect overlap with inclusive ends', () => {
     expect(
       rangesOverlap(
         { startsOn: '2026-11-01', endsOn: '2026-11-14' },
@@ -115,7 +115,7 @@ describe('sprints', () => {
       ),
     ).toBe(false)
   })
-  it('tells the sprint phase and working days', () => {
+  it('Should tell the sprint phase and working days', () => {
     const sprint = { startsOn: '2026-11-02', endsOn: '2026-11-15' }
     expect(sprintPhase(sprint, '2026-11-01')).toBe('upcoming')
     expect(sprintPhase(sprint, '2026-11-15')).toBe('current')
@@ -132,11 +132,13 @@ describe('story point scale', () => {
     { points: 5, maxMinutes: 480 },
   ]
 
-  it('accepts every preset', () => {
-    for (const preset of Object.values(scalePresets))
+  it.each(Object.entries(scalePresets))(
+    'Should accept the %s preset',
+    (_name, preset) => {
       expect(validateScale(preset)).toEqual([])
-  })
-  it('reports issues at the row that has them', () => {
+    },
+  )
+  it('Should report issues at the row that has them', () => {
     expect(validateScale([])).toEqual([{ code: 'empty' }])
     expect(
       validateScale([
@@ -155,12 +157,12 @@ describe('story point scale', () => {
       { code: 'minutes_range', index: 0 },
     ])
   })
-  it('gives the time range of a value', () => {
+  it('Should give the time range of a value', () => {
     expect(rangeFor(scale, 1)).toEqual({ min: 0, max: 60 })
     expect(rangeFor(scale, 3)).toEqual({ min: 120, max: 240 })
     expect(rangeFor(scale, 8)).toBeNull()
   })
-  it('suggests the smallest value that fits the time', () => {
+  it('Should suggest the smallest value that fits the time', () => {
     expect(suggestPoints(scale, 30)).toBe(1)
     expect(suggestPoints(scale, 121)).toBe(3)
     expect(suggestPoints(scale, 480)).toBe(5)
@@ -169,7 +171,7 @@ describe('story point scale', () => {
 })
 
 describe('rules', () => {
-  it('validates identifiers', () => {
+  it('Should validate identifiers', () => {
     expect(PROJECT_KEY_RE.test('PAY')).toBe(true)
     expect(PROJECT_KEY_RE.test('pay')).toBe(false)
     expect(PROJECT_KEY_RE.test('P')).toBe(false)
@@ -178,10 +180,10 @@ describe('rules', () => {
     expect(TIME_RE.test('09:30')).toBe(true)
     expect(TIME_RE.test('24:00')).toBe(false)
   })
-  it('compares names ignoring case and spaces', () => {
+  it('Should compare names ignoring case and spaces', () => {
     expect(sameName(' Code Review ', 'code review')).toBe(true)
   })
-  it('extracts task keys from links', () => {
+  it('Should extract task keys from links', () => {
     expect(extractTaskKey('https://acme.atlassian.net/browse/PAY-142')).toBe(
       'PAY-142',
     )

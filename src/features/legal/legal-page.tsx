@@ -36,8 +36,12 @@ export function fillLegal(text: string, date: string) {
   )
 }
 
+interface InlineProps {
+  text: string
+}
+
 /** Minimalny markdown w treści dokumentów: **pogrubienie** i [link](/ścieżka albo https://…). */
-function Inline({ text }: { text: string }) {
+function Inline({ text }: InlineProps) {
   const parts: Array<ReactNode> = []
   const re = /\*\*(.+?)\*\*|\[(.+?)\]\((.+?)\)/g
   let last = 0
@@ -73,7 +77,12 @@ function Inline({ text }: { text: string }) {
   return <>{parts}</>
 }
 
-function Block({ block, date }: { block: LegalBlock; date: string }) {
+interface BlockProps {
+  block: LegalBlock
+  date: string
+}
+
+function Block({ block, date }: BlockProps) {
   const f = (t: string) => fillLegal(t, date)
   if (typeof block === 'string')
     return (
@@ -141,8 +150,12 @@ function Block({ block, date }: { block: LegalBlock; date: string }) {
   )
 }
 
+export interface LegalPageProps {
+  id: LegalDocId
+}
+
 /** Strona dokumentu prawnego: tytuł, data wersji, spis treści, sekcje i linki do pozostałych dokumentów. */
-export function LegalPage({ id }: { id: LegalDocId }) {
+export function LegalPage({ id }: LegalPageProps) {
   const { locale } = useI18n()
   const t = useMessages(commonMessages).legal
   const doc: LegalDoc = legalDocs[id][locale]

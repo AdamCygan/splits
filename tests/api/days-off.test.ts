@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { client, registered } from './helpers'
 
-type DayOff = { date: string; kind: string; note: string | null }
+interface DayOff {
+  date: string
+  kind: string
+  note: string | null
+}
 
 describe('days off', () => {
-  it('marks a range on working days only and lists it', async () => {
+  it('Should mark a range on working days only and list it', async () => {
     const { c } = await registered()
     // pt 13 – śr 18 listopada 2026: weekend 14–15 jest pomijany.
     const set = await c.put<Array<DayOff>>('/days-off', {
@@ -60,7 +64,7 @@ describe('days off', () => {
     expect(after.body.map((d) => d.date)).toEqual(['2026-11-17', '2026-11-18'])
   })
 
-  it('validates the range and kind and keeps users apart', async () => {
+  it('Should validate the range and kind and keep users apart', async () => {
     const { c } = await registered()
     const backwards = await c.put('/days-off', {
       from: '2026-11-18',

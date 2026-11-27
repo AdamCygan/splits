@@ -17,7 +17,7 @@ export const matchesStatus = (status: TaskStatus, filter: TaskStatusFilter) =>
   filter === 'all' ||
   (filter === 'done' ? status === 'done' : status !== 'done')
 
-export type TaskGroup<T> = {
+export interface TaskGroup<T> {
   /** id rodzaju pracy, data (YYYY-MM-DD) albo 'all'. */
   key: string
   items: Array<T>
@@ -61,17 +61,19 @@ export type TaskPeriodId = keyof typeof TASK_PERIODS
 /** Okres albo konkretny sprint (`sprint:<id>`). */
 export type TaskPeriodChoice = TaskPeriodId | `sprint:${string}`
 
-/**
- * Zakres dat listy zadań: sprint (do dziś, nie starszy niż limit planu) albo ostatnie
- * N dni. `oldest` = najstarszy dzień dostępny w planie (null = bez limitu).
- */
-export function taskPeriodRange(options: {
+export interface TaskPeriodRangeOptions {
   choice: TaskPeriodChoice
   sprint: { startsOn: string; endsOn: string } | undefined
   today: string
   oldest: string | null
   freeDays: number | null
-}) {
+}
+
+/**
+ * Zakres dat listy zadań: sprint (do dziś, nie starszy niż limit planu) albo ostatnie
+ * N dni. `oldest` = najstarszy dzień dostępny w planie (null = bez limitu).
+ */
+export function taskPeriodRange(options: TaskPeriodRangeOptions) {
   const { sprint, today, oldest } = options
   if (sprint) {
     return {
@@ -88,7 +90,7 @@ export function taskPeriodRange(options: {
 }
 
 /** Filtry listy zadań; `query` już małymi literami i bez spacji na brzegach. */
-export type TaskFilters = {
+export interface TaskFilters {
   query: string
   typeId: string
   estimate: 'all' | EstimateStatus

@@ -5,7 +5,7 @@ const unique = () =>
   `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
 
 test.describe('accounts on the real server', () => {
-  test('sign up, log out and log back in', async ({ page }) => {
+  test('Should sign up, log out and log back in', async ({ page }) => {
     const name = `ada${unique()}`
     await page.goto('/register')
     await expectNoA11yViolations(page)
@@ -42,7 +42,7 @@ test.describe('accounts on the real server', () => {
     ).toBeVisible()
   })
 
-  test('the username is taken only once', async ({ page }) => {
+  test('Should allow each username only once', async ({ page }) => {
     const name = `bob${unique()}`
     await page.request.post('/api/v1/auth/register', {
       data: {
@@ -63,7 +63,7 @@ test.describe('accounts on the real server', () => {
     ).toBeVisible()
   })
 
-  test('forgot and reset password pages', async ({ page }) => {
+  test('Should show the forgot and reset password pages', async ({ page }) => {
     await page.goto('/forgot-password')
     await page.getByLabel('Email').fill('nobody@example.com')
     await page.getByRole('button', { name: 'Send link' }).click()
@@ -83,7 +83,9 @@ test.describe('accounts on the real server', () => {
     await expect(page.getByRole('alert')).toContainText('expired')
   })
 
-  test('hides Google sign-in when it is not configured', async ({ page }) => {
+  test('Should hide Google sign-in when it is not configured', async ({
+    page,
+  }) => {
     await page.goto('/login')
     await expect(page.getByRole('button', { name: 'Log in' })).toBeVisible()
     await expect(
@@ -95,7 +97,7 @@ test.describe('accounts on the real server', () => {
 })
 
 test.describe('session expiry', () => {
-  test('an expired session signs you out and sends you to log in', async ({
+  test('Should sign you out and send you to log in when the session expires', async ({
     page,
   }) => {
     await signInWithSamples(page)

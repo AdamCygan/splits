@@ -34,7 +34,7 @@ const optional = {
 } as const
 
 describe('entries', () => {
-  it('parses human durations', () => {
+  it('Should parse human durations', () => {
     expect(parseDuration('90')).toBe(90)
     expect(parseDuration('1:30')).toBe(90)
     expect(parseDuration('1h 15m')).toBe(75)
@@ -42,14 +42,14 @@ describe('entries', () => {
     expect(parseDuration('45 min')).toBe(45)
     expect(parseDuration('soon')).toBeNull()
   })
-  it('measures a time range within a day', () => {
+  it('Should measure a time range within a day', () => {
     expect(minutesBetween('09:15', '11:25')).toBe(130)
     expect(minutesBetween('11:00', '10:00')).toBeNull()
   })
-  it('accepts an entry with optional notes left empty', () => {
+  it('Should accept an entry with optional notes left empty', () => {
     expect(validateEntry(base, optional)).toEqual([])
   })
-  it('requires notes and links when the work type says so', () => {
+  it('Should require notes and links when the work type says so', () => {
     const strict = {
       linkRequirement: 'required',
       descriptionRequirement: 'required',
@@ -70,7 +70,7 @@ describe('entries', () => {
       ),
     ).toEqual([])
   })
-  it('limits notes to 20 000 characters and checks links and time', () => {
+  it('Should limit notes to 20 000 characters and check links and time', () => {
     expect(
       validateEntry({ ...base, note: 'x'.repeat(20_000) }, optional),
     ).not.toContainEqual({ field: 'note', code: 'too_long' })
@@ -91,7 +91,7 @@ describe('entries', () => {
     ).toContainEqual({ field: 'time', code: 'duration_range' })
   })
 
-  it('follows the story point setting of the work type', () => {
+  it('Should follow the story point setting of the work type', () => {
     const noSp = { ...base, storyPoints: null }
     expect(validateEntry(noSp, optional)).toEqual([
       { field: 'storyPoints', code: 'required' },
@@ -111,7 +111,7 @@ describe('entries', () => {
     })
   })
 
-  it('accepts a running timer without an end time', () => {
+  it('Should accept a running timer without an end time', () => {
     const timer = { ...base, endTime: null, durationMinutes: 0, running: true }
     expect(validateEntry(timer, optional)).toEqual([])
     expect(
@@ -120,7 +120,7 @@ describe('entries', () => {
     expect(isFutureStart('12:00', '11:59')).toBe(true)
     expect(isFutureStart('11:59', '11:59')).toBe(false)
   })
-  it('computes values when a timer stops', () => {
+  it('Should compute values when a timer stops', () => {
     const entry = {
       workDate: '2026-11-02',
       startTime: '09:15',

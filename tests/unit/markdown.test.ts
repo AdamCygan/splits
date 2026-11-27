@@ -29,7 +29,7 @@ function show(s: TextState | null): string | null {
 }
 
 describe('note editor operations', () => {
-  it('wraps and unwraps a selection', () => {
+  it('Should wrap and unwrap a selection', () => {
     expect(show(toggleWrap(state('Fix «retry» logic'), '**', 'bold'))).toBe(
       'Fix **«retry»** logic',
     )
@@ -41,11 +41,11 @@ describe('note editor operations', () => {
     )
   })
 
-  it('inserts a selected placeholder without a selection', () => {
+  it('Should insert a selected placeholder without a selection', () => {
     expect(show(toggleWrap(state('Run |'), '`', 'code'))).toBe('Run `«code»`')
   })
 
-  it('toggles list and heading prefixes on every selected line', () => {
+  it('Should toggle list and heading prefixes on every selected line', () => {
     expect(show(toggleLinePrefix(state('«one\ntwo»'), '- [ ] '))).toBe(
       '«- [ ] one\n- [ ] two»',
     )
@@ -62,14 +62,14 @@ describe('note editor operations', () => {
     expect(show(toggleLinePrefix(state('## Sum|mary'), '## '))).toBe('Sum|mary')
   })
 
-  it('wraps lines in a code block or opens an empty one', () => {
+  it('Should wrap lines in a code block or open an empty one', () => {
     expect(insertCodeBlock(state('«const a = 1»')).value).toBe(
       '```\nconst a = 1\n```',
     )
     expect(show(insertCodeBlock(state('Logs:|')))).toBe('Logs:\n```\n|\n```')
   })
 
-  it('Enter continues a list and ends it on an empty item', () => {
+  it('Should continue a list on Enter and end it on an empty item', () => {
     expect(show(continueList(state('- [x] done|')))).toBe('- [x] done\n- [ ] |')
     expect(show(continueList(state('1. one|')))).toBe('1. one\n2. |')
     expect(show(continueList(state('  - nested|')))).toBe('  - nested\n  - |')
@@ -78,7 +78,7 @@ describe('note editor operations', () => {
     expect(continueList(state('```\n- not a list|'))).toBeNull()
   })
 
-  it('Tab nests a list item under the previous one, Shift+Tab brings it back', () => {
+  it('Should nest a list item on Tab and bring it back on Shift+Tab', () => {
     expect(show(indentList(state('- one\n- tw|o'), 1))).toBe('- one\n  - tw|o')
     expect(show(indentList(state('1. one\n2. tw|o'), 1))).toBe(
       '1. one\n   2. tw|o',
@@ -98,17 +98,17 @@ describe('note editor operations', () => {
     expect(indentList(state('plain |text'), 1)).toBeNull()
   })
 
-  it('indents every selected list line', () => {
+  it('Should indent every selected list line', () => {
     expect(show(indentList(state('- a\n«- b\n- c»'), 1))).toBe(
       '- a\n«  - b\n  - c»',
     )
   })
 
-  it('Enter on an empty nested item moves it one level up', () => {
+  it('Should move an empty nested item one level up on Enter', () => {
     expect(show(continueList(state('- a\n  - |')))).toBe('- a\n- |')
   })
 
-  it('ticks the checkbox of the list item at an offset', () => {
+  it('Should tick the checkbox of the list item at an offset', () => {
     const text = 'Todo:\n- [ ] tests\n- [x] review'
     expect(toggleTaskAt(text, text.indexOf('- [ ]'))).toBe(
       'Todo:\n- [x] tests\n- [x] review',
@@ -119,7 +119,7 @@ describe('note editor operations', () => {
     expect(toggleTaskAt(text, 0)).toBeNull()
   })
 
-  it('turns a note into plain text for short previews', () => {
+  it('Should turn a note into plain text for short previews', () => {
     expect(
       notePlainText(
         '## Done\n- [x] **tests** for `retry`\n- see [PR](https://x.y)\n```\ncode\n```',

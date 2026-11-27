@@ -16,7 +16,9 @@ import { authMessages } from '#/i18n/messages/auth'
 import { seo } from '#/lib/seo'
 import { useErrorText } from '#/lib/use-error-text'
 
-type ResetSearch = { token?: string }
+interface ResetSearch {
+  token?: string
+}
 
 export const Route = createFileRoute('/_auth/reset-password')({
   validateSearch: (search: Record<string, unknown>): ResetSearch =>

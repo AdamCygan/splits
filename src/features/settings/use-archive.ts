@@ -3,7 +3,15 @@ import type { R } from '#/data/source'
 import { fmt } from '#/i18n/format'
 import { useDataMutation } from './queries'
 
-type Named = { id: string; name: string }
+interface Named {
+  id: string
+  name: string
+}
+
+export interface ArchiveOptions {
+  invalidate: QueryKey
+  messages: { archived: string; restored: string }
+}
 
 /**
  * Archiwizacja i przywracanie pozycji ustawień (rodzaje pracy, projekty, statusy):
@@ -11,10 +19,7 @@ type Named = { id: string; name: string }
  */
 export function useArchive<TData>(
   setArchived: (id: string, archived: boolean) => R<TData>,
-  options: {
-    invalidate: QueryKey
-    messages: { archived: string; restored: string }
-  },
+  options: ArchiveOptions,
 ) {
   const mutation = useDataMutation(
     ({ id, archived }: Named & { archived: boolean }) =>

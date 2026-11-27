@@ -52,18 +52,17 @@ export function useTaskProgress(entry: TimeEntry | undefined) {
   }
 }
 
+export interface TaskProgressProps {
+  entry: TimeEntry
+  className?: string
+}
+
 /**
  * Pasek „ile SP już zrobione” pod zadaniem na Dziś. Na widoku krótko: czas z budżetu
  * i plakietka przekroczenia; pełny opis (ile SP, skąd budżet) w aria i podpowiedzi.
  * Przekroczenie jest bursztynowe, nie czerwone: to informacja, nie błąd.
  */
-export function TaskProgress({
-  entry,
-  className,
-}: {
-  entry: TimeEntry
-  className?: string
-}) {
+export function TaskProgress({ entry, className }: TaskProgressProps) {
   const t = useMessages(entriesMessages).progress
   const format = useFormat()
   const p = useTaskProgress(entry)

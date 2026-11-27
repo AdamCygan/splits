@@ -3,13 +3,13 @@ import { parseDateQuery } from '#/domain/date-query'
 
 describe('parseDateQuery', () => {
   const today = '2026-11-26'
-  it('understands words in both languages', () => {
+  it('Should understand words in both languages', () => {
     expect(parseDateQuery('yesterday', today)).toBe('2026-11-25')
     expect(parseDateQuery('Wczoraj', today)).toBe('2026-11-25')
     expect(parseDateQuery('dziś', today)).toBe('2026-11-26')
     expect(parseDateQuery('przedwczoraj', today)).toBe('2026-11-24')
   })
-  it('reads ISO and day.month dates, never the future', () => {
+  it('Should read ISO and day.month dates, never the future', () => {
     expect(parseDateQuery('2026-11-20', today)).toBe('2026-11-20')
     expect(parseDateQuery('20.11', today)).toBe('2026-11-20')
     expect(parseDateQuery('3.2.2026', today)).toBe('2026-02-03')

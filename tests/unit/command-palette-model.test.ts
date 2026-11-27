@@ -47,27 +47,27 @@ const search = (c: PaletteContext, typed: string) =>
   ]).map((x) => x.id)
 
 describe('command palette model', () => {
-  it('shows only everyday commands without a query', () => {
+  it('Should show only everyday commands without a query', () => {
     const ids = search(ctx(), '')
     expect(ids).toContain('log')
     expect(ids).toContain('p-today')
     expect(ids).not.toContain('logout')
   })
 
-  it('understands meaning in both languages and diacritics', () => {
+  it('Should understand meaning in both languages and diacritics', () => {
     expect(search(ctx(), 'create task')[0]).toBe('log')
     expect(search(ctx(), 'dodaj zadanie')[0]).toBe('log')
     expect(search(ctx(), 'urlop')).toContain('day-off')
     expect(search(ctx(), 'wyloguj')).toContain('logout')
   })
 
-  it('puts typed-text commands last and turns dates into days', () => {
+  it('Should put typed-text commands last and turn dates into days', () => {
     const ids = search(ctx(), '20.11')
     expect(ids.slice(0, 2)).toEqual(['date-log', 'date-open'])
     expect(ids.slice(-2)).toEqual(['log-titled', 'timer-titled'])
   })
 
-  it('runs actions through the context', () => {
+  it('Should run actions through the context', () => {
     const c = ctx()
     buildCommands(c)
       .find((x) => x.id === 'upgrade')!

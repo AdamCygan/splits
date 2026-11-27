@@ -29,7 +29,7 @@ const e = (over: Partial<TimeEntry>): TimeEntry => ({
 })
 
 describe('task search', () => {
-  it('groups sessions into tasks, newest first, with totals and state', () => {
+  it('Should group sessions into tasks, newest first, with totals and state', () => {
     const results = groupSearchResults([
       e({ workDate: '2026-11-10', finishedAt: '2026-11-11T10:00:00Z' }),
       e({ workDate: '2026-11-11', durationMinutes: 30 }),
@@ -50,7 +50,7 @@ describe('task search', () => {
     ])
   })
 
-  it('treats % and _ in the query as plain characters', () => {
+  it('Should treat % and _ in the query as plain characters', () => {
     expect(likePattern(' 50%_off ')).toBe('%50\\%\\_off%')
   })
 })

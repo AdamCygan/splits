@@ -6,21 +6,24 @@ import { ensureSession, getCurrentUser, startSession } from './session'
 
 let starting: Promise<ApiFailure | null> | null = null
 
+/** Zakłada konto demo, chyba że ktoś już jest zalogowany. Zwraca błąd albo null. */
+async function openDemo(locale: Locale): Promise<ApiFailure | null> {
+  if (getCurrentUser() ?? (await ensureSession())) return null
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const result = await data.auth.demo({ locale, timezone })
+  if (!result.ok) return result.error
+  startSession(result.value)
+  track('demo_started', { locale })
+  return null
+}
+
 /**
  * Otwiera demo: nowe konto z przykładowymi danymi (bez rejestracji).
  * Kto jest już zalogowany (także w trwającym demo), zostaje na swoim koncie.
  * Jedno wywołanie naraz, nawet gdy komponent zamontuje się dwa razy.
  */
 export function startDemo(locale: Locale): Promise<ApiFailure | null> {
-  starting ??= (async () => {
-    if (getCurrentUser() ?? (await ensureSession())) return null
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-    const result = await data.auth.demo({ locale, timezone })
-    if (!result.ok) return result.error
-    startSession(result.value)
-    track('demo_started', { locale })
-    return null
-  })().finally(() => {
+  starting ??= openDemo(locale).finally(() => {
     starting = null
   })
   return starting

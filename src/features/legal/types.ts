@@ -5,13 +5,13 @@ export type LegalBlock =
   | { ol: Array<string> }
   | { table: { head: Array<string>; rows: Array<Array<string>> } }
 
-export type LegalSection = {
+export interface LegalSection {
   id: string
   heading: string
   blocks: Array<LegalBlock>
 }
 
-export type LegalDoc = {
+export interface LegalDoc {
   title: string
   /** Krótki opis do meta description i nagłówka strony. */
   summary: string

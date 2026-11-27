@@ -216,13 +216,12 @@ export function TemplateSettings() {
   )
 }
 
-function TemplateDialog({
-  template,
-  onClose,
-}: {
+interface TemplateDialogProps {
   template: QuickTemplate | null
   onClose: () => void
-}) {
+}
+
+function TemplateDialog({ template, onClose }: TemplateDialogProps) {
   const t = useMessages(settingsMessages).templates
   const app = useMessages(appMessages)
   const format = useFormat()

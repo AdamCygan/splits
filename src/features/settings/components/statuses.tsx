@@ -48,7 +48,16 @@ export function StatusSettings() {
   )
 }
 
-function StatusList({ statuses }: { statuses: Array<TaskStatus> }) {
+interface NamedItem {
+  id: string
+  name: string
+}
+
+interface StatusListProps {
+  statuses: Array<TaskStatus>
+}
+
+function StatusList({ statuses }: StatusListProps) {
   const t = useMessages(settingsMessages).statuses
   const app = useMessages(appMessages)
   const [editing, setEditing] = useState<TaskStatus | 'new' | null>(null)
@@ -60,7 +69,7 @@ function StatusList({ statuses }: { statuses: Array<TaskStatus> }) {
     { invalidate: [keys.statuses] },
   )
   const makeDefault = useDataMutation(
-    ({ id }: { id: string; name: string }) => data.statuses.setDefault(id),
+    ({ id }: NamedItem) => data.statuses.setDefault(id),
     {
       invalidate: [keys.statuses],
       success: (_r, v) => fmt(t.defaultSet, { name: v.name }),
@@ -215,13 +224,12 @@ function StatusList({ statuses }: { statuses: Array<TaskStatus> }) {
   )
 }
 
-function StatusDialog({
-  status,
-  onClose,
-}: {
+interface StatusDialogProps {
   status: TaskStatus | null
   onClose: () => void
-}) {
+}
+
+function StatusDialog({ status, onClose }: StatusDialogProps) {
   const t = useMessages(settingsMessages).statuses
   const app = useMessages(appMessages)
   const palette = usePalette()

@@ -6,7 +6,7 @@ test.describe('sprints: time goals', () => {
     await signInWithSamples(page)
   })
 
-  test('sets a time goal for code review and follows it on the sprint page', async ({
+  test('Should set a time goal for code review and follow it on the sprint page', async ({
     page,
   }) => {
     await page.goto('/app/sprints')

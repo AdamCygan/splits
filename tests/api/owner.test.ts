@@ -3,10 +3,17 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { db } from '#/server/db/client'
 import { users } from '#/server/db/schema'
 import { serverEnv } from '#/server/env'
-import { client, registered } from './helpers'
+import { client, inSequence, numbered, registered } from './helpers'
 
-type Session = { accessToken: string; user: { id: string; role: string } }
-type Me = { id: string; role: string; plan: string }
+interface Session {
+  accessToken: string
+  user: { id: string; role: string }
+}
+interface Me {
+  id: string
+  role: string
+  plan: string
+}
 
 const login = (c: ReturnType<typeof client>, username: string) =>
   c.post<Session>('/auth/login', {
@@ -32,7 +39,7 @@ async function owner() {
 afterEach(() => serverEnv.adminEmails.clear())
 
 describe('owner superuser (ADMIN_EMAILS)', () => {
-  it('becomes admin on login, but only with a verified email', async () => {
+  it('Should become admin on login, but only with a verified email', async () => {
     const account = await registered()
     serverEnv.adminEmails.add(account.email)
 
@@ -47,7 +54,7 @@ describe('owner superuser (ADMIN_EMAILS)', () => {
     expect((await account.c.get('/admin/stats')).status).toBe(200)
   })
 
-  it('is promoted on token refresh, without logging in again', async () => {
+  it('Should be promoted on token refresh, without logging in again', async () => {
     const account = await registered()
     serverEnv.adminEmails.add(account.email)
     await verify(account.email)
@@ -56,7 +63,7 @@ describe('owner superuser (ADMIN_EMAILS)', () => {
     expect(refreshed.body.user.role).toBe('admin')
   })
 
-  it('confirms the email address through a password reset link', async () => {
+  it('Should confirm the email address through a password reset link', async () => {
     const account = await registered()
     serverEnv.adminEmails.add(account.email)
     const logs: Array<string> = []
@@ -80,7 +87,7 @@ describe('owner superuser (ADMIN_EMAILS)', () => {
     expect((await login(c, account.username)).body.user.role).toBe('admin')
   })
 
-  it('gets every Pro feature on the Free plan without paying', async () => {
+  it('Should get every Pro feature on the Free plan without paying', async () => {
     const { c } = await owner()
     const me = await c.get<Me>('/account')
     expect(me.body.plan).toBe('free')
@@ -117,10 +124,10 @@ describe('owner superuser (ADMIN_EMAILS)', () => {
 
     // Bez limitu własnych typów pracy.
     const { id: _id, ...base } = types.body[1]!
-    for (let i = 1; i <= 5; i++) {
-      const res = await c.post('/task-types', { ...base, name: `Custom ${i}` })
-      expect(res.status).toBe(201)
-    }
+    const custom = await inSequence(numbered(5), (i) =>
+      c.post('/task-types', { ...base, name: `Custom ${i}` }),
+    )
+    expect(custom.map((res) => res.status)).toEqual([201, 201, 201, 201, 201])
 
     // Kupowanie samemu sobie nie ma sensu.
     const checkout = await c.post<{ code: string }>('/billing/checkout', {
@@ -130,7 +137,7 @@ describe('owner superuser (ADMIN_EMAILS)', () => {
     expect(checkout.body.code).toBe('billing.already_subscribed')
   })
 
-  it('cannot be demoted, blocked or deleted by another admin', async () => {
+  it('Should not be demoted, blocked or deleted by another admin', async () => {
     const boss = await owner()
     const other = await registered()
     await db
@@ -144,14 +151,15 @@ describe('owner superuser (ADMIN_EMAILS)', () => {
     }>(`/admin/users?q=${encodeURIComponent(boss.email)}`)
     expect(listed.body.items.find((u) => u.id === boss.id)?.isOwner).toBe(true)
 
-    for (const change of [{ role: 'client' }, { disabled: true }]) {
-      const res = await other.c.patch<{ code: string }>(
-        `/admin/users/${boss.id}`,
-        change,
-      )
-      expect(res.status).toBe(400)
-      expect(res.body.code).toBe('admin.owner')
-    }
+    const refused = await Promise.all(
+      [{ role: 'client' }, { disabled: true }].map((change) =>
+        other.c.patch<{ code: string }>(`/admin/users/${boss.id}`, change),
+      ),
+    )
+    expect(refused.map((res) => [res.status, res.body.code])).toEqual([
+      [400, 'admin.owner'],
+      [400, 'admin.owner'],
+    ])
     const deleted = await other.c.del<{ code: string }>(
       `/admin/users/${boss.id}`,
     )

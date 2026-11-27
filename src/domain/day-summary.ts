@@ -3,8 +3,14 @@ import { toMinutes } from './entries'
 import { groupTasks, taskGroupKey } from './report'
 import type { TaskRow } from './report'
 
+/** Przedział w minutach od północy. */
+export interface MinuteRange {
+  start: number
+  end: number
+}
+
 /** Odcinek na osi dnia: sesja pracy albo przerwa, w minutach od północy. */
-export type DayBlock = {
+export interface DayBlock {
   id: string
   kind: 'work' | 'break'
   start: number
@@ -16,7 +22,7 @@ export type DayBlock = {
   taskKey: string | null
 }
 
-export type DaySummary = {
+export interface DaySummary {
   minutes: number
   /** Praca bez spotkań. */
   focusMinutes: number
@@ -33,7 +39,7 @@ export type DaySummary = {
   /** Wpisy bez godzin (sam czas trwania) nie mają miejsca na osi. */
   untimedMinutes: number
   /** Pierwszy start i ostatni koniec dnia (minuty od północy); null = brak godzin. */
-  span: { start: number; end: number } | null
+  span: MinuteRange | null
   blocks: Array<DayBlock>
   tasks: Array<TaskRow>
   byType: Array<{ taskTypeId: string; minutes: number }>
@@ -55,11 +61,11 @@ export function daySummary(
   const tasks = groupTasks(entries, types).sort(
     (a, b) => b.minutes - a.minutes || a.title.localeCompare(b.title),
   )
-  const sum = (list: ReadonlyArray<{ durationMinutes: number }>) =>
+  const sum = (list: ReadonlyArray<Pick<TimeEntry, 'durationMinutes'>>) =>
     list.reduce((s, e) => s + e.durationMinutes, 0)
   const meetings = entries.filter(isMeeting)
 
-  const timed = (x: { startTime: string | null; endTime: string | null }) =>
+  const timed = (x: Pick<TimeEntry, 'startTime' | 'endTime'>) =>
     x.startTime !== null && x.endTime !== null
   const blocks: Array<DayBlock> = [
     ...entries.filter(timed).map((e) => ({
@@ -149,7 +155,7 @@ export function daySummary(
  * Oś dnia: pełne godziny od początku do końca pracy (co najmniej godzina), znaczniki
  * co 1, 2 albo 3 godziny (zależnie od długości dnia) i pozycja minuty w procentach.
  */
-export function timelineAxis(span: { start: number; end: number }) {
+export function timelineAxis(span: MinuteRange) {
   const from = Math.floor(span.start / 60) * 60
   const to = Math.max(from + 60, Math.ceil(span.end / 60) * 60)
   const hours = (to - from) / 60
@@ -170,7 +176,7 @@ export function timelineAxis(span: { start: number; end: number }) {
 
 /** Indeks odcinka osi, w który trafia minuta (−1 = przerwa między odcinkami). */
 export const blockIndexAt = (
-  blocks: ReadonlyArray<{ start: number; end: number }>,
+  blocks: ReadonlyArray<MinuteRange>,
   minute: number,
 ) => blocks.findIndex((b) => minute >= b.start && minute <= b.end)
 

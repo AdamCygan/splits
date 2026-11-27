@@ -9,7 +9,7 @@ import { settingsMessages } from '#/i18n/messages/settings'
 import { cn } from '#/lib/utils'
 
 /** Formularz harmonogramu: włączony?, dni, jedna godzina albo osobna na każdy dzień. */
-export type ScheduleDraft = {
+export interface ScheduleDraft {
   enabled: boolean
   days: Array<number>
   mode: 'same' | 'each'
@@ -40,10 +40,12 @@ export function scheduleFromDraft(d: ScheduleDraft): TemplateSchedule {
     }))
 }
 
-export function scheduleErrors(
-  d: ScheduleDraft,
-  t: { daysError: string; timeError: string },
-) {
+export interface ScheduleErrorMessages {
+  daysError: string
+  timeError: string
+}
+
+export function scheduleErrors(d: ScheduleDraft, t: ScheduleErrorMessages) {
   if (!d.enabled) return { days: null, time: null, dayTimes: {} }
   const ok = (v: string | undefined) => !!v && /^\d{2}:\d{2}$/.test(v)
   const dayTimes: Partial<Record<number, string>> =
@@ -61,6 +63,14 @@ export function scheduleErrors(
   }
 }
 
+export interface ScheduleFieldsProps {
+  value: ScheduleDraft
+  onChange: (next: ScheduleDraft) => void
+  weekStartsOn: number
+  errors: ReturnType<typeof scheduleErrors> | null
+  durationMissing: string | null
+}
+
 /**
  * Powtarzanie szablonu (np. daily w poniedziałki o 10:00, w pozostałe dni o 9:30):
  * dni tygodnia od początku tygodnia z ustawień, ta sama godzina albo inna na każdy dzień.
@@ -71,13 +81,7 @@ export function ScheduleFields({
   weekStartsOn,
   errors,
   durationMissing,
-}: {
-  value: ScheduleDraft
-  onChange: (next: ScheduleDraft) => void
-  weekStartsOn: number
-  errors: ReturnType<typeof scheduleErrors> | null
-  durationMissing: string | null
-}) {
+}: ScheduleFieldsProps) {
   const t = useMessages(settingsMessages).templates.schedule
   const { locale } = useI18n()
   const id = useId()
@@ -187,6 +191,15 @@ export function ScheduleFields({
   )
 }
 
+interface TimeFieldProps {
+  id: string
+  label: string
+  ariaLabel?: string
+  value: string
+  error: string | null
+  onChange: (value: string) => void
+}
+
 function TimeField({
   id,
   label,
@@ -194,14 +207,7 @@ function TimeField({
   value,
   error,
   onChange,
-}: {
-  id: string
-  label: string
-  ariaLabel?: string
-  value: string
-  error: string | null
-  onChange: (value: string) => void
-}) {
+}: TimeFieldProps) {
   return (
     <div className="flex items-center gap-3">
       <label htmlFor={id} className="min-w-24 text-sm font-medium">

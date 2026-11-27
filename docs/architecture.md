@@ -76,6 +76,19 @@ Wspólne klocki widoków są w `src/components/ui`: `StatGrid`/`StatTile` (liczb
 (czas, SP, daty, godziny 12h/24h, przedziały godzin, różnice wobec estymaty) daje
 `useFormat()` z `src/i18n/context.tsx`, a nie lokalne funkcje w komponentach.
 
+### Konwencje kodu i testów
+
+Pilnuje ich ESLint (`no-restricted-syntax` i `consistent-type-definitions` w `eslint.config.js`):
+
+- **Propsy i opcje to nazwane interfejsy**, a w sygnaturze tylko destrukturyzacja:
+  `interface StatTileProps { … }` i `function StatTile({ label, value }: StatTileProps)`.
+  Bez typów obiektowych wpisanych w parametr. Kształty obiektów to `interface`, nie `type`.
+- **Bez IIFE** (`(() => …)()`): logika idzie do nazwanej funkcji, w JSX do osobnego komponentu.
+- **Tytuły testów zaczynają się od „Should”**: `it('Should reject a duplicate username')`.
+- **Przypadki testowe przez `it.each`** (Vitest) albo `testEach` (Playwright, `tests/e2e/helpers.ts`),
+  nie przez pętlę. W treści testu nie ma pętli z asercjami: wyniki zbieramy
+  (`Promise.all`, `inSequence` z `tests/support/sequence.ts`) i sprawdzamy jedną asercją.
+
 ## 5. Uwierzytelnianie
 
 - Login (username lub e-mail) + hasło; hasła **scrypt** (N=2^15, r=8, p=3 wg OWASP) z wbudowanego `node:crypto`.

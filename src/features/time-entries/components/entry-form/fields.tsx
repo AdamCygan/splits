@@ -2,18 +2,20 @@ import type { ReactNode } from 'react'
 import type { EntryField } from '#/domain/entries'
 import type { EntryFormViewModel } from './use-entry-form'
 
+export interface FieldLabelProps {
+  htmlFor: string
+  note?: string
+  className?: string
+  children: ReactNode
+}
+
 /** Etykieta pola z dopiskiem „wymagane / opcjonalne”. */
 export function FieldLabel({
   htmlFor,
   note,
   className = 'block text-sm font-medium',
   children,
-}: {
-  htmlFor: string
-  note?: string
-  className?: string
-  children: ReactNode
-}) {
+}: FieldLabelProps) {
   return (
     <label htmlFor={htmlFor} className={className}>
       {children}
@@ -27,14 +29,13 @@ export function FieldLabel({
   )
 }
 
-/** Błąd pola (po próbie zapisu), powiązany z polem przez aria-describedby. */
-export function FieldError({
-  vm,
-  field,
-}: {
+export interface FieldErrorProps {
   vm: EntryFormViewModel
   field: EntryField
-}) {
+}
+
+/** Błąd pola (po próbie zapisu), powiązany z polem przez aria-describedby. */
+export function FieldError({ vm, field }: FieldErrorProps) {
   const text = vm.issueText(field)
   if (!text) return null
   return (

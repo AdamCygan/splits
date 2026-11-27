@@ -6,6 +6,12 @@ const TONES = {
   pair: 'bg-[var(--wt-pair)]',
 } as const
 
+export interface ProgressBarProps {
+  value: number
+  tone?: keyof typeof TONES
+  className?: string
+}
+
 /**
  * Cienki pasek postępu (cel dnia, przerwy). Ozdobny: wartość jest zawsze podana tekstem
  * obok, więc pasek jest ukryty przed czytnikami. Wartość 0–100 (przycinana).
@@ -14,11 +20,7 @@ export function ProgressBar({
   value,
   tone = 'ink',
   className,
-}: {
-  value: number
-  tone?: keyof typeof TONES
-  className?: string
-}) {
+}: ProgressBarProps) {
   return (
     <div
       aria-hidden

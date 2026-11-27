@@ -13,7 +13,7 @@ const flyValue = (key: string) =>
   new RegExp(`^\\s*${key}\\s*=\\s*'([^']*)'`, 'm').exec(fly)?.[1] ?? ''
 
 describe('launch check', () => {
-  it('has real company data and contact emails', () => {
+  it('Should have real company data and contact emails', () => {
     expect(
       launchProblems({
         legal,
@@ -23,7 +23,7 @@ describe('launch check', () => {
     ).toEqual([])
   })
 
-  it('uses one production domain everywhere in fly.toml', () => {
+  it('Should use one production domain everywhere in fly.toml', () => {
     const appUrl = flyValue('APP_URL')
     expect(appUrl).toMatch(/^https:\/\//)
     expect(flyValue('VITE_APP_URL')).toBe(appUrl)

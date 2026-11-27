@@ -72,7 +72,7 @@ describe('day summary', () => {
   ]
   const s = daySummary(entries, [brk('12:30', '13:00', 30)], [...types])
 
-  it('sums the day and splits focus work from meetings', () => {
+  it('Should sum the day and split focus work from meetings', () => {
     expect(s).toMatchObject({
       minutes: 230,
       focusMinutes: 215,
@@ -85,14 +85,14 @@ describe('day summary', () => {
     })
   })
 
-  it('finds the longest stretch without meetings and counts task switches', () => {
+  it('Should find the longest stretch without meetings and count task switches', () => {
     // 10:45–12:30: dwie sesje różnych zadań bez przerwy między nimi.
     expect(s.longestFocus).toBe(105)
     // PAY-1 → Daily → PAY-1 → PAY-2
     expect(s.switches).toBe(3)
   })
 
-  it('lists tasks longest first and the timeline in order, with breaks', () => {
+  it('Should list tasks longest first and the timeline in order, with breaks', () => {
     expect(s.tasks.map((r) => [r.title, r.minutes, r.sessions])).toEqual([
       ['PAY-1 Checkout', 165, 2],
       ['PAY-2 Refunds', 50, 2],
@@ -111,7 +111,7 @@ describe('day summary', () => {
     ])
   })
 
-  it('has no timeline for a day without set hours', () => {
+  it('Should have no timeline for a day without set hours', () => {
     const empty = daySummary([e({})], [], [...types])
     expect(empty.span).toBeNull()
     expect(empty.untimedMinutes).toBe(60)

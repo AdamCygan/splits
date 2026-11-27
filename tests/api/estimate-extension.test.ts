@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { todayIn } from '#/domain/dates'
 import { registered } from './helpers'
 
-type Entry = {
+interface Entry {
   id: string
   title: string
   durationMinutes: number
@@ -11,7 +11,9 @@ type Entry = {
   extensionMinutes: number | null
   extensionNote: string | null
 }
-type Problem = { errors?: Record<string, unknown> }
+interface Problem {
+  errors?: Record<string, unknown>
+}
 
 async function setup() {
   const { c } = await registered()
@@ -34,7 +36,7 @@ async function setup() {
 }
 
 describe('meeting that ran over', () => {
-  it('stores the extra time with a reason and validates it', async () => {
+  it('Should store the extra time with a reason and validate it', async () => {
     const { c, meeting, base } = await setup()
     const planned = {
       ...base,
@@ -85,7 +87,7 @@ describe('meeting that ran over', () => {
 })
 
 describe('task estimate', () => {
-  it('is saved with the entry, set for the whole task and kept on resume', async () => {
+  it('Should be saved with the entry, set for the whole task and kept on resume', async () => {
     const { c, task, base } = await setup()
     const entry = {
       ...base,

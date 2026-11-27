@@ -26,7 +26,10 @@ import { cn } from '#/lib/utils'
 
 const legalItem = 'px-1.5 py-1 text-xs font-normal text-ink-soft'
 
-type User = { displayName: string; email: string }
+interface User {
+  displayName: string
+  email: string
+}
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -37,7 +40,12 @@ function initials(name: string) {
   ).toUpperCase()
 }
 
-function Avatar({ name, className }: { name: string; className?: string }) {
+interface AvatarProps {
+  name: string
+  className?: string
+}
+
+function Avatar({ name, className }: AvatarProps) {
   // Inicjały jako treść CSS: to dekoracja, nie tekst etykiety przycisku (WCAG 2.5.3).
   return (
     <span
@@ -51,6 +59,13 @@ function Avatar({ name, className }: { name: string; className?: string }) {
   )
 }
 
+export interface AccountMenuProps {
+  user: User
+  onSignOut: () => void
+  onOpenCommands?: () => void
+  compact?: boolean
+}
+
 /**
  * Menu konta: wszystko, co nie jest pracą (motyw, język, dokumenty, wylogowanie),
  * w jednym miejscu zamiast w stopce paska bocznego. `compact` to sam awatar (telefon).
@@ -60,12 +75,7 @@ export function AccountMenu({
   onSignOut,
   onOpenCommands,
   compact = false,
-}: {
-  user: User
-  onSignOut: () => void
-  onOpenCommands?: () => void
-  compact?: boolean
-}) {
+}: AccountMenuProps) {
   const t = useMessages(appMessages)
   const common = useMessages(commonMessages)
   const { locale, setLocale } = useI18n()

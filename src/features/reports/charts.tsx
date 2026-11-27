@@ -15,6 +15,15 @@ import { reportsMessages } from '#/i18n/messages/reports'
 import { cn } from '#/lib/utils'
 import { Panel } from '#/components/ui/panel'
 
+export interface ChartCardProps {
+  title: string
+  lead?: string
+  legend?: ReactNode
+  table?: ReactNode
+  className?: string
+  children: ReactNode
+}
+
 /** Karta wykresu: tytuł, opis, opcjonalna legenda nad wykresem i tabela pod nim. */
 export function ChartCard({
   title,
@@ -23,14 +32,7 @@ export function ChartCard({
   table,
   className,
   children,
-}: {
-  title: string
-  lead?: string
-  legend?: ReactNode
-  table?: ReactNode
-  className?: string
-  children: ReactNode
-}) {
+}: ChartCardProps) {
   const t = useMessages(reportsMessages).charts
   return (
     <Panel
@@ -60,11 +62,11 @@ export function ChartCard({
   )
 }
 
-function Legend({
-  items,
-}: {
+interface LegendProps {
   items: Array<{ key: string; label: string; color: string }>
-}) {
+}
+
+function Legend({ items }: LegendProps) {
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-ink-soft">
       {items.map((i) => (
@@ -81,18 +83,15 @@ function Legend({
   )
 }
 
-/** Dymek nad wskazaną kolumną: najpierw wartość, potem nazwa serii. */
-function Tooltip({
-  left,
-  title,
-  rows,
-  hint,
-}: {
+interface TooltipProps {
   left: number
   title: string
   rows: Array<{ key: string; color?: string; label: string; value: string }>
   hint?: string
-}) {
+}
+
+/** Dymek nad wskazaną kolumną: najpierw wartość, potem nazwa serii. */
+function Tooltip({ left, title, rows, hint }: TooltipProps) {
   return (
     <div
       role="presentation"
@@ -123,6 +122,23 @@ function Tooltip({
   )
 }
 
+/** Słupek wykresu dzień po dniu: jeden dzień albo tydzień (przy długim okresie). */
+export interface ChartBucket {
+  from: string
+  to: string
+  unit: 'day' | 'week'
+}
+
+export interface TimeChartProps {
+  entries: ReadonlyArray<TimeEntry>
+  from: string
+  to: string
+  types: ReadonlyArray<TaskType>
+  className?: string
+  /** Kliknięcie albo Enter na kolumnie: dzień (albo tydzień) do otwarcia ze szczegółami. */
+  onOpen?: (bucket: ChartBucket) => void
+}
+
 /**
  * Czas dzień po dniu (albo tydzień po tygodniu) z podziałem na typy pracy: kolumny
  * z warstwami, oś godzin, dymek z rozbiciem po najechaniu albo fokusie.
@@ -134,15 +150,7 @@ export function TimeChart({
   types,
   className,
   onOpen,
-}: {
-  entries: ReadonlyArray<TimeEntry>
-  from: string
-  to: string
-  types: ReadonlyArray<TaskType>
-  className?: string
-  /** Kliknięcie albo Enter na kolumnie: dzień (albo tydzień) do otwarcia ze szczegółami. */
-  onOpen?: (bucket: { from: string; to: string; unit: 'day' | 'week' }) => void
-}) {
+}: TimeChartProps) {
   const t = useMessages(reportsMessages).charts
   const format = useFormat()
   const { locale } = useI18n()
@@ -379,17 +387,16 @@ export function TimeChart({
   )
 }
 
+export interface HourHeatmapProps {
+  entries: ReadonlyArray<TimeEntry>
+  className?: string
+}
+
 /**
  * Kiedy pracujesz: siatka dzień tygodnia × godzina, jeden odcień od jasnego do ciemnego.
  * Tylko wpisy z godzinami od–do.
  */
-export function HourHeatmap({
-  entries,
-  className,
-}: {
-  entries: ReadonlyArray<TimeEntry>
-  className?: string
-}) {
+export function HourHeatmap({ entries, className }: HourHeatmapProps) {
   const t = useMessages(reportsMessages).charts
   const format = useFormat()
   const { locale } = useI18n()
@@ -500,8 +507,12 @@ export function HourHeatmap({
   )
 }
 
+export interface EstimateChartProps {
+  rows: ReadonlyArray<TaskRow>
+}
+
 /** Trafność estymat: o ile zadania wyszły ponad (w prawo) albo poniżej (w lewo) estymaty. */
-export function EstimateChart({ rows }: { rows: ReadonlyArray<TaskRow> }) {
+export function EstimateChart({ rows }: EstimateChartProps) {
   const t = useMessages(reportsMessages).charts
   const format = useFormat()
   const misses = estimateMisses(rows)
@@ -584,18 +595,20 @@ export function EstimateChart({ rows }: { rows: ReadonlyArray<TaskRow> }) {
   )
 }
 
+export interface ColumnChartProps {
+  title: string
+  lead?: string
+  items: Array<{ key: string; label: string; value: number; display: string }>
+  color?: string
+}
+
 /** Jedna seria w kolumnach (np. SP na sprint): wartość nad kolumną, dymek przy fokusie. */
 export function ColumnChart({
   title,
   lead,
   items,
   color = 'var(--wt-task)',
-}: {
-  title: string
-  lead?: string
-  items: Array<{ key: string; label: string; value: number; display: string }>
-  color?: string
-}) {
+}: ColumnChartProps) {
   const t = useMessages(reportsMessages).charts
   const max = Math.max(...items.map((i) => i.value), 1)
   // Same zera (np. świeże konto): zamiast pustych słupków krótka informacja.

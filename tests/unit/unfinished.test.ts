@@ -32,7 +32,7 @@ const kinds = { task: 'task', meet: 'meeting' } as const
 const kindOf = (id: string) => kinds[id as keyof typeof kinds]
 
 describe('unfinished tasks', () => {
-  it('lists tasks from previous days with their total time, newest first', () => {
+  it('Should list tasks from previous days with their total time, newest first', () => {
     const older = e({ title: 'Older', workDate: '2026-11-12' })
     const a1 = e({ workDate: '2026-11-13', durationMinutes: 60 })
     const a2 = e({
@@ -55,7 +55,7 @@ describe('unfinished tasks', () => {
     })
   })
 
-  it('skips finished tasks, tasks worked on today, running ones and meetings', () => {
+  it('Should skip finished tasks, tasks worked on today, running ones and meetings', () => {
     const list = unfinishedTasks(
       [
         e({ title: 'Done', finishedAt: '2026-11-17T16:00:00Z' }),
@@ -73,7 +73,7 @@ describe('unfinished tasks', () => {
     expect(list.map((u) => u.entry.title)).toEqual(['Keep'])
   })
 
-  it('groups by link first, like the rest of the app', () => {
+  it('Should group by link first, like the rest of the app', () => {
     const link = 'https://acme.atlassian.net/browse/PAY-9'
     const list = unfinishedTasks(
       [
@@ -87,7 +87,7 @@ describe('unfinished tasks', () => {
     expect(list[0]!.entry.title).toBe('PAY-9 New name')
   })
 
-  it('keeps the list short', () => {
+  it('Should keep the list short', () => {
     const many = Array.from({ length: 10 }, (_, i) => e({ title: `T${i}` }))
     expect(unfinishedTasks(many, today, kindOf)).toHaveLength(UNFINISHED_LIMIT)
   })

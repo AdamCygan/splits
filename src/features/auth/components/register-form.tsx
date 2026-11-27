@@ -25,12 +25,12 @@ const defaultValues: RegisterValues = {
   acceptTerms: false,
 }
 
-/** next: dokąd po założeniu konta — konfiguracja (domyślnie) albo koszyk planu Pro. */
-export function RegisterForm({
-  next = 'setup',
-}: {
+export interface RegisterFormProps {
   next?: 'setup' | 'checkout'
-}) {
+}
+
+/** next: dokąd po założeniu konta — konfiguracja (domyślnie) albo koszyk planu Pro. */
+export function RegisterForm({ next = 'setup' }: RegisterFormProps) {
   const navigate = useNavigate()
   const t = useMessages(authMessages)
   const { locale } = useI18n()
@@ -200,16 +200,14 @@ export function RegisterForm({
   )
 }
 
-/** Zdanie zgody z linkami do regulaminu i polityki prywatności (otwierane w nowej karcie, formularz zostaje). */
-function TermsText({
-  template,
-  terms,
-  privacy,
-}: {
+interface TermsTextProps {
   template: string
   terms: string
   privacy: string
-}) {
+}
+
+/** Zdanie zgody z linkami do regulaminu i polityki prywatności (otwierane w nowej karcie, formularz zostaje). */
+function TermsText({ template, terms, privacy }: TermsTextProps) {
   const link = (to: '/terms' | '/privacy', label: string) => (
     <Link
       key={to}

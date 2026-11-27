@@ -42,7 +42,7 @@ describe('task list', () => {
     row({ title: 'C', taskTypeId: 'review', minutes: 45, last: '2026-11-20' }),
   ]
 
-  it('groups by kind of work, most time first, keeping the order inside', () => {
+  it('Should group by kind of work, most time first, keeping the order inside', () => {
     expect(
       groupTaskList(items, 'kind').map((g) => [
         g.key,
@@ -55,7 +55,7 @@ describe('task list', () => {
     ])
   })
 
-  it('groups by the day of last work, newest first, or not at all', () => {
+  it('Should group by the day of last work, newest first, or not at all', () => {
     expect(groupTaskList(items, 'day').map((g) => g.key)).toEqual([
       '2026-11-25',
       '2026-11-20',
@@ -65,7 +65,7 @@ describe('task list', () => {
     ])
   })
 
-  it('knows done, running and in-progress tasks for the status filter', () => {
+  it('Should know done, running and in-progress tasks for the status filter', () => {
     const finished = new Set(['A'])
     expect(taskStatus(items[0]!.row, finished)).toBe('done')
     expect(taskStatus({ key: 'A', running: true }, finished)).toBe('running')
@@ -113,7 +113,7 @@ describe('task list filters and period', () => {
     },
   ]
 
-  it('filters by text in title, link or ticket number', () => {
+  it('Should filter by text in title, link or ticket number', () => {
     const f = { ...NO_TASK_FILTERS, query: 'ph-12' }
     expect(filterTaskRows(rows, f, new Set()).map((x) => x.row.key)).toEqual([
       'a',
@@ -121,7 +121,7 @@ describe('task list filters and period', () => {
     expect(matchesTaskQuery(rows[1]!.row, 'review')).toBe(true)
   })
 
-  it('filters by type, estimate and status', () => {
+  it('Should filter by type, estimate and status', () => {
     expect(
       filterTaskRows(rows, { ...NO_TASK_FILTERS, typeId: 't2' }, new Set()),
     ).toHaveLength(1)
@@ -141,7 +141,7 @@ describe('task list filters and period', () => {
     ).toBe('b')
   })
 
-  it('counts filters that differ from the defaults', () => {
+  it('Should count filters that differ from the defaults', () => {
     expect(activeFilterCount(NO_TASK_FILTERS, 'd30')).toBe(0)
     expect(
       activeFilterCount(
@@ -151,7 +151,7 @@ describe('task list filters and period', () => {
     ).toBe(3)
   })
 
-  it('builds the date range for a period or a sprint', () => {
+  it('Should build the date range for a period or a sprint', () => {
     const today = '2026-11-27'
     expect(
       taskPeriodRange({

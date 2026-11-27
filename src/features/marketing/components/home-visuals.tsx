@@ -215,8 +215,12 @@ export function TimesheetVisual() {
   )
 }
 
+export interface ChecksProps {
+  items: ReadonlyArray<string>
+}
+
 /** Lista korzyści z zielonym znacznikiem (tekst niesie treść, ikona jest ozdobą). */
-export function Checks({ items }: { items: ReadonlyArray<string> }) {
+export function Checks({ items }: ChecksProps) {
   return (
     <ul className="mt-6 space-y-2.5">
       {items.map((item) => (

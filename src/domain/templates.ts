@@ -10,7 +10,7 @@ import { spForType } from './report'
 import type { ScheduledMeeting } from './schedule'
 
 /** Co użytkownik dopowiada w oknie przed zapisem szablonu. */
-export type TemplateChoice = {
+export interface TemplateChoice {
   projectId: string | null
   link: string | null
   note: string | null
@@ -57,6 +57,12 @@ export type TemplatePlan =
   | { kind: 'entry'; input: TimeEntryInput }
   | { kind: 'timer'; input: TimerStartInput }
 
+export interface TemplatePlanOptions {
+  workDate: string
+  now: string
+  at?: ScheduledMeeting
+}
+
 /**
  * Wpis z szablonu. Spotkanie z harmonogramu (`at`) dostaje godziny od–do; szablon
  * z czasem to wpis z czasem trwania; bez czasu startuje timer od `now`.
@@ -65,7 +71,7 @@ export function templatePlan(
   template: QuickTemplate,
   type: TaskType | undefined,
   choice: TemplateChoice,
-  options: { workDate: string; now: string; at?: ScheduledMeeting },
+  options: TemplatePlanOptions,
 ): TemplatePlan {
   const base = {
     taskTypeId: template.taskTypeId,

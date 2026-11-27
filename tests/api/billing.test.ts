@@ -13,7 +13,7 @@ import { client, registered } from './helpers'
 const SECRET = 'whsec_test_secret'
 const real = new Stripe('sk_test_fake')
 
-type Sub = {
+interface Sub {
   id: string
   customer: string
   status: string
@@ -47,23 +47,34 @@ const state = {
   checkoutParams: [] as Array<Record<string, unknown>>,
   canceled: [] as Array<string>,
 }
+/** Wycinki parametrów Stripe, których używa atrapa klienta. */
+interface PriceListParams {
+  lookup_keys: Array<string>
+}
+
+interface CustomerParams {
+  email: string
+  metadata: Record<string, string>
+}
+
+interface PortalParams {
+  customer: string
+}
+
 let n = 0
 const nextYear = Math.floor(Date.now() / 1000) + 365 * 86_400
 
 const fake = {
   webhooks: real.webhooks,
   prices: {
-    list: async ({ lookup_keys }: { lookup_keys: Array<string> }) => ({
+    list: async ({ lookup_keys }: PriceListParams) => ({
       data: lookup_keys.includes('splits_pro_yearly')
         ? [{ id: 'price_pro_yearly', lookup_key: 'splits_pro_yearly' }]
         : [],
     }),
   },
   customers: {
-    create: async (params: {
-      email: string
-      metadata: Record<string, string>
-    }) => {
+    create: async (params: CustomerParams) => {
       const customer = { id: `cus_${++n}`, ...params }
       state.customers.push(customer)
       return customer
@@ -105,7 +116,7 @@ const fake = {
   },
   billingPortal: {
     sessions: {
-      create: async ({ customer }: { customer: string }) => ({
+      create: async ({ customer }: PortalParams) => ({
         url: `https://billing.stripe.com/p/session/${customer}`,
       }),
     },
@@ -114,11 +125,14 @@ const fake = {
 setStripeClient(fake as unknown as Stripe)
 afterAll(() => setStripeClient(null))
 
+interface StripeEvent {
+  id: string
+  type: string
+  data: { object: unknown }
+}
+
 /** Wysyła zdarzenie do webhooka z poprawnym (albo złym) podpisem Stripe-Signature. */
-async function webhook(
-  event: { id: string; type: string; data: { object: unknown } },
-  secret = SECRET,
-) {
+async function webhook(event: StripeEvent, secret = SECRET) {
   const payload = JSON.stringify({
     object: 'event',
     api_version: '2026-10-28.endive',
@@ -164,7 +178,7 @@ function makeSub(
   }
 }
 
-type Billing = {
+interface Billing {
   enabled: boolean
   plan: string
   subscription: null | {
@@ -214,7 +228,7 @@ beforeEach(() => {
 })
 
 describe('billing (Stripe, yearly plans only)', () => {
-  it('opens a yearly Pro checkout for a free account', async () => {
+  it('Should open a yearly Pro checkout for a free account', async () => {
     const { c } = await registered()
     const me = await c.get<{ id: string; email: string }>('/account')
     const status = await c.get<Billing>('/billing')
@@ -251,13 +265,15 @@ describe('billing (Stripe, yearly plans only)', () => {
     expect(state.customers.at(-1)!.email).toBe(me.body.email)
   })
 
-  it('accepts only a yearly Pro plan', async () => {
-    const { c } = await registered()
-    for (const plan of ['pro_monthly', 'lifetime', 'team'])
+  it.each(['pro_monthly', 'lifetime', 'team'])(
+    'Should reject the %s plan at checkout (only yearly Pro is sold)',
+    async (plan) => {
+      const { c } = await registered()
       expect((await c.post('/billing/checkout', { plan })).status).toBe(400)
-  })
+    },
+  )
 
-  it('turns Pro on from a signed webhook and processes each event once', async () => {
+  it('Should turn Pro on from a signed webhook and process each event once', async () => {
     const { c, sub } = await buyPro()
     expect((await c.get<{ plan: string }>('/account')).body.plan).toBe('pro')
     const status = await c.get<Billing>('/billing')
@@ -290,7 +306,7 @@ describe('billing (Stripe, yearly plans only)', () => {
     ).toBe(true)
   })
 
-  it('rejects webhooks with a wrong signature', async () => {
+  it('Should reject webhooks with a wrong signature', async () => {
     const res = await webhook(
       {
         id: `evt_${++n}`,
@@ -304,7 +320,7 @@ describe('billing (Stripe, yearly plans only)', () => {
     expect(unsigned.status).toBe(400)
   })
 
-  it('goes back to Free when the subscription ends', async () => {
+  it('Should go back to Free when the subscription ends', async () => {
     const { c, sub } = await buyPro()
     state.subs.set(sub.id, { ...sub, status: 'canceled' })
     await webhook({
@@ -318,7 +334,7 @@ describe('billing (Stripe, yearly plans only)', () => {
     )
   })
 
-  it('keeps Pro during a payment retry (past_due)', async () => {
+  it('Should keep Pro during a payment retry (past_due)', async () => {
     const { c, sub } = await buyPro()
     state.subs.set(sub.id, { ...sub, status: 'past_due' })
     await webhook({
@@ -332,7 +348,7 @@ describe('billing (Stripe, yearly plans only)', () => {
     )
   })
 
-  it('syncs right after returning from checkout, only for the owner', async () => {
+  it('Should sync right after returning from checkout, only for the owner', async () => {
     const { c } = await registered()
     const me = await c.get<{ id: string }>('/account')
     const checkout = await c.post<{ url: string }>('/billing/checkout', {
@@ -356,7 +372,7 @@ describe('billing (Stripe, yearly plans only)', () => {
     expect(synced.body).toEqual({ plan: 'pro', paid: true })
   })
 
-  it('opens the customer portal and cancels billing when the account is deleted', async () => {
+  it('Should open the customer portal and cancel billing when the account is deleted', async () => {
     const { c, sub, customer } = await buyPro()
     const portal = await c.post<{ url: string }>('/billing/portal')
     expect(portal.body.url).toBe(
@@ -366,7 +382,7 @@ describe('billing (Stripe, yearly plans only)', () => {
     expect(state.canceled).toContain(sub.id)
   })
 
-  it('ends Pro and the subscription after a full refund, not a partial one', async () => {
+  it('Should end Pro and the subscription after a full refund, not a partial one', async () => {
     const { c, sub, customer } = await buyPro()
     const charge = (refunded: boolean) => ({
       id: `evt_${++n}`,
@@ -396,7 +412,7 @@ describe('billing (Stripe, yearly plans only)', () => {
     })
   })
 
-  it('limits Free reports to the last 30 days on the server', async () => {
+  it('Should limit Free reports to the last 30 days on the server', async () => {
     const { c, email } = await registered()
     const types = await c.get<Array<{ id: string }>>('/task-types')
     const today = new Intl.DateTimeFormat('en-CA', {
@@ -438,7 +454,7 @@ describe('billing (Stripe, yearly plans only)', () => {
 })
 
 describe('planForPrice', () => {
-  it('keeps Pro for an older price that lost its lookup key', () => {
+  it('Should keep Pro for an older price that lost its lookup key', () => {
     expect(
       planForPrice({
         id: 'price_old',

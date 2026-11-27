@@ -6,11 +6,15 @@ import { commonMessages } from '#/i18n/messages/common'
 import { cn } from '#/lib/utils'
 import type { Locale } from '#/i18n/config'
 
+export interface LanguageSwitcherProps {
+  className?: string
+}
+
 /**
  * Wybór języka jako natywny <select>: najlepiej obsługiwany przez klawiaturę,
  * czytniki ekranu i telefony. Zmiana zapisuje się w ciasteczku i od razu przełącza UI.
  */
-export function LanguageSwitcher({ className }: { className?: string }) {
+export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
   const id = useId()
   const { locale, setLocale } = useI18n()
   const t = useMessages(commonMessages).language

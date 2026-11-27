@@ -29,7 +29,7 @@ export function stackOrder<T extends Pick<TaskType, 'kind' | 'sortOrder'>>(
   )
 }
 
-export type TimeBucket = {
+export interface TimeBucket {
   /** Pierwszy dzień kubełka (dzień albo poniedziałek tygodnia). */
   from: string
   to: string
@@ -102,7 +102,7 @@ export function hourHeatmap(
   }
 }
 
-export type EstimateMiss = {
+export interface EstimateMiss {
   key: string
   title: string
   estimate: number

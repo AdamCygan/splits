@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { expectNoA11yViolations, signInWithSamples } from './helpers'
+import { expectNoA11yViolations, signInWithSamples, testEach } from './helpers'
 
 const sections = [
   { path: '/app/settings', heading: /welcome/i },
@@ -18,22 +18,23 @@ const sections = [
 test.describe('settings panel', () => {
   test.beforeEach(async ({ page }) => signInWithSamples(page))
 
-  for (const section of sections) {
-    test(`${section.path} renders and has no axe violations`, async ({
-      page,
-    }) => {
-      await page.goto(section.path)
+  testEach(sections)(
+    'Should render $path without axe violations',
+    async ({ path, heading }, page) => {
+      await page.goto(path)
       await expect(
-        page.getByRole('heading', { level: 1, name: section.heading }),
+        page.getByRole('heading', { level: 1, name: heading }),
       ).toBeVisible()
       await expect(
         page.getByRole('status').filter({ hasText: /loading/i }),
       ).toHaveCount(0)
       await expectNoA11yViolations(page)
-    })
-  }
+    },
+  )
 
-  test('story point scale: edit, validate, save', async ({ page }) => {
+  test('Should edit, validate and save the story point scale', async ({
+    page,
+  }) => {
     await page.goto('/app/settings/story-points')
     await page.getByRole('button', { name: /linear/i }).click()
     const firstHours = page.getByRole('spinbutton', {
@@ -51,7 +52,7 @@ test.describe('settings panel', () => {
     await expect(page.getByText(/scale saved/i)).toBeVisible()
   })
 
-  test('statuses: add with keyboard, reorder and make default', async ({
+  test('Should add a status with the keyboard, reorder it and make it default', async ({
     page,
     isMobile,
   }) => {
@@ -74,7 +75,7 @@ test.describe('settings panel', () => {
     await expect(row.getByText(/default/i).first()).toBeVisible()
   })
 
-  test('dialogs trap focus and close with Escape', async ({
+  test('Should trap focus in dialogs and close them with Escape', async ({
     page,
     isMobile,
   }) => {
@@ -88,7 +89,9 @@ test.describe('settings panel', () => {
     await expect(opener).toBeFocused()
   })
 
-  test('sprints: schedule preview follows the length', async ({ page }) => {
+  test('Should update the sprint schedule preview with the length', async ({
+    page,
+  }) => {
     await page.goto('/app/settings/sprints')
     await expect(
       page.getByRole('heading', { level: 1, name: /sprints/i }),

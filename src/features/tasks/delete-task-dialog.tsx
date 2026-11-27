@@ -8,6 +8,15 @@ import { fmt } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'
 
+export interface DeleteTaskDialogProps {
+  task: TaskRef | null
+  date: string | null
+  sessions: number
+  minutes: number
+  onClose: () => void
+  onDeleted?: () => void
+}
+
 /**
  * Ostrzeżenie przed usunięciem całego zadania: z jednego dnia (`date`) albo z całej historii.
  * Mówi, ile sesji i czasu zniknie, bo tego nie da się cofnąć.
@@ -19,14 +28,7 @@ export function DeleteTaskDialog({
   minutes,
   onClose,
   onDeleted,
-}: {
-  task: TaskRef | null
-  date: string | null
-  sessions: number
-  minutes: number
-  onClose: () => void
-  onDeleted?: () => void
-}) {
+}: DeleteTaskDialogProps) {
   const t = useMessages(entriesMessages).deleteTask
   const app = useMessages(appMessages)
   const format = useFormat()

@@ -5,7 +5,10 @@ import { db } from '#/server/db/client'
 import { users } from '#/server/db/schema'
 import { registered } from './helpers'
 
-type Problem = { code: string; errors?: Record<string, unknown> }
+interface Problem {
+  code: string
+  errors?: Record<string, unknown>
+}
 
 async function account() {
   const a = await registered()
@@ -29,7 +32,7 @@ async function account() {
 }
 
 describe('entry dates', () => {
-  it('adds a forgotten entry to a past day and lists it on that day', async () => {
+  it('Should add a forgotten entry to a past day and list it on that day', async () => {
     const { c, today, entry } = await account()
     const day = addDays(today, -3)
     const created = await c.post<{ workDate: string }>(
@@ -47,14 +50,14 @@ describe('entry dates', () => {
     ).toEqual([])
   })
 
-  it('rejects entries in the future', async () => {
+  it('Should reject entries in the future', async () => {
     const { c, today, entry } = await account()
     const res = await c.post<Problem>('/time-entries', entry(addDays(today, 1)))
     expect(res.status).toBe(400)
     expect(Object.keys(res.body.errors ?? {})).toContain('workDate')
   })
 
-  it('starts a timer only for today', async () => {
+  it('Should start a timer only for today', async () => {
     const { c, today, entry } = await account()
     const past = await c.post<Problem>('/time-entries/timer', {
       ...entry(addDays(today, -1)),
@@ -65,7 +68,7 @@ describe('entry dates', () => {
     expect(Object.keys(past.body.errors ?? {})).toContain('workDate')
   })
 
-  it('limits new entries to the last 30 days on Free, not on Pro', async () => {
+  it('Should limit new entries to the last 30 days on Free, not on Pro', async () => {
     const { c, email, today, entry } = await account()
     const edge = addDays(today, -29)
     const older = addDays(today, -30)

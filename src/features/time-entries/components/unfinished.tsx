@@ -24,11 +24,16 @@ const refOf = (e: TimeEntry): TaskRef => ({
   taskTypeId: e.taskTypeId,
 })
 
+export interface FinishTaskInput {
+  ref: TaskRef
+  finished: boolean
+}
+
 /** Zakończone / z powrotem w toku: wszystkie sesje zadania naraz. */
 export function useFinishTask() {
   const t = useMessages(entriesMessages).unfinished
   return useDataMutation(
-    ({ ref, finished }: { ref: TaskRef; finished: boolean }) =>
+    ({ ref, finished }: FinishTaskInput) =>
       data.entries.finishTask(ref, finished),
     {
       invalidate: [entryKeys.all],
@@ -38,11 +43,15 @@ export function useFinishTask() {
   )
 }
 
+export interface UnfinishedTasksProps {
+  today: string
+}
+
 /**
  * „Dokończ to, co zacząłeś”: niezakończone zadania z poprzednich dni na górze Dziś.
  * „Kontynuuj” startuje nową sesję (jak „Wznów”), „Zakończone” zdejmuje zadanie z listy.
  */
-export function UnfinishedTasks({ today }: { today: string }) {
+export function UnfinishedTasks({ today }: UnfinishedTasksProps) {
   const t = useMessages(entriesMessages)
   const tasks = useQuery(unfinishedQuery).data ?? []
   const resume = useResumeTask()
@@ -79,19 +88,21 @@ export function UnfinishedTasks({ today }: { today: string }) {
   )
 }
 
+interface UnfinishedRowProps {
+  task: UnfinishedTask
+  today: string
+  busy: boolean
+  onContinue: () => void
+  onFinish: () => void
+}
+
 function UnfinishedRow({
   task,
   today,
   busy,
   onContinue,
   onFinish,
-}: {
-  task: UnfinishedTask
-  today: string
-  busy: boolean
-  onContinue: () => void
-  onFinish: () => void
-}) {
+}: UnfinishedRowProps) {
   const t = useMessages(entriesMessages)
   const format = useFormat()
   const types = useQuery(taskTypesQuery).data ?? []

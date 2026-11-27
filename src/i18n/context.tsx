@@ -16,7 +16,7 @@ import { persistLocale } from './locale'
 import type { Locale } from './config'
 import type { Plural } from './format'
 
-type I18nValue = {
+interface I18nValue {
   locale: Locale
   /** BCP 47, np. "en-US" — do Intl i atrybutu lang. */
   tag: string
@@ -25,13 +25,12 @@ type I18nValue = {
 
 const I18nContext = createContext<I18nValue | null>(null)
 
-export function I18nProvider({
-  locale,
-  children,
-}: {
+export interface I18nProviderProps {
   locale: Locale
   children: ReactNode
-}) {
+}
+
+export function I18nProvider({ locale, children }: I18nProviderProps) {
   const router = useRouter()
   const setLocale = useCallback(
     async (next: Locale) => {
@@ -63,6 +62,17 @@ export function useMessages<T>(dictionary: Record<Locale, T>): T {
   return dictionary[useI18n().locale]
 }
 
+/** Teksty różnicy wobec planu; `{time}` zastępuje czas. */
+export interface DeltaMessages {
+  over: string
+  under: string
+  exact: string
+}
+
+export interface DayFormatOptions {
+  year?: boolean
+}
+
 /** Gotowe formatery związane z bieżącym językiem. */
 export function useFormat() {
   const { locale, tag } = useI18n()
@@ -83,10 +93,7 @@ export function useFormat() {
           ? `${time(start)}–${time(end)}, ${formatMinutes(locale, minutes)}`
           : formatMinutes(locale, minutes),
       /** Różnica czasu wobec planu: „+30 min ponad”, „15 min mniej”, „dokładnie”. */
-      delta: (
-        diff: number,
-        forms: { over: string; under: string; exact: string },
-      ) =>
+      delta: (diff: number, forms: DeltaMessages) =>
         diff > 0
           ? fmt(forms.over, { time: formatMinutes(locale, diff) })
           : diff < 0
@@ -97,7 +104,7 @@ export function useFormat() {
       number: (value: number, digits = 1) =>
         formatNumber(locale, value, digits),
       /** Krótki dzień: „czw., 26 lis” (z rokiem: „czw., 26 lis 2026”). */
-      day: (date: string, options: { year?: boolean } = {}) =>
+      day: (date: string, options: DayFormatOptions = {}) =>
         formatDate(locale, date, {
           weekday: 'short',
           day: 'numeric',
