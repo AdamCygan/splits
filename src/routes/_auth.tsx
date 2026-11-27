@@ -65,7 +65,8 @@ function AuthLayout() {
   return (
     <div className="grid min-h-dvh grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
       <div className="flex flex-col px-5 py-6 sm:px-10">
-        <div className="flex items-center justify-between gap-4">
+        {/* Nagłówek jako punkt orientacyjny: logo i język nie wiszą poza regionami strony. */}
+        <header className="flex items-center justify-between gap-4">
           <Link
             to="/"
             aria-label={common.nav.home}
@@ -74,7 +75,7 @@ function AuthLayout() {
             <Logo />
           </Link>
           <LanguageSwitcher />
-        </div>
+        </header>
         <main
           id="main"
           tabIndex={-1}

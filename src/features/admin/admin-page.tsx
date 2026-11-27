@@ -244,7 +244,7 @@ export function AdminPage() {
         ) : list.length === 0 ? (
           <p className="px-5 py-8 text-ink-soft sm:px-6">{t.empty}</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full min-w-[46rem] text-[0.9375rem]">
               <thead>
                 <tr className="text-left text-sm text-ink-soft">

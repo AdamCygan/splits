@@ -61,6 +61,7 @@ const en = {
     noCurrentCta: 'Set up sprints',
     empty: 'No time logged in this sprint yet.',
     emptyHistory: 'Past sprints will show up here once they end.',
+    tableRegion: 'Past sprints table, scrolls sideways',
     freeNote:
       'The Free plan covers the last 30 days, so older sprints may be incomplete.',
     upgrade: 'See Pro',
@@ -365,6 +366,7 @@ const pl: PanelMessages = {
     noCurrentCta: 'Ustaw sprinty',
     empty: 'W tym sprincie nie ma jeszcze wpisów.',
     emptyHistory: 'Zakończone sprinty pojawią się tutaj.',
+    tableRegion: 'Tabela zakończonych sprintów, przewija się w bok',
     freeNote:
       'Plan Free obejmuje ostatnie 30 dni, więc starsze sprinty mogą być niepełne.',
     upgrade: 'Zobacz Pro',

@@ -5,6 +5,7 @@ import { LEGAL_PLACEHOLDERS, legal } from '#/config/legal'
 import { useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
 import { commonMessages } from '#/i18n/messages/common'
+import { accessibilityDoc } from './accessibility'
 import { cookiesDoc } from './cookies'
 import { privacyDoc } from './privacy'
 import { termsDoc } from './terms'
@@ -14,14 +15,16 @@ export const legalDocs = {
   terms: termsDoc,
   privacy: privacyDoc,
   cookies: cookiesDoc,
+  accessibility: accessibilityDoc,
 } as const
 export const legalPaths: Record<
   LegalDocId,
-  '/terms' | '/privacy' | '/cookies'
+  '/terms' | '/privacy' | '/cookies' | '/accessibility'
 > = {
   terms: '/terms',
   privacy: '/privacy',
   cookies: '/cookies',
+  accessibility: '/accessibility',
 }
 
 /** {pole} → wartość z config/legal.ts; {date} = data wejścia w życie w języku strony. */
@@ -100,7 +103,7 @@ function Block({ block, date }: { block: LegalBlock; date: string }) {
     )
   return (
     <div
-      className="overflow-x-auto rounded-xl border border-line"
+      className="relative overflow-x-auto rounded-xl border border-line"
       tabIndex={0}
       role="region"
       aria-label={block.table.head.join(', ')}
@@ -143,7 +146,7 @@ export function LegalPage({ id }: { id: LegalDocId }) {
   const { locale } = useI18n()
   const t = useMessages(commonMessages).legal
   const doc: LegalDoc = legalDocs[id][locale]
-  const date = formatDate(locale, legal.effectiveDate, {
+  const date = formatDate(locale, doc.updated ?? legal.effectiveDate, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -160,7 +163,9 @@ export function LegalPage({ id }: { id: LegalDocId }) {
         </h1>
         <p className="mt-3 text-ink-soft">{fillLegal(doc.summary, date)}</p>
         <p className="mt-2 text-sm text-ink-soft">
-          {fmt(t.updated, { date, version: legal.version })}
+          {doc.updated
+            ? fmt(t.reviewed, { date })
+            : fmt(t.updated, { date, version: legal.version })}
         </p>
       </header>
 

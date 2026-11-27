@@ -39,8 +39,10 @@ const en = {
     terms: 'Terms',
     privacy: 'Privacy',
     cookies: 'Cookies',
+    accessibility: 'Accessibility',
     cookieSettings: 'Cookie settings',
     updated: 'Effective from {date} · version {version}',
+    reviewed: 'Last reviewed on {date}',
     contents: 'On this page',
     otherDocs: 'Related documents',
     banner: {
@@ -111,8 +113,10 @@ const pl: CommonMessages = {
     terms: 'Regulamin',
     privacy: 'Prywatność',
     cookies: 'Cookies',
+    accessibility: 'Dostępność',
     cookieSettings: 'Ustawienia cookies',
     updated: 'Obowiązuje od {date} · wersja {version}',
+    reviewed: 'Ostatni przegląd: {date}',
     contents: 'Na tej stronie',
     otherDocs: 'Powiązane dokumenty',
     banner: {

@@ -1,0 +1,214 @@
+import AxeBuilder from '@axe-core/playwright'
+import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { signInWithSamples } from './helpers'
+
+/**
+ * Przegląd dostępności całej aplikacji (WCAG 2.2 AA + dobre praktyki axe): każda strona
+ * w obu motywach, układ przy 320 px, tryb wysokiego kontrastu, fokus pod przyklejonymi
+ * paskami i odnośnik „Przejdź do treści”. Nowa strona = nowy wpis w listach poniżej.
+ */
+const publicPages = [
+  '/',
+  '/pricing',
+  '/terms',
+  '/privacy',
+  '/cookies',
+  '/accessibility',
+  '/login',
+  '/register',
+  '/forgot-password',
+]
+const appPages = [
+  '/app',
+  '/app/tasks',
+  '/app/sprints',
+  '/app/analytics',
+  '/app/day',
+  '/app/settings',
+  '/app/settings/workday',
+  '/app/settings/sprints',
+  '/app/settings/days-off',
+  '/app/settings/story-points',
+  '/app/settings/work-types',
+  '/app/settings/statuses',
+  '/app/settings/projects',
+  '/app/settings/templates',
+  '/app/settings/summaries',
+  '/app/settings/account',
+  '/app/settings/plan',
+]
+
+async function violations(page: Page) {
+  const result = await new AxeBuilder({ page })
+    .withTags([
+      'wcag2a',
+      'wcag2aa',
+      'wcag21a',
+      'wcag21aa',
+      'wcag22aa',
+      'best-practice',
+    ])
+    .analyze()
+  return result.violations.map(
+    (v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`,
+  )
+}
+
+async function settle(page: Page) {
+  await expect(page.locator('h1').first()).toBeVisible()
+  await page.waitForLoadState('networkidle')
+}
+
+test.describe('accessibility sweep', () => {
+  // Animacje wyłączone: axe ocenia stan końcowy, nie klatkę w połowie przejścia.
+  test.use({ reducedMotion: 'reduce' })
+
+  test('public pages pass WCAG 2.2 AA and best practices', async ({ page }) => {
+    test.setTimeout(180_000)
+    const found: Array<string> = []
+    for (const path of publicPages) {
+      await page.goto(path)
+      await settle(page)
+      for (const v of await violations(page)) found.push(`${path} → ${v}`)
+    }
+    expect(found).toEqual([])
+  })
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`every app page passes in the ${theme} theme`, async ({ page }) => {
+      test.setTimeout(240_000)
+      await signInWithSamples(page)
+      await page.evaluate((t) => localStorage.setItem('ph-theme', t), theme)
+      const found: Array<string> = []
+      for (const path of appPages) {
+        await page.goto(path)
+        await settle(page)
+        for (const v of await violations(page)) found.push(`${path} → ${v}`)
+      }
+      expect(found).toEqual([])
+    })
+  }
+
+  test('pages reflow at 320 px without sideways scrolling', async ({
+    page,
+  }) => {
+    test.setTimeout(180_000)
+    await signInWithSamples(page)
+    await page.setViewportSize({ width: 320, height: 640 })
+    const scrolled: Array<string> = []
+    for (const path of [...publicPages, ...appPages]) {
+      await page.goto(path)
+      await settle(page)
+      const x = await page.evaluate(() => {
+        window.scrollTo(400, window.scrollY)
+        return window.scrollX
+      })
+      if (x > 0) scrolled.push(`${path} scrolls ${x}px sideways`)
+    }
+    expect(scrolled).toEqual([])
+  })
+
+  test('skip link moves focus to the main content', async ({ page }) => {
+    await signInWithSamples(page)
+    await settle(page)
+    await page.keyboard.press('Tab')
+    const skip = page.getByRole('link', { name: 'Skip to main content' })
+    await expect(skip).toBeFocused()
+    await expect(skip).toBeInViewport()
+    await page.keyboard.press('Enter')
+    await expect(page.locator('#main')).toBeFocused()
+  })
+
+  test('settings open without a false “unsaved changes” bar', async ({
+    page,
+  }) => {
+    await signInWithSamples(page)
+    for (const path of appPages.filter((p) => p.startsWith('/app/settings'))) {
+      await page.goto(path)
+      await settle(page)
+      await expect(
+        page.getByRole('region', { name: 'You have unsaved changes' }),
+        path,
+      ).toHaveCount(0)
+    }
+  })
+})
+
+test.describe('high-contrast mode', () => {
+  test.use({ forcedColors: 'active', reducedMotion: 'reduce' })
+
+  test('focus and the selected item stay visible', async ({ page }) => {
+    await signInWithSamples(page)
+    await settle(page)
+    // Fokus: system usuwa cienie (ring), więc musi zostać obrys.
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('Tab')
+    const outline = await page.evaluate(() => {
+      const el = document.activeElement
+      return el ? getComputedStyle(el).outlineStyle : 'none'
+    })
+    expect(outline).not.toBe('none')
+    // Wybrana opcja (rodzaj pracy w formularzu) i bieżąca strona w menu mają tło systemowe.
+    const selectedBackground = await page.evaluate(() => {
+      const active = document.querySelector('[data-status="active"]')
+      return active ? getComputedStyle(active).backgroundColor : ''
+    })
+    expect(selectedBackground).not.toMatch(
+      /^(rgba\(0, 0, 0, 0\)|transparent)?$/,
+    )
+  })
+})
+
+test.describe('focus is not hidden under sticky bars', () => {
+  test.use({ reducedMotion: 'reduce' })
+
+  test('tabbing through a settings page keeps every stop visible', async ({
+    page,
+  }, info) => {
+    test.setTimeout(120_000)
+    await signInWithSamples(page)
+    // Działający timer = pasek na górze; na telefonie jest też dolna nawigacja.
+    const form = page.getByRole('region', { name: 'Log time' })
+    await form
+      .locator('label')
+      .filter({ hasText: /^Timer$/ })
+      .click()
+    await form.getByLabel('Title').fill('A11Y-1 Focus check')
+    await form.getByRole('button', { name: 'Start timer' }).click()
+    await page.goto('/app/settings/workday')
+    await settle(page)
+    const hidden: Array<string> = []
+    for (let i = 0; i < 45; i++) {
+      await page.keyboard.press('Tab')
+      const r = await page.evaluate(() => {
+        const el = document.activeElement
+        if (!(el instanceof HTMLElement) || el === document.body) return null
+        // Ukryte pole (np. checkbox w etykiecie) sprawdzamy po widocznej etykiecie.
+        const label =
+          el.closest('label') ??
+          (el.id ? document.querySelector(`label[for="${el.id}"]`) : null)
+        const target =
+          el.classList.contains('sr-only') && label instanceof HTMLElement
+            ? label
+            : el
+        const b = target.getBoundingClientRect()
+        if (b.width === 0 || b.height === 0) return null
+        const x = b.left + b.width / 2
+        const y = b.top + b.height / 2
+        const top = document.elementFromPoint(x, y)
+        const covered =
+          !!top && !target.contains(top) && !top.contains(target)
+            ? !!top.closest(
+                'header, nav, [role="region"], [data-sonner-toaster]',
+              )
+            : false
+        return covered
+          ? `${el.tagName} "${(el.getAttribute('aria-label') ?? el.textContent).trim().slice(0, 40)}" under ${top?.closest('header, nav, [role="region"]')?.getAttribute('aria-label') ?? top?.tagName}`
+          : null
+      })
+      if (r) hidden.push(r)
+    }
+    expect(hidden, info.project.name).toEqual([])
+  })
+})

@@ -455,7 +455,13 @@ export function SprintsPage() {
         {pastStats.length === 0 ? (
           <p className="px-5 py-6 text-ink-soft sm:px-6">{t.emptyHistory}</p>
         ) : (
-          <div className="overflow-x-auto">
+          // relative: ukryte podpisy (sr-only) w komórkach nie wypychają strony w bok.
+          <div
+            className="relative overflow-x-auto"
+            role="region"
+            tabIndex={0}
+            aria-label={t.tableRegion}
+          >
             <table className="w-full min-w-[40rem] text-[0.9375rem]">
               <thead>
                 <tr className="text-left text-sm text-ink-soft">

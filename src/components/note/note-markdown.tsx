@@ -141,14 +141,14 @@ export function NoteMarkdown({
       <pre
         // Długie linie kodu przewijają się w poziomie; region musi być osiągalny z klawiatury.
         tabIndex={0}
-        className="code-dark my-2 overflow-x-auto rounded-lg bg-[var(--code-block-bg)] px-3.5 py-3 leading-relaxed text-[var(--code-block-ink)] focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="code-dark my-2 relative overflow-x-auto rounded-lg bg-[var(--code-block-bg)] px-3.5 py-3 leading-relaxed text-[var(--code-block-ink)] focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         {children}
       </pre>
     ),
     hr: () => <hr className="my-3 border-line" />,
     table: ({ children }) => (
-      <div tabIndex={0} className="my-2 overflow-x-auto">
+      <div tabIndex={0} className="my-2 relative overflow-x-auto">
         <table className="text-left text-sm">{children}</table>
       </div>
     ),

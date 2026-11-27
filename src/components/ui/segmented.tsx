@@ -60,7 +60,7 @@ export function Segmented<T extends string>({
                 htmlFor={optionId}
                 className={cn(
                   'block cursor-pointer rounded-lg font-medium text-ink-soft transition-colors select-none hover:text-ink',
-                  'peer-checked:bg-surface peer-checked:text-ink peer-checked:shadow-sm',
+                  'peer-checked:bg-surface peer-checked:text-ink peer-checked:shadow-sm peer-checked:ring-[1.5px] peer-checked:ring-ink-soft',
                   'peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring',
                   size === 'sm'
                     ? 'px-3 py-1 text-sm'

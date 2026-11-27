@@ -52,6 +52,18 @@ const pl: LegalDoc = {
                 'Do wyczyszczenia danych witryny',
               ],
               [
+                'ph-theme',
+                'Niezbędne, localStorage',
+                'Wybrany motyw panelu (jasny, ciemny, jak w systemie)',
+                'Do wyczyszczenia danych witryny',
+              ],
+              [
+                'ph-clock',
+                'Niezbędne, localStorage',
+                'Wybrany format godziny (12- albo 24-godzinny)',
+                'Do wyczyszczenia danych witryny',
+              ],
+              [
                 'demo-v1:*',
                 'Niezbędne, localStorage',
                 'Dane konta demo (tylko w trybie demo)',
@@ -134,6 +146,18 @@ const en: LegalDoc = {
                 'setup:*',
                 'Necessary, localStorage',
                 'Progress of the setup checklist in this browser',
+                'Until you clear site data',
+              ],
+              [
+                'ph-theme',
+                'Necessary, localStorage',
+                'Your app theme (light, dark or matching the system)',
+                'Until you clear site data',
+              ],
+              [
+                'ph-clock',
+                'Necessary, localStorage',
+                'Your time format (12- or 24-hour)',
                 'Until you clear site data',
               ],
               [

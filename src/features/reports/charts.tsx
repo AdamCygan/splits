@@ -54,8 +54,8 @@ export function ChartCard({
           <div
             tabIndex={0}
             role="region"
-            aria-label={title}
-            className="mt-2 overflow-x-auto rounded-sm"
+            aria-label={fmt(t.scrollRegion, { title })}
+            className="mt-2 relative overflow-x-auto rounded-sm"
           >
             {table}
           </div>
@@ -453,13 +453,15 @@ export function HourHeatmap({
       <div
         tabIndex={0}
         role="region"
-        aria-label={t.hours.title}
-        className="overflow-x-auto rounded-sm"
+        aria-label={fmt(t.scrollRegion, { title: t.hours.title })}
+        className="relative overflow-x-auto rounded-sm"
       >
         <table className="w-full border-separate border-spacing-[2px] text-xs">
           <thead>
             <tr>
-              <th className="w-10" />
+              <th scope="col" className="w-10">
+                <span className="sr-only">{t.dayColumn}</span>
+              </th>
               {hours.map((h) => (
                 <th
                   key={h}
@@ -619,8 +621,9 @@ export function ColumnChart({
           <li
             key={i.key}
             className="flex h-full min-w-0 flex-1 flex-col items-center justify-end"
-            aria-label={`${i.label}: ${i.display}`}
           >
+            {/* Podpis słupka dla czytników (widoczne podpisy są pod osią, ukryte przed nimi). */}
+            <span className="sr-only">{i.label}: </span>
             <span className="mb-1 text-xs font-semibold tabular-nums">
               {i.display}
             </span>

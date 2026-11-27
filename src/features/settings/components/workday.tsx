@@ -102,12 +102,14 @@ function WorkdayForm({ settings }: { settings: UserSettings }) {
     summaryTemplate: settings.summaryTemplate,
     breakMinutes: draft.breakMinutes,
   }
-  const dirty =
-    JSON.stringify(next) !==
-    JSON.stringify({
-      ...settings,
-      workingDays: [...settings.workingDays].sort(),
-    })
+  // Porównanie pole po polu: kolejność kluczy w obiekcie z serwera nie może udawać zmian.
+  const saved: UserSettings = {
+    ...settings,
+    workingDays: [...settings.workingDays].sort(),
+  }
+  const dirty = (Object.keys(next) as Array<keyof UserSettings>).some(
+    (k) => JSON.stringify(next[k]) !== JSON.stringify(saved[k]),
+  )
   useUnsavedWarning(dirty)
 
   const days = weekdayNames(locale, 'long')

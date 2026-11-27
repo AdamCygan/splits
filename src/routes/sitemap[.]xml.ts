@@ -12,6 +12,7 @@ const pages: ReadonlyArray<{
   { path: '/terms', priority: '0.3', changefreq: 'yearly' },
   { path: '/privacy', priority: '0.3', changefreq: 'yearly' },
   { path: '/cookies', priority: '0.3', changefreq: 'yearly' },
+  { path: '/accessibility', priority: '0.3', changefreq: 'monthly' },
   { path: '/register', priority: '0.6', changefreq: 'yearly' },
 ]
 

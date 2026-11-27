@@ -522,7 +522,7 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
               <p className="text-sm text-ink-soft">{periodLabel}</p>
             </header>
             <div
-              className="overflow-x-auto"
+              className="relative overflow-x-auto"
               tabIndex={0}
               role="region"
               aria-label={t.table.region}

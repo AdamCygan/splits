@@ -177,6 +177,9 @@ export function AccountMenu({
           <DropdownMenuItem asChild className={legalItem}>
             <Link to="/privacy">{common.legal.privacy}</Link>
           </DropdownMenuItem>
+          <DropdownMenuItem asChild className={legalItem}>
+            <Link to="/accessibility">{common.legal.accessibility}</Link>
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={openSettings} className={legalItem}>
             {common.legal.cookieSettings}
           </DropdownMenuItem>

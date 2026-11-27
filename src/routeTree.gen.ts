@@ -20,6 +20,7 @@ import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-password'
 import { Route as MarketingIndexRouteImport } from './routes/_marketing/index'
+import { Route as MarketingAccessibilityRouteImport } from './routes/_marketing/accessibility'
 import { Route as MarketingCookiesRouteImport } from './routes/_marketing/cookies'
 import { Route as MarketingPricingRouteImport } from './routes/_marketing/pricing'
 import { Route as MarketingPrivacyRouteImport } from './routes/_marketing/privacy'
@@ -98,6 +99,11 @@ const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
 const MarketingIndexRoute = MarketingIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => MarketingRoute,
+} as any)
+const MarketingAccessibilityRoute = MarketingAccessibilityRouteImport.update({
+  id: '/accessibility',
+  path: '/accessibility',
   getParentRoute: () => MarketingRoute,
 } as any)
 const MarketingCookiesRoute = MarketingCookiesRouteImport.update({
@@ -242,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/reset-password': typeof AuthResetPasswordRoute
+  '/accessibility': typeof MarketingAccessibilityRoute
   '/cookies': typeof MarketingCookiesRoute
   '/pricing': typeof MarketingPricingRoute
   '/privacy': typeof MarketingPrivacyRoute
@@ -277,6 +284,7 @@ export interface FileRoutesByTo {
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/reset-password': typeof AuthResetPasswordRoute
+  '/accessibility': typeof MarketingAccessibilityRoute
   '/cookies': typeof MarketingCookiesRoute
   '/pricing': typeof MarketingPricingRoute
   '/privacy': typeof MarketingPrivacyRoute
@@ -316,6 +324,7 @@ export interface FileRoutesById {
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/register': typeof AuthRegisterRoute
   '/_auth/reset-password': typeof AuthResetPasswordRoute
+  '/_marketing/accessibility': typeof MarketingAccessibilityRoute
   '/_marketing/cookies': typeof MarketingCookiesRoute
   '/_marketing/pricing': typeof MarketingPricingRoute
   '/_marketing/privacy': typeof MarketingPrivacyRoute
@@ -356,6 +365,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/accessibility'
     | '/cookies'
     | '/pricing'
     | '/privacy'
@@ -391,6 +401,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/accessibility'
     | '/cookies'
     | '/pricing'
     | '/privacy'
@@ -429,6 +440,7 @@ export interface FileRouteTypes {
     | '/_auth/login'
     | '/_auth/register'
     | '/_auth/reset-password'
+    | '/_marketing/accessibility'
     | '/_marketing/cookies'
     | '/_marketing/pricing'
     | '/_marketing/privacy'
@@ -544,6 +556,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof MarketingIndexRouteImport
+      parentRoute: typeof MarketingRoute
+    }
+    '/_marketing/accessibility': {
+      id: '/_marketing/accessibility'
+      path: '/accessibility'
+      fullPath: '/accessibility'
+      preLoaderRoute: typeof MarketingAccessibilityRouteImport
       parentRoute: typeof MarketingRoute
     }
     '/_marketing/cookies': {
@@ -809,6 +828,7 @@ const AuthRouteChildren: AuthRouteChildren = {
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface MarketingRouteChildren {
+  MarketingAccessibilityRoute: typeof MarketingAccessibilityRoute
   MarketingCookiesRoute: typeof MarketingCookiesRoute
   MarketingPricingRoute: typeof MarketingPricingRoute
   MarketingPrivacyRoute: typeof MarketingPrivacyRoute
@@ -817,6 +837,7 @@ interface MarketingRouteChildren {
 }
 
 const MarketingRouteChildren: MarketingRouteChildren = {
+  MarketingAccessibilityRoute: MarketingAccessibilityRoute,
   MarketingCookiesRoute: MarketingCookiesRoute,
   MarketingPricingRoute: MarketingPricingRoute,
   MarketingPrivacyRoute: MarketingPrivacyRoute,

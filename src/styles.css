@@ -443,3 +443,48 @@
   width: 24px !important;
   height: 24px !important;
 }
+
+/*
+ * Fokus nie chowa się pod przyklejonymi paskami (WCAG 2.4.11): przy przechodzeniu Tabem
+ * przeglądarka przewija tak, żeby element nie lądował pod górnym paskiem timera/nagłówkiem
+ * ani pod dolną nawigacją na telefonie czy paskiem „Niezapisane zmiany”.
+ */
+html {
+  scroll-padding-top: 5rem;
+  scroll-padding-bottom: 6rem;
+}
+
+/*
+ * Tryb wysokiego kontrastu (Windows, forced-colors): system zamienia kolory na swoje i
+ * usuwa cienie, a z nimi pierścienie fokusu (ring) i tła zaznaczeń. Przywracamy je
+ * kolorami systemowymi, a kolory danych (wykresy, paski postępu, kropki rodzajów pracy)
+ * zostawiamy, bo niosą informację.
+ */
+@media (forced-colors: active) {
+  :focus-visible,
+  label:has(input.sr-only:focus-visible),
+  input.sr-only:focus-visible + * {
+    outline: 3px solid Highlight !important;
+    outline-offset: 2px !important;
+  }
+  nav [data-status='active'],
+  nav [aria-current='page'],
+  [aria-pressed='true'],
+  [role='option'][aria-selected='true'],
+  [role='tab'][aria-selected='true'],
+  [data-highlighted],
+  label:has(input.sr-only:checked),
+  input.sr-only:checked + * {
+    forced-color-adjust: none;
+    background-color: Highlight !important;
+    color: HighlightText !important;
+    border-color: Highlight !important;
+  }
+  [style*='background'],
+  [class*='bg-wt-'],
+  [class*='bg-[var(--wt'],
+  [role='progressbar'],
+  [role='progressbar'] * {
+    forced-color-adjust: none;
+  }
+}

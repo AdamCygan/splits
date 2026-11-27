@@ -172,7 +172,14 @@ function AppShell() {
         {/* Boczne menu (komputer): przyklejone, na pełną wysokość okna */}
         <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-line bg-surface p-4 md:flex">
           <div className="mb-8 flex items-center justify-between px-2 pt-1">
-            <Link to="/app" aria-label={common.nav.home} className="rounded-md">
+            <Link
+              to="/app"
+              aria-label={common.nav.home}
+              className="rounded-md"
+              // Logo to nie pozycja menu: bez aria-current="page" na każdej stronie.
+              activeOptions={{ exact: true }}
+              activeProps={{ 'aria-current': undefined }}
+            >
               <Logo />
             </Link>
           </div>
@@ -224,7 +231,14 @@ function AppShell() {
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Górny pasek (telefon) */}
           <header className="flex items-center justify-between border-b border-line bg-surface px-4 py-3 md:hidden">
-            <Link to="/app" aria-label={common.nav.home} className="rounded-md">
+            <Link
+              to="/app"
+              aria-label={common.nav.home}
+              className="rounded-md"
+              // Logo to nie pozycja menu: bez aria-current="page" na każdej stronie.
+              activeOptions={{ exact: true }}
+              activeProps={{ 'aria-current': undefined }}
+            >
               <Logo />
             </Link>
             <div className="flex items-center gap-1">

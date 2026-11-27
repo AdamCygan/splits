@@ -18,6 +18,8 @@ const en = {
       openDay: 'Click to see this day',
       openWeek: 'Click to report on this week',
     },
+    scrollRegion: '{title}: chart, scrolls sideways',
+    dayColumn: 'Day',
     hours: {
       title: 'When you work',
       lead: 'Weekday and hour of the entries with a start and end time.',
@@ -165,6 +167,8 @@ const pl: ReportsMessages = {
       openDay: 'Kliknij, żeby zobaczyć ten dzień',
       openWeek: 'Kliknij, żeby zobaczyć raport z tego tygodnia',
     },
+    scrollRegion: '{title}: wykres, przewija się w bok',
+    dayColumn: 'Dzień',
     hours: {
       title: 'Kiedy pracujesz',
       lead: 'Dzień tygodnia i godzina wpisów z godzinami od–do.',

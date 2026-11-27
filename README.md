@@ -90,10 +90,21 @@ Wyłączysz to zmienną `MIGRATE_ON_START=false`.
   i w Ustawienia → Account; wybór zapisuje się w ciasteczku `app_locale`).
 - Teksty są w `src/i18n/messages/*.ts` jako pary `en`/`pl` z tym samym kształtem,
   więc brak tłumaczenia to błąd TypeScriptu.
-- Dostępność (WCAG 2.2 AA): link „przejdź do treści”, ogłaszanie zmiany strony,
-  natywne kontrolki formularzy, okna z pułapką fokusu i powrotem fokusu, przyciski
-  „w górę / w dół” zamiast przeciągania, kolor nigdy nie jest jedyną informacją.
-  Testy Playwright sprawdzają każdą sekcję axe-core na komputerze i telefonie.
+- Dostępność (cel: WCAG 2.2 AA, czyli też EN 301 549 z Europejskiego Aktu o Dostępności):
+  link „przejdź do treści”, ogłaszanie zmiany strony, natywne kontrolki formularzy, okna
+  z pułapką fokusu i powrotem fokusu, przyciski „w górę / w dół” zamiast przeciągania,
+  kolor nigdy nie jest jedyną informacją, tryb wysokiego kontrastu (`forced-colors`),
+  `prefers-reduced-motion`, fokus nie chowa się pod przyklejonymi paskami (`scroll-padding`).
+- Deklaracja dostępności: `/accessibility` (`src/features/legal/accessibility.ts`). Przy każdym
+  przeglądzie zmień `UPDATED` i uczciwie opisz znane ograniczenia.
+- Testy: każdy test e2e kończy się sprawdzeniem axe-core, a `tests/e2e/a11y.spec.ts` przechodzi
+  przez **wszystkie strony** (oba motywy, komputer i telefon, reguły WCAG 2.2 AA + dobre praktyki),
+  sprawdza układ przy 320 px bez przewijania w bok, tryb wysokiego kontrastu, odnośnik
+  „przejdź do treści” i widoczność fokusu pod paskami. **Nowa strona = wpis w listach w tym pliku.**
+- Zasady przy zmianach w UI: każda kontrolka ma nazwę (etykieta albo `aria-label` zawierający
+  widoczny tekst), cel kliknięcia min. 24×24 px, przewijane w bok kontenery z tabelami mają
+  `relative overflow-x-auto` (inaczej ukryte podpisy `sr-only` wypychają stronę w bok),
+  zaznaczenie nie może opierać się tylko na tle (w trybie wysokiego kontrastu tła znikają).
 
 ## Co jest w panelu
 
@@ -133,7 +144,7 @@ Wyłączysz to zmienną `MIGRATE_ON_START=false`.
 
 ## Dokumenty prawne i cookies
 
-- Regulamin (`/terms`), polityka prywatności (`/privacy`) i polityka cookies (`/cookies`) po polsku i po angielsku:
+- Regulamin (`/terms`), polityka prywatności (`/privacy`), polityka cookies (`/cookies`) i deklaracja dostępności (`/accessibility`) po polsku i po angielsku:
   `src/features/legal/*.ts`.
 - **Przed publikacją uzupełnij `src/config/legal.ts`** (dane firmy z CEIDG/KRS, adres, NIP, e-mail do spraw
   danych, faktyczni dostawcy hostingu, bazy i e-maili) i daj dokumenty do przejrzenia prawnikowi.

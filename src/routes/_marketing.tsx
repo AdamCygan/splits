@@ -24,7 +24,7 @@ function MarketingLayout() {
       <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/95 backdrop-blur-sm">
         <nav
           aria-label={t.nav.home}
-          className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6"
+          className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-3 min-[360px]:px-4 sm:gap-6 sm:px-6"
         >
           <Link to="/" aria-label={t.nav.home} className="rounded-md">
             <Logo />
@@ -48,11 +48,12 @@ function MarketingLayout() {
               {home.nav.demo}
             </Link>
           </div>
-          <div className="ml-auto flex items-center gap-1.5 md:ml-0">
-            <Button variant="ghost" asChild>
+          {/* Przy 320 px (WCAG 1.4.10) przyciski mieszczą się obok logo bez przewijania w bok. */}
+          <div className="ml-auto flex items-center gap-1 min-[360px]:gap-1.5 md:ml-0">
+            <Button variant="ghost" className="max-[359px]:px-2.5" asChild>
               <Link to="/login">{t.nav.login}</Link>
             </Button>
-            <Button asChild>
+            <Button className="max-[359px]:px-3" asChild>
               <Link to="/register">{t.nav.signup}</Link>
             </Button>
           </div>
@@ -104,6 +105,9 @@ function MarketingLayout() {
               </Link>
               <Link to="/cookies" className="rounded-sm hover:text-ink">
                 {t.legal.cookies}
+              </Link>
+              <Link to="/accessibility" className="rounded-sm hover:text-ink">
+                {t.legal.accessibility}
               </Link>
               <CookieSettingsButton className="rounded-sm hover:text-ink" />
             </nav>
