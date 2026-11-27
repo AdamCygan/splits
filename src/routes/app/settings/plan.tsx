@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { PlanSettings } from '#/features/settings/components/plan'
+import { PlanSettings } from '#/features/billing/views/plan-settings'
 import { getLocale } from '#/i18n/locale'
 import { settingsMessages } from '#/i18n/messages/settings'
 import { site } from '#/config/site'

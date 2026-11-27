@@ -7,7 +7,7 @@ import {
   parseDuration,
   stoppedValues,
   validateEntry,
-} from '#/domain/entries'
+} from '../../src/features/time-entries/domain/entries'
 
 const base: TimeEntryInput = {
   taskTypeId: 't',

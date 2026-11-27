@@ -5,7 +5,7 @@ import {
   sameTime,
   scheduleRuns,
   scheduledOn,
-} from '#/domain/schedule'
+} from '../../src/features/templates/domain/schedule'
 
 const daily: QuickTemplate = {
   id: 'daily',

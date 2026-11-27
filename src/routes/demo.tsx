@@ -34,7 +34,7 @@ function DemoPage() {
 
   useEffect(() => {
     let active = true
-    void import('#/features/auth/demo')
+    void import('#/features/auth/controllers/demo')
       .then(({ startDemo }) => startDemo(locale))
       .then((error) => {
         if (!active) return

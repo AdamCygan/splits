@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { todayIn } from '#/domain/dates'
+import { todayIn } from '../../src/shared/domain/dates'
 import { afterEach, describe, expect, it } from 'vitest'
 import type Stripe from 'stripe'
 import { encryptSecret, newTotpSecret } from '#/server/auth/totp'

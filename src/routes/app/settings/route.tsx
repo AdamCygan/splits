@@ -5,7 +5,10 @@ import {
   createFileRoute,
   useRouterState,
 } from '@tanstack/react-router'
-import { settingsGroups, settingsSections } from '#/features/settings/sections'
+import {
+  settingsGroups,
+  settingsSections,
+} from '#/features/settings/domain/sections'
 import { useMessages } from '#/i18n/context'
 import { settingsMessages } from '#/i18n/messages/settings'
 

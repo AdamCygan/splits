@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { safeUrl } from '#/domain/entries'
+import { safeUrl } from '../../src/features/time-entries/domain/entries'
 import { securityTxt } from '#/routes/[.]well-known/security[.]txt'
 import { clientIp } from '#/server/http/client-ip'
 import { sameOrigin } from '#/server/http/origin'

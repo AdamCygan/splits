@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { TasksPage } from '#/features/tasks/tasks-page'
+import { TasksPage } from '#/features/tasks/views/tasks-page'
 import { getLocale } from '#/i18n/locale'
 import { panelMessages } from '#/i18n/messages/panel'
 import { site } from '#/config/site'

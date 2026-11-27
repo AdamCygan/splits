@@ -1,4 +1,8 @@
-import type { AdminActionKind, AdminUserSort, SortDir } from '#/domain/admin'
+import type {
+  AdminActionKind,
+  AdminUserSort,
+  SortDir,
+} from '#/features/admin/domain/admin'
 import {
   activeSessionSchema,
   securityStatusSchema,

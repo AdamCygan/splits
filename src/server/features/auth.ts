@@ -5,7 +5,7 @@ import type { Context } from 'hono'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import type { AuthSession } from '#/features/auth/data/dto'
-import { USERNAME_RE } from '#/domain/rules'
+import { USERNAME_RE } from '#/features/task-types/domain/rules'
 import { isLocale } from '#/i18n/config'
 import type { Locale } from '#/i18n/config'
 import {

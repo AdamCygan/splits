@@ -7,8 +7,8 @@ import {
   toggleLinePrefix,
   toggleTaskAt,
   toggleWrap,
-} from '#/domain/markdown'
-import type { TextState } from '#/domain/markdown'
+} from '../../src/shared/domain/markdown'
+import type { TextState } from '../../src/shared/domain/markdown'
 
 /** `|` oznacza kursor, `«` i `»` zaznaczenie. */
 function state(marked: string): TextState {

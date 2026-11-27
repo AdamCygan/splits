@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
-import { addDays, todayIn } from '#/domain/dates'
+import { addDays, todayIn } from '../../src/shared/domain/dates'
 import { FREE_LIMITS } from '../../src/features/billing/domain/plans'
 import { db } from '#/server/db/client'
 import { users } from '#/server/db/schema'

@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { AdminLayout } from '#/features/admin/admin-layout'
+import { AdminLayout } from '#/features/admin/views/admin-layout'
 import { getLocale } from '#/i18n/locale'
 import { adminMessages } from '#/i18n/messages/admin'
 import { site } from '#/config/site'
@@ -10,7 +10,7 @@ import { site } from '#/config/site'
  */
 export const Route = createFileRoute('/app/admin')({
   beforeLoad: async () => {
-    const { getCurrentUser } = await import('#/features/auth/session')
+    const { getCurrentUser } = await import('#/features/auth/data/session')
     if (getCurrentUser()?.role !== 'admin') throw redirect({ to: '/app' })
   },
   head: () => ({

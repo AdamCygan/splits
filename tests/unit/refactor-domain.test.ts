@@ -2,20 +2,37 @@ import { describe, expect, it } from 'vitest'
 import type { QuickTemplate } from '../../src/features/templates/data/dto'
 import type { TaskType } from '../../src/features/task-types/data/dto'
 import type { TimeEntry } from '../../src/features/time-entries/data/dto'
-import { aggregateTasks, dayTaskGroups } from '#/domain/task-groups'
+import {
+  aggregateTasks,
+  dayTaskGroups,
+} from '../../src/features/tasks/domain/task-groups'
 import {
   defaultChoice,
   templateNeeds,
   templateNeedsDialog,
   templatePlan,
-} from '#/domain/templates'
-import { blockIndexAt, timelineAxis } from '#/domain/day-summary'
-import { maxOf, percentOf } from '#/domain/numbers'
-import { nextSort, reportRange } from '#/domain/report'
-import { taskDayTimeline, taskNotes } from '#/domain/task-insights'
-import { currentSprint, startedSprints, upcomingSprint } from '#/domain/sprints'
-import { foldText } from '#/domain/text'
-import { clampWorkDate, dayTotals, historyStart } from '#/domain/workday'
+} from '../../src/features/templates/domain/templates'
+import {
+  blockIndexAt,
+  timelineAxis,
+} from '../../src/features/day/domain/day-summary'
+import { maxOf, percentOf } from '../../src/shared/domain/numbers'
+import { nextSort, reportRange } from '../../src/features/reports/domain/report'
+import {
+  taskDayTimeline,
+  taskNotes,
+} from '../../src/features/tasks/domain/task-insights'
+import {
+  currentSprint,
+  startedSprints,
+  upcomingSprint,
+} from '../../src/features/sprints/domain/sprints'
+import { foldText } from '../../src/shared/domain/text'
+import {
+  clampWorkDate,
+  dayTotals,
+  historyStart,
+} from '../../src/features/settings/domain/workday'
 
 let n = 0
 const entry = (patch: Partial<TimeEntry>): TimeEntry => ({

@@ -1,7 +1,7 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import type { MiddlewareHandler } from 'hono'
 import { z } from 'zod'
-import type { AdminActionKind } from '#/domain/admin'
+import type { AdminActionKind } from '#/features/admin/domain/admin'
 import { db } from '../../db/client'
 import type { Tx } from '../../db/client'
 import { adminActions, refreshTokens, users } from '../../db/schema'

@@ -7,7 +7,7 @@ import {
   sprintDay,
   sprintStats,
   timeGoalProgress,
-} from '#/domain/sprint-stats'
+} from '../../src/features/sprints/domain/sprint-stats'
 
 const types = [
   { id: 'task', storyPointsRequirement: 'required' as const },

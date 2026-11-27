@@ -9,7 +9,7 @@ import {
 } from '#/components/form/form-field'
 import { Button } from '#/components/ui/button'
 import { authApi } from '#/features/auth/data/api'
-import { passwordSchema } from '#/features/auth/schemas'
+import { passwordSchema } from '#/features/auth/domain/validation'
 import { useMessages } from '#/i18n/context'
 import { getLocale } from '#/i18n/locale'
 import { authMessages } from '#/i18n/messages/auth'

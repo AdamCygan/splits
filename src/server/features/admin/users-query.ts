@@ -15,7 +15,10 @@ import {
 } from 'drizzle-orm'
 import type { SQL } from 'drizzle-orm'
 import { z } from 'zod'
-import { ADMIN_USER_SORTS, PAYMENT_PROBLEM_STATUSES } from '#/domain/admin'
+import {
+  ADMIN_USER_SORTS,
+  PAYMENT_PROBLEM_STATUSES,
+} from '#/features/admin/domain/admin'
 import { db } from '../../db/client'
 import { subscriptions, timeEntries, users } from '../../db/schema'
 import { iso } from '../dto'

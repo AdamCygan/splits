@@ -1,6 +1,6 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { GoogleSignIn } from '#/features/auth/components/google-sign-in'
-import { RegisterForm } from '#/features/auth/components/register-form'
+import { GoogleSignIn } from '#/features/auth/views/google-sign-in'
+import { RegisterForm } from '#/features/auth/views/register-form'
 import { isBillingInterval } from '#/features/billing/domain/plans'
 import type { BillingInterval } from '#/features/billing/domain/plans'
 import { useMessages } from '#/i18n/context'

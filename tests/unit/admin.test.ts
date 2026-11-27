@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { adminUsersCsv, isPaymentProblem, nextAdminSort } from '#/domain/admin'
-import type { AdminCsvUser } from '#/domain/admin'
-import { csvCell, toCsv } from '#/domain/csv'
+import {
+  adminUsersCsv,
+  isPaymentProblem,
+  nextAdminSort,
+} from '../../src/features/admin/domain/admin'
+import type { AdminCsvUser } from '../../src/features/admin/domain/admin'
+import { csvCell, toCsv } from '../../src/shared/domain/csv'
 import {
   activeUserFilters,
   pageCount,
   parseActionSearch,
   parseUserSearch,
-} from '#/features/admin/model'
+} from '../../src/features/admin/domain/filters'
 
 describe('admin sorting', () => {
   it.each<

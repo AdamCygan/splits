@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { WorkTypeSettings } from '#/features/settings/components/work-types'
+import { WorkTypeSettings } from '#/features/task-types/views/work-types-settings'
 import { getLocale } from '#/i18n/locale'
 import { settingsMessages } from '#/i18n/messages/settings'
 import { site } from '#/config/site'

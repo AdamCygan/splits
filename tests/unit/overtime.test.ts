@@ -3,10 +3,17 @@ import type {
   TimeEntry,
   TimeEntryInput,
 } from '../../src/features/time-entries/data/dto'
-import { validateEntry } from '#/domain/entries'
-import { groupTasks, reportCsv, totalsOf } from '#/domain/report'
-import { renderSummary, taskStats } from '#/domain/summary'
-import { summaryValues } from '#/features/time-entries/summary'
+import { validateEntry } from '../../src/features/time-entries/domain/entries'
+import {
+  groupTasks,
+  reportCsv,
+  totalsOf,
+} from '../../src/features/reports/domain/report'
+import {
+  renderSummary,
+  taskStats,
+} from '../../src/features/tasks/domain/summary'
+import { summaryValues } from '../../src/features/time-entries/domain/summary'
 
 const base: TimeEntryInput = {
   taskTypeId: 't',

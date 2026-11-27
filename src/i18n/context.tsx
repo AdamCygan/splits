@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo } from 'react'
 import { useRouter } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
-import { fromMinutes } from '#/domain/entries'
+import { fromMinutes } from '#/features/time-entries/domain/entries'
 import { clockTime, useClockPref } from '#/lib/clock'
 import { localeTags } from './config'
 import {

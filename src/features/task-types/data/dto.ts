@@ -1,4 +1,4 @@
-import type { WorkKind } from '#/config/work-types'
+import type { WorkKind } from '#/features/task-types/domain/work-types'
 import type { TimeInputMode } from '#/features/settings/data/dto'
 import { z } from '#/lib/zod'
 import { idSchema, requirementSchema, workKindSchema } from '#/shared/data/dto'

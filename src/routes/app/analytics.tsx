@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ReportsPage } from '#/features/reports/reports-page'
+import { ReportsPage } from '#/features/reports/views/reports-page'
 import { getLocale } from '#/i18n/locale'
 import { reportsMessages } from '#/i18n/messages/reports'
 import { site } from '#/config/site'

@@ -1,6 +1,6 @@
 import { and, count, countDistinct, eq, gte, inArray, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
-import { PAYMENT_PROBLEM_STATUSES } from '#/domain/admin'
+import { PAYMENT_PROBLEM_STATUSES } from '#/features/admin/domain/admin'
 import { db } from '../../db/client'
 import { payments, subscriptions, timeEntries, users } from '../../db/schema'
 import type { AppEnv } from '../../http/context'

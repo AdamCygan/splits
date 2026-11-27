@@ -6,7 +6,7 @@ import { useI18n, useMessages } from '#/i18n/context'
 import { commonMessages } from '#/i18n/messages/common'
 import { displayTime, parseTime, useClockPref, uses12h } from '#/lib/clock'
 import { cn } from '#/lib/utils'
-import { fromMinutes, toMinutes } from '#/domain/entries'
+import { fromMinutes, toMinutes } from '#/features/time-entries/domain/entries'
 import { Input } from './input'
 
 const SLOTS = Array.from({ length: 96 }, (_, i) => {

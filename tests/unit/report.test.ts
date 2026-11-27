@@ -9,7 +9,7 @@ import {
   sortRows,
   spForType,
   totalsOf,
-} from '#/domain/report'
+} from '../../src/features/reports/domain/report'
 
 let n = 0
 const entry = (patch: Partial<TimeEntry>): TimeEntry => ({
@@ -181,7 +181,8 @@ describe('report', () => {
 
 describe('task summary intervals', () => {
   it('Should list time ranges per day for {intervals}', async () => {
-    const { sampleValues } = await import('#/features/time-entries/summary')
+    const { sampleValues } =
+      await import('../../src/features/time-entries/domain/summary')
     const en = sampleValues('en').intervals
     expect(en).toContain('9:15 AM–11:25 AM (2h 10m)')
     expect(en).toContain('6:40 AM–7:20 AM (40m)')

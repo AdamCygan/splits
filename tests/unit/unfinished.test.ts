@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { TimeEntry } from '../../src/features/time-entries/data/dto'
-import { UNFINISHED_LIMIT, unfinishedTasks } from '#/domain/unfinished'
+import {
+  UNFINISHED_LIMIT,
+  unfinishedTasks,
+} from '../../src/features/time-entries/domain/unfinished'
 
 const today = '2026-11-18'
 let n = 0

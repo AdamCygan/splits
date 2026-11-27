@@ -5,7 +5,7 @@ import {
   hourTicks,
   stackOrder,
   timeBuckets,
-} from '#/domain/analytics'
+} from '../../src/features/reports/domain/analytics'
 
 const e = (workDate: string, taskTypeId: string, durationMinutes: number) => ({
   workDate,
@@ -97,7 +97,8 @@ describe('analytics', () => {
 
 describe('story points earned by time worked', () => {
   it('Should use the estimate first, then the SP scale', async () => {
-    const { earnedPoints, taskBudget } = await import('#/domain/sp-scale')
+    const { earnedPoints, taskBudget } =
+      await import('../../src/features/story-points/domain/sp-scale')
     const scale = [
       { points: 3, maxMinutes: 240 },
       { points: 5, maxMinutes: 480 },

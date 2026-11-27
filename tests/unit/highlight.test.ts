@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { highlightCodeLine, markdownLines } from '#/domain/highlight'
+import {
+  highlightCodeLine,
+  markdownLines,
+} from '../../src/shared/domain/highlight'
 
 const joined = (lines: ReturnType<typeof markdownLines>) =>
   lines.map((l) => l.parts.map((p) => p.text).join('')).join('\n')

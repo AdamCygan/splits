@@ -21,12 +21,12 @@ import {
   insertCodeBlock,
   toggleLinePrefix,
   toggleWrap,
-} from '#/domain/markdown'
-import type { TextState } from '#/domain/markdown'
+} from '#/shared/domain/markdown'
+import type { TextState } from '#/shared/domain/markdown'
 import { useMessages } from '#/i18n/context'
 import { entriesMessages } from '#/i18n/messages/entries'
-import { markdownLines } from '#/domain/highlight'
-import type { MarkdownLine, Part } from '#/domain/highlight'
+import { markdownLines } from '#/shared/domain/highlight'
+import type { MarkdownLine, Part } from '#/shared/domain/highlight'
 import { isApplePlatform } from '#/lib/platform'
 import { cn } from '#/lib/utils'
 import { NoteMarkdown } from './note-markdown'

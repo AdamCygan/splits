@@ -20,24 +20,24 @@ import { useEffect } from 'react'
 import { Toaster } from 'sonner'
 import { Logo } from '#/components/brand/logo'
 import { AccountMenu } from '#/components/layout/account-menu'
-import { useBootstrap } from '#/features/app/bootstrap'
+import { useBootstrap } from '#/features/app/data/bootstrap'
 import {
   CommandPalette,
   openCommandPalette,
   shortcutLabel,
-} from '#/features/commands/command-palette'
+} from '#/features/commands/views/command-palette'
 import {
   onSessionExpired,
   signOut,
   useCurrentUser,
-} from '#/features/auth/session'
+} from '#/features/auth/data/session'
 import { useMessages } from '#/i18n/context'
 import { appMessages } from '#/i18n/messages/app'
 import { commonMessages } from '#/i18n/messages/common'
 import { adminMessages } from '#/i18n/messages/admin'
 import { panelMessages } from '#/i18n/messages/panel'
-import { AccountNotices } from '#/features/notices'
-import { TimerBar } from '#/features/time-entries/components/timer'
+import { AccountNotices } from '#/features/notices/views'
+import { TimerBar } from '#/features/time-entries/views/timer'
 import { useClockPref } from '#/lib/clock'
 import { applyTheme } from '#/lib/theme'
 import { QueryProvider } from '#/integrations/tanstack-query/query-provider'
@@ -51,7 +51,7 @@ export const Route = createFileRoute('/app')({
   head: () => ({ meta: [{ name: 'robots', content: 'noindex, nofollow' }] }),
   beforeLoad: async ({ location }) => {
     // Import dynamiczny: moduł sesji (z Zod) nie trafia do bundla strony głównej.
-    const { ensureSession } = await import('#/features/auth/session')
+    const { ensureSession } = await import('#/features/auth/data/session')
     if (!(await ensureSession())) {
       throw redirect({ to: '/login', search: { redirect: location.href } })
     }

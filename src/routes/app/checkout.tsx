@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { CheckoutPage } from '#/features/billing/checkout-page'
+import { CheckoutPage } from '#/features/billing/views/checkout-page'
 import { isBillingInterval } from '#/features/billing/domain/plans'
 import type { BillingInterval } from '#/features/billing/domain/plans'
 import { getLocale } from '#/i18n/locale'

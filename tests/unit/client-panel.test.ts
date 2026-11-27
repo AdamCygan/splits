@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { isEmailToken } from '#/features/auth/confirm-email/token'
-import { accountNotices } from '#/features/notices/model'
+import { isEmailToken } from '../../src/features/auth/domain/email-token'
+import { accountNotices } from '../../src/features/notices/domain/notices'
 import {
   emailChangeInput,
   isDeleteCode,
   isEmail,
   normalizeDeleteCode,
-} from '#/features/settings/components/account/model'
+} from '../../src/features/account/domain/account-forms'
 import { formatMoney } from '#/i18n/format'
 
 const user = { emailVerified: true, isDemo: false }

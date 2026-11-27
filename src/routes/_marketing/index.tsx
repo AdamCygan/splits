@@ -1,17 +1,17 @@
 import { Suspense } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Button } from '#/components/ui/button'
-import { EntryFormDemo } from '#/features/marketing/components/entry-form-demo'
-import { Faq } from '#/features/marketing/components/faq'
+import { EntryFormDemo } from '#/features/marketing/views/entry-form-demo'
+import { Faq } from '#/features/marketing/views/faq'
 import {
   Checks,
   IntervalsVisual,
   SprintSplit,
   TimesheetVisual,
-} from '#/features/marketing/components/home-visuals'
-import { PricingSection } from '#/features/marketing/components/pricing-section'
-import { VideoSection } from '#/features/marketing/components/video-section'
-import { landingJsonLd } from '#/features/marketing/structured-data'
+} from '#/features/marketing/views/home-visuals'
+import { PricingSection } from '#/features/marketing/views/pricing-section'
+import { VideoSection } from '#/features/marketing/views/video-section'
+import { landingJsonLd } from '#/features/marketing/domain/structured-data'
 import { useI18n, useMessages } from '#/i18n/context'
 import { getLocale } from '#/i18n/locale'
 import { commonMessages } from '#/i18n/messages/common'

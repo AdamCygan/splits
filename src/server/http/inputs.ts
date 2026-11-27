@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { isValidDate } from '#/domain/dates'
+import { isValidDate } from '#/shared/domain/dates'
 import {
   HEX_COLOR_RE,
   LIMITS,
@@ -7,8 +7,8 @@ import {
   ROUNDING_OPTIONS,
   TIME_RE,
   USERNAME_RE,
-} from '#/domain/rules'
-import { SUMMARY_TEMPLATE_MAX } from '#/domain/summary'
+} from '#/features/task-types/domain/rules'
+import { SUMMARY_TEMPLATE_MAX } from '#/features/tasks/domain/summary'
 import { locales } from '#/i18n/config'
 import type { Context } from 'hono'
 import { readBody } from './body-limit'

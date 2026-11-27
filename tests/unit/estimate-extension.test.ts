@@ -3,9 +3,16 @@ import type {
   TimeEntry,
   TimeEntryInput,
 } from '../../src/features/time-entries/data/dto'
-import { validateEntry, withExtension } from '#/domain/entries'
-import { groupTasks, reportCsv, totalsOf } from '#/domain/report'
-import { estimateOf } from '#/domain/sprint-stats'
+import {
+  validateEntry,
+  withExtension,
+} from '../../src/features/time-entries/domain/entries'
+import {
+  groupTasks,
+  reportCsv,
+  totalsOf,
+} from '../../src/features/reports/domain/report'
+import { estimateOf } from '../../src/features/sprints/domain/sprint-stats'
 
 const meeting: TimeEntryInput = {
   taskTypeId: 'm',

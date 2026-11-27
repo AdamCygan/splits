@@ -1,4 +1,4 @@
-import { pad2 as pad } from '#/domain/text'
+import { pad2 as pad } from '#/shared/domain/text'
 import { createLocalStore } from './local-store'
 
 /**

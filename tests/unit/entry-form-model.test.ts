@@ -14,7 +14,7 @@ import {
   withPrefill,
   withQuickLog,
   withType,
-} from '#/features/time-entries/components/entry-form/model'
+} from '../../src/features/time-entries/domain/entry-form'
 
 const type = (patch: Partial<TaskType> = {}): TaskType => ({
   id: 'task',

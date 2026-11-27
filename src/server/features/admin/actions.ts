@@ -1,7 +1,7 @@
 import { and, count, desc, eq, ilike, or } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { ADMIN_ACTION_KINDS } from '#/domain/admin'
+import { ADMIN_ACTION_KINDS } from '#/features/admin/domain/admin'
 import { db } from '../../db/client'
 import { adminActions } from '../../db/schema'
 import type { AppEnv } from '../../http/context'

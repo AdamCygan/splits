@@ -1,4 +1,7 @@
-import type { AdminActionKind, AdminUserSort } from '#/domain/admin'
+import type {
+  AdminActionKind,
+  AdminUserSort,
+} from '#/features/admin/domain/admin'
 import type { Dictionary } from '../context'
 import type { Plural } from '../format'
 

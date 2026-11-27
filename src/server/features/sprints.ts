@@ -1,8 +1,11 @@
 import { and, asc, eq, gte, ne } from 'drizzle-orm'
 import { Hono } from 'hono'
-import { todayIn } from '#/domain/dates'
-import { missingCadenceSprints, rangesOverlap } from '#/domain/sprints'
-import type { DateSpan } from '#/domain/sprints'
+import { todayIn } from '#/shared/domain/dates'
+import {
+  missingCadenceSprints,
+  rangesOverlap,
+} from '#/features/sprints/domain/sprints'
+import type { DateSpan } from '#/features/sprints/domain/sprints'
 import { db } from '../db/client'
 import type { Tx } from '../db/client'
 import * as t from '../db/schema'

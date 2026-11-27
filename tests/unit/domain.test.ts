@@ -6,20 +6,20 @@ import {
   isValidDate,
   startOfWeek,
   weekday,
-} from '#/domain/dates'
+} from '../../src/shared/domain/dates'
 import {
   extractTaskKey,
   PROJECT_KEY_RE,
   sameName,
   TIME_RE,
   USERNAME_RE,
-} from '#/domain/rules'
+} from '../../src/features/task-types/domain/rules'
 import {
   rangeFor,
   scalePresets,
   suggestPoints,
   validateScale,
-} from '#/domain/sp-scale'
+} from '../../src/features/story-points/domain/sp-scale'
 import {
   cadenceNumberAt,
   cadenceSprint,
@@ -29,7 +29,7 @@ import {
   sprintName,
   sprintPhase,
   sprintWorkingDays,
-} from '#/domain/sprints'
+} from '../../src/features/sprints/domain/sprints'
 
 describe('dates', () => {
   it('Should add days across month and year boundaries', () => {

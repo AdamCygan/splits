@@ -1,6 +1,6 @@
 import { and, asc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
-import { todayIn } from '#/domain/dates'
+import { todayIn } from '#/shared/domain/dates'
 import { db } from '../db/client'
 import * as t from '../db/schema'
 import type { AppEnv } from '../http/context'

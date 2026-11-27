@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { AdminUserFilter } from '#/features/admin/data/dto'
-import { parseUserSearch } from '#/features/admin/model'
-import { AdminUsersPage } from '#/features/admin/users-page'
+import { parseUserSearch } from '#/features/admin/domain/filters'
+import { AdminUsersPage } from '#/features/admin/views/users-page'
 
 export const Route = createFileRoute('/app/admin/')({
   validateSearch: (search: Record<string, unknown>): AdminUserFilter =>

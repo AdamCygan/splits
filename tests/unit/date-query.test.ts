@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseDateQuery } from '#/domain/date-query'
+import { parseDateQuery } from '../../src/shared/domain/date-query'
 
 describe('parseDateQuery', () => {
   const today = '2026-11-26'

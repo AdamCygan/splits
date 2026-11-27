@@ -6,8 +6,8 @@ import remarkBreaks from 'remark-breaks'
 import remarkGfm from 'remark-gfm'
 import type { PluggableList, Plugin } from 'unified'
 import { cn } from '#/lib/utils'
-import { highlightCodeLine } from '#/domain/highlight'
-import { toggleTaskAt } from '#/domain/markdown'
+import { highlightCodeLine } from '#/shared/domain/highlight'
+import { toggleTaskAt } from '#/shared/domain/markdown'
 
 interface HastNode {
   type: string

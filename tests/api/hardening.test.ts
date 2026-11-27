@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { todayIn } from '#/domain/dates'
+import { todayIn } from '../../src/shared/domain/dates'
 import { MAX_BODY_BYTES, readBody } from '#/server/http/body-limit'
 import { client, registered } from './helpers'
 

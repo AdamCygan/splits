@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { DayOff } from '../../src/features/days-off/data/dto'
-import { groupDaysOff, sprintAvailability } from '#/domain/days-off'
+import {
+  groupDaysOff,
+  sprintAvailability,
+} from '../../src/features/days-off/domain/days-off'
 
 const off = (
   date: string,

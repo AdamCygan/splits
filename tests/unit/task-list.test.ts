@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { TaskRow } from '#/domain/report'
+import type { TaskRow } from '../../src/features/reports/domain/report'
 import {
   NO_TASK_FILTERS,
   activeFilterCount,
@@ -9,7 +9,7 @@ import {
   matchesTaskQuery,
   taskPeriodRange,
   taskStatus,
-} from '#/domain/task-list'
+} from '../../src/features/tasks/domain/task-list'
 
 const row = (over: Partial<TaskRow>): { row: TaskRow } => ({
   row: {

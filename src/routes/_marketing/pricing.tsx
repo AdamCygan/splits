@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Faq } from '#/features/marketing/components/faq'
-import { PricingSection } from '#/features/marketing/components/pricing-section'
+import { Faq } from '#/features/marketing/views/faq'
+import { PricingSection } from '#/features/marketing/views/pricing-section'
 import { useMessages } from '#/i18n/context'
 import { getLocale } from '#/i18n/locale'
 import { marketingMessages } from '#/i18n/messages/marketing'

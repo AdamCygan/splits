@@ -1,5 +1,5 @@
 import { Link, Outlet, createFileRoute } from '@tanstack/react-router'
-import { CookieSettingsButton } from '#/features/legal/cookie-banner'
+import { CookieSettingsButton } from '#/features/legal/views/cookie-banner'
 import { Logo } from '#/components/brand/logo'
 import { LanguageSwitcher } from '#/components/layout/language-switcher'
 import { Button } from '#/components/ui/button'

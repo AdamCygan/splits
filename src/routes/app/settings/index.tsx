@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { SettingsOverview } from '#/features/settings/components/overview'
+import { SettingsOverview } from '#/features/settings/views/overview'
 import { getLocale } from '#/i18n/locale'
 import { settingsMessages } from '#/i18n/messages/settings'
 import { site } from '#/config/site'

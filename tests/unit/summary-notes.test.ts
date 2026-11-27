@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { TimeEntry } from '../../src/features/time-entries/data/dto'
-import { taskStats } from '#/domain/summary'
-import { summaryValues } from '#/features/time-entries/summary'
+import { taskStats } from '../../src/features/tasks/domain/summary'
+import { summaryValues } from '../../src/features/time-entries/domain/summary'
 
 let n = 0
 const e = (over: Partial<TimeEntry>): TimeEntry => ({

@@ -1,5 +1,5 @@
 import { and, eq, isNotNull, isNull, ne, or, sql } from 'drizzle-orm'
-import { todayIn, nowTimeIn, weekday } from '#/domain/dates'
+import { todayIn, nowTimeIn, weekday } from '#/shared/domain/dates'
 import { formatMinutes } from '#/i18n/format'
 import { db } from './db/client'
 import { daysOff, timeEntries, userSettings, users } from './db/schema'

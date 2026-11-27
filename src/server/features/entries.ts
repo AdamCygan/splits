@@ -13,22 +13,25 @@ import {
 } from 'drizzle-orm'
 import { Hono } from 'hono'
 import type { TimeEntryInput } from '#/features/time-entries/data/dto'
-import { addDays, nowTimeIn, todayIn } from '#/domain/dates'
+import { addDays, nowTimeIn, todayIn } from '#/shared/domain/dates'
 import {
   isFutureStart,
   startedAtFor,
   stoppedValues,
   validateEntry,
   ENTRY_LIMITS,
-} from '#/domain/entries'
-import { spForType, taskGroupKey } from '#/domain/report'
-import { UNFINISHED_LOOKBACK_DAYS, unfinishedTasks } from '#/domain/unfinished'
+} from '#/features/time-entries/domain/entries'
+import { spForType, taskGroupKey } from '#/features/reports/domain/report'
+import {
+  UNFINISHED_LOOKBACK_DAYS,
+  unfinishedTasks,
+} from '#/features/time-entries/domain/unfinished'
 import {
   groupSearchResults,
   likePattern,
   rankSearchResults,
   searchWords,
-} from '#/domain/task-search'
+} from '#/features/tasks/domain/task-search'
 import { FREE_LIMITS, hasProAccess } from '#/features/billing/domain/plans'
 import { db } from '../db/client'
 import type { Tx } from '../db/client'

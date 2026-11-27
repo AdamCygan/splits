@@ -1,7 +1,7 @@
 import { and, asc, eq, isNull, ne, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import type { TaskTypeInput } from '#/features/task-types/data/dto'
-import { validateScale } from '#/domain/sp-scale'
+import { validateScale } from '#/features/story-points/domain/sp-scale'
 import { FREE_LIMITS, hasProAccess } from '#/features/billing/domain/plans'
 import { db } from '../db/client'
 import type { Tx } from '../db/client'

@@ -8,7 +8,7 @@ import {
 } from '#/components/form/form-field'
 import { Button } from '#/components/ui/button'
 import { authApi } from '#/features/auth/data/api'
-import { forgotPasswordSchema } from '#/features/auth/schemas'
+import { forgotPasswordSchema } from '#/features/auth/domain/validation'
 import { useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { getLocale } from '#/i18n/locale'

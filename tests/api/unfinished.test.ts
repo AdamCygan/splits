@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, todayIn } from '#/domain/dates'
+import { addDays, todayIn } from '../../src/shared/domain/dates'
 import { registered } from './helpers'
 
 interface Entry {

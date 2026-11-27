@@ -11,8 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '#/components/ui/dropdown-menu'
-import { shortcutLabel } from '#/features/commands/command-palette'
-import { useConsent } from '#/features/legal/consent-context'
+import { shortcutLabel } from '#/features/commands/views/command-palette'
+import { useConsent } from '#/features/legal/views/consent-context'
 import { localeNames, locales } from '#/i18n/config'
 import type { Locale } from '#/i18n/config'
 import { useI18n, useMessages } from '#/i18n/context'
