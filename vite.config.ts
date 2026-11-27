@@ -20,6 +20,13 @@ const config = defineConfig({
               'public, max-age=2592000, stale-while-revalidate=86400',
           },
         },
+        // Zrzuty produktu na landingu (product-today-<język>-<szerokość>.<format>).
+        '/product-*': {
+          headers: {
+            'cache-control':
+              'public, max-age=2592000, stale-while-revalidate=86400',
+          },
+        },
         '/og.png': { headers: { 'cache-control': 'public, max-age=604800' } },
         '/og-pl.png': { headers: { 'cache-control': 'public, max-age=604800' } },
         '/icon.svg': { headers: { 'cache-control': 'public, max-age=604800' } },

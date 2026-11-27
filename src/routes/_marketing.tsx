@@ -53,7 +53,10 @@ function MarketingLayout() {
             <Button variant="ghost" className="max-[359px]:px-2.5" asChild>
               <Link to="/login">{t.nav.login}</Link>
             </Button>
-            <Button className="max-[359px]:px-3" asChild>
+            <Button
+              className="bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)] max-[359px]:px-3"
+              asChild
+            >
               <Link to="/register">{t.nav.signup}</Link>
             </Button>
           </div>

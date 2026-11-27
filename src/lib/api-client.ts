@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '#/lib/zod'
 import { env } from './env'
 import { getAccessToken } from './auth-token'
 import { failure, success } from './result'

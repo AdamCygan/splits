@@ -8,10 +8,6 @@ export type ConfirmState =
   | { status: 'verified' | 'changed'; signedIn: boolean }
   | { status: 'failed'; error: ApiFailure; signedIn: boolean }
 
-/** Token z linku w e-mailu (jak przy resecie hasła). */
-export const isEmailToken = (token: unknown): token is string =>
-  typeof token === 'string' && /^[\w-]{10,200}$/.test(token)
-
 const attempts = new Map<string, Promise<ConfirmState>>()
 
 async function confirm(token: string): Promise<ConfirmState> {

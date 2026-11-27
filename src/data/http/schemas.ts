@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '#/lib/zod'
 
 /** Schematy odpowiedzi API — dane z sieci są walidowane, a nie rzutowane na ślepo. */
 const id = z.string()

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
-import { z } from 'zod'
+import { z } from '#/lib/zod'
 import {
   FormAlert,
   TextField,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isEmailToken } from '#/features/auth/confirm-email/model'
+import { isEmailToken } from '#/features/auth/confirm-email/token'
 import { accountNotices } from '#/features/notices/model'
 import {
   emailChangeInput,

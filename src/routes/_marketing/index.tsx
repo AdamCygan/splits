@@ -39,7 +39,17 @@ const painColors = [
 
 const h2 = 'type-heading text-[clamp(2rem,4.5vw,3.25rem)]'
 const cta = 'h-12 px-6 text-base'
+/** Główne wezwanie na jasnym tle: kolor typu „Task” (styles.css → --brand). */
+const brandCta = `${cta} bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]`
 const visuals = [EntryFormDemo, IntervalsVisual, TimesheetVisual] as const
+/** Pasek nad końcowym wezwaniem: sprint podzielony na typy pracy (szerokość w %, kolor). */
+const finalStrip = [
+  [38, 'var(--wt-task)'],
+  [17, 'var(--wt-review)'],
+  [14, 'var(--wt-pair)'],
+  [11, 'var(--wt-meeting)'],
+  [20, 'var(--wt-extra)'],
+] as const
 
 interface DemoLinkProps {
   label: string
@@ -101,7 +111,7 @@ function LandingPage() {
             {t.hero.lead}
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Button size="lg" asChild className={cta}>
+            <Button size="lg" asChild className={brandCta}>
               <Link to="/register">{t.hero.primary}</Link>
             </Button>
             <DemoLink label={t.hero.demo} />
@@ -151,8 +161,11 @@ function LandingPage() {
                 >
                   <span
                     aria-hidden
-                    className="block h-1.5 w-12 rounded-full"
-                    style={{ background: painColors[i] }}
+                    className="fill-on-view block h-1.5 w-12 rounded-full"
+                    style={{
+                      background: painColors[i],
+                      ['--fill-step' as string]: i,
+                    }}
                   />
                   <h3 className="mt-5 text-xl font-semibold">{pain.title}</h3>
                   <p className="mt-2 text-white/75">{pain.problem}</p>
@@ -274,11 +287,17 @@ function LandingPage() {
           className="below-fold bg-[var(--ink-fixed)] text-white"
         >
           <div aria-hidden className="flex h-2">
-            <span className="w-[38%] bg-wt-task" />
-            <span className="w-[17%] bg-wt-review" />
-            <span className="w-[14%] bg-wt-pair" />
-            <span className="w-[11%] bg-wt-meeting" />
-            <span className="w-[20%] bg-wt-extra" />
+            {finalStrip.map(([width, color], i) => (
+              <span
+                key={color}
+                className="fill-on-view"
+                style={{
+                  width: `${width}%`,
+                  background: color,
+                  ['--fill-step' as string]: i,
+                }}
+              />
+            ))}
           </div>
           <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
             <h2

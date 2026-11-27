@@ -88,6 +88,13 @@
   --wt-meeting: #8a8fa8;
   --wt-custom: #2c8fd6;
 
+  /*
+   * Akcent stron marketingowych = kolor typu „Task”: główny przycisk ma barwę samej pracy.
+   * Biały tekst na --brand: kontrast 7,5:1, na --brand-strong 9:1.
+   */
+  --brand: #3d3bf3;
+  --brand-strong: #2a28d2;
+
   --radius: 0.75rem;
   --background: var(--paper);
   --foreground: var(--ink);
@@ -333,25 +340,18 @@
 
 /*
  * Hero strony głównej: jeden szary blok rozpada się na typy pracy (raz, po wejściu na stronę).
- * split-before: podpis „Programowanie, 80 h” znika; split-bar: otwierają się przerwy;
- * split-segment: szary przechodzi w kolor typu; split-row: liczby wjeżdżają po kolei.
+ * split-cover: szary blok „Programowanie, 80 h” znika; split-segment: spod niego wychodzą
+ * kawałki w kolorach typów pracy; split-row: liczby wjeżdżają po kolei.
  */
-@keyframes split-before {
-  from {
-    opacity: 1;
-  }
+@keyframes split-cover {
   to {
     opacity: 0;
   }
 }
-@keyframes split-gap {
+@keyframes split-piece {
   from {
-    gap: 0;
-  }
-}
-@keyframes split-color {
-  from {
-    background: #6b6f8a;
+    opacity: 0;
+    transform: scale(0.86);
   }
 }
 @keyframes split-row {
@@ -360,15 +360,12 @@
     transform: translateY(8px);
   }
 }
-.split-before {
-  opacity: 0;
-  animation: split-before 350ms ease-out 900ms both;
-}
-.split-bar {
-  animation: split-gap 600ms cubic-bezier(0.2, 0.7, 0.2, 1) 900ms both;
+/* Tylko opacity i transform: animacja idzie na kompozytorze, bez przeliczania układu w każdej klatce. */
+.split-cover {
+  animation: split-cover 380ms ease-out 900ms both;
 }
 .split-segment {
-  animation: split-color 600ms ease-out both;
+  animation: split-piece 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 .split-row {
   animation: split-row 450ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
@@ -494,5 +491,30 @@ html {
   [role='progressbar'],
   [role='progressbar'] * {
     forced-color-adjust: none;
+  }
+}
+
+/*
+ * „Czas się wypełnia”: paski na landingu rosną od lewej, gdy wjeżdżają w widok, jak zalogowane
+ * godziny. Animacja sterowana przewijaniem (bez JavaScriptu, na kompozytorze). Przeglądarki bez
+ * animation-timeline i osoby z „ogranicz ruch” widzą od razu pełne paski.
+ * --fill-step przesuwa start kolejnych kawałków, żeby wypełniały się po kolei.
+ * Rodzic paska nie może mieć overflow: hidden (to kontener przewijania, view() liczyłby się
+ * względem niego i pasek byłby od razu pełny); do przycinania overflow: clip.
+ */
+@keyframes fill-in {
+  from {
+    transform: scaleX(0);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .fill-on-view {
+      transform-origin: left center;
+      animation: fill-in linear both;
+      animation-timeline: view();
+      animation-range: entry calc(20% + var(--fill-step, 0) * 6%) cover
+        calc(32% + var(--fill-step, 0) * 6%);
+    }
   }
 }

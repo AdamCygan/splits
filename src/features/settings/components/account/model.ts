@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '#/lib/zod'
 import { LIMITS } from '#/domain/rules'
 
 /** Kod usunięcia konta z e-maila: dokładnie 6 cyfr (spacje przy wklejaniu pomijamy). */

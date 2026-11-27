@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '#/lib/zod'
 import { LIMITS, USERNAME_RE } from '#/domain/rules'
 import { fmt } from '#/i18n/format'
 import type { AuthMessages } from '#/i18n/messages/auth'

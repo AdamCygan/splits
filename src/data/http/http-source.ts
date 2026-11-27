@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '#/lib/zod'
 import { apiRequest, emptyResponse } from '#/lib/api-client'
 import type { DataSource } from '../source'
 import * as s from './schemas'

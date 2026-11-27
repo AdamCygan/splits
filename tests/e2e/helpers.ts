@@ -110,7 +110,8 @@ export async function lastCode(page: Page, to: string) {
 /**
  * Czeka, aż skończą się skończone animacje i przejścia CSS (np. wjazd powiadomienia).
  * axe liczy kontrast z bieżącej przezroczystości, więc w trakcie animacji widzi za słaby tekst.
- * Animacje bez końca (wskaźnik ładowania, pulsujący timer) są pomijane.
+ * Animacje bez końca (wskaźnik ładowania, pulsujący timer) i sterowane przewijaniem
+ * (paski na landingu, animation-timeline: view()) są pomijane.
  */
 export async function settleAnimations(page: Page) {
   await page.waitForFunction(() =>
@@ -119,6 +120,7 @@ export async function settleAnimations(page: Page) {
       .every(
         (animation) =>
           animation.playState !== 'running' ||
+          animation.timeline !== document.timeline ||
           animation.effect?.getComputedTiming().endTime === Infinity,
       ),
   )

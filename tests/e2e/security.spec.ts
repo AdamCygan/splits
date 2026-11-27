@@ -14,12 +14,22 @@ const appPages = [
   '/app/settings/account',
 ]
 
-/** Naruszenia CSP zgłoszone przez przeglądarkę (zdarzenie + komunikat w konsoli). */
+/**
+ * Naruszenia CSP zgłoszone przez przeglądarkę: komunikaty w konsoli i zdarzenia
+ * securitypolicyviolation (np. zablokowane eval, którego Chrome nie wypisuje w konsoli).
+ */
 function watchViolations(page: Page) {
   const found: Array<string> = []
   page.on('console', (message) => {
-    if (/Content Security Policy/i.test(message.text()))
+    if (/Content Security Policy|csp-violation/i.test(message.text()))
       found.push(message.text())
+  })
+  void page.addInitScript(() => {
+    document.addEventListener('securitypolicyviolation', (event) => {
+      console.warn(
+        `csp-violation ${event.violatedDirective} ${event.blockedURI} ${event.sourceFile}:${event.lineNumber}`,
+      )
+    })
   })
   return found
 }

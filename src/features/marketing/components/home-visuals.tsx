@@ -10,9 +10,10 @@ const card =
 const shares = [38, 17, 11, 9, 5]
 
 /**
- * Hero: jedna animacja na całej stronie. Szary blok „Programowanie, 80 h” (tak widzi sprint zwykły
- * tracker) rozpada się na typy pracy, a pod nim pojawiają się liczby. Czysty CSS (styles.css → split-*),
- * bez JavaScriptu; przy „ogranicz ruch” od razu widać stan końcowy. Czytniki dostają jeden opis.
+ * Hero: główna animacja strony. Szary blok „Programowanie, 80 h” (tak widzi sprint zwykły
+ * tracker) znika, spod niego wychodzą kawałki w kolorach typów pracy, a pod nimi liczby.
+ * Czysty CSS (styles.css → split-*), tylko opacity i transform; przy „ogranicz ruch” od razu
+ * widać stan końcowy. Czytniki dostają jeden opis.
  */
 export function SprintSplit() {
   const t = useMessages(homeMessages).split
@@ -30,7 +31,7 @@ export function SprintSplit() {
         </div>
 
         <div className="relative mt-5">
-          <div className="split-bar flex h-14 gap-1 overflow-hidden rounded-2xl">
+          <div className="flex h-14 gap-1 overflow-hidden rounded-2xl">
             {t.rows.map((row, i) => (
               <span
                 key={row.kind}
@@ -43,7 +44,7 @@ export function SprintSplit() {
               />
             ))}
           </div>
-          <p className="split-before pointer-events-none absolute inset-0 flex items-center px-5 font-semibold text-white">
+          <p className="split-cover pointer-events-none absolute inset-0 flex items-center rounded-2xl bg-[#6b6f8a] px-5 font-semibold text-white">
             {t.before}
           </p>
         </div>
@@ -109,12 +110,16 @@ export function IntervalsVisual() {
           <span className="absolute top-0 left-[70%] -translate-x-1/2 rounded-full bg-muted px-2 py-0.5 text-xs font-semibold">
             {t.resumed}
           </span>
-          <div className="flex h-12 overflow-hidden rounded-xl bg-muted">
+          <div className="flex h-12 overflow-clip rounded-xl bg-muted">
             {blocks.map((b, i) => (
               <span
                 key={i}
-                className="h-full border-r-2 border-surface last:border-r-0"
-                style={{ width: `${b.width}%`, background: b.color }}
+                className="fill-on-view h-full border-r-2 border-surface last:border-r-0"
+                style={{
+                  width: `${b.width}%`,
+                  background: b.color,
+                  ['--fill-step' as string]: i,
+                }}
               />
             ))}
           </div>
