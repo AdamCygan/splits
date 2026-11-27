@@ -28,7 +28,9 @@ const config = defineConfig({
           },
         },
         '/og.png': { headers: { 'cache-control': 'public, max-age=604800' } },
-        '/og-pl.png': { headers: { 'cache-control': 'public, max-age=604800' } },
+        '/og-pl.png': {
+          headers: { 'cache-control': 'public, max-age=604800' },
+        },
         '/icon.svg': { headers: { 'cache-control': 'public, max-age=604800' } },
         '/icon-192.png': {
           headers: { 'cache-control': 'public, max-age=604800' },

@@ -163,9 +163,7 @@ describe('auth', () => {
   it('Should report health and app info', async () => {
     const c = client()
     expect((await c.get<{ status: string }>('/health')).body.status).toBe('ok')
-    expect((await c.get<{ name: string }>('/meta')).body.name).toBe(
-      'Timeblame',
-    )
+    expect((await c.get<{ name: string }>('/meta')).body.name).toBe('Timeblame')
     expect((await c.get('/nope')).status).toBe(404)
   })
 })

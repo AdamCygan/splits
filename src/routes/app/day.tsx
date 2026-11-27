@@ -18,7 +18,9 @@ export const Route = createFileRoute('/app/day')({
       ? { date: search.date }
       : {},
   head: () => ({
-    meta: [{ title: `${dayViewMessages[getLocale()].seoTitle} | ${site.name}` }],
+    meta: [
+      { title: `${dayViewMessages[getLocale()].seoTitle} | ${site.name}` },
+    ],
   }),
   component: DayRoute,
 })

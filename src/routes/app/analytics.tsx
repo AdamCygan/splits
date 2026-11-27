@@ -15,7 +15,9 @@ export const Route = createFileRoute('/app/analytics')({
       ? { sprint: search.sprint }
       : {},
   head: () => ({
-    meta: [{ title: `${reportsMessages[getLocale()].pageTitle} | ${site.name}` }],
+    meta: [
+      { title: `${reportsMessages[getLocale()].pageTitle} | ${site.name}` },
+    ],
   }),
   component: ReportsRoute,
 })

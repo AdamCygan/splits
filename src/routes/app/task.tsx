@@ -20,7 +20,9 @@ export const Route = createFileRoute('/app/task')({
       : {}),
   }),
   head: () => ({
-    meta: [{ title: `${taskViewMessages[getLocale()].seoTitle} | ${site.name}` }],
+    meta: [
+      { title: `${taskViewMessages[getLocale()].seoTitle} | ${site.name}` },
+    ],
   }),
   component: TaskRoute,
 })

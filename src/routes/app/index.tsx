@@ -31,7 +31,9 @@ export const Route = createFileRoute('/app/')({
       : {}),
   }),
   head: () => ({
-    meta: [{ title: `${entriesMessages[getLocale()].pageTitle} | ${site.name}` }],
+    meta: [
+      { title: `${entriesMessages[getLocale()].pageTitle} | ${site.name}` },
+    ],
   }),
   component: TodayRoute,
 })

@@ -7,7 +7,9 @@ import { site } from '#/config/site'
 export const Route = createFileRoute('/app/sprints')({
   head: () => ({
     meta: [
-      { title: `${panelMessages[getLocale()].sprints.seoTitle} | ${site.name}` },
+      {
+        title: `${panelMessages[getLocale()].sprints.seoTitle} | ${site.name}`,
+      },
     ],
   }),
   component: SprintsPage,
