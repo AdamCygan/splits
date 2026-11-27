@@ -15,7 +15,8 @@ import type { Locale } from '#/i18n/config'
 import type * as t from '../db/schema'
 
 /** Wiersze z bazy → kształt z kontraktu API (src/data/types.ts), daty jako ISO 8601. */
-const iso = (d: Date | null) => (d ? d.toISOString() : null)
+/** Data z bazy jako ISO 8601 albo null (format dat w odpowiedziach API). */
+export const iso = (d: Date | null) => (d ? d.toISOString() : null)
 
 export const toUser = (u: typeof t.users.$inferSelect): User => ({
   id: u.id,

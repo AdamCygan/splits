@@ -13,6 +13,7 @@ import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
 import { reportsMessages } from '#/i18n/messages/reports'
 import { cn } from '#/lib/utils'
+import { Panel } from '#/components/ui/panel'
 
 /** Karta wykresu: tytuł, opis, opcjonalna legenda nad wykresem i tabela pod nim. */
 export function ChartCard({
@@ -30,22 +31,16 @@ export function ChartCard({
   className?: string
   children: ReactNode
 }) {
-  const id = useId()
   const t = useMessages(reportsMessages).charts
   return (
-    <section
-      aria-labelledby={id}
-      className={cn(
-        'min-w-0 rounded-2xl border border-line bg-surface p-5 sm:p-6',
-        className,
-      )}
+    <Panel
+      title={title}
+      lead={lead}
+      level={3}
+      headerExtra={legend}
+      className={className}
     >
-      <h3 id={id} className="type-heading text-xl">
-        {title}
-      </h3>
-      {lead && <p className="mt-1 text-sm text-ink-soft">{lead}</p>}
-      {legend && <div className="mt-3">{legend}</div>}
-      <div className="mt-4">{children}</div>
+      {children}
       {table && (
         <details className="mt-4 text-sm">
           <summary className="cursor-pointer font-medium text-ink-soft hover:text-ink">
@@ -55,13 +50,13 @@ export function ChartCard({
             tabIndex={0}
             role="region"
             aria-label={fmt(t.scrollRegion, { title })}
-            className="mt-2 relative overflow-x-auto rounded-sm"
+            className="relative mt-2 overflow-x-auto rounded-sm"
           >
             {table}
           </div>
         </details>
       )}
-    </section>
+    </Panel>
   )
 }
 
@@ -161,11 +156,7 @@ export function TimeChart({
   const top = ticks.at(-1)!
   const label = (b: (typeof buckets)[number]) =>
     unit === 'day'
-      ? formatDate(locale, b.from, {
-          weekday: 'short',
-          day: 'numeric',
-          month: 'short',
-        })
+      ? format.day(b.from)
       : fmt(t.week, {
           from: formatDate(locale, b.from, { day: 'numeric', month: 'short' }),
           to: formatDate(locale, b.to, { day: 'numeric', month: 'short' }),

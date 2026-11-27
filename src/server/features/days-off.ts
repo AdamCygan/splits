@@ -1,6 +1,6 @@
 import { and, asc, between, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
-import { addDays, diffDays } from '#/domain/dates'
+import { addDays, diffDays, weekday } from '#/domain/dates'
 import type { DayOff, DayOffKind } from '#/data/types'
 import { db } from '../db/client'
 import * as t from '../db/schema'
@@ -16,8 +16,6 @@ const toDayOff = (row: typeof t.daysOff.$inferSelect): DayOff => ({
   kind: row.kind as DayOffKind,
   note: row.note,
 })
-
-const weekday = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay()
 
 export const dayOffRoutes = new Hono<AppEnv>()
   .get('/', async (c) => {

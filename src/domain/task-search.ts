@@ -1,5 +1,6 @@
 import type { TaskSearchResult, TimeEntry } from '#/data/types'
-import { taskGroupKey } from './report'
+import { aggregateTasks, isLaterSession } from './task-groups'
+import type { TaskAggregate } from './task-groups'
 
 export const TASK_SEARCH_LIMIT = 8
 
@@ -14,37 +15,17 @@ export const likePattern = (q: string) =>
 export function groupSearchResults(
   entries: ReadonlyArray<TimeEntry>,
 ): Array<TaskSearchResult> {
-  const groups = new Map<string, Array<TimeEntry>>()
-  for (const e of entries) {
-    const key = taskGroupKey(e)
-    const list = groups.get(key)
-    if (list) list.push(e)
-    else groups.set(key, [e])
-  }
-  return [...groups.values()]
-    .map((list) => {
-      const latest = list.reduce((a, b) =>
-        b.workDate > a.workDate ||
-        (b.workDate === a.workDate && b.createdAt > a.createdAt)
-          ? b
-          : a,
-      )
-      return {
-        entry: latest,
-        workedMinutes: list.reduce((s, e) => s + e.durationMinutes, 0),
-        sessions: list.length,
-        lastDate: latest.workDate,
-        finished: list.some((e) => e.finishedAt !== null),
-        running: list.some((e) => e.running),
-      }
-    })
-    .sort(
-      (a, b) =>
-        b.lastDate.localeCompare(a.lastDate) ||
-        b.entry.createdAt.localeCompare(a.entry.createdAt),
-    )
-    .slice(0, TASK_SEARCH_LIMIT)
+  return aggregateTasks(entries).slice(0, TASK_SEARCH_LIMIT).map(toSearchResult)
 }
+
+const toSearchResult = (task: TaskAggregate): TaskSearchResult => ({
+  entry: task.latest,
+  workedMinutes: task.workedMinutes,
+  sessions: task.sessions.length,
+  lastDate: task.lastDate,
+  finished: task.finished,
+  running: task.running,
+})
 
 /** Słowa zapytania (bez duplikatów, najwyżej 6), małymi literami. */
 export function searchWords(q: string) {
@@ -99,60 +80,34 @@ export function rankSearchResults(
 ): Array<RankedSearchResult> {
   const words = searchWords(q)
   if (words.length === 0) return []
-  const groups = new Map<string, Array<TimeEntry>>()
-  for (const e of entries) {
-    const key = taskGroupKey(e)
-    const list = groups.get(key)
-    if (list) list.push(e)
-    else groups.set(key, [e])
-  }
+  const notesOf = (e: TimeEntry) =>
+    [e.note, e.overtimeNote, e.extensionNote].filter(Boolean).join('\n')
   const scored: Array<{ result: RankedSearchResult; score: number }> = []
-  for (const list of groups.values()) {
-    const latest = list.reduce((a, b) =>
-      b.workDate > a.workDate ||
-      (b.workDate === a.workDate && b.createdAt > a.createdAt)
-        ? b
-        : a,
-    )
-    const title = latest.title.toLocaleLowerCase()
-    const link = (latest.link ?? '').toLocaleLowerCase()
-    const notes = list
-      .map((e) =>
-        [e.note, e.overtimeNote, e.extensionNote].filter(Boolean).join('\n'),
-      )
-      .join('\n')
-    const haystack = `${title}\n${link}\n${notes.toLocaleLowerCase()}`
+  // aggregateTasks zwraca zadania od ostatnio ruszanego; sort niżej jest stabilny,
+  // więc w obrębie tej samej punktacji ta kolejność zostaje.
+  for (const task of aggregateTasks(entries)) {
+    const title = task.latest.title.toLocaleLowerCase()
+    const link = (task.latest.link ?? '').toLocaleLowerCase()
+    const notes = task.sessions.map(notesOf).join('\n').toLocaleLowerCase()
+    const haystack = `${title}\n${link}\n${notes}`
     if (!words.every((w) => haystack.includes(w))) continue
     const inTitle = words.every((w) => title.includes(w))
     const inHead = words.every((w) => title.includes(w) || link.includes(w))
-    const score = inTitle ? 3 : inHead ? 2 : 1
     // Fragment z najświeższej sesji, której notatka zawiera któreś słowo.
-    const withNote = [...list]
-      .reverse()
-      .map((e) =>
-        [e.note, e.overtimeNote, e.extensionNote].filter(Boolean).join('\n'),
-      )
+    const withNote = [...task.sessions]
+      .sort((a, b) => (isLaterSession(a, b) ? -1 : 1))
+      .map(notesOf)
       .find((n) => words.some((w) => n.toLocaleLowerCase().includes(w)))
     scored.push({
-      score,
+      score: inTitle ? 3 : inHead ? 2 : 1,
       result: {
-        entry: latest,
-        workedMinutes: list.reduce((s, e) => s + e.durationMinutes, 0),
-        sessions: list.length,
-        lastDate: latest.workDate,
-        finished: list.some((e) => e.finishedAt !== null),
-        running: list.some((e) => e.running),
+        ...toSearchResult(task),
         snippet: !inHead && withNote ? noteSnippet(withNote, words) : null,
       },
     })
   }
   return scored
-    .sort(
-      (a, b) =>
-        b.score - a.score ||
-        b.result.lastDate.localeCompare(a.result.lastDate) ||
-        b.result.entry.createdAt.localeCompare(a.result.entry.createdAt),
-    )
+    .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((x) => x.result)
 }

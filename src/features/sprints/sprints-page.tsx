@@ -33,6 +33,7 @@ import { reportsMessages } from '#/i18n/messages/reports'
 import { ColumnChart } from '#/features/reports/charts'
 import { panelMessages } from '#/i18n/messages/panel'
 import { cn } from '#/lib/utils'
+import { StatTile } from '#/components/ui/stats'
 
 /** Ile zakończonych sprintów porównujemy (plus bieżący). */
 const HISTORY = 6
@@ -69,28 +70,6 @@ function TypeBar({
           }}
         />
       ))}
-    </div>
-  )
-}
-
-function Tile({
-  label,
-  value,
-  hint,
-  className,
-}: {
-  label: string
-  value: string
-  hint?: string
-  className?: string
-}) {
-  return (
-    <div className={cn('bg-surface px-4 py-3 sm:px-5', className)}>
-      <dt className="text-sm text-ink-soft">{label}</dt>
-      <dd className="type-heading mt-0.5 text-xl tabular-nums sm:text-2xl">
-        {value}
-      </dd>
-      {hint && <dd className="mt-0.5 text-sm text-ink-soft">{hint}</dd>}
     </div>
   )
 }
@@ -242,7 +221,7 @@ export function SprintsPage() {
             })()}
 
             <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-5">
-              <Tile
+              <StatTile
                 label={t.logged}
                 value={format.minutes(currentStats.minutes)}
                 hint={
@@ -253,7 +232,7 @@ export function SprintsPage() {
                     : undefined
                 }
               />
-              <Tile
+              <StatTile
                 label={t.points}
                 value={
                   current.capacityStoryPoints
@@ -264,16 +243,16 @@ export function SprintsPage() {
                     : format.sp(currentStats.storyPoints)
                 }
               />
-              <Tile
+              <StatTile
                 label={t.perSp}
                 value={perSp(currentStats)}
                 hint={currentStats.minutesPerSp === null ? t.noSp : undefined}
               />
-              <Tile label={t.tasks} value={String(currentStats.tasks)} />
+              <StatTile label={t.tasks} value={String(currentStats.tasks)} />
               {(() => {
                 const a = availability(current)
                 return (
-                  <Tile
+                  <StatTile
                     className="col-span-2 lg:col-span-1"
                     label={off.sprint.available}
                     value={fmt(off.sprint.availableValue, {

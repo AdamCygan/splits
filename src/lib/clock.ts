@@ -1,4 +1,5 @@
-import { useSyncExternalStore } from 'react'
+import { pad2 as pad } from '#/domain/text'
+import { createLocalStore } from './local-store'
 
 /**
  * Format godziny: automatycznie z języka (EN 12h, PL 24h), albo na stałe 24h lub 12h.
@@ -7,40 +8,10 @@ import { useSyncExternalStore } from 'react'
 export type ClockPref = 'auto' | 'h24' | 'h12'
 export const clockPrefs: readonly ClockPref[] = ['auto', 'h24', 'h12']
 
-const KEY = 'ph-clock'
-const listeners = new Set<() => void>()
-let memory: ClockPref = 'auto'
-
-export function readClock(): ClockPref {
-  try {
-    const v = localStorage.getItem(KEY)
-    return v === 'h24' || v === 'h12' ? v : 'auto'
-  } catch {
-    return memory
-  }
-}
-
-export function setClock(pref: ClockPref) {
-  memory = pref
-  try {
-    if (pref === 'auto') localStorage.removeItem(KEY)
-    else localStorage.setItem(KEY, pref)
-  } catch {
-    // Bez localStorage zostaje w pamięci do odświeżenia.
-  }
-  listeners.forEach((l) => l())
-}
-
-export function useClockPref(): ClockPref {
-  return useSyncExternalStore(
-    (l) => {
-      listeners.add(l)
-      return () => listeners.delete(l)
-    },
-    readClock,
-    () => 'auto',
-  )
-}
+const store = createLocalStore<ClockPref>('ph-clock', clockPrefs, 'auto')
+export const readClock = store.read
+export const setClock = store.set
+export const useClockPref = store.use
 
 /** Czy pokazywać 12-godzinny zegar (AM/PM) dla danego języka. */
 export function uses12h(tag: string, pref: ClockPref = readClock()) {
@@ -57,8 +28,6 @@ export function hourOptions(tag: string): Intl.DateTimeFormatOptions {
     ? { hour: 'numeric', minute: '2-digit', hourCycle: 'h12' }
     : { hour: 'numeric', minute: '2-digit', hourCycle: 'h23' }
 }
-
-const pad = (n: number) => String(n).padStart(2, '0')
 
 /** "HH:MM" (24h) do wyświetlenia w polu: "14:30" albo "2:30 PM". */
 export function displayTime(value: string, twelve: boolean) {

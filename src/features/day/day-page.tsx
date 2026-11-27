@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, Pencil } from 'lucide-react'
 import { useId, useState } from 'react'
-import type { ReactNode } from 'react'
 import { CheckableNote } from '#/components/note/note-markdown'
 import { buttonVariants } from '#/components/ui/button'
 import { Badge, ColorDot } from '#/components/ui/controls'
@@ -26,6 +25,8 @@ import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
 import { dayViewMessages } from '#/i18n/messages/day-view'
 import { cn } from '#/lib/utils'
+import { StatTile } from '#/components/ui/stats'
+import { Panel } from '#/components/ui/panel'
 
 const hhmm = (m: number) =>
   `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
@@ -153,7 +154,7 @@ function Stats({ summary, target }: { summary: DaySummary; target: number }) {
   const percent = target > 0 ? Math.round((summary.minutes / target) * 100) : 0
   return (
     <dl className="mb-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line lg:grid-cols-4">
-      <Stat
+      <StatTile
         label={t.worked}
         value={format.minutes(summary.minutes)}
         hint={[
@@ -167,7 +168,7 @@ function Stats({ summary, target }: { summary: DaySummary; target: number }) {
           .filter(Boolean)
           .join('; ')}
       />
-      <Stat
+      <StatTile
         label={t.focus}
         value={format.minutes(summary.focusMinutes)}
         hint={[
@@ -181,12 +182,12 @@ function Stats({ summary, target }: { summary: DaySummary; target: number }) {
           .filter(Boolean)
           .join('; ')}
       />
-      <Stat
+      <StatTile
         label={t.meetings}
         value={format.minutes(summary.meetingMinutes)}
         hint={format.plural(t.meetingCount, summary.meetings)}
       />
-      <Stat
+      <StatTile
         label={t.breaks}
         value={format.minutes(summary.breakMinutes)}
         hint={
@@ -196,53 +197,6 @@ function Stats({ summary, target }: { summary: DaySummary; target: number }) {
         }
       />
     </dl>
-  )
-}
-
-function Stat({
-  label,
-  value,
-  hint,
-}: {
-  label: string
-  value: string
-  hint?: string
-}) {
-  return (
-    <div className="bg-surface px-4 py-3 sm:px-5">
-      <dt className="text-sm text-ink-soft">{label}</dt>
-      <dd className="type-heading mt-0.5 text-2xl tabular-nums">{value}</dd>
-      {hint && <dd className="mt-1 text-xs text-ink-soft">{hint}</dd>}
-    </div>
-  )
-}
-
-function Panel({
-  title,
-  lead,
-  className,
-  children,
-}: {
-  title: string
-  lead?: string
-  className?: string
-  children: ReactNode
-}) {
-  const id = useId()
-  return (
-    <section
-      aria-labelledby={id}
-      className={cn(
-        'min-w-0 rounded-2xl border border-line bg-surface px-5 py-5 sm:px-6',
-        className,
-      )}
-    >
-      <h2 id={id} className="type-heading text-xl">
-        {title}
-      </h2>
-      {lead && <p className="mt-1 text-sm text-ink-soft">{lead}</p>}
-      <div className="mt-4">{children}</div>
-    </section>
   )
 }
 

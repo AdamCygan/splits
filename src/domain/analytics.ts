@@ -1,5 +1,5 @@
 import type { TaskType, TimeEntry } from '#/data/types'
-import { addDays, diffDays } from './dates'
+import { addDays, diffDays, weekday } from './dates'
 import { toMinutes } from './entries'
 import type { TaskRow } from './report'
 
@@ -36,8 +36,6 @@ export type TimeBucket = {
   minutes: number
   byType: Record<string, number>
 }
-
-const weekday = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay()
 
 /** Poniedziałek tygodnia, w którym jest `date`. */
 const mondayOf = (date: string) => addDays(date, -((weekday(date) + 6) % 7))

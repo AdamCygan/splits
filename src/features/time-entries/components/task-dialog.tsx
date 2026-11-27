@@ -10,7 +10,7 @@ import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import { data } from '#/data'
 import type { TaskRef, TaskType, TimeEntry } from '#/data/types'
-import { ENTRY_LIMITS, parseDuration } from '#/domain/entries'
+import { ENTRY_LIMITS, isUrl, parseDuration } from '#/domain/entries'
 import { maxPoints } from '#/domain/summary'
 import {
   mutationFieldError,
@@ -20,15 +20,13 @@ import {
   useDataMutation,
 } from '#/features/settings/queries'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
-import { fmt, formatDate } from '#/i18n/format'
+import { fmt } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { unwrap } from '#/lib/api-client'
 import { entryKeys } from '../queries'
 import { EntryForm } from './entry-form'
 import { clockTime } from './timer'
-
-const URL_RE = /^https?:\/\/\S+$/i
 
 export const taskQueryKey = (ref: TaskRef) =>
   [...entryKeys.all, 'task', ref.taskTypeId, ref.link ?? '', ref.title] as const
@@ -170,7 +168,7 @@ export function TaskDetails({
     link:
       linkMode === 'required' && !draft.link.trim()
         ? t.issues.link.required
-        : draft.link.trim() && !URL_RE.test(draft.link.trim())
+        : draft.link.trim() && !isUrl(draft.link)
           ? t.issues.link.invalid_url
           : null,
     storyPoints:
@@ -333,16 +331,11 @@ export function Sessions({ entries }: { entries: Array<TimeEntry> }) {
   const t = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   const format = useFormat()
-  const { locale, tag } = useI18n()
+  const { tag } = useI18n()
   const [editing, setEditing] = useState<TimeEntry | null>(null)
   const [deleting, setDeleting] = useState<TimeEntry | null>(null)
   const dayLabel = (entry: TimeEntry) =>
-    formatDate(locale, entry.workDate, {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    })
+    format.day(entry.workDate, { year: true })
 
   const remove = useDataMutation((id: string) => data.entries.remove(id), {
     invalidate: [entryKeys.all],

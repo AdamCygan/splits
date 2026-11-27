@@ -61,13 +61,14 @@ import {
 } from '#/features/time-entries/queries'
 import { localeNames, locales } from '#/i18n/config'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
-import { fmt, formatDate } from '#/i18n/format'
+import { fmt } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { settingsMessages } from '#/i18n/messages/settings'
 import { unwrap } from '#/lib/api-client'
 import { clockPrefs, setClock } from '#/lib/clock'
 import { setTheme } from '#/lib/theme'
 import { cn } from '#/lib/utils'
+import { Kbd } from '#/components/ui/kbd'
 
 type Group =
   | 'timer'
@@ -235,12 +236,7 @@ export function CommandPalette() {
   const current = sprints.find((x) => x.startsOn <= today && x.endsOn >= today)
   const isPro = hasProAccess(user)
   const typeOf = (id: string) => types.find((x) => x.id === id)
-  const dayLabel = (date: string) =>
-    formatDate(locale, date, {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    })
+  const dayLabel = (date: string) => format.day(date)
   const go = (to: string, search?: Record<string, string>) => () =>
     void navigate({ to, search } as never)
 
@@ -838,14 +834,6 @@ export function CommandPalette() {
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
-  )
-}
-
-function Kbd({ children }: { children: string }) {
-  return (
-    <kbd className="rounded border border-line px-1 font-sans text-[0.6875rem]">
-      {children}
-    </kbd>
   )
 }
 

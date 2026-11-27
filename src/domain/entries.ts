@@ -20,7 +20,9 @@ export const ENTRY_LIMITS = {
   maxEstimate: 60_000,
 } as const
 
-const URL_RE = /^https?:\/\/\S+$/i
+/** Adres http(s) bez spacji: ta sama reguła w formularzach i na serwerze. */
+export const URL_RE = /^https?:\/\/\S+$/i
+export const isUrl = (value: string) => URL_RE.test(value.trim())
 
 export type EntryField =
   | 'title'
@@ -51,8 +53,11 @@ export const toMinutes = (time: string) => {
   return h! * 60 + m!
 }
 
-export const fromMinutes = (minutes: number) =>
-  `${String(Math.floor(minutes / 60) % 24).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+/** Minuty od północy → 'HH:MM'; wartości spoza doby zawijają się (−5 → 23:55, 1445 → 00:05). */
+export const fromMinutes = (minutes: number) => {
+  const m = ((Math.round(minutes) % 1440) + 1440) % 1440
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+}
 
 /** Czas między godzinami w obrębie dnia; null, gdy koniec nie jest po początku. */
 export function minutesBetween(start: string, end: string): number | null {

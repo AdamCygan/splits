@@ -1,7 +1,5 @@
 import type { DayOff, DayOffKind, Sprint } from '#/data/types'
-import { addDays, diffDays } from './dates'
-
-const weekday = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay()
+import { addDays, diffDays, weekday } from './dates'
 
 export type DayOffRange = {
   from: string

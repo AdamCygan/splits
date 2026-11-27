@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { createLocalStore } from './local-store'
 
 /**
  * Motyw panelu: jasny, ciemny albo zgodny z systemem. Wybór żyje w localStorage
@@ -8,19 +9,8 @@ import { useSyncExternalStore } from 'react'
 export type Theme = 'system' | 'light' | 'dark'
 export const themes: readonly Theme[] = ['system', 'light', 'dark']
 
-const KEY = 'ph-theme'
-const listeners = new Set<() => void>()
-// Zapas, gdy przeglądarka nie daje localStorage (tryb prywatny).
-let memory: Theme | null = null
-
-export function readTheme(): Theme {
-  try {
-    const v = localStorage.getItem(KEY)
-    return v === 'light' || v === 'dark' ? v : 'system'
-  } catch {
-    return memory ?? 'system'
-  }
-}
+const store = createLocalStore<Theme>('ph-theme', themes, 'system')
+export const readTheme = store.read
 
 function systemDark() {
   return (
@@ -42,19 +32,13 @@ export function applyTheme(on = true) {
 }
 
 export function setTheme(theme: Theme) {
-  try {
-    if (theme === 'system') localStorage.removeItem(KEY)
-    else localStorage.setItem(KEY, theme)
-  } catch {
-    // Prywatny tryb bez localStorage: motyw działa do odświeżenia strony.
-    memory = theme
-  }
+  store.set(theme)
   applyTheme()
-  listeners.forEach((l) => l())
 }
 
+/** Motyw z localStorage; zmiana motywu systemu przerysowuje i przemalowuje „Jak w systemie”. */
 function subscribe(listener: () => void) {
-  listeners.add(listener)
+  const off = store.subscribe(listener)
   const media = window.matchMedia('(prefers-color-scheme: dark)')
   const onSystem = () => {
     if (readTheme() === 'system') applyTheme()
@@ -62,7 +46,7 @@ function subscribe(listener: () => void) {
   }
   media.addEventListener('change', onSystem)
   return () => {
-    listeners.delete(listener)
+    off()
     media.removeEventListener('change', onSystem)
   }
 }
@@ -75,4 +59,4 @@ export function useTheme(): Theme {
  * Skrypt w <head>: ustawia motyw przed pierwszym malowaniem panelu, żeby ciemny
  * motyw nie mignął jasnym ekranem ładowania.
  */
-export const themeBootScript = `(function(){try{if(location.pathname.indexOf('/app')!==0)return;var t=localStorage.getItem('${KEY}');var d=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);if(d){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark'}}catch(e){}})()`
+export const themeBootScript = `(function(){try{if(location.pathname.indexOf('/app')!==0)return;var t=localStorage.getItem('${store.key}');var d=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);if(d){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark'}}catch(e){}})()`

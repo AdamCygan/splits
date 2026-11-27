@@ -6,6 +6,7 @@ import { useI18n, useMessages } from '#/i18n/context'
 import { commonMessages } from '#/i18n/messages/common'
 import { displayTime, parseTime, useClockPref, uses12h } from '#/lib/clock'
 import { cn } from '#/lib/utils'
+import { fromMinutes, toMinutes } from '#/domain/entries'
 import { Input } from './input'
 
 const SLOTS = Array.from({ length: 96 }, (_, i) => {
@@ -13,12 +14,6 @@ const SLOTS = Array.from({ length: 96 }, (_, i) => {
   const m = String((i % 4) * 15).padStart(2, '0')
   return `${h}:${m}`
 })
-
-const toMinutes = (v: string) => Number(v.slice(0, 2)) * 60 + Number(v.slice(3))
-const fromMinutes = (n: number) => {
-  const m = ((n % 1440) + 1440) % 1440
-  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
-}
 
 /**
  * Pole godziny w formacie aplikacji (24h albo 12h wg preferencji), zamiast systemowego

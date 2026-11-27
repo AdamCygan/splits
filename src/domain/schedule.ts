@@ -1,7 +1,6 @@
 import type { QuickTemplate, TemplateSchedule, TimeEntry } from '#/data/types'
+import { weekday } from './dates'
 import { fromMinutes, toMinutes } from './entries'
-
-const weekday = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay()
 
 export type ScheduledMeeting = {
   template: QuickTemplate

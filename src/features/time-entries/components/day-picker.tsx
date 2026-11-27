@@ -2,8 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { addDays } from '#/domain/dates'
-import { useI18n, useMessages } from '#/i18n/context'
-import { formatDate } from '#/i18n/format'
+import { useFormat, useMessages } from '#/i18n/context'
 import { entriesMessages } from '#/i18n/messages/entries'
 
 /**
@@ -26,7 +25,7 @@ export function DayPicker({
   onChange: (date: string) => void
 }) {
   const t = useMessages(entriesMessages).day
-  const { locale } = useI18n()
+  const format = useFormat()
   const isToday = value === today
   const atMin = min !== null && value <= min
 
@@ -50,12 +49,8 @@ export function DayPicker({
             className="flex h-full items-center gap-2 px-3 text-sm font-medium whitespace-nowrap"
           >
             <CalendarDays className="size-4 text-ink-soft" />
-            {formatDate(locale, value, {
-              weekday: 'short',
-              day: 'numeric',
-              month: 'short',
-              year:
-                value.slice(0, 4) === today.slice(0, 4) ? undefined : 'numeric',
+            {format.day(value, {
+              year: value.slice(0, 4) !== today.slice(0, 4),
             })}
           </span>
           <input

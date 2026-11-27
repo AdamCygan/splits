@@ -27,6 +27,7 @@ import { useMessages } from '#/i18n/context'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { markdownLines } from '#/domain/highlight'
 import type { MarkdownLine, Part } from '#/domain/highlight'
+import { isApplePlatform } from '#/lib/platform'
 import { cn } from '#/lib/utils'
 import { NoteMarkdown } from './note-markdown'
 
@@ -37,9 +38,6 @@ type Action = {
   keys?: string
   run: (s: TextState) => TextState
 }
-
-const isMac = () =>
-  typeof navigator !== 'undefined' && /Mac|iP(hone|ad)/.test(navigator.platform)
 
 /**
  * Pole notatki z paskiem formatowania (Markdown): nagłówek, pogrubienie, kursywa, listy,
@@ -61,7 +59,7 @@ export function NoteEditor({
   const ref = useRef<HTMLTextAreaElement>(null)
   const pending = useRef<{ start: number; end: number } | null>(null)
   const [preview, setPreview] = useState(false)
-  const mod = isMac() ? '⌘' : 'Ctrl+'
+  const mod = isApplePlatform() ? '⌘' : 'Ctrl+'
 
   // Zaznaczenie po zmianie, gdy tekst poszedł przez stan Reacta (bez insertText).
   useLayoutEffect(() => {
@@ -284,7 +282,7 @@ export function NoteEditor({
               aria-label={action.label}
               aria-keyshortcuts={
                 action.keys
-                  ? `${isMac() ? 'Meta' : 'Control'}+${action.keys}`
+                  ? `${isApplePlatform() ? 'Meta' : 'Control'}+${action.keys}`
                   : undefined
               }
               title={shortcut ? `${action.label} (${shortcut})` : action.label}

@@ -40,17 +40,10 @@ import {
   move,
   useAnnouncer,
 } from './ui'
+import { Kbd } from '#/components/ui/kbd'
 
 /** Wartość pola „Projekt” dla szablonu, w którym projekt wybiera się przy użyciu. */
 const ANY = '__any'
-
-function Kbd({ children }: { children: string }) {
-  return (
-    <kbd className="inline-grid min-w-14 place-items-center rounded-md border border-line border-b-[3px] bg-surface px-2 py-0.5 font-sans text-xs font-semibold">
-      {children}
-    </kbd>
-  )
-}
 
 export function TemplateSettings() {
   const t = useMessages(settingsMessages).templates
@@ -135,7 +128,9 @@ export function TemplateSettings() {
                       <div className="flex min-w-0 items-center gap-3">
                         <span className="w-16 shrink-0">
                           {template.hotkey ? (
-                            <Kbd>{fmt(t.shortcut, { n: template.hotkey })}</Kbd>
+                            <Kbd variant="key">
+                              {fmt(t.shortcut, { n: template.hotkey })}
+                            </Kbd>
                           ) : (
                             <span className="text-xs text-ink-soft">
                               {t.noShortcut}

@@ -1,7 +1,7 @@
 import type { WorkKind } from '#/config/work-types'
 import type { TimeEntry, UnfinishedTask } from '#/data/types'
 import { addDays } from './dates'
-import { taskGroupKey } from './report'
+import { aggregateTasks } from './task-groups'
 
 /** Ile dni wstecz szukamy zadań do dokończenia. */
 export const UNFINISHED_LOOKBACK_DAYS = 14
@@ -20,36 +20,20 @@ export function unfinishedTasks(
   kindOf: (taskTypeId: string) => WorkKind | undefined,
 ): Array<UnfinishedTask> {
   const from = addDays(today, -UNFINISHED_LOOKBACK_DAYS)
-  const groups = new Map<string, Array<TimeEntry>>()
-  for (const e of entries) {
-    const key = taskGroupKey(e)
-    const list = groups.get(key)
-    if (list) list.push(e)
-    else groups.set(key, [e])
-  }
-  const result: Array<UnfinishedTask> = []
-  for (const list of groups.values()) {
-    const latest = list.reduce((a, b) => (newer(b, a) ? b : a))
-    if (latest.workDate >= today || latest.workDate < from) continue
-    if (list.some((e) => e.running || e.finishedAt !== null)) continue
-    const kind = kindOf(latest.taskTypeId)
-    if (!kind || kind === 'meeting') continue
-    result.push({
-      entry: latest,
-      workedMinutes: list.reduce((sum, e) => sum + e.durationMinutes, 0),
-      sessions: list.length,
-      lastDate: latest.workDate,
-    })
-  }
-  return result
-    .sort((a, b) => (newer(a.entry, b.entry) ? -1 : 1))
+  return aggregateTasks(entries)
+    .filter(
+      (task) =>
+        task.lastDate < today &&
+        task.lastDate >= from &&
+        !task.running &&
+        !task.finished &&
+        ![undefined, 'meeting'].includes(kindOf(task.latest.taskTypeId)),
+    )
     .slice(0, UNFINISHED_LIMIT)
+    .map((task) => ({
+      entry: task.latest,
+      workedMinutes: task.workedMinutes,
+      sessions: task.sessions.length,
+      lastDate: task.lastDate,
+    }))
 }
-
-/** Później tego dnia: najpierw dzień, potem godzina startu, potem kolejność dodania. */
-const newer = (a: TimeEntry, b: TimeEntry) =>
-  a.workDate !== b.workDate
-    ? a.workDate > b.workDate
-    : (a.startTime ?? '') !== (b.startTime ?? '')
-      ? (a.startTime ?? '') > (b.startTime ?? '')
-      : a.createdAt > b.createdAt

@@ -38,6 +38,8 @@ import { entriesMessages } from '#/i18n/messages/entries'
 import { taskViewMessages } from '#/i18n/messages/task-view'
 import { unwrap } from '#/lib/api-client'
 import { cn } from '#/lib/utils'
+import { StatTile } from '#/components/ui/stats'
+import { Panel } from '#/components/ui/panel'
 
 /**
  * Strona jednego zadania: ile zajęło, w ilu sesjach i dniach, jak często coś odrywało od niego
@@ -194,7 +196,7 @@ export function TaskPage({
       </header>
 
       <dl className="mb-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line lg:grid-cols-4">
-        <Stat
+        <StatTile
           label={t.stats.time}
           value={format.minutes(insights.minutes)}
           hint={[
@@ -226,7 +228,7 @@ export function TaskPage({
             .join('; ')}
           warn={diff > 0}
         />
-        <Stat
+        <StatTile
           label={t.stats.sessions}
           value={String(insights.sessions)}
           hint={fmt(t.stats.average, {
@@ -234,7 +236,7 @@ export function TaskPage({
             longest: format.minutes(insights.longestSession),
           })}
         />
-        <Stat
+        <StatTile
           label={t.stats.days}
           value={String(insights.days.length)}
           hint={format
@@ -245,7 +247,7 @@ export function TaskPage({
             .replace('{from}', dateShort(insights.firstDate))
             .replace('{to}', dateShort(insights.lastDate))}
         />
-        <Stat
+        <StatTile
           label={t.stats.interruptions}
           value={String(insights.gaps.length)}
           hint={
@@ -307,59 +309,6 @@ export function TaskPage({
   )
 }
 
-function Stat({
-  label,
-  value,
-  hint,
-  warn,
-}: {
-  label: string
-  value: string
-  hint?: string
-  warn?: boolean
-}) {
-  return (
-    <div className="bg-surface px-4 py-3 sm:px-5">
-      <dt className="text-sm text-ink-soft">{label}</dt>
-      <dd className="type-heading mt-0.5 text-2xl tabular-nums">{value}</dd>
-      {hint && (
-        <dd
-          className={cn(
-            'mt-1 text-xs',
-            warn ? 'font-medium text-destructive' : 'text-ink-soft',
-          )}
-        >
-          {hint}
-        </dd>
-      )}
-    </div>
-  )
-}
-
-function Panel({
-  title,
-  lead,
-  children,
-}: {
-  title: string
-  lead?: string
-  children: React.ReactNode
-}) {
-  const id = `panel-${title.replace(/\W+/g, '-').toLowerCase()}`
-  return (
-    <section
-      aria-labelledby={id}
-      className="rounded-2xl border border-line bg-surface px-5 py-5 sm:px-6"
-    >
-      <h2 id={id} className="type-heading text-xl">
-        {title}
-      </h2>
-      {lead && <p className="mt-1 text-sm text-ink-soft">{lead}</p>}
-      <div className="mt-4">{children}</div>
-    </section>
-  )
-}
-
 /**
  * Oś dnia: sesje zadania w kolorze typu, inna praca na szaro, luki widać jako puste miejsca.
  * Zakres osi: od najwcześniejszego do najpóźniejszego wpisu z godzinami tego dnia.
@@ -379,7 +328,7 @@ function Timeline({
 }) {
   const t = useMessages(taskViewMessages)
   const format = useFormat()
-  const { locale, tag } = useI18n()
+  const { tag } = useI18n()
   const ids = new Set(sessions.map((s) => s.id))
 
   return (
@@ -405,13 +354,7 @@ function Timeline({
           return (
             <li key={day.date}>
               <p className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
-                <span className="font-medium">
-                  {formatDate(locale, day.date, {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: 'short',
-                  })}
-                </span>
+                <span className="font-medium">{format.day(day.date)}</span>
                 <span className="text-ink-soft tabular-nums">
                   {format.plural(t.timeline.sessions, day.sessions)},{' '}
                   <span className="font-semibold text-ink">
@@ -556,7 +499,7 @@ function Interrupted({
 /** Notatki z sesji, z nadgodzinami i przedłużeniami, od najstarszej. */
 function Notes({ sessions }: { sessions: Array<TimeEntry> }) {
   const t = useMessages(taskViewMessages)
-  const { locale, tag } = useI18n()
+  const { tag } = useI18n()
   const format = useFormat()
   const updateNote = useUpdateNote()
   const notes = sessions.flatMap((s) =>
@@ -586,13 +529,7 @@ function Notes({ sessions }: { sessions: Array<TimeEntry> }) {
       {notes.map((n) => (
         <li key={n.id} className="text-sm">
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-soft tabular-nums">
-            <span>
-              {formatDate(locale, n.date, {
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short',
-              })}
-            </span>
+            <span>{format.day(n.date)}</span>
             {/* Godziny sesji, w której powstała notatka. */}
             <span>
               {n.start && n.end

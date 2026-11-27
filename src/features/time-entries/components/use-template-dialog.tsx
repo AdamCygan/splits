@@ -8,7 +8,7 @@ import { Input } from '#/components/ui/input'
 import type { Project, QuickTemplate, TaskType } from '#/data/types'
 import { useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
-import { parseDuration } from '#/domain/entries'
+import { isUrl, parseDuration } from '#/domain/entries'
 import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'
 
@@ -19,8 +19,6 @@ export type TemplateChoice = {
   /** Czas wpisu podany w oknie (dzień z przeszłości, a szablon nie ma czasu). */
   minutes: number | null
 }
-
-const URL_RE = /^https?:\/\/\S+$/i
 
 /** Czego brakuje, żeby szablon zapisał wpis jednym kliknięciem. */
 export function templateNeeds(
@@ -86,7 +84,7 @@ export function UseTemplateDialog({
     ? null
     : !link.trim()
       ? t.issues.link.required
-      : !URL_RE.test(link.trim())
+      : !isUrl(link)
         ? t.issues.link.invalid_url
         : link.length > 2048
           ? t.issues.link.too_long

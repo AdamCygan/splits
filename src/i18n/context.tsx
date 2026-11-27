@@ -2,7 +2,13 @@ import { createContext, useCallback, useContext, useMemo } from 'react'
 import { useRouter } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { localeTags } from './config'
-import { formatMinutes, formatNumber, formatSp, plural } from './format'
+import {
+  formatDate,
+  formatMinutes,
+  formatNumber,
+  formatSp,
+  plural,
+} from './format'
 import { persistLocale } from './locale'
 import type { Locale } from './config'
 import type { Plural } from './format'
@@ -63,6 +69,14 @@ export function useFormat() {
       sp: (points: number) => formatSp(locale, points),
       number: (value: number, digits = 1) =>
         formatNumber(locale, value, digits),
+      /** Krótki dzień: „czw., 26 lis” (z rokiem: „czw., 26 lis 2026”). */
+      day: (date: string, options: { year?: boolean } = {}) =>
+        formatDate(locale, date, {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+          ...(options.year ? { year: 'numeric' } : {}),
+        }),
       plural: (
         forms: Plural,
         count: number,

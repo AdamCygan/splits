@@ -18,6 +18,7 @@ import { z } from 'zod'
 import { planById } from '#/features/billing/plans'
 import { cutAccess, restoreAccess } from '../auth/access'
 import { billingEnabled } from '../billing/stripe'
+import { iso } from './dto'
 import { db } from '../db/client'
 import type { Tx } from '../db/client'
 import {
@@ -73,7 +74,6 @@ const patchInput = z
   .partial()
   .refine((v) => Object.keys(v).length > 0)
 
-const iso = (d: Date | null) => (d ? d.toISOString() : null)
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, '\\$&')
 
 function log(

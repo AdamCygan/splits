@@ -42,6 +42,7 @@ import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate, formatDateRange } from '#/i18n/format'
 import { reportsMessages } from '#/i18n/messages/reports'
 import { cn } from '#/lib/utils'
+import { linkLabel } from '#/domain/links'
 
 const PRESETS: ReadonlyArray<PeriodPreset> = [
   'this_week',
@@ -642,7 +643,7 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1 text-xs text-ink-soft underline-offset-4 hover:text-ink hover:underline"
                               >
-                                {r.taskKey ?? new URL(r.link).hostname}
+                                {linkLabel(r.link, r.taskKey)}
                                 <ExternalLink aria-hidden className="size-3" />
                                 <span className="sr-only">
                                   {' '}
@@ -676,7 +677,7 @@ export function ReportsPage({ initialSprintId }: { initialSprintId?: string }) {
                               className={cn(
                                 'block text-xs font-medium',
                                 r.minutes > r.estimateMinutes
-                                  ? 'text-[#9a4a00] dark:text-[#f4b26b]'
+                                  ? 'text-warn'
                                   : 'text-ink-soft',
                               )}
                             >

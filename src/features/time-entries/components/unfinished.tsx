@@ -11,7 +11,7 @@ import {
   taskTypesQuery,
   useDataMutation,
 } from '#/features/settings/queries'
-import { useFormat, useI18n, useMessages } from '#/i18n/context'
+import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { entryKeys, unfinishedQuery } from '../queries'
@@ -94,7 +94,6 @@ function UnfinishedRow({
 }) {
   const t = useMessages(entriesMessages)
   const format = useFormat()
-  const { tag } = useI18n()
   const types = useQuery(taskTypesQuery).data ?? []
   const projects = useQuery(projectsQuery).data ?? []
   const { entry } = task
@@ -103,12 +102,7 @@ function UnfinishedRow({
   const when =
     task.lastDate === addDays(today, -1)
       ? t.day.yesterday
-      : new Intl.DateTimeFormat(tag, {
-          weekday: 'short',
-          day: 'numeric',
-          month: 'short',
-          timeZone: 'UTC',
-        }).format(new Date(`${task.lastDate}T00:00:00Z`))
+      : format.day(task.lastDate)
 
   return (
     <li className="px-5 py-4 sm:px-6">

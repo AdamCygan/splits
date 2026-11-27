@@ -1,6 +1,5 @@
+import { foldText, pad2 as pad } from './text'
 import { addDays, isValidDate } from './dates'
-
-const pad = (n: number) => String(n).padStart(2, '0')
 
 /**
  * Dzień wpisany w palecie poleceń: „dziś”/„today”, „wczoraj”/„yesterday”,
@@ -8,7 +7,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
  * przepracowanego czasu); null, gdy tekst nie jest datą.
  */
 export function parseDateQuery(raw: string, today: string): string | null {
-  const q = raw.trim().toLocaleLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  const q = foldText(raw.trim())
   if (!q) return null
   const words: Partial<Record<string, number>> = {
     today: 0,

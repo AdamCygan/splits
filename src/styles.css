@@ -76,6 +76,8 @@
   /* Zaznaczenie (aktywna zakładka, wybrana opcja): atrament na jasnym, jasne na ciemnym. */
   --selected: #14162b;
   --on-selected: #ffffff;
+  /* Przekroczenie (czas ponad estymatę, budżet): informacja, nie błąd. */
+  --warn: #9a4a00;
 
   --wt-task: #3d3bf3;
   --wt-review: #e8a33d;
@@ -108,6 +110,7 @@
 .dark {
   --selected: #eef0f8;
   --on-selected: #14162b;
+  --warn: #f4b26b;
   --paper: #121426;
   --surface: #1a1d33;
   --ink: #eef0f8;
@@ -156,6 +159,7 @@
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
+  --color-warn: var(--warn);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);

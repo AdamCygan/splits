@@ -29,7 +29,7 @@ import { Input } from '#/components/ui/input'
 import { Segmented } from '#/components/ui/segmented'
 import type { TimeEntry } from '#/data/types'
 import { addDays, todayIn } from '#/domain/dates'
-import { groupTasks, sortRows, taskGroupKey, totalsOf } from '#/domain/report'
+import { groupTasks, sortRows, totalsOf } from '#/domain/report'
 import type { TaskRow, TaskSort } from '#/domain/report'
 import { groupTaskList, matchesStatus, taskStatus } from '#/domain/task-list'
 import type {
@@ -57,14 +57,9 @@ import { panelMessages } from '#/i18n/messages/panel'
 import { cn } from '#/lib/utils'
 import { DeleteTaskDialog } from './delete-task-dialog'
 import { TaskLink } from './task-link'
-
-const hostOf = (link: string) => {
-  try {
-    return new URL(link).hostname
-  } catch {
-    return 'Link'
-  }
-}
+import { StatTile } from '#/components/ui/stats'
+import { aggregateTasks } from '#/domain/task-groups'
+import { linkLabel } from '#/domain/links'
 
 const PERIODS = { d30: 30, d90: 90, d365: 365 } as const
 type PeriodId = keyof typeof PERIODS
@@ -129,13 +124,10 @@ export function TasksPage({
 
   const { rows, latest, finished } = useMemo(() => {
     const list = entries.data ?? []
-    // Ostatni wpis zadania: z niego startuje „Kontynuuj” i podsumowanie.
-    const last = new Map<string, TimeEntry>()
-    const done = new Set<string>()
-    for (const e of list) {
-      last.set(taskGroupKey(e), e)
-      if (e.finishedAt) done.add(taskGroupKey(e))
-    }
+    // Ostatnia sesja zadania: z niej startuje „Kontynuuj” i podsumowanie.
+    const tasks = aggregateTasks(list)
+    const last = new Map(tasks.map((x) => [x.key, x.latest]))
+    const done = new Set(tasks.filter((x) => x.finished).map((x) => x.key))
     return {
       rows: sortRows(
         groupTasks(list, types),
@@ -194,12 +186,7 @@ export function TasksPage({
   const doneCount = filtered.filter(
     (x) => taskStatus(x.row, finished) === 'done',
   ).length
-  const dayLabel = (date: string) =>
-    formatDate(locale, date, {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    })
+  const dayLabel = (date: string) => format.day(date)
   const groupTitle = (key: string) =>
     grouping === 'kind'
       ? (typeOf(key)?.name ?? '?')
@@ -249,7 +236,7 @@ export function TasksPage({
                   className="inline-flex items-center gap-1 rounded-sm font-medium text-ink underline-offset-4 hover:underline"
                 >
                   <ExternalLink aria-hidden className="size-3.5" />
-                  {row.taskKey ?? hostOf(row.link)}
+                  {linkLabel(row.link, row.taskKey)}
                   <span className="sr-only">
                     {': '}
                     {fmt(t.open, { name: row.title })}
@@ -418,12 +405,12 @@ export function TasksPage({
       )}
 
       <dl className="mb-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line lg:grid-cols-4">
-        <Tile
+        <StatTile
           label={t.tiles.tasks}
           value={String(totals.tasks)}
           hint={fmt(t.tiles.doneOf, { done: doneCount })}
         />
-        <Tile
+        <StatTile
           label={t.tiles.sp}
           value={format.number(spTotal)}
           hint={
@@ -434,7 +421,7 @@ export function TasksPage({
               : undefined
           }
         />
-        <Tile
+        <StatTile
           label={t.tiles.time}
           value={format.minutes(totals.minutes)}
           hint={
@@ -445,7 +432,7 @@ export function TasksPage({
                 })
           }
         />
-        <Tile
+        <StatTile
           label={t.tiles.over}
           value={estimated.length ? String(over) : '–'}
           hint={
@@ -792,7 +779,7 @@ function EstimateCell({
       className={cn(
         'flex items-center gap-1.5 text-sm font-medium',
         e.status === 'over'
-          ? 'text-[#9a4a00] dark:text-[#f4b26b]'
+          ? 'text-warn'
           : e.status === 'under'
             ? 'text-[#0b6b5b] dark:text-[#6ee7b7]'
             : 'text-ink-soft',
@@ -829,25 +816,5 @@ function StatusIcon({ state, label }: { state: TaskStatus; label: string }) {
       )}
       <span className="sr-only">{label}</span>
     </span>
-  )
-}
-
-function Tile({
-  label,
-  value,
-  hint,
-}: {
-  label: string
-  value: string
-  hint?: string
-}) {
-  return (
-    <div className="bg-surface px-4 py-3 sm:px-5">
-      <dt className="text-sm text-ink-soft">{label}</dt>
-      <dd className="type-heading mt-0.5 text-xl tabular-nums sm:text-2xl">
-        {value}
-      </dd>
-      {hint && <dd className="mt-0.5 text-xs text-ink-soft">{hint}</dd>}
-    </div>
   )
 }
