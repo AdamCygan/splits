@@ -3,6 +3,8 @@ import { activeSessions } from '#/server/auth/sessions'
 import {
   base32Decode,
   base32Encode,
+  decryptSecret,
+  encryptSecret,
   hashRecoveryCode,
   newRecoveryCodes,
   totpAt,
@@ -86,5 +88,26 @@ describe('active sessions', () => {
       ['laptop', false, '2026-11-20'],
     ])
     expect(list[1]!.lastActiveAt).toBe('2026-11-25T09:00:00.000Z')
+  })
+})
+
+describe('TOTP secret encryption', () => {
+  it('Should decrypt what it encrypted, with a fresh IV each time', () => {
+    const first = encryptSecret(SECRET)
+    expect(decryptSecret(first)).toBe(SECRET)
+    expect(encryptSecret(SECRET)).not.toBe(first)
+  })
+
+  it('Should reject a stored secret with a tampered or shortened auth tag', () => {
+    const [iv, tag, data] = encryptSecret(SECRET).split('.')
+    const short = Buffer.from(tag!, 'base64url').subarray(0, 4)
+    const flipped = Buffer.from(tag!, 'base64url')
+    flipped[0] = flipped[0]! ^ 1
+    expect(() =>
+      decryptSecret([iv, short.toString('base64url'), data].join('.')),
+    ).toThrow()
+    expect(() =>
+      decryptSecret([iv, flipped.toString('base64url'), data].join('.')),
+    ).toThrow()
   })
 })

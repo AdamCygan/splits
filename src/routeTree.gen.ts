@@ -15,6 +15,7 @@ import { Route as AppRouteRouteImport } from './routes/app/route'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as DotwellKnownSecurityDottxtRouteImport } from './routes/[.]well-known/security[.]txt'
 import { Route as AuthConfirmEmailRouteImport } from './routes/_auth/confirm-email'
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
@@ -80,6 +81,12 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DotwellKnownSecurityDottxtRoute =
+  DotwellKnownSecurityDottxtRouteImport.update({
+    id: '/.well-known/security.txt',
+    path: '/.well-known/security.txt',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthConfirmEmailRoute = AuthConfirmEmailRouteImport.update({
   id: '/confirm-email',
   path: '/confirm-email',
@@ -269,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/app/admin': typeof AppAdminRouteRouteWithChildren
   '/app/settings': typeof AppSettingsRouteRouteWithChildren
+  '/.well-known/security.txt': typeof DotwellKnownSecurityDottxtRoute
   '/confirm-email': typeof AuthConfirmEmailRoute
   '/forgot-password': typeof AuthForgotPasswordRoute
   '/login': typeof AuthLoginRoute
@@ -308,6 +316,7 @@ export interface FileRoutesByTo {
   '/demo': typeof DemoRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.well-known/security.txt': typeof DotwellKnownSecurityDottxtRoute
   '/confirm-email': typeof AuthConfirmEmailRoute
   '/forgot-password': typeof AuthForgotPasswordRoute
   '/login': typeof AuthLoginRoute
@@ -352,6 +361,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/app/admin': typeof AppAdminRouteRouteWithChildren
   '/app/settings': typeof AppSettingsRouteRouteWithChildren
+  '/.well-known/security.txt': typeof DotwellKnownSecurityDottxtRoute
   '/_auth/confirm-email': typeof AuthConfirmEmailRoute
   '/_auth/forgot-password': typeof AuthForgotPasswordRoute
   '/_auth/login': typeof AuthLoginRoute
@@ -397,6 +407,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/app/admin'
     | '/app/settings'
+    | '/.well-known/security.txt'
     | '/confirm-email'
     | '/forgot-password'
     | '/login'
@@ -436,6 +447,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/.well-known/security.txt'
     | '/confirm-email'
     | '/forgot-password'
     | '/login'
@@ -479,6 +491,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/app/admin'
     | '/app/settings'
+    | '/.well-known/security.txt'
     | '/_auth/confirm-email'
     | '/_auth/forgot-password'
     | '/_auth/login'
@@ -522,6 +535,7 @@ export interface RootRouteChildren {
   DemoRoute: typeof DemoRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  DotwellKnownSecurityDottxtRoute: typeof DotwellKnownSecurityDottxtRoute
   ApiV1SplatRoute: typeof ApiV1SplatRoute
 }
 
@@ -567,6 +581,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/security.txt': {
+      id: '/.well-known/security.txt'
+      path: '/.well-known/security.txt'
+      fullPath: '/.well-known/security.txt'
+      preLoaderRoute: typeof DotwellKnownSecurityDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth/confirm-email': {
@@ -948,6 +969,7 @@ const rootRouteChildren: RootRouteChildren = {
   DemoRoute: DemoRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  DotwellKnownSecurityDottxtRoute: DotwellKnownSecurityDottxtRoute,
   ApiV1SplatRoute: ApiV1SplatRoute,
 }
 export const routeTree = rootRouteImport

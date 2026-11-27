@@ -48,6 +48,34 @@ describe('monitoring (Sentry envelope)', () => {
     ])
   })
 
+  it('Should read frames without a function name or without a position', () => {
+    expect(
+      stackFrames(
+        [
+          'Error: boom',
+          '    at /app/server/x.js:7:3',
+          '    at fn (native)',
+        ].join('\n'),
+      ),
+    ).toEqual([
+      { function: 'fn (native)', in_app: false },
+      {
+        function: undefined,
+        filename: '/app/server/x.js',
+        lineno: 7,
+        colno: 3,
+        in_app: true,
+      },
+    ])
+  })
+
+  it('Should parse a crafted long line in linear time', () => {
+    const line = `at )${' (:'.repeat(200_000)}\u0000`
+    const started = performance.now()
+    stackFrames(`Error\n${line}`)
+    expect(performance.now() - started).toBeLessThan(200)
+  })
+
   it('Should send one envelope with the error and no personal request data', async () => {
     const calls: Array<{ url: string; init: RequestInit }> = []
     setMonitoringForTests({

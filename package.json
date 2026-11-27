@@ -68,6 +68,7 @@
     "@vitejs/plugin-react": "^6.0.1",
     "drizzle-kit": "0.31.11",
     "eslint": "^10.0.0",
+    "eslint-plugin-security": "^4.2.1",
     "prettier": "^3.8.1",
     "tsx": "4.23.15",
     "typescript": "^6.0.2",

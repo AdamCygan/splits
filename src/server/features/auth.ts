@@ -45,6 +45,7 @@ import {
   tokenInput,
   timezone as timezoneSchema,
 } from '../http/inputs'
+import { clientIp } from '../http/client-ip'
 import { rateLimit, resetRateLimit } from '../http/rate-limit'
 import { runMaintenance } from '../maintenance'
 import { toUser } from './dto'
@@ -59,10 +60,8 @@ const DEMO_MAX_ACCOUNTS = 500
 const secure = serverEnv.appUrl.startsWith('https://')
 
 export function requestMeta(c: Context) {
-  const forwarded =
-    c.req.header('fly-client-ip') ?? c.req.header('x-forwarded-for')
   return {
-    ip: forwarded?.split(',')[0]?.trim() ?? null,
+    ip: clientIp(c.req, serverEnv.clientIpHeader),
     userAgent: c.req.header('user-agent') ?? null,
   }
 }
@@ -283,7 +282,13 @@ export const authRoutes = new Hono<AppEnv>()
     const meta = requestMeta(c)
     const input = await body(c, loginInput)
     rateLimit(`login-ip:${meta.ip}`, 30, 15 * 60_000)
-    rateLimit(`login:${lower(input.login)}`, 15, 15 * 60_000)
+    // Ten sam próg co blokada konta: nieistniejący login też dostaje 429 po tylu próbach,
+    // więc odpowiedź 429 nie zdradza, czy konto istnieje.
+    rateLimit(
+      `login:${lower(input.login)}`,
+      MAX_FAILED_LOGINS,
+      LOCKOUT_MINUTES * 60_000,
+    )
     const user = await findUserByLogin(db, input.login)
     if (!user?.passwordHash) {
       await burnPasswordCheck(input.password)

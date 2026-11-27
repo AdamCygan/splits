@@ -11,6 +11,7 @@ import {
 import { SUMMARY_TEMPLATE_MAX } from '#/domain/summary'
 import { locales } from '#/i18n/config'
 import type { Context } from 'hono'
+import { readBody } from './body-limit'
 import { invalid } from './errors'
 
 /**
@@ -315,8 +316,16 @@ export async function body<T extends z.ZodType>(
   c: Context,
   schema: T,
 ): Promise<z.infer<T>> {
-  const raw: unknown = await c.req.json().catch(() => undefined)
-  return parse(schema, raw)
+  const text = await readBody(c.req.raw)
+  return parse(schema, parseJson(text))
+}
+
+function parseJson(text: string): unknown {
+  try {
+    return JSON.parse(text) as unknown
+  } catch {
+    return undefined
+  }
 }
 
 export function parse<T extends z.ZodType>(

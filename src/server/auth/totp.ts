@@ -91,12 +91,17 @@ export function otpauthUrl(secret: string, account: string) {
   return `otpauth://totp/${label}?secret=${secret}&issuer=Pointhours&algorithm=SHA1&digits=${DIGITS}&period=${STEP_SECONDS}`
 }
 
+/** GCM z pełnym, 16-bajtowym tagiem: krótszy tag z bazy nie przejdzie deszyfrowania. */
+const GCM_TAG_LENGTH = 16
+
 const key = () =>
   createHash('sha256').update(`totp:${serverEnv.jwtSecret}`).digest()
 
 export function encryptSecret(secret: string): string {
   const iv = randomBytes(12)
-  const cipher = createCipheriv('aes-256-gcm', key(), iv)
+  const cipher = createCipheriv('aes-256-gcm', key(), iv, {
+    authTagLength: GCM_TAG_LENGTH,
+  })
   const data = Buffer.concat([cipher.update(secret, 'utf8'), cipher.final()])
   return [iv, cipher.getAuthTag(), data]
     .map((b) => b.toString('base64url'))
@@ -107,7 +112,9 @@ export function decryptSecret(stored: string): string {
   const [iv, tag, data] = stored
     .split('.')
     .map((p) => Buffer.from(p, 'base64url'))
-  const decipher = createDecipheriv('aes-256-gcm', key(), iv!)
+  const decipher = createDecipheriv('aes-256-gcm', key(), iv!, {
+    authTagLength: GCM_TAG_LENGTH,
+  })
   decipher.setAuthTag(tag!)
   return Buffer.concat([decipher.update(data!), decipher.final()]).toString(
     'utf8',

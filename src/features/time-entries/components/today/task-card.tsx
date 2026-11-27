@@ -18,6 +18,7 @@ import { TaskProgress } from '../task-progress'
 import { useElapsed } from '../timer'
 import { SessionRow } from './session-row'
 import type { DayTask, EntryListViewModel } from './use-entry-list'
+import { safeUrl } from '#/domain/entries'
 
 interface TaskTotalProps {
   done: number
@@ -83,7 +84,7 @@ export function TaskCard({ task, vm }: TaskCardProps) {
             )}
             {latest.link && (
               <a
-                href={latest.link}
+                href={safeUrl(latest.link)}
                 target="_blank"
                 rel="noreferrer noopener"
                 className="inline-flex items-center gap-1 font-medium text-ink underline-offset-4 hover:underline"

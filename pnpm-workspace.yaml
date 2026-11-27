@@ -9,3 +9,15 @@ allowBuilds:
 # Playwright i jego rdzeń w tej samej wersji co przeglądarka w CI i w testach.
 overrides:
   playwright-core: 1.63.0
+  # Łatka bezpieczeństwa w zależności narzędzia (pnpm audit). Usuń, gdy drizzle-kit
+  # sam przejdzie na poprawioną wersję.
+  # esbuild <=0.24.2: dowolna strona może czytać serwer deweloperski (drizzle-kit > @esbuild-kit/core-utils).
+  '@esbuild-kit/core-utils>esbuild': ^0.25.0
+
+# Znane podatności zaakceptowane świadomie (pnpm audit). Każda z powodem i warunkiem usunięcia.
+auditConfig:
+  ignoreGhsas:
+    # minimatch <11.0.1 (DoS przez złośliwy wzorzec glob) tylko w narzędziach lint: wzorce pochodzą
+    # z naszej konfiguracji, a nie od użytkowników. eslint-plugin-import-x nie działa jeszcze
+    # z minimatch 11 (brak makeRe). Usuń, gdy Dependabot zaproponuje poprawione wersje.
+    - GHSA-g3hv-75wg-m249

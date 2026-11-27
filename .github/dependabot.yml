@@ -1,0 +1,29 @@
+# Cotygodniowe aktualizacje zależności. Łatki bezpieczeństwa przychodzą od razu (security updates),
+# niezależnie od tego harmonogramu, gdy w ustawieniach repozytorium są włączone Dependabot alerts.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      # Drobne aktualizacje w jednym PR, duże wersje osobno (mogą wymagać zmian w kodzie).
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday

@@ -23,6 +23,9 @@ export const ENTRY_LIMITS = {
 /** Adres http(s) bez spacji: ta sama reguła w formularzach i na serwerze. */
 export const URL_RE = /^https?:\/\/\S+$/i
 export const isUrl = (value: string) => URL_RE.test(value.trim())
+/** Adres do atrybutu href: tylko http(s). Inne schematy (javascript:, data:) dają undefined. */
+export const safeUrl = (value: string | null | undefined) =>
+  value && isUrl(value) ? value.trim() : undefined
 
 export type EntryField =
   | 'title'

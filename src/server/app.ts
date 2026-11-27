@@ -32,6 +32,8 @@ import { dayOffRoutes } from './features/days-off'
 import { sprintRoutes } from './features/sprints'
 import type { AppEnv } from './http/context'
 import { ApiError, fromDatabaseError, problem } from './http/errors'
+import { sameOrigin } from './http/origin'
+import { limitBody } from './http/body-limit'
 import { startMaintenance } from './maintenance'
 import { installProcessHandlers, reportError } from './monitoring'
 import { launchProblems } from '#/config/launch-check'
@@ -44,13 +46,6 @@ function detectLocale(
 ): Locale {
   if (isLocale(cookie)) return cookie
   return header?.toLowerCase().startsWith('pl') ? 'pl' : 'en'
-}
-
-/** Ścieżki z ciasteczkiem sesji: przyjmujemy je tylko z naszej własnej strony (ochrona przed CSRF). */
-function sameOrigin(origin: string | undefined, requestUrl: string) {
-  if (!origin) return true
-  const own = new URL(requestUrl).origin
-  return origin === own || origin === new URL(serverEnv.appUrl).origin
 }
 
 /**
@@ -77,7 +72,18 @@ if (serverEnv.isProduction) {
 
 export const api = new Hono<AppEnv>().basePath('/api/v1')
 
-api.use('*', secureHeaders({ crossOriginResourcePolicy: 'same-origin' }))
+api.use(
+  '*',
+  secureHeaders({
+    crossOriginResourcePolicy: 'same-origin',
+    // API zwraca tylko JSON: nic z odpowiedzi nie może się wykonać ani osadzić.
+    contentSecurityPolicy: {
+      defaultSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+    strictTransportSecurity: 'max-age=63072000; includeSubDomains',
+  }),
+)
 api.use('*', async (c, next) => {
   c.set('traceId', randomUUID())
   c.set(
@@ -88,10 +94,16 @@ api.use('*', async (c, next) => {
   await ensureMigrated()
   await next()
 })
+api.use('*', limitBody)
 
 api.use('/auth/*', async (c, next) => {
-  if (c.req.method !== 'GET' && !sameOrigin(c.req.header('origin'), c.req.url))
-    throw new HTTPException(403)
+  const allowed = sameOrigin({
+    origin: c.req.header('origin'),
+    fetchSite: c.req.header('sec-fetch-site'),
+    requestUrl: c.req.url,
+    appUrl: serverEnv.appUrl,
+  })
+  if (c.req.method !== 'GET' && !allowed) throw new HTTPException(403)
   await next()
 })
 
@@ -196,7 +208,7 @@ api.onError(async (error, c) => {
       error.status,
     )
   }
-  console.error(`[api] ${traceId} ${c.req.method} ${c.req.path}`, error)
+  console.error('[api] %s %s %s', traceId, c.req.method, c.req.path, error)
   await reportError(error, where)
   return c.json(problem(locale, 'server.unexpected', 500, [], traceId), 500)
 })

@@ -250,6 +250,13 @@ dobrych praktykach i SEO (telefon i desktop). Co za tym stoi:
 **Przed wdrożeniem ustaw `VITE_APP_URL` na docelową domenę** (build arg w `compose.yaml`).
 Od niej zależą canonical, sitemap, Open Graph i dane strukturalne.
 
+## Bezpieczeństwo
+
+Opis zabezpieczeń: `docs/architecture.md` (sekcje 5 i 5a), zgłaszanie podatności: `SECURITY.md`.
+Przy każdym pushu działa `.github/workflows/security.yml` (CodeQL, Semgrep, gitleaks, `pnpm audit`).
+Na Railway adres klienta do limitów prób przychodzi w `X-Real-IP` (domyślne `CLIENT_IP_HEADER`);
+na Fly.io ustaw `CLIENT_IP_HEADER=fly-client-ip`.
+
 ## Przydatne komendy
 
 ```bash

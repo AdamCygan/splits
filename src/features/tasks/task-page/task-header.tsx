@@ -12,6 +12,7 @@ import { fmt, formatDate } from '#/i18n/format'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { taskViewMessages } from '#/i18n/messages/task-view'
 import type { TaskViewModel } from './use-task'
+import { safeUrl } from '#/domain/entries'
 
 export interface TaskHeaderProps {
   vm: TaskViewModel
@@ -62,7 +63,7 @@ export function TaskHeader({ vm }: TaskHeaderProps) {
         </h1>
         {latest.link && (
           <a
-            href={latest.link}
+            href={safeUrl(latest.link)}
             target="_blank"
             rel="noreferrer noopener"
             className="mt-1 inline-flex max-w-full items-center gap-1.5 text-sm text-ink-soft underline-offset-4 hover:text-ink hover:underline"

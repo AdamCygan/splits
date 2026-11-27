@@ -38,26 +38,40 @@ interface Frame {
   in_app: boolean
 }
 
+const POSITION_RE = /:(\d+):(\d+)$/
+
+/**
+ * Jedna ramka „at fn (plik:linia:kolumna)” albo „at plik:linia:kolumna”. Bez jednego
+ * wyrażenia regularnego na całą linię: takie z dwoma leniwymi grupami ma wielomianowy
+ * backtracking (ReDoS), a linia z komunikatu błędu może pochodzić od użytkownika.
+ */
+function parseFrame(line: string): Frame | null {
+  const text = line.trim()
+  if (!text.startsWith('at ')) return null
+  const rest = text.slice(3)
+  const open = rest.endsWith(')') ? rest.lastIndexOf(' (') : -1
+  const location = open >= 0 ? rest.slice(open + 2, -1) : rest
+  const position = POSITION_RE.exec(location)
+  if (!position) return { function: rest, in_app: false }
+  const file = location.slice(0, position.index)
+  return {
+    function: open >= 0 ? rest.slice(0, open) : undefined,
+    filename: file,
+    lineno: Number(position[1]),
+    colno: Number(position[2]),
+    in_app: !file.includes('node_modules') && !file.startsWith('node:'),
+  }
+}
+
 /** Ramki stosu V8 („at fn (plik:linia:kolumna)”), od najstarszej, jak oczekuje Sentry. */
 export function stackFrames(stack: string | undefined): Array<Frame> {
   if (!stack) return []
-  const frames: Array<Frame> = []
-  for (const line of stack.split('\n').slice(1)) {
-    const match =
-      /^\s*at (?:(.+?) \()?(.+?):(\d+):(\d+)\)?$/.exec(line) ??
-      /^\s*at (.+)$/.exec(line)
-    if (!match) continue
-    const [, fn, file, lineno, colno] = match
-    frames.push({
-      function: fn,
-      filename: file,
-      lineno: lineno ? Number(lineno) : undefined,
-      colno: colno ? Number(colno) : undefined,
-      in_app:
-        !!file && !file.includes('node_modules') && !file.startsWith('node:'),
-    })
-  }
-  return frames.reverse()
+  return stack
+    .split('\n')
+    .slice(1)
+    .map(parseFrame)
+    .filter((frame): frame is Frame => frame !== null)
+    .reverse()
 }
 
 export interface ErrorContext {

@@ -1,0 +1,16 @@
+# gitleaks (CI: .github/workflows/security.yml). Domyślne reguły plus wyjątki dla danych,
+# które celowo nie są sekretami: hasła i klucze z testów oraz wartości do pracy lokalnej.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Test fixtures and local-development defaults"
+paths = [
+  '''^tests/''',
+  '''^playwright\.config\.ts$''',
+  '''^vitest\.config\.ts$''',
+  '''^\.env\.example$''',
+]
+regexes = [
+  '''dev-only-secret-change-me''',
+]

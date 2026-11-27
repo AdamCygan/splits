@@ -23,6 +23,7 @@ import { TaskLink } from '../task-link'
 import { EstimateCell } from './estimate-cell'
 import { StatusIcon } from './status-icon'
 import type { TaskListItem, TasksViewModel } from './use-tasks'
+import { safeUrl } from '#/domain/entries'
 
 export interface TaskRowViewProps {
   item: TaskListItem
@@ -58,7 +59,7 @@ export function TaskRowView({ item: { row, estimate }, vm }: TaskRowViewProps) {
           {row.link && (
             <>
               <a
-                href={row.link}
+                href={safeUrl(row.link)}
                 target="_blank"
                 rel="noreferrer noopener"
                 className="inline-flex items-center gap-1 rounded-sm font-medium text-ink underline-offset-4 hover:underline"
@@ -171,7 +172,7 @@ export function TaskRowView({ item: { row, estimate }, vm }: TaskRowViewProps) {
                 {row.link && (
                   <DropdownMenuItem asChild>
                     <a
-                      href={row.link}
+                      href={safeUrl(row.link)}
                       target="_blank"
                       rel="noreferrer noopener"
                     >

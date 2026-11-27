@@ -1,6 +1,7 @@
 //  @ts-check
 
 import { tanstackConfig } from '@tanstack/eslint-config'
+import security from 'eslint-plugin-security'
 
 /** Zasady kodu (src i testy): nazwane typy parametrów, bez IIFE. */
 const codeRules = [
@@ -21,6 +22,11 @@ const codeRules = [
       'CallExpression > :matches(ArrowFunctionExpression, FunctionExpression).callee',
     message:
       'Do not use IIFEs: extract a named function (or a component) and call it.',
+  },
+  {
+    selector: 'JSXAttribute[name.name="dangerouslySetInnerHTML"]',
+    message:
+      'Avoid dangerouslySetInnerHTML (XSS). If the HTML is fully ours, disable this line with a comment saying why it is safe.',
   },
 ]
 
@@ -59,8 +65,34 @@ const testRules = [
   },
 ]
 
+/**
+ * Wzorce niebezpieczne niezależnie od kontekstu (eslint-plugin-security). Bez reguł opartych
+ * na heurystyce (detect-object-injection, detect-unsafe-regex, detect-non-literal-regexp,
+ * detect-non-literal-fs-filename): przy TypeScripcie dają głównie fałszywe alarmy, a te
+ * przypadki dokładniej sprawdza CodeQL w CI (js/redos, js/polynomial-redos, js/regex-injection).
+ */
+const securityRules = {
+  'security/detect-bidi-characters': 'error',
+  'security/detect-buffer-noassert': 'error',
+  'security/detect-child-process': 'error',
+  'security/detect-disable-mustache-escape': 'error',
+  'security/detect-eval-with-expression': 'error',
+  'security/detect-new-buffer': 'error',
+  'security/detect-no-csrf-before-method-override': 'error',
+  'security/detect-non-literal-require': 'error',
+  'security/detect-pseudoRandomBytes': 'error',
+  'no-eval': 'error',
+  'no-implied-eval': 'error',
+  'no-new-func': 'error',
+  'no-script-url': 'error',
+}
+
 export default [
   ...tanstackConfig,
+  {
+    plugins: { security },
+    rules: securityRules,
+  },
   {
     rules: {
       'import/no-cycle': 'off',
@@ -77,6 +109,8 @@ export default [
     files: ['tests/**/*.test.ts', 'tests/**/*.spec.ts'],
     rules: {
       'no-restricted-syntax': ['error', ...testRules],
+      // Testy celowo wysyłają adresy javascript:, żeby sprawdzić, że aplikacja je odrzuca.
+      'no-script-url': 'off',
     },
   },
   {

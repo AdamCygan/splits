@@ -66,6 +66,7 @@ const en = {
   'sprint.cadence_delete':
     'Sprints from your schedule can’t be deleted. Edit it, or change the schedule instead.',
   'validation.invalid': 'Check the highlighted fields.',
+  'validation.too_large': 'This is too much data to send at once.',
   not_found: 'This item no longer exists. Refresh the page.',
   'server.unexpected': 'Something went wrong on our side. Try again.',
 }
@@ -140,6 +141,7 @@ const pl: ErrorMessages = {
   'sprint.cadence_delete':
     'Sprintów z harmonogramu nie można usunąć. Edytuj sprint albo zmień harmonogram.',
   'validation.invalid': 'Popraw zaznaczone pola.',
+  'validation.too_large': 'Za dużo danych do wysłania naraz.',
   not_found: 'Ten element już nie istnieje. Odśwież stronę.',
   'server.unexpected':
     'Coś poszło nie tak po naszej stronie. Spróbuj ponownie.',

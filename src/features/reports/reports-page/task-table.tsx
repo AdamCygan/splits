@@ -14,6 +14,7 @@ import { fmt, formatDate } from '#/i18n/format'
 import { reportsMessages } from '#/i18n/messages/reports'
 import { cn } from '#/lib/utils'
 import type { ReportsViewModel } from './use-reports'
+import { safeUrl } from '#/domain/entries'
 
 export interface TaskTableProps {
   vm: ReportsViewModel
@@ -162,7 +163,7 @@ function TaskTableRow({ row: r, vm }: TaskTableRowProps) {
           {r.running && <Badge tone="success">{t.table.running}</Badge>}
           {r.link && (
             <a
-              href={r.link}
+              href={safeUrl(r.link)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-xs text-ink-soft underline-offset-4 hover:text-ink hover:underline"

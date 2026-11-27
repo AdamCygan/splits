@@ -83,6 +83,12 @@ export const serverEnv = {
    * administratorzy mają już 2FA: bez niego API admina odpowiada 403 admin.two_factor_required.
    */
   adminRequire2fa: env.ADMIN_REQUIRE_2FA === 'true',
+  /**
+   * Nagłówek z adresem IP klienta ustawiany przez proxy hostingu (limity prób, lista sesji).
+   * Railway nadpisuje X-Real-IP, Fly.io ustawia Fly-Client-IP. Czytamy tylko ten jeden nagłówek:
+   * inne klient może podać sam i obejść limity prób.
+   */
+  clientIpHeader: (env.CLIENT_IP_HEADER ?? 'x-real-ip').trim().toLowerCase(),
   /** Limity prób logowania/rejestracji w pamięci; RATE_LIMITS=off tylko w testach. */
   rateLimits: env.RATE_LIMITS !== 'off' || isProduction,
   /** Tylko testy e2e: endpoint z danymi przykładowymi. Nigdy w produkcji. */

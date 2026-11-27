@@ -4,6 +4,7 @@ import {
   Link,
   Scripts,
   createRootRoute,
+  useRouter,
 } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 
@@ -104,12 +105,19 @@ interface RootDocumentProps {
 
 function RootDocument({ children }: RootDocumentProps) {
   const { locale, consent } = Route.useLoaderData()
+  const nonce = useRouter().options.ssr?.nonce
 
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
         <HeadContent />
-        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <script
+          nonce={nonce}
+          suppressHydrationWarning
+          // Stały skrypt motywu z #/lib/theme, bez danych od użytkownika.
+          // eslint-disable-next-line no-restricted-syntax
+          dangerouslySetInnerHTML={{ __html: themeBootScript }}
+        />
       </head>
       <body>
         <I18nProvider locale={locale}>

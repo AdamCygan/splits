@@ -30,6 +30,8 @@ RUN pnpm build
 
 # --- 3. Runtime: wynik builda (.output ma własne node_modules) + migracje SQL
 FROM node:24-alpine AS runtime
+# Łatki bezpieczeństwa systemu z Alpine, nawet gdy obraz bazowy jest starszy niż ostatnie poprawki.
+RUN apk upgrade --no-cache
 WORKDIR /app
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
@@ -40,5 +42,5 @@ COPY --from=build --chown=node:node /app/drizzle ./drizzle
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
-  CMD wget -qO- http://127.0.0.1:3000/api/v1/health || exit 1
+  CMD ["wget", "-qO-", "http://127.0.0.1:3000/api/v1/health"]
 CMD ["node", ".output/server/index.mjs"]

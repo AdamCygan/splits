@@ -193,7 +193,7 @@ function SetupDialog({ security, onClose, onEnabled }: SetupDialogProps) {
     secret: string
     otpauthUrl: string
   } | null>(null)
-  const [svg, setSvg] = useState('')
+  const [qr, setQr] = useState('')
   const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
   const start = useDataMutation(() => data.account.twoFactorSetup(), {
@@ -219,12 +219,9 @@ function SetupDialog({ security, onClose, onEnabled }: SetupDialogProps) {
   }, [])
   useEffect(() => {
     if (!secret) return
+    // Obrazek (data: URL) zamiast wstawiania SVG jako HTML: nic z niego nie może się wykonać.
     void import('qrcode').then((QR) =>
-      QR.toString(secret.otpauthUrl, {
-        type: 'svg',
-        margin: 1,
-        width: 200,
-      }).then(setSvg),
+      QR.toDataURL(secret.otpauthUrl, { margin: 1, width: 400 }).then(setQr),
     )
   }, [secret])
 
@@ -259,12 +256,9 @@ function SetupDialog({ security, onClose, onEnabled }: SetupDialogProps) {
           className="space-y-4"
         >
           <div className="flex flex-wrap items-start gap-5">
-            <div
-              role="img"
-              aria-label={t.setupScan}
-              className="size-[200px] shrink-0 overflow-hidden rounded-lg border border-line bg-white p-1"
-              dangerouslySetInnerHTML={{ __html: svg }}
-            />
+            <div className="size-[200px] shrink-0 overflow-hidden rounded-lg border border-line bg-white p-1">
+              {qr && <img src={qr} alt={t.setupScan} className="size-full" />}
+            </div>
             <div className="min-w-0 flex-1 basis-48">
               <p className="text-sm text-ink-soft">{t.setupManual}</p>
               <p className="mt-1 font-mono text-sm break-all select-all">

@@ -97,9 +97,25 @@ Pilnuje ich ESLint (`no-restricted-syntax` i `consistent-type-definitions` w `es
 - Access token (JWT HS256, 15 min) w pamięci przeglądarki + refresh token (30 dni) w ciasteczku
   httpOnly `SameSite=Lax` ograniczonym do `/api/v1/auth`. Refresh tokeny są rotowane, w bazie leży tylko
   ich SHA-256, a ponowne użycie starego tokenu unieważnia całą rodzinę sesji.
-- Endpointy z ciasteczkiem przyjmują żądania tylko z naszej strony (sprawdzanie `Origin`).
+- Endpointy z ciasteczkiem przyjmują żądania tylko z naszej strony (`Origin` i `Sec-Fetch-Site`).
 - Blokada konta na 15 min po 10 błędnych hasłach, limity prób w pamięci procesu (przy kilku maszynach: Redis).
+  Adres IP do limitów pochodzi tylko z nagłówka ustawianego przez proxy hostingu (`CLIENT_IP_HEADER`,
+  domyślnie `X-Real-IP` na Railway); innych nagłówków klient może użyć do podszycia się pod inny adres.
 - Reset hasła: jednorazowy token (60 min) e-mailem; po zmianie hasła wszystkie sesje wygasają.
+- Sekret 2FA zaszyfrowany AES-256-GCM z pełnym, 16-bajtowym tagiem.
+
+## 5a. Nagłówki i ochrona przeglądarki
+
+- Strony: Content-Security-Policy z nonce'em losowanym dla każdego żądania (`src/server.ts`,
+  `src/server/security-headers.ts`). Nonce trafia do routera (`ssr.nonce`), więc dostają go skrypty
+  hydracji, skrypt motywu i JSON-LD; wstrzyknięty skrypt bez nonce'a się nie wykona. Style mają
+  `'unsafe-inline'` (atrybuty `style` z Reacta). Do tego HSTS, `X-Frame-Options: DENY`,
+  `frame-ancestors 'none'`, `nosniff`, COOP/CORP i Permissions-Policy.
+- API: `default-src 'none'`, HSTS, `Cache-Control: no-store`, limit ciała żądania 1 MB.
+- Linki zadań: serwer przyjmuje tylko `http(s)`, a widoki i tak przepuszczają je przez `safeUrl`.
+- `/.well-known/security.txt` i `SECURITY.md`: jak zgłosić podatność.
+- CI (`.github/workflows/security.yml`): CodeQL, Semgrep, gitleaks, `pnpm audit`, Dependency Review;
+  Dependabot aktualizuje npm, akcje (przypięte do commitów) i obraz Dockera.
 
 ## 6. Płatności (następny krok)
 
