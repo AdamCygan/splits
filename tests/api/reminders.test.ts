@@ -1,27 +1,34 @@
 import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
 import { db } from '#/server/db/client'
-import { userSettings } from '#/server/db/schema'
+import { userSettings, users } from '#/server/db/schema'
 import { outbox } from '#/server/email'
 import { runReminders } from '#/server/reminders'
 import { registered } from './helpers'
+import type { ApiClient } from './helpers'
 
 const reminders = (to: string) =>
   outbox.filter((m) => m.to === to && /Log today’s work/.test(m.subject))
 
+/** Przypomnienie ustawione bezpośrednio w bazie (z pominięciem blokady planu w API). */
+async function remindAt(c: ApiClient, time: string) {
+  const me = await c.get<{ id: string }>('/account')
+  await db
+    .update(userSettings)
+    .set({
+      dailyReminderAt: time,
+      timezone: 'UTC',
+      workingDays: [0, 1, 2, 3, 4, 5, 6],
+      workdayTargetMinutes: 480,
+    })
+    .where(eq(userSettings.userId, me.body.id))
+  return me.body.id
+}
+
 describe('daily reminder email', () => {
   it('Should come once a day after the set time when the day is not full', async () => {
-    const { c, email } = await registered()
-    const me = await c.get<{ id: string }>('/account')
-    await db
-      .update(userSettings)
-      .set({
-        dailyReminderAt: '17:00',
-        timezone: 'UTC',
-        workingDays: [0, 1, 2, 3, 4, 5, 6],
-        workdayTargetMinutes: 480,
-      })
-      .where(eq(userSettings.userId, me.body.id))
+    const { c, email } = await registered('en', { pro: true })
+    await remindAt(c, '17:00')
 
     // Przed godziną nic, po godzinie jeden e-mail, drugi raz tego dnia już nie.
     await runReminders(new Date('2031-03-03T16:50:00Z'))
@@ -34,6 +41,17 @@ describe('daily reminder email', () => {
 
     // Kilka godzin po czasie (np. serwer stał) przypomnienie już nie przychodzi.
     await runReminders(new Date('2031-03-04T23:30:00Z'))
+    expect(reminders(email)).toHaveLength(1)
+  })
+
+  it('Should not send reminders on the Free plan, even one set earlier', async () => {
+    const { c, email } = await registered()
+    const id = await remindAt(c, '17:00')
+    await runReminders(new Date('2031-03-05T17:05:00Z'))
+    expect(reminders(email)).toHaveLength(0)
+
+    await db.update(users).set({ plan: 'pro' }).where(eq(users.id, id))
+    await runReminders(new Date('2031-03-05T17:06:00Z'))
     expect(reminders(email)).toHaveLength(1)
   })
 })

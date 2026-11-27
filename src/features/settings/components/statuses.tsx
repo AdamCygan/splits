@@ -29,6 +29,12 @@ import {
   move,
   useAnnouncer,
 } from './ui'
+import { FREE_LIMITS } from '#/features/billing/plans'
+import {
+  PlanLimit,
+  useFreePlan,
+} from '#/features/billing/components/plan-limit'
+import { billingMessages } from '#/i18n/messages/billing'
 
 const categoryTone = {
   todo: 'muted',
@@ -63,6 +69,8 @@ function StatusList({ statuses }: StatusListProps) {
   const [editing, setEditing] = useState<TaskStatus | 'new' | null>(null)
   const [announcer, announce] = useAnnouncer()
   const { active, archived } = splitArchived(statuses)
+  const limits = useMessages(billingMessages).limits
+  const atLimit = useFreePlan() && active.length >= FREE_LIMITS.statuses
 
   const reorder = useDataMutation(
     (ids: Array<string>) => data.statuses.reorder(ids),
@@ -97,13 +105,18 @@ function StatusList({ statuses }: StatusListProps) {
       title={t.title}
       lead={t.defaultHint}
       actions={
-        <Button onClick={() => setEditing('new')}>
+        <Button
+          onClick={() => setEditing('new')}
+          disabled={atLimit}
+          aria-describedby={atLimit ? 'status-limit' : undefined}
+        >
           <Plus aria-hidden className="size-4" />
           {t.add}
         </Button>
       }
     >
       {announcer}
+      {atLimit && <PlanLimit id="status-limit">{limits.statuses}</PlanLimit>}
       <ol className="divide-y divide-line">
         {active.map((status, index) => (
           <li

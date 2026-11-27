@@ -156,32 +156,40 @@ Wyłączysz to zmienną `MIGRATE_ON_START=false`.
 - Baner cookies: statystyki (PostHog) ładują się wyłącznie po zgodzie; wybór w ciasteczku `app_consent`
   (12 miesięcy), zmiana w stopce przez „Cookie settings”.
 
-## Płatności (Stripe, tylko plany roczne)
+## Płatności (Stripe: Free, Pro miesięcznie, Pro rocznie)
 
-Sprzedajemy wyłącznie plany **płatne z góry za rok** (dziś: Pro, 24 USD/rok z VAT, jeśli dotyczy).
-Plan Team (za osobę) jest w cenniku jako „wkrótce” i zapisuje na listę mailem.
+Cennik ma trzy kafelki: **Free**, **Pro miesięcznie (6 USD)** i **Pro rocznie (60 USD, 2 miesiące gratis)**,
+ceny z VAT, jeśli dotyczy. Oba warianty Pro mają te same funkcje; różni je tylko okres płatności.
+Nie ma okresów próbnych: do oglądania jest demo (konta demo mają Pro).
+
+Plan Free jest mocno przycięty (limity w `FREE_LIMITS`, `src/features/billing/plans.ts`, pilnowane przez API):
+historia i raporty z 7 dni, 1 projekt, 2 szybkie szablony, 4 domyślne statusy, tylko wbudowane typy pracy,
+bez eksportu CSV i bez codziennych przypomnień e-mail.
 
 Jak to działa:
 
-1. Cennik → „Kup Pro na rok” → rejestracja albo logowanie → **koszyk** (`/app/checkout`):
-   podsumowanie, data odnowienia, zgoda na regulamin i 14 dni na pełny zwrot.
+1. Cennik → „Kup Pro miesięcznie / rocznie” → rejestracja albo logowanie → **koszyk** (`/app/checkout`):
+   wybór okresu (miesiąc albo rok), podsumowanie, data odnowienia, zgoda na regulamin i 14 dni na pełny zwrot.
 2. „Przejdź do płatności” otwiera **Stripe Checkout** (karta, adres, NIP firmy, kod rabatowy).
 3. Po płatności wracasz do Ustawienia → Plan; plan włącza się od razu (`POST /api/v1/billing/sync`),
    a webhook (`/api/v1/stripe/webhook`) pilnuje odnowień, nieudanych płatności i anulowania, a wpłaty
    i zwroty (`charge.succeeded`, `charge.refunded`) zapisuje do przychodu w panelu admina.
    Po aktualizacji uruchom ponownie `pnpm stripe:setup`, żeby webhook dostał nowe zdarzenie.
 4. Ustawienia → Plan → „Zarządzaj subskrypcją” otwiera **Stripe Customer Portal**: faktury, karta,
-   dane do faktury, wyłączenie odnowienia (dostęp zostaje do końca opłaconego roku).
+   dane do faktury, zmiana okresu miesiąc ↔ rok (z proporcjonalnym rozliczeniem) i wyłączenie odnowienia
+   (dostęp zostaje do końca opłaconego okresu).
 5. **Zwrot** (14 dni z regulaminu): zrób pełny zwrot płatności w panelu Stripe. Webhook `charge.refunded`
-   sam kończy subskrypcję i przełącza konto na Free, więc za rok nie będzie kolejnego obciążenia.
+   sam kończy subskrypcję i przełącza konto na Free, więc nie będzie kolejnego obciążenia.
    Częściowy zwrot (np. rabat) niczego nie wyłącza.
 
 Konfiguracja (najpierw w trybie testowym, klucz `sk_test_…`):
 
 ```bash
 STRIPE_SECRET_KEY=sk_test_… APP_URL=https://timeblame.com pnpm stripe:setup
-# tworzy produkt i cenę (lookup key splits_pro_yearly), portal klienta i webhook; wypisuje STRIPE_WEBHOOK_SECRET
-fly secrets set STRIPE_SECRET_KEY=sk_… STRIPE_WEBHOOK_SECRET=whsec_…
+# tworzy produkt „Timeblame Pro” z dwiema cenami (lookup keys timeblame_pro_monthly i timeblame_pro_yearly),
+# wyłącza stare ceny, ustawia portal klienta (zmiana okresu) i webhook; wypisuje STRIPE_WEBHOOK_SECRET
+# Sekrety STRIPE_SECRET_KEY i STRIPE_WEBHOOK_SECRET ustaw w zmiennych serwisu na Railway.
+# Opcjonalnie STRIPE_PRICE_PRO_MONTHLY / STRIPE_PRICE_PRO_YEARLY wymuszają konkretne price_…
 ```
 
 Lokalnie webhooki przekazuje Stripe CLI: `stripe listen --forward-to localhost:3000/api/v1/stripe/webhook`
@@ -189,8 +197,8 @@ Lokalnie webhooki przekazuje Stripe CLI: `stripe listen --forward-to localhost:3
 
 W panelu Stripe włącz jeszcze: przypomnienia o odnowieniu (7 dni przed) i e-maile z fakturą
 (Settings → Billing → Subscriptions and emails), a gdy sprzedajesz konsumentom w UE: Stripe Tax
-i `STRIPE_AUTOMATIC_TAX=true` (VAT OSS). Zmiana ceny = nowa cena w Stripe z tym samym lookup key
-(„transfer lookup key”) i kwota w `src/features/billing/plans.ts`.
+i `STRIPE_AUTOMATIC_TAX=true` (VAT OSS). Zmiana ceny = nowa kwota w `PRO_PRICES` (`src/features/billing/plans.ts`)
+i ponowne `pnpm stripe:setup` (nowa cena przejmuje lookup key, stara zostaje wyłączona).
 
 ## Przed startem: `pnpm check:launch`
 

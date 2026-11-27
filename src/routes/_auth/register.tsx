@@ -1,17 +1,26 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { GoogleSignIn } from '#/features/auth/components/google-sign-in'
 import { RegisterForm } from '#/features/auth/components/register-form'
-import type { PlanId } from '#/features/billing/plans'
+import { isBillingInterval } from '#/features/billing/plans'
+import type { BillingInterval } from '#/features/billing/plans'
 import { useMessages } from '#/i18n/context'
 import { getLocale } from '#/i18n/locale'
 import { authMessages } from '#/i18n/messages/auth'
 import { seo } from '#/lib/seo'
 
-const PLANS: ReadonlyArray<PlanId> = ['free', 'pro']
+interface RegisterSearch {
+  plan?: 'pro'
+  interval?: BillingInterval
+}
 
-/** Plan wybrany na stronie cennika; płatność proponujemy po założeniu konta. */
-const validateSearch = (search: Record<string, unknown>): { plan?: PlanId } =>
-  PLANS.includes(search.plan as PlanId) ? { plan: search.plan as PlanId } : {}
+/** Plan Pro wybrany na stronie cennika (miesięczny albo roczny); koszyk po założeniu konta. */
+const validateSearch = (search: Record<string, unknown>): RegisterSearch =>
+  search.plan === 'pro'
+    ? {
+        plan: 'pro',
+        interval: isBillingInterval(search.interval) ? search.interval : 'year',
+      }
+    : {}
 
 export const Route = createFileRoute('/_auth/register')({
   validateSearch,
@@ -27,9 +36,11 @@ export const Route = createFileRoute('/_auth/register')({
 })
 
 function RegisterPage() {
-  const { plan } = Route.useSearch()
+  const { plan, interval = 'year' } = Route.useSearch()
   const t = useMessages(authMessages)
-  const note = plan === 'pro' ? t.register.planNote.pro : null
+  const pro = plan === 'pro'
+  const note = pro ? t.register.planNote[interval] : null
+  const checkoutUrl = `/app/checkout?interval=${interval}`
 
   return (
     <div>
@@ -38,7 +49,7 @@ function RegisterPage() {
         {t.register.haveAccount}{' '}
         <Link
           to="/login"
-          search={plan === 'pro' ? { redirect: '/app/checkout?plan=pro' } : {}}
+          search={pro ? { redirect: checkoutUrl } : {}}
           className="rounded-sm font-medium text-ink underline underline-offset-4"
         >
           {t.register.logIn}
@@ -47,11 +58,9 @@ function RegisterPage() {
       {note && (
         <p className="mb-6 rounded-lg bg-muted px-3.5 py-3 text-sm">{note}</p>
       )}
-      <RegisterForm next={plan === 'pro' ? 'checkout' : 'setup'} />
+      <RegisterForm next={pro ? 'checkout' : 'setup'} interval={interval} />
       <div className="mt-8">
-        <GoogleSignIn
-          redirectTo={plan === 'pro' ? '/app/checkout?plan=pro' : undefined}
-        />
+        <GoogleSignIn redirectTo={pro ? checkoutUrl : undefined} />
       </div>
     </div>
   )

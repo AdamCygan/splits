@@ -4,7 +4,10 @@ import type {
   SprintTimeGoal,
   QuickTemplateInput,
 } from '#/data/types'
+import { eq } from 'drizzle-orm'
 import { api } from '#/server/app'
+import { db } from '#/server/db/client'
+import { users } from '#/server/db/schema'
 import { inSequence, lastDeleteCode, numbered, otherCode } from './helpers'
 
 /**
@@ -115,7 +118,15 @@ beforeEach(async () => {
     }),
   )
   setAccessToken(session.accessToken)
+  // Kontrakt sprawdzamy na koncie Pro; limity planu Free mają osobny test.
+  await setPlan('pro')
 })
+
+const setPlan = (plan: 'free' | 'pro') =>
+  db
+    .update(users)
+    .set({ plan })
+    .where(eq(users.email, `tester${stamp}${n}@example.com`))
 
 describe('API contract (frontend adapter against the real server)', () => {
   it('Should reject a duplicate username and a wrong password', async () => {
@@ -162,14 +173,11 @@ describe('API contract (frontend adapter against the real server)', () => {
     expect((await value(data.sprints.list())).length).toBeGreaterThanOrEqual(2)
   })
 
-  it('Should enforce the Free plan limit on custom work types', async () => {
+  it('Should keep custom work types unique and valid', async () => {
     const base = (await value(data.taskTypes.list()))[1]!
     await inSequence(numbered(3), (i) =>
       value(data.taskTypes.create({ ...base, name: `Custom ${i}` })),
     )
-    expect(
-      await errorCode(data.taskTypes.create({ ...base, name: 'Custom 4' })),
-    ).toBe('plan.limit_custom_types')
     expect(
       await errorCode(data.taskTypes.create({ ...base, name: 'custom 1' })),
     ).toBe('name_taken')
@@ -182,6 +190,53 @@ describe('API contract (frontend adapter against the real server)', () => {
         }),
       ),
     ).toBe('validation.invalid')
+  })
+
+  it('Should hold a Free account to its limits', async () => {
+    await setPlan('free')
+    const base = (await value(data.taskTypes.list()))[1]!
+    expect(
+      await errorCode(data.taskTypes.create({ ...base, name: 'Custom' })),
+    ).toBe('plan.limit_custom_types')
+
+    await value(
+      data.projects.create({ name: 'Payments', key: 'PAY', color: '#3D3BF3' }),
+    )
+    expect(
+      await errorCode(
+        data.projects.create({ name: 'Search', key: 'SRCH', color: '#3D3BF3' }),
+      ),
+    ).toBe('plan.limit_projects')
+
+    const type = (await value(data.taskTypes.list()))[0]!
+    const existing = (await value(data.templates.list())).length
+    await inSequence(numbered(Math.max(0, 2 - existing)), (i) =>
+      value(
+        data.templates.create({ ...dailyTemplate(type.id), label: `T${i}` }),
+      ),
+    )
+    expect(
+      await errorCode(
+        data.templates.create({ ...dailyTemplate(type.id), label: 'Third' }),
+      ),
+    ).toBe('plan.limit_templates')
+
+    expect(
+      await errorCode(
+        data.statuses.create({
+          name: 'Blocked',
+          category: 'in_progress',
+          color: '#E5603B',
+        }),
+      ),
+    ).toBe('plan.limit_statuses')
+
+    const settings = await value(data.settings.get())
+    expect(
+      await errorCode(
+        data.settings.update({ ...settings, dailyReminderAt: '17:00' }),
+      ),
+    ).toBe('plan.pro_feature')
   })
 
   it('Should protect default and system statuses', async () => {

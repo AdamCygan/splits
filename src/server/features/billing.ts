@@ -14,10 +14,12 @@ import {
 import { serverEnv } from '../env'
 import {
   billingEnabled,
+  intervalOfPrice,
   planForPrice,
   priceFor,
   stripe,
 } from '../billing/stripe'
+import { BILLING_INTERVALS } from '#/features/billing/plans'
 import type { AppEnv } from '../http/context'
 import { ApiError } from '../http/errors'
 import { body } from '../http/inputs'
@@ -60,6 +62,7 @@ export async function syncSubscription(
     status: sub.status,
     plan,
     priceId: item.price.id,
+    interval: intervalOfPrice(item.price),
     quantity: item.quantity ?? 1,
     currentPeriodEnd: item.current_period_end
       ? new Date(item.current_period_end * 1000)
@@ -128,7 +131,11 @@ async function customerFor(user: typeof users.$inferSelect) {
   return customer.id
 }
 
-const checkoutInput = z.object({ plan: z.enum(['pro']) })
+const checkoutInput = z.object({
+  plan: z.enum(['pro']),
+  /** Co miesiąc albo raz w roku; te same funkcje, inna płatność. Starsze klienty: rok. */
+  interval: z.enum(BILLING_INTERVALS).default('year'),
+})
 const syncInput = z.object({ sessionId: z.string().regex(/^cs_[\w]+$/) })
 
 export const billingRoutes = new Hono<AppEnv>()
@@ -143,6 +150,7 @@ export const billingRoutes = new Hono<AppEnv>()
         ? {
             status: sub.status,
             plan: sub.plan,
+            interval: sub.interval,
             active: isActive(sub.status),
             currentPeriodEnd: sub.currentPeriodEnd?.toISOString() ?? null,
             cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
@@ -157,13 +165,13 @@ export const billingRoutes = new Hono<AppEnv>()
     return c.json(await listInvoices(user.stripeCustomerId))
   })
 
-  /** Koszyk → Stripe Checkout: subskrypcja płatna z góry za rok. */
+  /** Koszyk → Stripe Checkout: subskrypcja Pro płatna z góry za miesiąc albo za rok. */
   .post('/checkout', async (c) => {
     const user = await currentUser(c.get('userId'))
     // Płatność tylko z potwierdzonym adresem: na niego idą faktury i e-maile o odnowieniu.
     if (!user.emailVerifiedAt && !user.isDemo)
       throw new ApiError('auth.email_unverified', 403)
-    const { plan } = await body(c, checkoutInput)
+    const { plan, interval } = await body(c, checkoutInput)
     assertNotDemo(user)
     if (!billingEnabled()) throw new ApiError('billing.unavailable', 503)
     // Administrator ma Pro bez opłat, a Lifetime na zawsze: kupowanie nie ma sensu.
@@ -177,7 +185,8 @@ export const billingRoutes = new Hono<AppEnv>()
       .select({ locale: userSettings.locale })
       .from(userSettings)
       .where(eq(userSettings.userId, user.id))
-    const price = await priceFor(plan)
+    // Zmiana miesięczny ↔ roczny przy aktywnej subskrypcji idzie przez Customer Portal.
+    const price = await priceFor(interval)
     const customer = await customerFor(user)
     const session = await stripe()
       .checkout.sessions.create({
@@ -185,8 +194,8 @@ export const billingRoutes = new Hono<AppEnv>()
         customer,
         client_reference_id: user.id,
         line_items: [{ price, quantity: 1 }],
-        metadata: { userId: user.id, plan },
-        subscription_data: { metadata: { userId: user.id, plan } },
+        metadata: { userId: user.id, plan, interval },
+        subscription_data: { metadata: { userId: user.id, plan, interval } },
         allow_promotion_codes: true,
         billing_address_collection: 'required',
         tax_id_collection: { enabled: true },
@@ -194,7 +203,7 @@ export const billingRoutes = new Hono<AppEnv>()
         automatic_tax: { enabled: serverEnv.stripe?.automaticTax ?? false },
         locale: settings?.locale === 'pl' ? 'pl' : 'en',
         success_url: `${serverEnv.appUrl}/app/settings/plan?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${serverEnv.appUrl}/app/checkout?plan=${plan}&canceled=1`,
+        cancel_url: `${serverEnv.appUrl}/app/checkout?interval=${interval}&canceled=1`,
       })
       .catch((error: unknown) => {
         console.error('[billing] checkout', error)

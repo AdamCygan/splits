@@ -6,10 +6,19 @@ const en = {
     title: 'Your cart',
     lead: 'Check your order, then pay securely with Stripe.',
     item: 'Timeblame {plan}',
-    itemPeriod: 'Yearly subscription, paid upfront for 12 months',
+    billing: 'Billing',
+    intervals: {
+      month: 'Monthly',
+      year: 'Yearly',
+    },
+    saveBadge: '2 months free',
+    itemPeriod: {
+      month: 'Monthly subscription, renews every month',
+      year: 'Yearly subscription, paid upfront for 12 months',
+    },
     included: 'What’s included',
     summary: 'Order summary',
-    line: '{plan}, 1 year',
+    line: { month: '{plan}, 1 month', year: '{plan}, 1 year' },
     vat: 'VAT',
     vatValue: 'included where it applies',
     total: 'Total today',
@@ -41,8 +50,14 @@ const en = {
     endsOn: 'Pro ends on {date}. Renewal is turned off.',
     pastDue:
       'Your last payment didn’t go through. Update your card so Pro stays on.',
-    buyPro: 'Get Pro for a year, {price}',
-    buyProHint: 'One payment a year. Full refund within 14 days.',
+    buyPro: {
+      month: 'Pro monthly, {price} a month',
+      year: 'Pro yearly, {price} a year',
+    },
+    buyProHint:
+      'Same Pro either way. Yearly gives you 2 months free. Full refund within 14 days.',
+    billedMonthly: 'Billed monthly',
+    billedYearly: 'Billed yearly',
     manage: 'Manage subscription',
     manageHint:
       'Invoices, card, billing details and renewal, on a secure Stripe page.',
@@ -80,6 +95,16 @@ const en = {
       } as Record<string, string>,
     },
   },
+  limits: {
+    upgrade: 'Upgrade to Pro',
+    projects: 'The Free plan includes one project.',
+    templates: 'The Free plan includes two quick templates.',
+    statuses:
+      'The Free plan uses the four default statuses. You can rename and reorder them.',
+    workTypes:
+      'The Free plan uses the built-in work types. You can still change how each one works.',
+    reminders: 'Daily email reminders are part of Pro.',
+  },
 }
 
 export type BillingMessages = typeof en
@@ -90,10 +115,19 @@ const pl: BillingMessages = {
     title: 'Twój koszyk',
     lead: 'Sprawdź zamówienie i zapłać bezpiecznie przez Stripe.',
     item: 'Timeblame {plan}',
-    itemPeriod: 'Subskrypcja roczna, płatna z góry za 12 miesięcy',
+    billing: 'Płatność',
+    intervals: {
+      month: 'Co miesiąc',
+      year: 'Co rok',
+    },
+    saveBadge: '2 miesiące gratis',
+    itemPeriod: {
+      month: 'Subskrypcja miesięczna, odnawia się co miesiąc',
+      year: 'Subskrypcja roczna, płatna z góry za 12 miesięcy',
+    },
     included: 'Co dostajesz',
     summary: 'Podsumowanie zamówienia',
-    line: '{plan}, 1 rok',
+    line: { month: '{plan}, 1 miesiąc', year: '{plan}, 1 rok' },
     vat: 'VAT',
     vatValue: 'wliczony, jeśli dotyczy',
     total: 'Do zapłaty dziś',
@@ -124,8 +158,14 @@ const pl: BillingMessages = {
     endsOn: 'Pro kończy się {date}. Odnowienie jest wyłączone.',
     pastDue:
       'Ostatnia płatność nie przeszła. Zaktualizuj kartę, żeby Pro dalej działało.',
-    buyPro: 'Kup Pro na rok, {price}',
-    buyProHint: 'Jedna płatność w roku. Pełny zwrot w ciągu 14 dni.',
+    buyPro: {
+      month: 'Pro miesięcznie, {price} za miesiąc',
+      year: 'Pro rocznie, {price} za rok',
+    },
+    buyProHint:
+      'To samo Pro w obu wariantach. Rocznie masz 2 miesiące gratis. Pełny zwrot w ciągu 14 dni.',
+    billedMonthly: 'Płatne co miesiąc',
+    billedYearly: 'Płatne co rok',
     manage: 'Zarządzaj subskrypcją',
     manageHint:
       'Faktury, karta, dane do faktury i odnowienie, na bezpiecznej stronie Stripe.',
@@ -162,6 +202,16 @@ const pl: BillingMessages = {
         uncollectible: 'Nieopłacona',
       },
     },
+  },
+  limits: {
+    upgrade: 'Przejdź na Pro',
+    projects: 'Plan Free obejmuje jeden projekt.',
+    templates: 'Plan Free obejmuje dwa szybkie szablony.',
+    statuses:
+      'Plan Free korzysta z czterech domyślnych statusów. Możesz zmieniać ich nazwy i kolejność.',
+    workTypes:
+      'Plan Free korzysta z wbudowanych typów pracy. Nadal możesz zmieniać, jak każdy z nich działa.',
+    reminders: 'Codzienne przypomnienia e-mail są w planie Pro.',
   },
 }
 

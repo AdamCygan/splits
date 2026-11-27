@@ -41,6 +41,12 @@ import {
   useAnnouncer,
 } from './ui'
 import { Kbd } from '#/components/ui/kbd'
+import { FREE_LIMITS } from '#/features/billing/plans'
+import {
+  PlanLimit,
+  useFreePlan,
+} from '#/features/billing/components/plan-limit'
+import { billingMessages } from '#/i18n/messages/billing'
 
 /** Wartość pola „Projekt” dla szablonu, w którym projekt wybiera się przy użyciu. */
 const ANY = '__any'
@@ -51,6 +57,9 @@ export function TemplateSettings() {
   const format = useFormat()
   const types = useQuery(taskTypesQuery).data ?? []
   const projects = useQuery(projectsQuery).data ?? []
+  const templatesData = useQuery(templatesQuery).data
+  const isFree = useFreePlan()
+  const limits = useMessages(billingMessages).limits
   const [editing, setEditing] = useState<QuickTemplate | 'new' | null>(null)
   const [deleting, setDeleting] = useState<QuickTemplate | null>(null)
   const [announcer, announce] = useAnnouncer()
@@ -76,6 +85,9 @@ export function TemplateSettings() {
     onSuccess: () => setDeleting(null),
   })
 
+  const atLimit =
+    isFree && (templatesData ?? []).length >= FREE_LIMITS.quickTemplates
+
   return (
     <div>
       <SectionHeader title={t.title} lead={t.lead} />
@@ -83,12 +95,19 @@ export function TemplateSettings() {
       <SettingsCard
         title={t.title}
         actions={
-          <Button onClick={() => setEditing('new')}>
+          <Button
+            onClick={() => setEditing('new')}
+            disabled={atLimit}
+            aria-describedby={atLimit ? 'template-limit' : undefined}
+          >
             <Plus aria-hidden className="size-4" />
             {t.add}
           </Button>
         }
       >
+        {atLimit && (
+          <PlanLimit id="template-limit">{limits.templates}</PlanLimit>
+        )}
         <QueryView query={templatesQuery}>
           {(templates) =>
             templates.length === 0 ? (

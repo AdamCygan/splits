@@ -41,7 +41,9 @@ const en = {
     submit: 'Create account',
     submitting: 'Creating account…',
     planNote: {
-      pro: 'You picked Pro (yearly). Create your account first and we’ll take you straight to your cart and a secure Stripe checkout.',
+      year: 'You picked Pro, billed yearly. Create your account first and we’ll take you straight to your cart and a secure Stripe checkout.',
+      month:
+        'You picked Pro, billed monthly. Create your account first and we’ll take you straight to your cart and a secure Stripe checkout.',
     },
   },
   forgot: {
@@ -143,7 +145,9 @@ const pl: AuthMessages = {
     submit: 'Załóż konto',
     submitting: 'Zakładanie konta…',
     planNote: {
-      pro: 'Wybrałeś Pro (rocznie). Najpierw załóż konto, a od razu przejdziesz do koszyka i bezpiecznej płatności Stripe.',
+      year: 'Wybrałeś Pro płatne rocznie. Najpierw załóż konto, a od razu przejdziesz do koszyka i bezpiecznej płatności Stripe.',
+      month:
+        'Wybrałeś Pro płatne co miesiąc. Najpierw załóż konto, a od razu przejdziesz do koszyka i bezpiecznej płatności Stripe.',
     },
   },
   forgot: {

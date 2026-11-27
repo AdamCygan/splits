@@ -13,7 +13,7 @@ const en = {
     pastLead: 'Entries go to {date}. The timer works only for today.',
     listTitle: 'Entries on {date}',
     listEmpty: 'Nothing logged on this day yet. Add what you forgot.',
-    freeLimit: 'The Free plan lets you add entries from the last 30 days.',
+    freeLimit: 'The Free plan lets you add entries from the last 7 days.',
     upgrade: 'Upgrade to Pro',
   },
   summary: {
@@ -416,7 +416,7 @@ const pl: EntriesMessages = {
     listTitle: 'Wpisy z dnia {date}',
     listEmpty:
       'Tego dnia nic jeszcze nie zalogowano. Dopisz to, o czym zapomniałeś.',
-    freeLimit: 'W planie Free dodasz wpisy z ostatnich 30 dni.',
+    freeLimit: 'W planie Free dodasz wpisy z ostatnich 7 dni.',
     upgrade: 'Przejdź na Pro',
   },
   summary: {

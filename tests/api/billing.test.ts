@@ -22,7 +22,11 @@ interface Sub {
   cancel_at: number | null
   items: {
     data: Array<{
-      price: { id: string; lookup_key: string | null }
+      price: {
+        id: string
+        lookup_key: string | null
+        recurring?: { interval: string }
+      }
       quantity: number
       current_period_end: number
     }>
@@ -77,6 +81,21 @@ const stripeInvoice = (customer: string) => ({
   hosted_invoice_url: `https://invoice.stripe.com/i/${customer}`,
 })
 
+/** Ceny Pro w Stripe: nowe (miesięczna i roczna) i stara roczna sprzed zmiany cennika. */
+const PRICES = {
+  month: {
+    id: 'price_pro_monthly',
+    lookup_key: 'timeblame_pro_monthly',
+    recurring: { interval: 'month' },
+  },
+  year: {
+    id: 'price_pro_yearly',
+    lookup_key: 'timeblame_pro_yearly',
+    recurring: { interval: 'year' },
+  },
+  legacy: { id: 'price_legacy_yearly', lookup_key: 'splits_pro_yearly' },
+}
+
 let n = 0
 const nextYear = Math.floor(Date.now() / 1000) + 365 * 86_400
 
@@ -89,9 +108,9 @@ const fake = {
   },
   prices: {
     list: async ({ lookup_keys }: PriceListParams) => ({
-      data: lookup_keys.includes('splits_pro_yearly')
-        ? [{ id: 'price_pro_yearly', lookup_key: 'splits_pro_yearly' }]
-        : [],
+      data: Object.values(PRICES).filter(
+        (price) => price.lookup_key && lookup_keys.includes(price.lookup_key),
+      ),
     }),
   },
   customers: {
@@ -189,7 +208,7 @@ function makeSub(
     items: {
       data: [
         {
-          price: { id: 'price_pro_yearly', lookup_key: 'splits_pro_yearly' },
+          price: PRICES.year,
           quantity: 1,
           current_period_end: nextYear,
         },
@@ -204,6 +223,7 @@ interface Billing {
   plan: string
   subscription: null | {
     status: string
+    interval: 'month' | 'year' | null
     active: boolean
     currentPeriodEnd: string | null
     cancelAtPeriodEnd: boolean
@@ -211,7 +231,9 @@ interface Billing {
 }
 
 /** Konto po zakupie Pro: koszyk → Checkout → webhook checkout.session.completed. */
-async function buyPro() {
+async function buyPro(
+  price: Sub['items']['data'][number]['price'] = PRICES.year,
+) {
   const { c } = await registered()
   const me = await c.get<{ id: string }>('/account')
   const checkout = await c.post<{ url: string }>('/billing/checkout', {
@@ -219,7 +241,11 @@ async function buyPro() {
   })
   const sessionId = /cs_test_\d+/.exec(checkout.body.url)![0]
   const customer = state.customers.at(-1)!.id
-  const sub = makeSub(me.body.id, customer)
+  const sub = makeSub(me.body.id, customer, {
+    items: {
+      data: [{ price, quantity: 1, current_period_end: nextYear }],
+    },
+  })
   state.subs.set(sub.id, sub)
   state.sessions.set(sessionId, {
     client_reference_id: me.body.id,
@@ -248,7 +274,7 @@ beforeEach(() => {
   state.checkoutParams.length = 0
 })
 
-describe('billing (Stripe, yearly plans only)', () => {
+describe('billing (Stripe, Pro monthly or yearly)', () => {
   it('Should open a yearly Pro checkout for a free account', async () => {
     const { c } = await registered()
     const me = await c.get<{ id: string; email: string }>('/account')
@@ -276,7 +302,9 @@ describe('billing (Stripe, yearly plans only)', () => {
     expect(params.success_url).toContain(
       '/app/settings/plan?checkout=success&session_id={CHECKOUT_SESSION_ID}',
     )
-    expect(params.cancel_url).toContain('/app/checkout?plan=pro&canceled=1')
+    expect(params.cancel_url).toContain(
+      '/app/checkout?interval=year&canceled=1',
+    )
 
     // Drugie podejście używa tego samego klienta Stripe.
     const customers = state.customers.length
@@ -286,13 +314,32 @@ describe('billing (Stripe, yearly plans only)', () => {
     expect(state.customers.at(-1)!.email).toBe(me.body.email)
   })
 
-  it.each(['pro_monthly', 'lifetime', 'team'])(
-    'Should reject the %s plan at checkout (only yearly Pro is sold)',
-    async (plan) => {
-      const { c } = await registered()
-      expect((await c.post('/billing/checkout', { plan })).status).toBe(400)
-    },
-  )
+  it('Should open a monthly Pro checkout with the monthly price', async () => {
+    const { c } = await registered()
+    const before = state.checkoutParams.length
+    const res = await c.post<{ url: string }>('/billing/checkout', {
+      plan: 'pro',
+      interval: 'month',
+    })
+    expect(res.status).toBe(200)
+    const params = state.checkoutParams[before]!
+    expect(params).toMatchObject({
+      line_items: [{ price: 'price_pro_monthly', quantity: 1 }],
+      metadata: expect.objectContaining({ interval: 'month' }),
+    })
+    expect(params.cancel_url).toContain(
+      '/app/checkout?interval=month&canceled=1',
+    )
+  })
+
+  it.each<[string, Record<string, unknown>]>([
+    ['lifetime', { plan: 'lifetime' }],
+    ['team', { plan: 'team' }],
+    ['weekly Pro', { plan: 'pro', interval: 'week' }],
+  ])('Should reject %s at checkout', async (_, body) => {
+    const { c } = await registered()
+    expect((await c.post('/billing/checkout', body)).status).toBe(400)
+  })
 
   it('Should turn Pro on from a signed webhook and process each event once', async () => {
     const { c, sub } = await buyPro()
@@ -300,6 +347,7 @@ describe('billing (Stripe, yearly plans only)', () => {
     const status = await c.get<Billing>('/billing')
     expect(status.body.subscription).toMatchObject({
       status: 'active',
+      interval: 'year',
       active: true,
       cancelAtPeriodEnd: false,
     })
@@ -325,6 +373,17 @@ describe('billing (Stripe, yearly plans only)', () => {
     expect(
       (await c.get<Billing>('/billing')).body.subscription?.cancelAtPeriodEnd,
     ).toBe(true)
+  })
+
+  it.each<[string, Sub['items']['data'][number]['price'], 'month' | 'year']>([
+    ['the monthly price', PRICES.month, 'month'],
+    ['the old yearly price from before the new pricing', PRICES.legacy, 'year'],
+  ])('Should turn Pro on for %s', async (_, price, interval) => {
+    const { c } = await buyPro(price)
+    expect((await c.get<{ plan: string }>('/account')).body.plan).toBe('pro')
+    expect((await c.get<Billing>('/billing')).body.subscription?.interval).toBe(
+      interval,
+    )
   })
 
   it('Should reject webhooks with a wrong signature', async () => {

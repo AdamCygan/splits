@@ -559,6 +559,8 @@ export const subscriptions = pgTable(
     /** Plan wynikający z ceny (lookup key), np. pro. */
     plan: planCode('plan').notNull(),
     priceId: text('price_id').notNull(),
+    /** Płatność co miesiąc albo co rok (z ceny); null dla subskrypcji sprzed tej kolumny. */
+    interval: text('billing_interval', { enum: ['month', 'year'] }),
     quantity: integer('quantity').notNull().default(1),
     currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }),
     cancelAtPeriodEnd: boolean('cancel_at_period_end').notNull().default(false),

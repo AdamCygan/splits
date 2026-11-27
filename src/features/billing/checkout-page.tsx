@@ -11,42 +11,70 @@ import { fmt, formatDate } from '#/i18n/format'
 import { billingMessages } from '#/i18n/messages/billing'
 import { marketingMessages } from '#/i18n/messages/marketing'
 import { cn } from '#/lib/utils'
-import { formatPrice, planById, renewalDate } from './plans'
+import { Segmented } from '#/components/ui/segmented'
+import {
+  BILLING_INTERVALS,
+  PRO_PRICES,
+  formatPrice,
+  planById,
+  renewalDate,
+} from './plans'
+import type { BillingInterval } from './plans'
 import { billingQuery, useStripeRedirect } from './queries'
 
 export interface CheckoutPageProps {
-  planId: 'pro'
+  interval: BillingInterval
   canceled: boolean
+  onIntervalChange: (interval: BillingInterval) => void
 }
 
 /**
- * Koszyk: podsumowanie zamówienia (plan roczny płatny z góry), zgoda na regulamin
+ * Koszyk: Pro płatne co miesiąc albo co rok (te same funkcje), zgoda na regulamin
  * i przejście do Stripe Checkout. Kartę, adres, NIP i kod rabatowy podaje się już w Stripe.
  */
-export function CheckoutPage({ planId, canceled }: CheckoutPageProps) {
+export function CheckoutPage({
+  interval,
+  canceled,
+  onIntervalChange,
+}: CheckoutPageProps) {
   const t = useMessages(billingMessages).checkout
   const features = useMessages(marketingMessages).pricing.features
   const { tag, locale } = useI18n()
   const billing = useQuery(billingQuery)
-  const plan = planById(planId)
-  const price = formatPrice(plan.yearly ?? 0, tag)
+  const plan = planById('pro')
+  const price = formatPrice(PRO_PRICES[interval], tag)
   const [accepted, setAccepted] = useState(false)
   const consentId = useId()
-  const checkout = useStripeRedirect((id: 'pro') => data.billing.checkout(id))
+  const checkout = useStripeRedirect((next: BillingInterval) =>
+    data.billing.checkout(next),
+  )
 
   const status = billing.data
   const isAdmin = useCurrentUser()?.role === 'admin'
   const owned =
     isAdmin ||
     status?.plan === 'lifetime' ||
-    status?.plan === planId ||
-    (status?.subscription?.active && status.subscription.plan === planId)
+    status?.plan === 'pro' ||
+    (status?.subscription?.active && status.subscription.plan === 'pro')
 
-  const renewal = formatDate(locale, renewalDate().toISOString().slice(0, 10), {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
+  const intervalOptions = BILLING_INTERVALS.map((value) => ({
+    value,
+    label: t.intervals[value],
+    description:
+      value === 'year'
+        ? `${formatPrice(PRO_PRICES.year, tag)}, ${t.saveBadge}`
+        : formatPrice(PRO_PRICES.month, tag),
+  }))
+
+  const renewal = formatDate(
+    locale,
+    renewalDate(interval).toISOString().slice(0, 10),
+    {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    },
+  )
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -94,10 +122,18 @@ export function CheckoutPage({ planId, canceled }: CheckoutPageProps) {
                 <h2 id="cart-item" className="type-heading text-2xl">
                   {fmt(t.item, { plan: plan.name })}
                 </h2>
-                <p className="mt-1 text-ink-soft">{t.itemPeriod}</p>
+                <p className="mt-1 text-ink-soft">{t.itemPeriod[interval]}</p>
               </div>
               <p className="type-display text-3xl tabular-nums">{price}</p>
             </div>
+            <Segmented
+              className="mt-5"
+              label={t.billing}
+              name="billing-interval"
+              value={interval}
+              onChange={onIntervalChange}
+              options={intervalOptions}
+            />
             <h3 className="mt-6 text-sm font-semibold">{t.included}</h3>
             <ul className="mt-3 grid gap-2 sm:grid-cols-2">
               {features.pro.map((feature) => (
@@ -122,7 +158,7 @@ export function CheckoutPage({ planId, canceled }: CheckoutPageProps) {
             </h2>
             <dl className="mt-4 space-y-2 text-sm">
               <div className="flex justify-between gap-3">
-                <dt>{fmt(t.line, { plan: plan.name })}</dt>
+                <dt>{fmt(t.line[interval], { plan: plan.name })}</dt>
                 <dd className="tabular-nums">{price}</dd>
               </div>
               <div className="flex justify-between gap-3 text-ink-soft">
@@ -166,7 +202,7 @@ export function CheckoutPage({ planId, canceled }: CheckoutPageProps) {
               className="mt-5 h-12 w-full text-base"
               disabled={!accepted || !status?.enabled || checkout.isPending}
               aria-busy={checkout.isPending}
-              onClick={() => checkout.mutate(planId)}
+              onClick={() => checkout.mutate(interval)}
             >
               <Lock aria-hidden className="size-4" />
               {checkout.isPending ? t.redirecting : t.pay}

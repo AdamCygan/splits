@@ -1,9 +1,43 @@
 import { absoluteUrl, site } from '#/config/site'
-import { plans } from '#/features/billing/plans'
+import { BILLING_INTERVALS, PRO_PRICES } from '#/features/billing/plans'
+import type { BillingInterval } from '#/features/billing/plans'
 import type { Locale } from '#/i18n/config'
 import { commonMessages } from '#/i18n/messages/common'
 import { marketingMessages } from '#/i18n/messages/marketing'
 import { promoVideoFiles, promoVideoMeta } from './video'
+
+const BILLING_DURATION: Readonly<Record<BillingInterval, string>> = {
+  month: 'P1M',
+  year: 'P1Y',
+}
+
+/** Trzy oferty z cennika: Free, Pro miesięczne i Pro roczne. */
+function pricingOffers(): Array<Record<string, unknown>> {
+  const pro = BILLING_INTERVALS.map((interval) => ({
+    '@type': 'Offer',
+    name: interval === 'month' ? 'Pro (monthly)' : 'Pro (yearly)',
+    price: PRO_PRICES[interval],
+    priceCurrency: 'USD',
+    priceSpecification: {
+      '@type': 'UnitPriceSpecification',
+      price: PRO_PRICES[interval],
+      priceCurrency: 'USD',
+      billingDuration: BILLING_DURATION[interval],
+      valueAddedTaxIncluded: true,
+    },
+    url: absoluteUrl(`/register?plan=pro&interval=${interval}`),
+  }))
+  return [
+    {
+      '@type': 'Offer',
+      name: 'Free',
+      price: 0,
+      priceCurrency: 'USD',
+      url: absoluteUrl('/register'),
+    },
+    ...pro,
+  ]
+}
 
 /**
  * Dane strukturalne schema.org dla strony głównej. Google używa ich do wyników
@@ -46,26 +80,7 @@ export function landingJsonLd(locale: Locale): Array<Record<string, unknown>> {
           inLanguage: locale,
           image: absoluteUrl(site.ogImage),
           publisher: { '@id': absoluteUrl('/#organization') },
-          offers: plans
-            .filter((plan) => plan.available)
-            .map((plan) => ({
-              '@type': 'Offer',
-              name: plan.name,
-              price: plan.yearly ?? 0,
-              priceCurrency: 'USD',
-              ...(plan.yearly
-                ? {
-                    priceSpecification: {
-                      '@type': 'UnitPriceSpecification',
-                      price: plan.yearly,
-                      priceCurrency: 'USD',
-                      billingDuration: 'P1Y',
-                      valueAddedTaxIncluded: true,
-                    },
-                  }
-                : {}),
-              url: absoluteUrl(`/register?plan=${plan.id}`),
-            })),
+          offers: pricingOffers(),
         },
         {
           '@type': 'VideoObject',

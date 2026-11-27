@@ -12,7 +12,7 @@ interface Result {
 
 describe('task search', () => {
   it('Should find tasks by title or link, finished ones too, and only your own', async () => {
-    const { c } = await registered()
+    const { c } = await registered('en', { pro: true })
     const types =
       await c.get<
         Array<{ id: string; kind: string; storyPointsRequirement: string }>
@@ -64,7 +64,7 @@ describe('task search', () => {
   })
 
   it('Should search notes and every word, ranking title matches first', async () => {
-    const { c } = await registered()
+    const { c } = await registered('en', { pro: true })
     const types =
       await c.get<
         Array<{ id: string; kind: string; storyPointsRequirement: string }>

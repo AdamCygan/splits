@@ -21,6 +21,11 @@ import {
   SettingsCard,
   useUnsavedWarning,
 } from './ui'
+import {
+  PlanLimit,
+  useFreePlan,
+} from '#/features/billing/components/plan-limit'
+import { billingMessages } from '#/i18n/messages/billing'
 
 /** Lista stref IANA z przeglądarki; na starszych silnikach przynajmniej bieżąca i UTC. */
 function timeZones(current: string) {
@@ -67,6 +72,8 @@ interface WorkdayFormProps {
 function WorkdayForm({ settings }: WorkdayFormProps) {
   const t = useMessages(settingsMessages).workday
   const app = useMessages(appMessages)
+  const limits = useMessages(billingMessages).limits
+  const isFree = useFreePlan()
   const { locale, tag } = useI18n()
   const [draft, setDraft] = useState<Draft>(() => toDraft(settings))
   const [submitted, setSubmitted] = useState(false)
@@ -271,11 +278,16 @@ function WorkdayForm({ settings }: WorkdayFormProps) {
       </SettingsCard>
 
       <SettingsCard title={t.cards.reminders}>
+        {/* Przypomnienia są w Pro; Free może tylko wyłączyć przypomnienie ustawione wcześniej. */}
+        {isFree && (
+          <PlanLimit id="reminder-limit">{limits.reminders}</PlanLimit>
+        )}
         <div className="space-y-5">
           <Switch
             label={t.reminder}
             description={t.reminderHint}
             checked={draft.reminderOn}
+            disabled={isFree && !draft.reminderOn}
             onCheckedChange={(v) => setDraft({ ...draft, reminderOn: v })}
           />
           {draft.reminderOn && (

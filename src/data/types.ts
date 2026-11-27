@@ -365,8 +365,10 @@ export interface BillingStatus {
   subscription: {
     status: string
     plan: PlanCode
+    /** Okres rozliczenia; null dla starych subskrypcji sprzed migracji. */
+    interval: 'month' | 'year' | null
     active: boolean
-    /** Koniec opłaconego roku (odnowienie albo koniec planu). */
+    /** Koniec opłaconego okresu (odnowienie albo koniec planu). */
     currentPeriodEnd: string | null
     cancelAtPeriodEnd: boolean
   } | null

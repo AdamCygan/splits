@@ -23,6 +23,13 @@ import {
 import { useArchive } from '../use-archive'
 import { usePalette, withCurrent } from './palette'
 import { QueryView, SectionHeader, SettingsCard } from './ui'
+import { useQuery } from '@tanstack/react-query'
+import { FREE_LIMITS } from '#/features/billing/plans'
+import {
+  PlanLimit,
+  useFreePlan,
+} from '#/features/billing/components/plan-limit'
+import { billingMessages } from '#/i18n/messages/billing'
 
 export function ProjectSettings() {
   const t = useMessages(settingsMessages)
@@ -38,7 +45,12 @@ export function ProjectSettings() {
 function Projects() {
   const t = useMessages(settingsMessages).projects
   const app = useMessages(appMessages)
+  const limits = useMessages(billingMessages).limits
   const [editing, setEditing] = useState<Project | 'new' | null>(null)
+  const isFree = useFreePlan()
+  const activeCount = splitArchived(useQuery(projectsQuery).data ?? []).active
+    .length
+  const atLimit = isFree && activeCount >= FREE_LIMITS.projects
   const archive = useArchive(data.projects.setArchived, {
     invalidate: keys.projects,
     messages: t,
@@ -48,12 +60,17 @@ function Projects() {
     <SettingsCard
       title={t.title}
       actions={
-        <Button onClick={() => setEditing('new')}>
+        <Button
+          onClick={() => setEditing('new')}
+          disabled={atLimit}
+          aria-describedby={atLimit ? 'project-limit' : undefined}
+        >
           <Plus aria-hidden className="size-4" />
           {t.add}
         </Button>
       }
     >
+      {atLimit && <PlanLimit id="project-limit">{limits.projects}</PlanLimit>}
       <QueryView query={projectsQuery}>
         {(projects) => {
           const { active, archived } = splitArchived(projects)

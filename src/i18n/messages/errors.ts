@@ -50,9 +50,16 @@ const en = {
   key_taken: 'Another project already uses this key.',
   hotkey_taken: 'Another template already uses this shortcut.',
   'plan.limit_custom_types':
-    'The Free plan includes up to 3 custom work types. Archive one or upgrade to Pro.',
+    'The Free plan uses the built-in work types. Upgrade to Pro to add your own.',
   'plan.limit_history':
-    'On the Free plan you can add entries from the last 30 days. Upgrade to Pro to log older work.',
+    'On the Free plan you can add entries from the last 7 days. Upgrade to Pro to log older work.',
+  'plan.limit_projects':
+    'The Free plan includes one project. Archive it or upgrade to Pro for more.',
+  'plan.limit_templates':
+    'The Free plan includes two quick templates. Delete one or upgrade to Pro for more.',
+  'plan.limit_statuses':
+    'The Free plan uses the four default statuses. Upgrade to Pro to add your own.',
+  'plan.pro_feature': 'This is a Pro feature. Upgrade to turn it on.',
   'break.running': 'A break is already running. End it first.',
   'status.default_archive':
     'The default status can’t be archived. Make another status the default first.',
@@ -122,9 +129,16 @@ const pl: ErrorMessages = {
   key_taken: 'Ten klucz ma już inny projekt.',
   hotkey_taken: 'Ten skrót ma już inny szablon.',
   'plan.limit_custom_types':
-    'Plan Free obejmuje do 3 własnych typów pracy. Zarchiwizuj jeden albo przejdź na Pro.',
+    'Plan Free korzysta z wbudowanych typów pracy. Przejdź na Pro, żeby dodać własne.',
   'plan.limit_history':
-    'W planie Free dodasz wpisy z ostatnich 30 dni. Przejdź na Pro, żeby wpisać starszą pracę.',
+    'W planie Free dodasz wpisy z ostatnich 7 dni. Przejdź na Pro, żeby wpisać starszą pracę.',
+  'plan.limit_projects':
+    'Plan Free obejmuje jeden projekt. Zarchiwizuj go albo przejdź na Pro, żeby mieć więcej.',
+  'plan.limit_templates':
+    'Plan Free obejmuje dwa szybkie szablony. Usuń jeden albo przejdź na Pro, żeby mieć więcej.',
+  'plan.limit_statuses':
+    'Plan Free korzysta z czterech domyślnych statusów. Przejdź na Pro, żeby dodać własne.',
+  'plan.pro_feature': 'To funkcja Pro. Przejdź na Pro, żeby ją włączyć.',
   'break.running': 'Przerwa już trwa. Najpierw ją zakończ.',
   'status.default_archive':
     'Nie można zarchiwizować statusu domyślnego. Najpierw ustaw inny jako domyślny.',

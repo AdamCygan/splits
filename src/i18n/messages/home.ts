@@ -92,8 +92,8 @@ const en = {
     totalHours: '152.0 h',
   },
   pricing: {
-    title: 'Free to start. $24 a year when you want more.',
-    lead: 'The free plan has no time limit. Pro adds full history, CSV export and unlimited work types, with a full refund within 14 days.',
+    title: 'Free to try. $6 a month when you want it all.',
+    lead: 'Free gives you a taste with no time limit. Pro removes every limit, monthly or yearly with 2 months free, and you get a full refund within 14 days.',
     demo: 'Not sure yet? Try the live demo first',
   },
   final: {
@@ -197,8 +197,8 @@ const pl: HomeMessages = {
     totalHours: '152,0 h',
   },
   pricing: {
-    title: 'Zaczynasz za darmo. 24 $ rocznie, gdy chcesz więcej.',
-    lead: 'Plan darmowy nie ma limitu czasu. Pro dodaje pełną historię, eksport CSV i nielimitowane typy pracy, z pełnym zwrotem w ciągu 14 dni.',
+    title: 'Wypróbuj za darmo. 6 $ miesięcznie, gdy chcesz wszystko.',
+    lead: 'Free to przedsmak bez limitu czasu. Pro zdejmuje wszystkie limity, miesięcznie albo rocznie z 2 miesiącami gratis, a pełny zwrot dostajesz w ciągu 14 dni.',
     demo: 'Jeszcze się wahasz? Najpierw wypróbuj demo',
   },
   final: {

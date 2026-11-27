@@ -99,7 +99,7 @@ export function DayPicker({
           {t.freeLimit}{' '}
           <Link
             to="/app/checkout"
-            search={{ plan: 'pro' }}
+            search={{ interval: 'year' }}
             className="font-medium text-ink underline underline-offset-2"
           >
             {t.upgrade}

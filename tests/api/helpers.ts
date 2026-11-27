@@ -82,11 +82,13 @@ export type ApiClient = ReturnType<typeof client>
 let n = 0
 export interface RegisteredOptions {
   verify?: boolean
+  /** Konto Pro (bez limitów planu Free), gdy test sprawdza coś innego niż limity. */
+  pro?: boolean
 }
 
 export async function registered(
   locale: 'en' | 'pl' = 'en',
-  { verify = true }: RegisteredOptions = {},
+  { verify = true, pro = false }: RegisteredOptions = {},
 ) {
   const c = client()
   const id = `${Date.now().toString(36)}${n++}`
@@ -103,6 +105,11 @@ export async function registered(
     await c.post('/auth/email/confirm', {
       token: lastToken(`user${id}@example.com`),
     })
+  if (pro)
+    await db
+      .update(users)
+      .set({ plan: 'pro' })
+      .where(sql`lower(${users.email}) = ${`user${id}@example.com`}`)
   return { c, username: `user${id}`, email: `user${id}@example.com` }
 }
 

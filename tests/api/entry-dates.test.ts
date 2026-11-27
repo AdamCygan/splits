@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
 import { addDays, todayIn } from '#/domain/dates'
+import { FREE_LIMITS } from '#/features/billing/plans'
 import { db } from '#/server/db/client'
 import { users } from '#/server/db/schema'
 import { registered } from './helpers'
@@ -68,10 +69,10 @@ describe('entry dates', () => {
     expect(Object.keys(past.body.errors ?? {})).toContain('workDate')
   })
 
-  it('Should limit new entries to the last 30 days on Free, not on Pro', async () => {
+  it('Should limit new entries to the last 7 days on Free, not on Pro', async () => {
     const { c, email, today, entry } = await account()
-    const edge = addDays(today, -29)
-    const older = addDays(today, -30)
+    const edge = addDays(today, -(FREE_LIMITS.historyDays - 1))
+    const older = addDays(today, -FREE_LIMITS.historyDays)
     expect((await c.post('/time-entries', entry(edge))).status).toBe(201)
     const blocked = await c.post<Problem>('/time-entries', entry(older))
     expect(blocked.status).toBe(403)

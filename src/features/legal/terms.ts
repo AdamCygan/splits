@@ -9,7 +9,7 @@ import type { LegalDoc } from './types'
 const pl: LegalDoc = {
   title: 'Regulamin',
   summary:
-    'Zasady korzystania z {name}: konto, plany Free i Pro (płatny rocznie), płatności, odstąpienie od umowy, reklamacje i odpowiedzialność.',
+    'Zasady korzystania z {name}: konto, plany Free i Pro (płatny miesięcznie albo rocznie), płatności, odstąpienie od umowy, reklamacje i odpowiedzialność.',
   sections: [
     {
       id: 'general',
@@ -31,7 +31,7 @@ const pl: LegalDoc = {
             '**Przedsiębiorca na prawach konsumenta**: osoba fizyczna prowadząca działalność gospodarczą, która zawiera umowę niemającą dla niej charakteru zawodowego (art. 38a ustawy o prawach konsumenta). Ma prawa konsumenta opisane w pkt 7 i 10.',
             '**Konto**: indywidualne konto Użytkownika w Serwisie.',
             '**Plan Free**: bezpłatny plan na czas nieokreślony.',
-            '**Plan Pro**: płatna subskrypcja roczna, opłacana z góry za 12 miesięcy.',
+            '**Plan Pro**: płatna subskrypcja miesięczna albo roczna, opłacana z góry za wybrany okres (miesiąc albo 12 miesięcy). Oba warianty dają te same funkcje.',
             '**Treści Użytkownika**: dane wprowadzane do Serwisu, w szczególności wpisy czasu, notatki, zadania, projekty i ustawienia.',
           ],
         },
@@ -50,7 +50,7 @@ const pl: LegalDoc = {
             'w planach płatnych: pełna historia raportów, eksport danych i funkcje opisane w [cenniku](/pricing).',
           ],
         },
-        'Umowa o prowadzenie Konta w planie Free jest zawierana na czas nieokreślony z chwilą rejestracji. Umowa planu Pro jest zawierana na rok i odnawia się automatycznie na kolejne lata, dopóki nie wyłączysz odnowienia.',
+        'Umowa o prowadzenie Konta w planie Free jest zawierana na czas nieokreślony z chwilą rejestracji. Umowa planu Pro jest zawierana na wybrany okres rozliczeniowy (miesiąc albo rok) i odnawia się automatycznie na kolejne takie okresy, dopóki nie wyłączysz odnowienia.',
       ],
     },
     {
@@ -90,11 +90,11 @@ const pl: LegalDoc = {
           ol: [
             'Aktualne ceny i zakres planów są w [cenniku](/pricing). Ceny podajemy w dolarach amerykańskich (USD). Dla konsumentów ceny zawierają podatek VAT, jeżeli ma zastosowanie.',
             'Płatności obsługuje Stripe Payments Europe Ltd. (Irlandia). Nie przechowujemy pełnych danych kart płatniczych.',
-            'Plan Pro jest płatny z góry za cały rok: opłatę pobieramy w dniu zakupu, a potem w dniu każdego odnowienia. Nie oferujemy płatności miesięcznych.',
-            'Plan Pro odnawia się automatycznie na kolejny rok, dopóki nie wyłączysz odnowienia w ustawieniach Konta (Ustawienia → Plan). Wyłączenie działa od następnego roku; do końca opłaconego okresu zachowujesz dostęp do planu Pro.',
+            'Plan Pro jest płatny z góry za wybrany okres rozliczeniowy, miesiąc albo rok: opłatę pobieramy w dniu zakupu, a potem w dniu każdego odnowienia. Okres zmienisz w ustawieniach Konta; różnicę rozliczamy proporcjonalnie przy kolejnej płatności.',
+            'Plan Pro odnawia się automatycznie na kolejny okres rozliczeniowy, dopóki nie wyłączysz odnowienia w ustawieniach Konta (Ustawienia → Plan). Wyłączenie działa od następnego okresu; do końca opłaconego okresu zachowujesz dostęp do planu Pro.',
             'Co najmniej 7 dni przed odnowieniem wysyłamy na adres e-mail Konta przypomnienie z datą odnowienia i kwotą.',
             'Faktury i rachunki wystawiamy elektronicznie i udostępniamy na adres e-mail Konta.',
-            'O zmianie ceny planu Pro informujemy co najmniej 30 dni przed odnowieniem. Nowa cena obowiązuje od kolejnego roku; jeżeli się na nią nie zgadzasz, możesz wyłączyć odnowienie przed jego datą.',
+            'O zmianie ceny planu Pro informujemy co najmniej 30 dni przed odnowieniem. Nowa cena obowiązuje od kolejnego okresu rozliczeniowego; jeżeli się na nią nie zgadzasz, możesz wyłączyć odnowienie przed jego datą.',
           ],
         },
       ],
@@ -109,7 +109,7 @@ const pl: LegalDoc = {
             'Wystarczy wysłać oświadczenie na {email}, np. według wzoru z pkt 16. Do zachowania terminu wystarczy wysłanie oświadczenia przed jego upływem.',
             'Zwracamy całą zapłaconą kwotę w ciągu 14 dni od otrzymania oświadczenia, tą samą metodą płatności, chyba że uzgodnimy inną. Nie pobieramy opłaty za okres, w którym korzystałeś z planu.',
             'Taki sam 14-dniowy zwrot stosujemy dobrowolnie także wobec pozostałych Użytkowników, przy pierwszym zakupie danego planu.',
-            'Także po automatycznym odnowieniu możesz w ciągu 14 dni od pobrania opłaty zrezygnować z nowego roku i otrzymać pełny zwrot tej opłaty. Wystarczy wiadomość na {email}.',
+            'Także po automatycznym odnowieniu możesz w ciągu 14 dni od pobrania opłaty zrezygnować z nowego okresu i otrzymać pełny zwrot tej opłaty. Wystarczy wiadomość na {email}.',
           ],
         },
       ],
@@ -226,7 +226,7 @@ const pl: LegalDoc = {
 const en: LegalDoc = {
   title: 'Terms of Service',
   summary:
-    'The rules for using {name}: your account, the Free and Pro (billed yearly) plans, payments, withdrawal, complaints and liability.',
+    'The rules for using {name}: your account, the Free and Pro (billed monthly or yearly) plans, payments, withdrawal, complaints and liability.',
   sections: [
     {
       id: 'general',
@@ -248,7 +248,7 @@ const en: LegalDoc = {
             '**Sole trader with consumer rights**: a natural person running a business who enters into a contract that is not of a professional nature for them (Article 38a of the Polish Consumer Rights Act). They have the consumer rights described in sections 7 and 10.',
             '**Account**: your personal account on the Service.',
             '**Free plan**: the free plan with no time limit.',
-            '**Pro plan**: a paid yearly subscription, paid upfront for 12 months.',
+            '**Pro plan**: a paid monthly or yearly subscription, paid upfront for the period you choose (one month or 12 months). Both give you the same features.',
             '**Your Content**: the data you enter, in particular time entries, notes, tasks, projects and settings.',
           ],
         },
@@ -267,7 +267,7 @@ const en: LegalDoc = {
             'on paid plans: full report history, data export and the features listed on the [pricing page](/pricing).',
           ],
         },
-        'The Free plan contract is concluded for an indefinite period when you sign up. The Pro plan contract runs for one year and renews automatically for further years until you turn off renewal.',
+        'The Free plan contract is concluded for an indefinite period when you sign up. The Pro plan contract runs for the billing period you choose (a month or a year) and renews automatically for further periods of the same length until you turn off renewal.',
       ],
     },
     {
@@ -307,11 +307,11 @@ const en: LegalDoc = {
           ol: [
             'Current prices and plan features are on the [pricing page](/pricing). Prices are in US dollars (USD). For consumers, prices include VAT where applicable.',
             'Payments are processed by Stripe Payments Europe Ltd. (Ireland). We never store full card details.',
-            'The Pro plan is paid upfront for the whole year: we charge on the day you buy and on the day of each renewal. We don’t offer monthly billing.',
-            'The Pro plan renews automatically for another year until you turn off renewal in your Account settings (Settings → Plan). Turning it off applies from the next year; you keep Pro until the end of the period you paid for.',
+            'The Pro plan is paid upfront for the billing period you choose, a month or a year: we charge on the day you buy and on the day of each renewal. You can change the period in your Account settings; we settle the difference proportionally on your next payment.',
+            'The Pro plan renews automatically for another billing period until you turn off renewal in your Account settings (Settings → Plan). Turning it off applies from the next period; you keep Pro until the end of the period you paid for.',
             'At least 7 days before a renewal we email you a reminder with the renewal date and amount.',
             'Invoices and receipts are issued electronically and sent to your Account email.',
-            'We announce Pro price changes at least 30 days before your renewal. The new price applies from the next year; if you don’t agree, you can turn off renewal before that date.',
+            'We announce Pro price changes at least 30 days before your renewal. The new price applies from the next billing period; if you don’t agree, you can turn off renewal before that date.',
           ],
         },
       ],
@@ -326,7 +326,7 @@ const en: LegalDoc = {
             'Just send us a statement at {email}, for example using the model in section 16. Sending it before the deadline is enough.',
             'We refund the full amount within 14 days of receiving your statement, using the same payment method unless we agree otherwise. We do not charge for the time you used the plan.',
             'We voluntarily offer the same 14-day refund to all other Users on their first purchase of a plan.',
-            'After an automatic renewal you can also cancel the new year within 14 days of the charge and get that charge back in full. Just email {email}.',
+            'After an automatic renewal you can also cancel the new period within 14 days of the charge and get that charge back in full. Just email {email}.',
           ],
         },
       ],

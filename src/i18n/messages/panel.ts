@@ -73,7 +73,7 @@ const en = {
     emptyHistory: 'Past sprints will show up here once they end.',
     tableRegion: 'Past sprints table, scrolls sideways',
     freeNote:
-      'The Free plan covers the last 30 days, so older sprints may be incomplete.',
+      'The Free plan covers the last 7 days, so older sprints may be incomplete.',
     upgrade: 'See Pro',
     upcoming: 'Next: {name}, starts {date}',
   },
@@ -135,7 +135,7 @@ const en = {
     clear: 'Clear filters',
     showing: { one: '{n} task', other: '{n} tasks' } as Plural,
     more: 'Show {n} more',
-    freeNote: 'The Free plan shows tasks from the last 30 days.',
+    freeNote: 'The Free plan shows tasks from the last 7 days.',
     upgrade: 'See Pro',
     view: {
       groupBy: 'Group by',
@@ -268,7 +268,7 @@ const pl: PanelMessages = {
     emptyHistory: 'Zakończone sprinty pojawią się tutaj.',
     tableRegion: 'Tabela zakończonych sprintów, przewija się w bok',
     freeNote:
-      'Plan Free obejmuje ostatnie 30 dni, więc starsze sprinty mogą być niepełne.',
+      'Plan Free obejmuje ostatnie 7 dni, więc starsze sprinty mogą być niepełne.',
     upgrade: 'Zobacz Pro',
     upcoming: 'Następny: {name}, start {date}',
   },
@@ -345,7 +345,7 @@ const pl: PanelMessages = {
       other: '{n} zadań',
     },
     more: 'Pokaż kolejne {n}',
-    freeNote: 'Plan Free pokazuje zadania z ostatnich 30 dni.',
+    freeNote: 'Plan Free pokazuje zadania z ostatnich 7 dni.',
     upgrade: 'Zobacz Pro',
     view: {
       groupBy: 'Grupuj według',

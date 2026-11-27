@@ -15,6 +15,7 @@ import { fieldErrorsOf, useErrorText } from '#/lib/use-error-text'
 import { registerSchema } from '../schemas'
 import { startSession } from '../session'
 import type { RegisterForm as RegisterValues } from '../schemas'
+import type { BillingInterval } from '#/features/billing/plans'
 
 type ServerErrors = Partial<Record<keyof RegisterValues, Array<string>>>
 
@@ -27,10 +28,15 @@ const defaultValues: RegisterValues = {
 
 export interface RegisterFormProps {
   next?: 'setup' | 'checkout'
+  /** Płatność wybrana na cenniku (dla next=checkout). */
+  interval?: BillingInterval
 }
 
 /** next: dokąd po założeniu konta — konfiguracja (domyślnie) albo koszyk planu Pro. */
-export function RegisterForm({ next = 'setup' }: RegisterFormProps) {
+export function RegisterForm({
+  next = 'setup',
+  interval = 'year',
+}: RegisterFormProps) {
   const navigate = useNavigate()
   const t = useMessages(authMessages)
   const { locale } = useI18n()
@@ -60,12 +66,12 @@ export function RegisterForm({ next = 'setup' }: RegisterFormProps) {
       }
       startSession(result.value)
       track('signup_completed', {
-        plan: next === 'checkout' ? 'pro' : 'free',
+        plan: next === 'checkout' ? `pro_${interval}` : 'free',
         locale,
       })
       // Wybrany na cenniku Pro: po założeniu konta od razu koszyk.
       await (next === 'checkout'
-        ? navigate({ to: '/app/checkout', search: { plan: 'pro' } })
+        ? navigate({ to: '/app/checkout', search: { interval } })
         : navigate({ to: '/app/settings' }))
     },
   })

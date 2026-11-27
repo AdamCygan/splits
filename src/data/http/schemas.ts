@@ -174,6 +174,7 @@ export const billingSchema = z.object({
     .object({
       status: z.string(),
       plan: planSchema,
+      interval: z.enum(['month', 'year']).nullable().default(null),
       active: z.boolean(),
       currentPeriodEnd: z.string().nullable(),
       cancelAtPeriodEnd: z.boolean(),

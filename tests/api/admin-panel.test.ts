@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm'
+import { todayIn } from '#/domain/dates'
 import { afterEach, describe, expect, it } from 'vitest'
 import type Stripe from 'stripe'
 import { encryptSecret, newTotpSecret } from '#/server/auth/totp'
@@ -84,7 +85,7 @@ async function logTime(c: ApiClient) {
     title: 'Stand-up',
     link: null,
     storyPoints: null,
-    workDate: '2026-11-20',
+    workDate: todayIn('Europe/Warsaw'),
     startTime: null,
     endTime: null,
     durationMinutes: 15,

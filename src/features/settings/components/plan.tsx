@@ -1,4 +1,3 @@
-import { percentOf } from '#/domain/numbers'
 import { useEffect } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -7,7 +6,7 @@ import { Button, buttonVariants } from '#/components/ui/button'
 import { Badge } from '#/components/ui/controls'
 import { data } from '#/data'
 import { InvoicesCard } from '#/features/billing/invoices'
-import { FREE_LIMITS, formatPrice, planById } from '#/features/billing/plans'
+import { PRO_PRICES, formatPrice, planById } from '#/features/billing/plans'
 import {
   billingKeys,
   billingQuery,
@@ -21,7 +20,7 @@ import { unwrap } from '#/lib/api-client'
 import { marketingMessages } from '#/i18n/messages/marketing'
 import { settingsMessages } from '#/i18n/messages/settings'
 import { cn } from '#/lib/utils'
-import { keys as settingsKeys, meQuery, taskTypesQuery } from '../queries'
+import { keys as settingsKeys, meQuery } from '../queries'
 import { DemoNotice, QueryView, SectionHeader, SettingsCard } from './ui'
 
 export interface PlanSettingsProps {
@@ -112,11 +111,8 @@ function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
   const b = useMessages(billingMessages).plan
   const pricing = useMessages(marketingMessages).pricing
   const { tag, locale } = useI18n()
-  const types = useQuery(taskTypesQuery).data ?? []
   const billing = useQuery(billingQuery).data
   const portal = useStripeRedirect(() => data.billing.portal())
-  const customCount = types.filter((x) => !x.isSystem && !x.archivedAt).length
-  const pro = planById('pro')
   const isFree = planId === 'free'
   const name = admin
     ? 'Admin'
@@ -131,7 +127,6 @@ function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
       month: 'long',
       year: 'numeric',
     })
-  const usagePct = percentOf(customCount, FREE_LIMITS.customWorkTypes, true)
 
   return (
     <>
@@ -146,6 +141,11 @@ function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
               sub.status === 'past_due' && 'text-destructive',
             )}
           >
+            {sub.interval && sub.status !== 'past_due' && (
+              <span className="block text-ink-soft">
+                {sub.interval === 'month' ? b.billedMonthly : b.billedYearly}
+              </span>
+            )}
             {sub.status === 'past_due'
               ? b.pastDue
               : sub.currentPeriodEnd
@@ -166,57 +166,33 @@ function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
             </li>
           ))}
         </ul>
-        <div className="mt-6 border-t border-line pt-5">
-          {isFree ? (
-            <>
-              <p id="plan-usage" className="text-sm font-medium">
-                {fmt(t.usage, {
-                  used: customCount,
-                  limit: FREE_LIMITS.customWorkTypes,
-                })}
-              </p>
-              <div
-                role="meter"
-                aria-labelledby="plan-usage"
-                aria-valuemin={0}
-                aria-valuemax={FREE_LIMITS.customWorkTypes}
-                aria-valuenow={Math.min(
-                  customCount,
-                  FREE_LIMITS.customWorkTypes,
-                )}
-                className="mt-2 h-2.5 max-w-sm overflow-hidden rounded-full bg-muted"
-              >
-                <div
-                  className={cn(
-                    'h-full rounded-full',
-                    usagePct >= 100 ? 'bg-destructive' : 'bg-ink',
-                  )}
-                  style={{ width: `${usagePct}%` }}
-                />
-              </div>
-            </>
-          ) : (
-            <p className="text-sm font-medium">
-              {fmt(t.usageUnlimited, { used: customCount })}
-            </p>
-          )}
-          {planId === 'lifetime' && (
-            <p className="mt-3 text-ink-soft">
-              {admin ? b.adminNote : b.lifetimeNote}
-            </p>
-          )}
-        </div>
+        {planId === 'lifetime' && (
+          <p className="mt-6 border-t border-line pt-5 text-ink-soft">
+            {admin ? b.adminNote : b.lifetimeNote}
+          </p>
+        )}
       </SettingsCard>
 
       {isFree && (
         <SettingsCard title={t.upgradeTitle} lead={t.upgradeLead}>
-          <Link
-            to="/app/checkout"
-            search={{ plan: 'pro' }}
-            className={buttonVariants()}
-          >
-            {fmt(b.buyPro, { price: formatPrice(pro.yearly ?? 0, tag) })}
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              to="/app/checkout"
+              search={{ interval: 'year' }}
+              className={buttonVariants()}
+            >
+              {fmt(b.buyPro.year, { price: formatPrice(PRO_PRICES.year, tag) })}
+            </Link>
+            <Link
+              to="/app/checkout"
+              search={{ interval: 'month' }}
+              className={buttonVariants({ variant: 'outline' })}
+            >
+              {fmt(b.buyPro.month, {
+                price: formatPrice(PRO_PRICES.month, tag),
+              })}
+            </Link>
+          </div>
           <p className="mt-2 text-sm text-ink-soft">{b.buyProHint}</p>
         </SettingsCard>
       )}

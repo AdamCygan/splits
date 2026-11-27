@@ -24,7 +24,7 @@ const en = {
     summaries: { title: 'Task summaries', text: 'Your summary template' },
     account: { title: 'Account', text: 'Profile, language, data' },
     security: { title: 'Security', text: 'Email, password, two-step login' },
-    plan: { title: 'Plan', text: 'Free or Pro, billed yearly' },
+    plan: { title: 'Plan', text: 'Free or Pro, billed monthly or yearly' },
   },
   overview: {
     welcome: 'Welcome to Timeblame',
@@ -224,8 +224,6 @@ const en = {
     custom: 'Custom',
     notFocus: 'Not focus work',
     archivedTitle: 'Archived types ({count})',
-    freeUsage: '{used} of {limit} custom types on the Free plan',
-    upgrade: 'Upgrade for unlimited types',
     summary: {
       link: {
         hidden: 'No link',
@@ -580,11 +578,9 @@ const en = {
   plan: {
     title: 'Your plan',
     current: 'Current plan',
-    usage: 'Custom work types: {used} of {limit}',
-    usageUnlimited: 'Custom work types: {used}, unlimited',
     upgradeTitle: 'Upgrade',
     upgradeLead:
-      'Pro adds full history, CSV export and unlimited work types and statuses.',
+      'Pro adds full history, CSV export, daily reminders and no limits on projects, templates, work types or statuses.',
     comparePlans: 'Compare plans',
   },
   colors: {
@@ -639,7 +635,10 @@ const pl: SettingsMessages = {
       title: 'Bezpieczeństwo',
       text: 'E-mail, hasło, logowanie dwuetapowe',
     },
-    plan: { title: 'Plan', text: 'Free albo Pro, płatne rocznie' },
+    plan: {
+      title: 'Plan',
+      text: 'Free albo Pro, płatne co miesiąc lub co rok',
+    },
   },
   overview: {
     welcome: 'Witaj w Timeblame',
@@ -844,8 +843,6 @@ const pl: SettingsMessages = {
     custom: 'Własny',
     notFocus: 'Poza pracą skupioną',
     archivedTitle: 'Zarchiwizowane typy ({count})',
-    freeUsage: '{used} z {limit} własnych typów w planie Free',
-    upgrade: 'Przejdź na Pro, by mieć ich bez limitu',
     summary: {
       link: {
         hidden: 'Bez linku',
@@ -1202,11 +1199,9 @@ const pl: SettingsMessages = {
   plan: {
     title: 'Twój plan',
     current: 'Obecny plan',
-    usage: 'Własne typy pracy: {used} z {limit}',
-    usageUnlimited: 'Własne typy pracy: {used}, bez limitu',
     upgradeTitle: 'Zmień plan',
     upgradeLead:
-      'Pro dodaje pełną historię, eksport CSV oraz nielimitowane typy pracy i statusy.',
+      'Pro dodaje pełną historię, eksport CSV, codzienne przypomnienia i brak limitów projektów, szablonów, typów pracy i statusów.',
     comparePlans: 'Porównaj plany',
   },
   colors: {

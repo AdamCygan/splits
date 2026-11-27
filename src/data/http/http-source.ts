@@ -355,8 +355,11 @@ export const httpSource: DataSource = {
   },
   billing: {
     status: () => get('/billing', s.billingSchema),
-    checkout: (plan) =>
-      send('POST', '/billing/checkout', z.object({ url: z.url() }), { plan }),
+    checkout: (interval) =>
+      send('POST', '/billing/checkout', z.object({ url: z.url() }), {
+        plan: 'pro',
+        interval,
+      }),
     sync: (sessionId) =>
       send(
         'POST',

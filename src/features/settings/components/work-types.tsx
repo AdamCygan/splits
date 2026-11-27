@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
 import { Archive, ArchiveRestore, Check, Pencil, Plus } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import {
@@ -42,12 +41,15 @@ import { markSetupStep } from '../setup-progress'
 import { useArchive } from '../use-archive'
 import { usePalette, withCurrent } from './palette'
 import { QueryView, SectionHeader, SettingsCard } from './ui'
+import { PlanLimit } from '#/features/billing/components/plan-limit'
+import { billingMessages } from '#/i18n/messages/billing'
 
 export function WorkTypeSettings() {
   const t = useMessages(settingsMessages).workTypes
   const app = useMessages(appMessages)
   const format = useFormat()
   const user = useCurrentUser()
+  const limits = useMessages(billingMessages).limits
   const [editing, setEditing] = useState<TaskType | 'new' | null>(null)
 
   const archive = useArchive(data.taskTypes.setArchived, {
@@ -69,14 +71,6 @@ export function WorkTypeSettings() {
             <div className="space-y-6">
               <SettingsCard
                 title={t.title}
-                lead={
-                  limited
-                    ? fmt(t.freeUsage, {
-                        used: customCount,
-                        limit: FREE_LIMITS.customWorkTypes,
-                      })
-                    : undefined
-                }
                 actions={
                   <Button
                     onClick={() => setEditing('new')}
@@ -89,17 +83,7 @@ export function WorkTypeSettings() {
                 }
               >
                 {atLimit && (
-                  <p
-                    id="type-limit"
-                    className="mb-4 rounded-lg bg-muted px-3.5 py-2.5 text-sm"
-                  >
-                    <Link
-                      to="/app/settings/plan"
-                      className="font-medium underline underline-offset-4"
-                    >
-                      {t.upgrade}
-                    </Link>
-                  </p>
+                  <PlanLimit id="type-limit">{limits.workTypes}</PlanLimit>
                 )}
                 <ul className="divide-y divide-line">
                   {active.map((type) => (

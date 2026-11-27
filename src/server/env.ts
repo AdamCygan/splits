@@ -59,8 +59,9 @@ export const serverEnv = {
         webhookSecret: env.STRIPE_WEBHOOK_SECRET ?? null,
         /** Stripe Tax: VAT liczony z adresu klienta (wymaga konfiguracji w panelu Stripe). */
         automaticTax: env.STRIPE_AUTOMATIC_TAX === 'true',
-        /** Opcjonalnie id ceny zamiast wyszukiwania po lookup key. */
-        priceProYearly: env.STRIPE_PRICE_PRO_YEARLY ?? null,
+        /** Opcjonalnie id cen Pro zamiast wyszukiwania po lookup key. */
+        priceProMonthly: env.STRIPE_PRICE_PRO_MONTHLY || null,
+        priceProYearly: env.STRIPE_PRICE_PRO_YEARLY || null,
       }
     : null,
   /** Sentry (np. https://klucz@o1.ingest.de.sentry.io/123); bez niego błędy są tylko w logach. */

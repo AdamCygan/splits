@@ -52,6 +52,7 @@ import type {
   Bootstrap,
 } from './types'
 import type { Locale } from '#/i18n/config'
+import type { BillingInterval } from '#/features/billing/plans'
 
 export type R<T> = Promise<Result<ApiFailure, T>>
 
@@ -236,7 +237,7 @@ export interface DataSource {
   billing: {
     status: () => R<BillingStatus>
     /** Adres Stripe Checkout dla planu rocznego. */
-    checkout: (plan: 'pro') => R<{ url: string }>
+    checkout: (interval: BillingInterval) => R<{ url: string }>
     /** Po powrocie z płatności: plan od razu, bez czekania na webhook. */
     sync: (sessionId: string) => R<{ plan: PlanCode; paid: boolean }>
     /** Adres Stripe Customer Portal (faktury, karta, anulowanie). */

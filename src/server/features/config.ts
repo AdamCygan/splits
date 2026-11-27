@@ -74,6 +74,56 @@ async function assertTypeSlot(tx: Tx, userId: string) {
     throw new ApiError('plan.limit_custom_types', 403)
 }
 
+type FreeLimitCode =
+  'plan.limit_projects' | 'plan.limit_templates' | 'plan.limit_statuses'
+
+/**
+ * Limit planu Free na liczbę elementów (projekty, szablony, statusy). Liczy się stan przed
+ * dodaniem albo przywróceniem z archiwum; Pro i administrator nie mają limitu.
+ */
+async function assertFreeSlot(
+  userId: string,
+  count: () => Promise<number>,
+  limit: number,
+  code: FreeLimitCode,
+) {
+  const user = await currentUser(userId)
+  if (!hasProAccess(user) && (await count()) >= limit)
+    throw new ApiError(code, 403)
+}
+
+const countRows = async (rows: Promise<Array<{ n: number }>>) =>
+  (await rows)[0]?.n ?? 0
+
+const activeProjects = (tx: Tx, userId: string) =>
+  countRows(
+    tx
+      .select({ n: sql<number>`count(*)::int` })
+      .from(t.projects)
+      .where(and(eq(t.projects.userId, userId), isNull(t.projects.archivedAt))),
+  )
+
+const activeStatuses = (tx: Tx, userId: string) =>
+  countRows(
+    tx
+      .select({ n: sql<number>`count(*)::int` })
+      .from(t.taskStatuses)
+      .where(
+        and(
+          eq(t.taskStatuses.userId, userId),
+          isNull(t.taskStatuses.archivedAt),
+        ),
+      ),
+  )
+
+const templateCount = (tx: Tx, userId: string) =>
+  countRows(
+    tx
+      .select({ n: sql<number>`count(*)::int` })
+      .from(t.quickTemplates)
+      .where(eq(t.quickTemplates.userId, userId)),
+  )
+
 /** Typ bez SP nie ma wartości domyślnej, a typ z wymaganymi SP musi ją mieć. */
 function cleanType(input: TaskTypeInput): TaskTypeInput {
   if (input.storyPointsRequirement === 'hidden')
@@ -166,6 +216,18 @@ export const settingsRoutes = new Hono<AppEnv>()
     const userId = c.get('userId')
     const input = await body(c, settingsInput)
     const row = await db.transaction(async (tx) => {
+      // Przypomnienia e-mail są w Pro. Free może je tylko wyłączyć albo zostawić bez zmian.
+      if (input.dailyReminderAt !== null) {
+        const [current] = await tx
+          .select({ at: t.userSettings.dailyReminderAt })
+          .from(t.userSettings)
+          .where(eq(t.userSettings.userId, userId))
+        if (
+          current?.at !== input.dailyReminderAt &&
+          !hasProAccess(await currentUser(userId))
+        )
+          throw new ApiError('plan.pro_feature', 403, 'dailyReminderAt')
+      }
       const [updated] = await tx
         .update(t.userSettings)
         .set({
@@ -287,6 +349,12 @@ export const statusRoutes = new Hono<AppEnv>()
     const userId = c.get('userId')
     const input = await body(c, statusInput)
     const row = await db.transaction(async (tx) => {
+      await assertFreeSlot(
+        userId,
+        () => activeStatuses(tx, userId),
+        FREE_LIMITS.statuses,
+        'plan.limit_statuses',
+      )
       const all = await listStatuses(tx, userId)
       if (all.some((s) => lowerName(s.name) === lowerName(input.name)))
         throw conflict('name_taken', 'name')
@@ -359,6 +427,13 @@ export const statusRoutes = new Hono<AppEnv>()
         if (status.isSystem) throw conflict('status.system_archive')
         if (status.isDefault) throw conflict('status.default_archive')
         await assertNotLastInCategory(tx, status)
+      } else if (status.archivedAt) {
+        await assertFreeSlot(
+          userId,
+          () => activeStatuses(tx, userId),
+          FREE_LIMITS.statuses,
+          'plan.limit_statuses',
+        )
       }
       const [updated] = await tx
         .update(t.taskStatuses)
@@ -409,6 +484,12 @@ export const projectRoutes = new Hono<AppEnv>()
     const userId = c.get('userId')
     const input = await body(c, projectInput)
     const row = await db.transaction(async (tx) => {
+      await assertFreeSlot(
+        userId,
+        () => activeProjects(tx, userId),
+        FREE_LIMITS.projects,
+        'plan.limit_projects',
+      )
       await assertProjectUnique(tx, userId, input)
       const [created] = await tx
         .insert(t.projects)
@@ -435,19 +516,38 @@ export const projectRoutes = new Hono<AppEnv>()
     return c.json(toProject(row))
   })
   .post('/:id/:action{archive|restore}', async (c) => {
-    const [row] = await db
-      .update(t.projects)
-      .set({
-        archivedAt: c.req.param('action') === 'archive' ? new Date() : null,
-      })
-      .where(
-        and(
-          eq(t.projects.id, c.req.param('id')),
-          eq(t.projects.userId, c.get('userId')),
-        ),
-      )
-      .returning()
-    if (!row) throw notFound()
+    const userId = c.get('userId')
+    const archived = c.req.param('action') === 'archive'
+    const row = await db.transaction(async (tx) => {
+      const [project] = await tx
+        .select({ archivedAt: t.projects.archivedAt })
+        .from(t.projects)
+        .where(
+          and(
+            eq(t.projects.id, c.req.param('id')),
+            eq(t.projects.userId, userId),
+          ),
+        )
+      if (!project) throw notFound()
+      if (!archived && project.archivedAt)
+        await assertFreeSlot(
+          userId,
+          () => activeProjects(tx, userId),
+          FREE_LIMITS.projects,
+          'plan.limit_projects',
+        )
+      const [updated] = await tx
+        .update(t.projects)
+        .set({ archivedAt: archived ? new Date() : null })
+        .where(
+          and(
+            eq(t.projects.id, c.req.param('id')),
+            eq(t.projects.userId, userId),
+          ),
+        )
+        .returning()
+      return updated!
+    })
     return c.json(toProject(row))
   })
 
@@ -534,6 +634,12 @@ export const templateRoutes = new Hono<AppEnv>()
     const userId = c.get('userId')
     const input = await body(c, templateInput)
     const row = await db.transaction(async (tx) => {
+      await assertFreeSlot(
+        userId,
+        () => templateCount(tx, userId),
+        FREE_LIMITS.quickTemplates,
+        'plan.limit_templates',
+      )
       await checkTemplate(tx, userId, input)
       const all = await listTemplates(tx, userId)
       const [created] = await tx

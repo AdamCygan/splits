@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm'
+import { and, eq, isNotNull, isNull, ne, or, sql } from 'drizzle-orm'
 import { todayIn, nowTimeIn, weekday } from '#/domain/dates'
 import { formatMinutes } from '#/i18n/format'
 import { db } from './db/client'
@@ -17,7 +17,7 @@ const minutesOf = (time: string) => {
 /**
  * Dzienne przypomnienie e-mailem (Ustawienia → Dzień pracy): o ustawionej godzinie
  * w dzień roboczy, jeśli wpisany czas jest mniejszy niż cel dnia. Najwyżej jedno dziennie,
- * nie w dzień wolny, tylko na potwierdzony adres.
+ * nie w dzień wolny, tylko na potwierdzony adres i tylko w planie Pro.
  */
 export async function runReminders(now = new Date()) {
   const rows = await db
@@ -33,6 +33,8 @@ export async function runReminders(now = new Date()) {
         isNotNull(users.emailVerifiedAt),
         isNull(users.disabledAt),
         eq(users.isDemo, false),
+        // Przypomnienia są w Pro (administrator ma Pro bez opłat).
+        or(ne(users.plan, 'free'), eq(users.role, 'admin')),
       ),
     )
   let sent = 0
