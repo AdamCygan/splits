@@ -5,19 +5,17 @@ import type { KeyboardEvent } from 'react'
 import { Button } from '#/components/ui/button'
 import { Badge } from '#/components/ui/controls'
 import { Input } from '#/components/ui/input'
-import { entriesApi } from '../data/api'
 import type {
   TaskSearchResult,
   TimeEntry,
 } from '#/features/time-entries/data/dto'
-import { unwrap } from '#/lib/api-client'
 import { taskTypesQuery } from '#/features/task-types/data/queries'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { cn } from '#/lib/utils'
-import { entryKeys } from '../data/queries'
-import { useResumeTask } from './timer'
+import { useResumeTask } from '../controllers/use-timer'
+import { taskSearchQuery } from '../data/queries'
 
 export interface TaskSearchProps {
   isToday: boolean
@@ -39,12 +37,7 @@ export function TaskSearch({ isToday, onUse }: TaskSearchProps) {
   const [active, setActive] = useState(0)
   const [selected, setSelected] = useState<TaskSearchResult | null>(null)
   const q = useDeferredValue(query.trim())
-  const search = useQuery({
-    queryKey: [...entryKeys.all, 'search', q],
-    queryFn: () => unwrap(entriesApi.search(q)),
-    enabled: q.length >= 2,
-    staleTime: 10_000,
-  })
+  const search = useQuery(taskSearchQuery(q))
   const results = q.length >= 2 ? (search.data ?? []) : []
   const resume = useResumeTask()
   const expanded = open && q.length >= 2

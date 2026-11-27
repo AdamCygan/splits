@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
-import { authApi } from '../data/api'
+import {
+  googleSignInUrl,
+  useGoogleAvailable,
+} from '../controllers/use-google-sign-in'
 import { useMessages } from '#/i18n/context'
 import { authMessages } from '#/i18n/messages/auth'
 import { cn } from '#/lib/utils'
@@ -39,22 +41,9 @@ export interface GoogleSignInProps {
  */
 export function GoogleSignIn({ redirectTo, className }: GoogleSignInProps) {
   const t = useMessages(authMessages)
-  const [enabled, setEnabled] = useState(false)
-  useEffect(() => {
-    let active = true
-    void authApi.providers().then((result) => {
-      if (active) setEnabled(result.ok && result.value.google)
-    })
-    return () => {
-      active = false
-    }
-  }, [])
+  const enabled = useGoogleAvailable()
   if (!enabled) return null
 
-  const params = new URLSearchParams({
-    redirect: redirectTo ?? '/app',
-    tz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-  })
   return (
     <div className={className}>
       <div className="mb-5 flex items-center gap-3 text-sm text-ink-soft">
@@ -63,7 +52,7 @@ export function GoogleSignIn({ redirectTo, className }: GoogleSignInProps) {
         <span aria-hidden className="h-px flex-1 bg-line" />
       </div>
       <a
-        href={`/api/v1/auth/google?${params.toString()}`}
+        href={googleSignInUrl(redirectTo)}
         className={cn(
           'flex h-11 w-full items-center justify-center gap-3 rounded-lg border border-input bg-surface px-4 text-base font-medium shadow-xs hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:outline-none',
         )}

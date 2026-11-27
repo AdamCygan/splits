@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import type { FormEvent } from 'react'
+import { useSaveWorkType, useWorkTypes } from '../controllers/use-work-types'
+import { taskTypesQuery } from '../data/queries'
+import { blankType } from '../domain/work-type-draft'
 import { useQuery } from '@tanstack/react-query'
-import { Archive, ArchiveRestore, Check, Pencil, Plus } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import {
   Badge,
@@ -14,49 +14,42 @@ import {
 import { Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import { Segmented } from '#/components/ui/segmented'
-import { taskTypesApi } from '#/features/task-types/data/api'
-import { splitArchived } from '#/shared/domain/archive'
-import type {
-  FieldRequirement,
-  TaskType,
-  TaskTypeInput,
-} from '#/features/task-types/data/dto'
+import { PlanLimit } from '#/features/billing/views/plan-limit'
 import type { TimeInputMode } from '#/features/settings/data/dto'
-import { LIMITS } from '#/features/task-types/domain/rules'
-import { FREE_LIMITS, hasProAccess } from '#/features/billing/domain/plans'
-import { useCurrentUser } from '#/features/auth/data/session'
-import { useFormat, useMessages } from '#/i18n/context'
-import { fmt } from '#/i18n/format'
-import { appMessages } from '#/i18n/messages/app'
-import { settingsMessages } from '#/i18n/messages/settings'
-import { cn } from '#/lib/utils'
-import { keys } from '#/shared/data/query-keys'
-import { mutationFieldError, useDataMutation } from '#/shared/data/mutations'
-import { scaleQuery } from '#/features/story-points/data/queries'
-import { taskTypesQuery } from '../data/queries'
-import { markSetupStep } from '#/features/settings/controllers/setup-progress'
-import { useArchive } from '#/shared/controllers/use-archive'
 import { usePalette, withCurrent } from '#/features/settings/domain/palette'
 import {
   QueryView,
   SectionHeader,
   SettingsCard,
 } from '#/features/settings/views/ui'
-import { PlanLimit } from '#/features/billing/views/plan-limit'
+import { scaleQuery } from '#/features/story-points/data/queries'
+import type {
+  FieldRequirement,
+  TaskType,
+  TaskTypeInput,
+} from '#/features/task-types/data/dto'
+import { LIMITS } from '#/features/task-types/domain/rules'
+import { useFormat, useMessages } from '#/i18n/context'
+import { fmt } from '#/i18n/format'
+import { appMessages } from '#/i18n/messages/app'
 import { billingMessages } from '#/i18n/messages/billing'
+import { settingsMessages } from '#/i18n/messages/settings'
+import { cn } from '#/lib/utils'
+import { mutationFieldError } from '#/shared/data/mutations'
+import { splitArchived } from '#/shared/domain/archive'
+import { Archive, ArchiveRestore, Check, Pencil, Plus } from 'lucide-react'
+import { useState } from 'react'
+import type { FormEvent } from 'react'
 
 export function WorkTypeSettings() {
   const t = useMessages(settingsMessages).workTypes
   const app = useMessages(appMessages)
   const format = useFormat()
-  const user = useCurrentUser()
   const limits = useMessages(billingMessages).limits
   const [editing, setEditing] = useState<TaskType | 'new' | null>(null)
 
-  const archive = useArchive(taskTypesApi.setArchived, {
-    invalidate: keys.taskTypes,
-    messages: t,
-  })
+  const workTypes = useWorkTypes()
+  const { archive } = workTypes
 
   return (
     <div>
@@ -65,8 +58,7 @@ export function WorkTypeSettings() {
         {(types) => {
           const { active, archived } = splitArchived(types)
           const customCount = active.filter((x) => !x.isSystem).length
-          const limited = !hasProAccess(user)
-          const atLimit = limited && customCount >= FREE_LIMITS.customWorkTypes
+          const atLimit = workTypes.atLimit(customCount)
 
           return (
             <div className="space-y-6">
@@ -185,19 +177,6 @@ export function WorkTypeSettings() {
   )
 }
 
-const blankType = (titleLabel: string): TaskTypeInput => ({
-  name: '',
-  color: '#8B5CF6',
-  titleLabel,
-  linkRequirement: 'optional',
-  linkLabel: 'Link',
-  descriptionRequirement: 'optional',
-  storyPointsRequirement: 'optional',
-  defaultStoryPoints: null,
-  defaultTimeInput: 'duration',
-  countsAsFocusWork: true,
-})
-
 interface WorkTypeDialogProps {
   type: TaskType | null
   onClose: () => void
@@ -214,18 +193,7 @@ function WorkTypeDialog({ type, onClose }: WorkTypeDialogProps) {
   )
   const [submitted, setSubmitted] = useState(false)
 
-  const save = useDataMutation(
-    (input: TaskTypeInput) =>
-      type ? taskTypesApi.update(type.id, input) : taskTypesApi.create(input),
-    {
-      invalidate: [keys.taskTypes],
-      success: type ? app.status.saved : t.created,
-      onSuccess: () => {
-        markSetupStep('workTypes')
-        onClose()
-      },
-    },
-  )
+  const save = useSaveWorkType({ type, onSaved: onClose })
 
   const errors = {
     name:

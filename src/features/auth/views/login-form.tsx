@@ -1,51 +1,21 @@
-import { useState } from 'react'
-import { useForm } from '@tanstack/react-form'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
+import { useLogin } from '../controllers/use-login'
 import {
   FormAlert,
   TextField,
   errorMessages,
 } from '#/components/form/form-field'
 import { Button } from '#/components/ui/button'
-import { authApi } from '../data/api'
 import { useMessages } from '#/i18n/context'
 import { authMessages } from '#/i18n/messages/auth'
-import { useErrorText } from '#/lib/use-error-text'
-import { loginSchema } from '../domain/validation'
-import { startSession } from '../data/session'
-import type { LoginForm as LoginValues } from '../domain/validation'
-
-const defaultValues: LoginValues = { login: '', password: '' }
 
 export interface LoginFormProps {
   redirectTo?: string
 }
 
 export function LoginForm({ redirectTo }: LoginFormProps) {
-  const navigate = useNavigate()
   const t = useMessages(authMessages)
-  const errorText = useErrorText()
-  const [formError, setFormError] = useState<string | null>(null)
-
-  const form = useForm({
-    defaultValues,
-    validators: { onSubmit: loginSchema(t.validation) },
-    onSubmit: async ({ value }) => {
-      setFormError(null)
-      const result = await authApi.login(value)
-      if (!result.ok) {
-        setFormError(errorText(result.error))
-        return
-      }
-      // Drugi krok (kod 2FA) dojdzie razem z ustawieniami bezpieczeństwa.
-      if ('mfaRequired' in result.value) {
-        setFormError(t.login.twoFactorUnavailable)
-        return
-      }
-      startSession(result.value)
-      await navigate({ to: redirectTo ?? '/app' })
-    },
-  })
+  const { form, formError } = useLogin(redirectTo)
 
   return (
     <form

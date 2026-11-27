@@ -5,7 +5,6 @@ import { Button } from '#/components/ui/button'
 import { Badge, ColorDot, ColorPicker, Field } from '#/components/ui/controls'
 import { Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
-import { statusesApi } from '#/features/task-statuses/data/api'
 import { splitArchived } from '#/shared/domain/archive'
 import type {
   StatusCategory,
@@ -17,22 +16,20 @@ import { useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { settingsMessages } from '#/i18n/messages/settings'
-import { keys } from '#/shared/data/query-keys'
-import { mutationFieldError, useDataMutation } from '#/shared/data/mutations'
+import { mutationFieldError } from '#/shared/data/mutations'
 import { statusesQuery } from '../data/queries'
-import { useArchive } from '#/shared/controllers/use-archive'
 import { usePalette, withCurrent } from '#/features/settings/domain/palette'
 import {
   QueryView,
   ReorderButtons,
   SectionHeader,
   SettingsCard,
-  move,
   useAnnouncer,
 } from '#/features/settings/views/ui'
-import { FREE_LIMITS } from '#/features/billing/domain/plans'
-import { PlanLimit, useFreePlan } from '#/features/billing/views/plan-limit'
+import { move } from '#/shared/domain/move'
+import { PlanLimit } from '#/features/billing/views/plan-limit'
 import { billingMessages } from '#/i18n/messages/billing'
+import { useSaveStatus, useStatuses } from '../controllers/use-statuses'
 
 const categoryTone = {
   todo: 'muted',
@@ -52,11 +49,6 @@ export function StatusSettings() {
   )
 }
 
-interface NamedItem {
-  id: string
-  name: string
-}
-
 interface StatusListProps {
   statuses: Array<TaskStatus>
 }
@@ -68,23 +60,8 @@ function StatusList({ statuses }: StatusListProps) {
   const [announcer, announce] = useAnnouncer()
   const { active, archived } = splitArchived(statuses)
   const limits = useMessages(billingMessages).limits
-  const atLimit = useFreePlan() && active.length >= FREE_LIMITS.statuses
 
-  const reorder = useDataMutation(
-    (ids: Array<string>) => statusesApi.reorder(ids),
-    { invalidate: [keys.statuses] },
-  )
-  const makeDefault = useDataMutation(
-    ({ id }: NamedItem) => statusesApi.setDefault(id),
-    {
-      invalidate: [keys.statuses],
-      success: (_r, v) => fmt(t.defaultSet, { name: v.name }),
-    },
-  )
-  const archive = useArchive(statusesApi.setArchived, {
-    invalidate: keys.statuses,
-    messages: t,
-  })
+  const { reorder, makeDefault, archive, atLimit } = useStatuses(active.length)
 
   const onMove = (from: number, to: number) => {
     const next = move(active, from, to)
@@ -251,15 +228,7 @@ function StatusDialog({ status, onClose }: StatusDialogProps) {
   )
   const [submitted, setSubmitted] = useState(false)
 
-  const save = useDataMutation(
-    (input: TaskStatusInput) =>
-      status ? statusesApi.update(status.id, input) : statusesApi.create(input),
-    {
-      invalidate: [keys.statuses],
-      success: status ? app.status.saved : t.created,
-      onSuccess: onClose,
-    },
-  )
+  const save = useSaveStatus({ status, onSaved: onClose })
 
   const nameOk =
     draft.name.trim().length > 0 && draft.name.length <= LIMITS.statusName

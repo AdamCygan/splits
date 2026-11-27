@@ -4,7 +4,6 @@ import { Copy, Settings2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { Dialog, DialogContent } from '#/components/ui/dialog'
-import { entriesApi } from '../data/api'
 import type { TaskType } from '#/features/task-types/data/dto'
 import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { renderSummary, taskStats } from '#/features/tasks/domain/summary'
@@ -13,8 +12,8 @@ import { useI18n, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'
-import { unwrap } from '#/lib/api-client'
 import { defaultSummaryTemplate, summaryValues } from '../domain/summary'
+import { taskSessionsQuery } from '../data/queries'
 
 export interface SummaryDialogProps {
   entry: TimeEntry
@@ -30,23 +29,13 @@ export function SummaryDialog({ entry, type, onClose }: SummaryDialogProps) {
   const template =
     useQuery(settingsQuery).data?.summaryTemplate ??
     defaultSummaryTemplate(locale)
-  const related = useQuery({
-    queryKey: [
-      'time-entries',
-      'task',
-      entry.taskTypeId,
-      entry.link ?? '',
-      entry.title,
-    ],
-    queryFn: () =>
-      unwrap(
-        entriesApi.forTask({
-          title: entry.title,
-          link: entry.link,
-          taskTypeId: entry.taskTypeId,
-        }),
-      ),
-  })
+  const related = useQuery(
+    taskSessionsQuery({
+      title: entry.title,
+      link: entry.link,
+      taskTypeId: entry.taskTypeId,
+    }),
+  )
   const entries = related.data ?? []
   const text = entries.length
     ? renderSummary(

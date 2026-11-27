@@ -86,5 +86,16 @@ test.describe('pricing and cart: Free, Pro monthly, Pro yearly', () => {
     await expect(
       page.getByText('Daily email reminders are part of Pro.'),
     ).toBeVisible()
+
+    await page.goto('/app/settings/projects')
+    await expect(
+      page.getByRole('button', { name: /add project/i }),
+    ).toBeDisabled()
+    await expect(
+      page.getByText('The Free plan includes one project.'),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('link', { name: 'Upgrade to Pro' }),
+    ).toHaveAttribute('href', '/app/settings/plan')
   })
 })

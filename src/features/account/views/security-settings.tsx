@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Copy,
@@ -15,7 +15,6 @@ import { Badge, Field } from '#/components/ui/controls'
 import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import { site } from '#/config/site'
-import { accountApi } from '#/features/account/data/api'
 import type { SecurityStatus } from '#/features/account/data/dto'
 import type { User } from '#/features/auth/data/dto'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
@@ -23,10 +22,14 @@ import { fmt, formatDate } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { settingsMessages } from '#/i18n/messages/settings'
 import { describeDevice } from '#/lib/user-agent'
-import { keys } from '#/shared/data/query-keys'
-import { meQuery, securityQuery, sessionsQuery } from '../data/queries'
-import { mutationFieldError, useDataMutation } from '#/shared/data/mutations'
-import { IdentityFields, PasswordCard } from './'
+import { meQuery, securityQuery } from '../data/queries'
+import { mutationFieldError } from '#/shared/data/mutations'
+import {
+  useDevices,
+  useTwoFactorActions,
+  useTwoFactorSetup,
+} from '../controllers/use-security'
+import { IdentityFields, PasswordCard } from './index'
 import {
   DemoNotice,
   QueryView,
@@ -86,20 +89,10 @@ function TwoFactorCard({ security }: TwoFactorCardProps) {
     setPassword('')
     setCode('')
   }
-  const disable = useDataMutation(
-    () => accountApi.twoFactorDisable({ password, code }),
-    { invalidate: [keys.security], success: t.disabled, onSuccess: reset },
-  )
-  const regenerate = useDataMutation(
-    () => accountApi.newRecoveryCodes({ password, code }),
-    {
-      invalidate: [keys.security],
-      onSuccess: (result) => {
-        reset()
-        setCodes(result.recoveryCodes)
-      },
-    },
-  )
+  const { disable, regenerate } = useTwoFactorActions({
+    onDone: reset,
+    onNewCodes: setCodes,
+  })
   const pending = confirm === 'disable' ? disable : regenerate
 
   return (
@@ -161,7 +154,7 @@ function TwoFactorCard({ security }: TwoFactorCardProps) {
         cancelLabel={app.actions.cancel}
         destructive={confirm === 'disable'}
         busy={pending.isPending || code.trim().length < 6}
-        onConfirm={() => pending.mutate(undefined)}
+        onConfirm={() => pending.mutate({ password, code })}
       >
         <div className="mt-4 space-y-4">
           <IdentityFields
@@ -190,41 +183,12 @@ interface SetupDialogProps {
 function SetupDialog({ security, onClose, onEnabled }: SetupDialogProps) {
   const t = useMessages(settingsMessages).security
   const app = useMessages(appMessages)
-  const [secret, setSecret] = useState<{
-    secret: string
-    otpauthUrl: string
-  } | null>(null)
-  const [qr, setQr] = useState('')
   const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
-  const start = useDataMutation(() => accountApi.twoFactorSetup(), {
-    invalidate: [],
-    onSuccess: setSecret,
+  const { secret, qr, enable } = useTwoFactorSetup({
+    hasPassword: security.hasPassword,
+    onEnabled,
   })
-  const enable = useDataMutation(
-    () =>
-      accountApi.twoFactorEnable({
-        secret: secret!.secret,
-        code,
-        password: security.hasPassword ? password : undefined,
-      }),
-    {
-      invalidate: [keys.security, keys.sessions],
-      success: t.enabled,
-      onSuccess: (result) => onEnabled(result.recoveryCodes),
-    },
-  )
-  // Nowy sekret przy każdym otwarciu okna (zapisuje się dopiero po poprawnym kodzie).
-  useEffect(() => {
-    start.mutate(undefined)
-  }, [])
-  useEffect(() => {
-    if (!secret) return
-    // Obrazek (data: URL) zamiast wstawiania SVG jako HTML: nic z niego nie może się wykonać.
-    void import('qrcode').then((QR) =>
-      QR.toDataURL(secret.otpauthUrl, { margin: 1, width: 400 }).then(setQr),
-    )
-  }, [secret])
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -252,7 +216,7 @@ function SetupDialog({ security, onClose, onEnabled }: SetupDialogProps) {
           noValidate
           onSubmit={(e) => {
             e.preventDefault()
-            enable.mutate(undefined)
+            enable.mutate({ code, password })
           }}
           className="space-y-4"
         >
@@ -365,15 +329,7 @@ function CodesDialog({ codes, onClose }: CodesDialogProps) {
 function DevicesCard() {
   const t = useMessages(settingsMessages).security
   const { locale } = useI18n()
-  const sessions = useQuery(sessionsQuery).data ?? []
-  const revoke = useDataMutation((id: string) => accountApi.revokeSession(id), {
-    invalidate: [keys.sessions],
-    success: t.signedOut,
-  })
-  const others = useDataMutation(() => accountApi.revokeOtherSessions(), {
-    invalidate: [keys.sessions],
-    success: t.othersSignedOut,
-  })
+  const { sessions, revoke, others } = useDevices()
   const when = (iso: string) =>
     formatDate(locale, new Date(iso), {
       day: 'numeric',

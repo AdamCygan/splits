@@ -1,11 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { accountApi } from '#/features/account/data/api'
-import { billingApi } from '#/features/billing/data/api'
 import type { User } from '#/features/auth/data/dto'
-import {
-  billingQuery,
-  useStripeRedirect,
-} from '#/features/billing/data/queries'
+import { useBillingPortal } from '#/features/billing/controllers/use-billing'
+import { billingQuery } from '#/features/billing/data/queries'
 import { useDataMutation } from '#/shared/data/mutations'
 import { useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
@@ -23,7 +20,7 @@ export function useAccountNoticesViewModel(user: User) {
     invalidate: [],
     success: fmt(t.resent, { email: user.email }),
   })
-  const portal = useStripeRedirect(() => billingApi.portal())
+  const portal = useBillingPortal()
 
   return {
     email: user.email,
@@ -33,9 +30,9 @@ export function useAccountNoticesViewModel(user: User) {
     }),
     resending: resend.isPending,
     resent: resend.isSuccess,
-    opening: portal.isPending,
+    opening: portal.opening,
     resend: () => resend.mutate(undefined),
-    updatePayment: () => portal.mutate(undefined),
+    updatePayment: portal.open,
   }
 }
 

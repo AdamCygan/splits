@@ -15,7 +15,7 @@ import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { TaskProgress } from '../task-progress'
-import { useElapsed } from '../timer'
+import { useElapsed } from '../../controllers/use-timer'
 import { SessionRow } from './session-row'
 import type {
   DayTask,

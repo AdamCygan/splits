@@ -8,7 +8,8 @@ import { fmt } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { cn } from '#/lib/utils'
-import { formatClock, useElapsed } from '../timer'
+import { formatClock } from '../../domain/clock'
+import { useElapsed } from '../../controllers/use-timer'
 import { Notes } from './notes'
 import type {
   DayTask,

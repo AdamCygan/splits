@@ -1,7 +1,5 @@
-import { useId, useState } from 'react'
-import type { ReactNode } from 'react'
-import type { TaskType } from '#/features/task-types/data/dto'
-import type { TimeEntry } from '#/features/time-entries/data/dto'
+import type { ChartBucket } from '../domain/charts'
+import { Panel } from '#/components/ui/panel'
 import {
   estimateMisses,
   hourHeatmap,
@@ -10,11 +8,14 @@ import {
   timeBuckets,
 } from '#/features/reports/domain/analytics'
 import type { TaskRow } from '#/features/reports/domain/report'
+import type { TaskType } from '#/features/task-types/data/dto'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
 import { reportsMessages } from '#/i18n/messages/reports'
 import { cn } from '#/lib/utils'
-import { Panel } from '#/components/ui/panel'
+import { useId, useState } from 'react'
+import type { ReactNode } from 'react'
 
 export interface ChartCardProps {
   title: string
@@ -121,13 +122,6 @@ function Tooltip({ left, title, rows, hint }: TooltipProps) {
       {hint && <p className="mt-1.5 text-ink-soft">{hint}</p>}
     </div>
   )
-}
-
-/** Słupek wykresu dzień po dniu: jeden dzień albo tydzień (przy długim okresie). */
-export interface ChartBucket {
-  from: string
-  to: string
-  unit: 'day' | 'week'
 }
 
 export interface TimeChartProps {

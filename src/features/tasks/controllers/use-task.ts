@@ -6,10 +6,12 @@ import { maxEstimate, maxPoints } from '#/features/tasks/domain/summary'
 import { taskInsights } from '#/features/tasks/domain/task-insights'
 import { projectsQuery } from '#/features/projects/data/queries'
 import { taskTypesQuery } from '#/features/task-types/data/queries'
-import { taskQueryKey } from '#/features/time-entries/views/task-dialog'
-import { useResumeTask } from '#/features/time-entries/views/timer'
-import { useFinishTask } from '#/features/time-entries/views/unfinished'
-import { rangeEntriesQuery } from '#/features/time-entries/data/queries'
+import {
+  taskQueryKey,
+  rangeEntriesQuery,
+} from '#/features/time-entries/data/queries'
+import { useResumeTask } from '#/features/time-entries/controllers/use-timer'
+import { useFinishTask } from '#/features/time-entries/controllers/use-unfinished'
 import { useUpdateNote } from '#/features/time-entries/controllers/use-update-note'
 import { unwrap } from '#/lib/api-client'
 

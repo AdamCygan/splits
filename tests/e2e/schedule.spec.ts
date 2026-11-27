@@ -3,7 +3,8 @@ import { expectNoA11yViolations, signInWithSamples } from './helpers'
 
 test.describe('recurring meetings', () => {
   test.beforeEach(async ({ page }) => {
-    await signInWithSamples(page)
+    // Pro: przykładowe konto ma więcej projektów i szablonów, niż pozwala plan Free.
+    await signInWithSamples(page, { subscription: 'active' })
   })
 
   test('Should give the sample daily its own time on Mondays', async ({

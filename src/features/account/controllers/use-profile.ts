@@ -8,7 +8,7 @@ import { useMessages } from '#/i18n/context'
 import { settingsMessages } from '#/i18n/messages/settings'
 import { keys } from '#/shared/data/query-keys'
 import { mutationFieldError, useDataMutation } from '#/shared/data/mutations'
-import { useUnsavedWarning } from '#/features/settings/views/ui'
+import { useUnsavedWarning } from '#/shared/controllers/use-unsaved-warning'
 import { isDisplayName } from '../domain/account-forms'
 
 /** ViewModel profilu: wyświetlana nazwa z paskiem zapisu (login i e-mail tylko do odczytu). */

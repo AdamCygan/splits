@@ -87,6 +87,38 @@ const securityRules = {
   'no-script-url': 'error',
 }
 
+/**
+ * Warstwy funkcji (src/features/<nazwa>): views → controllers → data / domain.
+ * Widok tylko wyświetla; wywołania API i mutacje są w kontrolerach (use-*.ts),
+ * a reguły biznesowe w domain/ (czyste funkcje, bez Reacta i sieci).
+ */
+const serverOnly = {
+  regex: String.raw`(^#/server/|\.server$)`,
+  message:
+    'Server-only code (Drizzle, Hono, secrets) must not reach the browser bundle.',
+}
+const viewImports = [
+  serverOnly,
+  {
+    regex: String.raw`/data/api$`,
+    message:
+      'Views do not call the API: use a controller (controllers/use-*.ts).',
+  },
+  {
+    regex: String.raw`^#/shared/data/mutations$`,
+    importNames: ['useDataMutation'],
+    message:
+      'Views do not run mutations: use a controller (controllers/use-*.ts).',
+  },
+]
+const domainImports = [
+  serverOnly,
+  {
+    regex: String.raw`^(react|react-dom|sonner|@tanstack/.*|#/lib/api-client|#/components/.*)$|/(controllers|views)/|/data/(?!dto$)`,
+    message: 'Domain code is pure: no React, no network, no views.',
+  },
+]
+
 export default [
   ...tanstackConfig,
   {
@@ -104,6 +136,25 @@ export default [
       '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
       'no-restricted-syntax': ['error', ...codeRules],
     },
+  },
+  {
+    files: ['src/features/*/views/**'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: viewImports }],
+      'no-restricted-syntax': [
+        'error',
+        ...codeRules,
+        {
+          selector: 'ImportSpecifier[imported.name="useMutation"]',
+          message:
+            'Views do not run mutations: use a controller (controllers/use-*.ts).',
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/features/*/domain/**', 'src/shared/domain/**'],
+    rules: { 'no-restricted-imports': ['error', { patterns: domainImports }] },
   },
   {
     files: ['tests/**/*.test.ts', 'tests/**/*.spec.ts'],

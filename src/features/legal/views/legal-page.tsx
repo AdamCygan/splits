@@ -1,40 +1,12 @@
-import { Fragment } from 'react'
-import type { ReactNode } from 'react'
+import { fillLegal, legalDocs, legalPaths } from '../domain/legal-paths'
+import type { LegalBlock, LegalDoc, LegalDocId } from '../domain/types'
 import { Link } from '@tanstack/react-router'
-import { LEGAL_PLACEHOLDERS, legal } from '#/config/legal'
+import { legal } from '#/config/legal'
 import { useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
 import { commonMessages } from '#/i18n/messages/common'
-import { accessibilityDoc } from '../domain/accessibility'
-import { cookiesDoc } from '../domain/cookies'
-import { privacyDoc } from '../domain/privacy'
-import { termsDoc } from '../domain/terms'
-import type { LegalBlock, LegalDoc, LegalDocId } from '../domain/types'
-
-export const legalDocs = {
-  terms: termsDoc,
-  privacy: privacyDoc,
-  cookies: cookiesDoc,
-  accessibility: accessibilityDoc,
-} as const
-export const legalPaths: Record<
-  LegalDocId,
-  '/terms' | '/privacy' | '/cookies' | '/accessibility'
-> = {
-  terms: '/terms',
-  privacy: '/privacy',
-  cookies: '/cookies',
-  accessibility: '/accessibility',
-}
-
-/** {pole} → wartość z config/legal.ts; {date} = data wejścia w życie w języku strony. */
-export function fillLegal(text: string, date: string) {
-  return text.replace(/\{(\w+)\}/g, (match, key: string) =>
-    key === 'date'
-      ? date
-      : ((LEGAL_PLACEHOLDERS as Record<string, string>)[key] ?? match),
-  )
-}
+import { Fragment } from 'react'
+import type { ReactNode } from 'react'
 
 interface InlineProps {
   text: string

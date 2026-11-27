@@ -3,16 +3,14 @@ import { useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { ConfirmDialog } from '#/components/ui/dialog'
-import { daysOffApi } from '../data/api'
+import { useRemoveDaysOff } from '../controllers/use-days-off'
 import { DAY_OFF_KINDS } from '#/features/days-off/data/dto'
 import { todayIn } from '#/shared/domain/dates'
 import { groupDaysOff } from '#/features/days-off/domain/days-off'
 import type { DayOffRange } from '#/features/days-off/domain/days-off'
 import { SectionHeader, SettingsCard } from '#/features/settings/views/ui'
 import { daysOffQuery } from '#/features/days-off/data/queries'
-import { keys } from '#/shared/data/query-keys'
 import { settingsQuery } from '#/features/settings/data/queries'
-import { useDataMutation } from '#/shared/data/mutations'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate, formatDateRange } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
@@ -55,14 +53,10 @@ export function DaysOffSettings() {
     )
     .join(', ')
 
-  const remove = useDataMutation(
-    (range: DayOffRange) => daysOffApi.remove(range.from, range.to),
-    {
-      invalidate: [keys.daysOff],
-      success: t.settings.removed,
-      onSuccess: () => setRemoving(null),
-    },
-  )
+  const remove = useRemoveDaysOff({
+    success: t.settings.removed,
+    onRemoved: () => setRemoving(null),
+  })
 
   const dates = (r: DayOffRange) =>
     r.from === r.to

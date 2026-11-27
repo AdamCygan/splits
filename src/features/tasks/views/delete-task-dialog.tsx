@@ -1,12 +1,10 @@
 import { ConfirmDialog } from '#/components/ui/dialog'
-import { entriesApi } from '#/features/time-entries/data/api'
 import type { TaskRef } from '#/features/time-entries/data/dto'
-import { useDataMutation } from '#/shared/data/mutations'
-import { entryKeys } from '#/features/time-entries/data/queries'
 import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'
+import { useDeleteTask } from '../controllers/use-delete-task'
 
 export interface DeleteTaskDialogProps {
   task: TaskRef | null
@@ -32,17 +30,14 @@ export function DeleteTaskDialog({
   const t = useMessages(entriesMessages).deleteTask
   const app = useMessages(appMessages)
   const format = useFormat()
-  const remove = useDataMutation(
-    (ref: TaskRef) => entriesApi.removeTask(ref, date),
-    {
-      invalidate: [entryKeys.all],
-      success: () => fmt(t.deleted, { name: task?.title ?? '' }),
-      onSuccess: () => {
-        onClose()
-        onDeleted?.()
-      },
+  const remove = useDeleteTask({
+    date,
+    title: task?.title ?? '',
+    onDeleted: () => {
+      onClose()
+      onDeleted?.()
     },
-  )
+  })
   return (
     <ConfirmDialog
       open={task !== null}

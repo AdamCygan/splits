@@ -1,49 +1,43 @@
-import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
+import {
+  useRemoveSprint,
+  useSaveCadence,
+  useSaveSprint,
+} from '../controllers/use-sprint-settings'
+import { cadenceQuery, sprintsQuery } from '../data/queries'
+import { PRESETS, toDraft } from '../domain/cadence-draft'
+import type { LengthChoice } from '../domain/cadence-draft'
+import { goalDrafts, goalsFromDrafts } from '../domain/time-goals'
+import { TimeGoalsField } from './sprint-time-goals'
 import { useQuery } from '@tanstack/react-query'
-import { CalendarPlus, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Badge, Field, Switch, Textarea } from '#/components/ui/controls'
 import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import { Segmented } from '#/components/ui/segmented'
-import { sprintsApi } from '#/features/sprints/data/api'
-import type {
-  Sprint,
-  SprintCadence,
-  SprintInput,
-} from '#/features/sprints/data/dto'
-import { isValidDate, startOfWeek, todayIn } from '#/shared/domain/dates'
-import { LIMITS } from '#/features/task-types/domain/rules'
-import {
-  previewCadence,
-  sprintPhase,
-  sprintWorkingDays,
-} from '#/features/sprints/domain/sprints'
-import { useFormat, useI18n, useMessages } from '#/i18n/context'
-import { fmt, formatDateRange } from '#/i18n/format'
-import { appMessages } from '#/i18n/messages/app'
-import { settingsMessages } from '#/i18n/messages/settings'
-import { cadenceQuery, sprintsQuery } from '../data/queries'
-import { keys } from '#/shared/data/query-keys'
-import { mutationFieldError, useDataMutation } from '#/shared/data/mutations'
 import { settingsQuery } from '#/features/settings/data/queries'
-import { taskTypesQuery } from '#/features/task-types/data/queries'
-import { markSetupStep } from '#/features/settings/controllers/setup-progress'
-import {
-  TimeGoalsField,
-  goalDrafts,
-  goalsFromDrafts,
-} from './sprint-time-goals'
 import {
   QueryView,
   SaveBar,
   SectionHeader,
   SettingsCard,
 } from '#/features/settings/views/ui'
-
-const PRESETS = [7, 14, 21, 28] as const
-type LengthChoice = '7' | '14' | '21' | '28' | 'custom'
+import type { Sprint, SprintCadence } from '#/features/sprints/data/dto'
+import {
+  previewCadence,
+  sprintPhase,
+  sprintWorkingDays,
+} from '#/features/sprints/domain/sprints'
+import { taskTypesQuery } from '#/features/task-types/data/queries'
+import { LIMITS } from '#/features/task-types/domain/rules'
+import { useFormat, useI18n, useMessages } from '#/i18n/context'
+import { fmt, formatDateRange } from '#/i18n/format'
+import { appMessages } from '#/i18n/messages/app'
+import { settingsMessages } from '#/i18n/messages/settings'
+import { mutationFieldError } from '#/shared/data/mutations'
+import { isValidDate, todayIn } from '#/shared/domain/dates'
+import { CalendarPlus, Pencil, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 
 export function SprintSettings() {
   const t = useMessages(settingsMessages)
@@ -59,33 +53,6 @@ export function SprintSettings() {
       <SprintList />
     </div>
   )
-}
-
-// ---------------------------------------------------------------- harmonogram
-
-interface ScheduleDraft {
-  length: LengthChoice
-  customDays: string
-  anchorDate: string
-  namePattern: string
-  autoCreate: boolean
-}
-
-function toDraft(
-  cadence: SprintCadence | null,
-  defaultPattern: string,
-): ScheduleDraft {
-  const today = todayIn()
-  const days = cadence?.lengthDays ?? 14
-  return {
-    length: (PRESETS as ReadonlyArray<number>).includes(days)
-      ? (String(days) as LengthChoice)
-      : 'custom',
-    customDays: String(days),
-    anchorDate: cadence?.anchorDate ?? startOfWeek(today, 1),
-    namePattern: cadence?.namePattern ?? defaultPattern,
-    autoCreate: cadence?.autoCreate ?? true,
-  }
 }
 
 interface ScheduleCardProps {
@@ -107,11 +74,7 @@ function ScheduleCard({ cadence }: ScheduleCardProps) {
     setEditing(cadence !== null)
   }, [cadence])
 
-  const save = useDataMutation(sprintsApi.setCadence, {
-    invalidate: [keys.cadence, keys.sprints],
-    success: (result) => (result ? t.scheduleSaved : app.status.saved),
-    onSuccess: () => markSetupStep('sprints'),
-  })
+  const save = useSaveCadence()
 
   const lengthDays =
     draft.length === 'custom' ? Number(draft.customDays) : Number(draft.length)
@@ -328,11 +291,7 @@ function SprintList() {
   const [deleting, setDeleting] = useState<Sprint | null>(null)
   const today = todayIn(settings?.timezone)
 
-  const remove = useDataMutation((id: string) => sprintsApi.remove(id), {
-    invalidate: [keys.sprints],
-    success: t.deleted,
-    onSuccess: () => setDeleting(null),
-  })
+  const remove = useRemoveSprint(() => setDeleting(null))
 
   return (
     <SettingsCard
@@ -508,15 +467,7 @@ function SprintDialog({ sprint, onClose }: SprintDialogProps) {
   })
   const [submitted, setSubmitted] = useState(false)
 
-  const save = useDataMutation(
-    (input: SprintInput) =>
-      sprint ? sprintsApi.update(sprint.id, input) : sprintsApi.create(input),
-    {
-      invalidate: [keys.sprints],
-      success: sprint ? app.status.saved : t.created,
-      onSuccess: onClose,
-    },
-  )
+  const save = useSaveSprint({ sprint, onSaved: onClose })
 
   const capacity =
     draft.capacity.trim() === ''

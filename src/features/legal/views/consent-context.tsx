@@ -12,7 +12,7 @@ import {
   initAnalytics,
 } from '#/integrations/posthog/analytics'
 import { persistConsent } from '../data/consent'
-import type { Consent } from '../data/consent'
+import type { Consent } from '../domain/consent'
 
 interface ConsentState {
   consent: Consent | null

@@ -1,7 +1,6 @@
+import { isKind } from '../domain/actions'
 import { Link } from '@tanstack/react-router'
 import type { AdminAction } from '#/features/admin/data/dto'
-import { ADMIN_ACTION_KINDS } from '#/features/admin/domain/admin'
-import type { AdminActionKind } from '#/features/admin/domain/admin'
 import { useI18n, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { adminMessages } from '#/i18n/messages/admin'
@@ -12,9 +11,6 @@ export interface ActionsTableProps {
   showTarget?: boolean
   caption: string
 }
-
-const isKind = (action: string): action is AdminActionKind =>
-  (ADMIN_ACTION_KINDS as ReadonlyArray<string>).includes(action)
 
 /** Wpisy dziennika zmian: kiedy, co, którego konta dotyczyło i kto to zrobił. */
 export function ActionsTable({

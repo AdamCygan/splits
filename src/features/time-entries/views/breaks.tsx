@@ -1,97 +1,26 @@
-import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Coffee, List as ListIcon, Play, Trash2 } from 'lucide-react'
-import { toast } from 'sonner'
+import { formatClock } from '../domain/clock'
 import { Button } from '#/components/ui/button'
 import { Field } from '#/components/ui/controls'
 import { Dialog, DialogContent } from '#/components/ui/dialog'
-import { TimeInput } from '#/components/ui/time-input'
 import { Input } from '#/components/ui/input'
-import { breaksApi } from '#/features/breaks/data/api'
-import type { WorkBreak } from '#/features/breaks/data/dto'
+import { ProgressBar } from '#/components/ui/progress-bar'
+import { StatTile } from '#/components/ui/stats'
+import { TimeInput } from '#/components/ui/time-input'
 import {
-  minutesBetween,
-  parseDuration,
-} from '#/features/time-entries/domain/entries'
-import { TIME_RE } from '#/features/task-types/domain/rules'
-import { settingsQuery } from '#/features/settings/data/queries'
-import { useDataMutation } from '#/shared/data/mutations'
+  useBreakDay,
+  useBreakListActions,
+  useEndBreak,
+  useStartBreak,
+} from '#/features/breaks/controllers/use-breaks'
+import { readBreakDraft } from '#/features/breaks/domain/break-form'
+import type { WorkBreak } from '#/features/breaks/data/dto'
 import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'
-import {
-  breakKeys,
-  breaksQuery,
-  runningBreakQuery,
-} from '#/features/breaks/data/queries'
-import { entryKeys } from '../data/queries'
-import { formatClock } from './timer'
-import { ProgressBar } from '#/components/ui/progress-bar'
-import { StatTile } from '#/components/ui/stats'
-
-/** Sekundy trwającej przerwy, odświeżane co sekundę. */
-function useBreakSeconds(running: WorkBreak | null | undefined) {
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    if (!running) return
-    const id = window.setInterval(() => setNow(Date.now()), 1000)
-    return () => window.clearInterval(id)
-  }, [running])
-  if (!running?.startedAt) return 0
-  return Math.max(0, Math.floor((now - Date.parse(running.startedAt)) / 1000))
-}
-
-/** Przerwy z dnia: wykorzystane minuty (z trwającą), limit z ustawień i trwająca przerwa. */
-export function useBreakDay(date: string) {
-  const list = useQuery(breaksQuery(date)).data ?? []
-  const running = useQuery(runningBreakQuery).data ?? null
-  const limit = useQuery(settingsQuery).data?.breakMinutes ?? 30
-  const seconds = useBreakSeconds(running)
-  const finished = list
-    .filter((b) => !b.running)
-    .reduce((sum, b) => sum + b.durationMinutes, 0)
-  const live =
-    running && running.workDate === date ? Math.floor(seconds / 60) : 0
-  return { list, running, limit, used: finished + live, seconds }
-}
-
-export function useStartBreak() {
-  const t = useMessages(entriesMessages).breaks
-  return useDataMutation(() => breaksApi.start(), {
-    invalidate: [breakKeys.all, entryKeys.all],
-    success: (result) =>
-      result.paused
-        ? fmt(t.startedPaused, { name: result.paused.title })
-        : t.started,
-  })
-}
-
-interface EndBreakInput {
-  id: string
-  /** Po przerwie wznowić wstrzymane zadanie. */
-  resume: boolean
-}
-
-export function useEndBreak() {
-  const t = useMessages(entriesMessages)
-  const format = useFormat()
-  return useDataMutation(
-    ({ id, resume }: EndBreakInput) => breaksApi.end(id, resume),
-    {
-      invalidate: [breakKeys.all, entryKeys.all],
-      success: (result) =>
-        fmt(t.breaks.ended, {
-          time: format.minutes(result.break.durationMinutes),
-        }),
-      onSuccess: (result) => {
-        if (result.resumed)
-          toast(fmt(t.timer.resumed, { name: result.resumed.title }))
-      },
-    },
-  )
-}
+import { Coffee, List as ListIcon, Play, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 
 export interface BreakBarProps {
   running: WorkBreak
@@ -280,41 +209,22 @@ function BreaksDialog({ date, day, onClose }: BreaksDialogProps) {
   const [to, setTo] = useState('')
   const [submitted, setSubmitted] = useState(false)
 
-  const hasTimes = from.trim() !== '' || to.trim() !== ''
-  const between =
-    TIME_RE.test(from) && TIME_RE.test(to) ? minutesBetween(from, to) : null
-  const minutes = hasTimes ? between : parseDuration(duration)
-  const error = hasTimes
-    ? between === null || between < 1
+  const draft = readBreakDraft({ duration, from, to })
+  const { hasTimes, minutes } = draft
+  const error =
+    draft.error === 'times'
       ? t.timesError
-      : null
-    : minutes === null || minutes < 1 || minutes > 1440
-      ? t.durationError
-      : null
+      : draft.error === 'duration'
+        ? t.durationError
+        : null
 
-  const add = useDataMutation(
-    () =>
-      breaksApi.add({
-        workDate: date,
-        startTime: hasTimes ? from : null,
-        endTime: hasTimes ? to : null,
-        durationMinutes: minutes ?? 1,
-      }),
-    {
-      invalidate: [breakKeys.all],
-      success: (added) =>
-        fmt(t.added, { time: format.minutes(added.durationMinutes) }),
-      onSuccess: () => {
-        setDuration('')
-        setFrom('')
-        setTo('')
-        setSubmitted(false)
-      },
+  const { add, remove } = useBreakListActions({
+    onAdded: () => {
+      setDuration('')
+      setFrom('')
+      setTo('')
+      setSubmitted(false)
     },
-  )
-  const remove = useDataMutation((id: string) => breaksApi.remove(id), {
-    invalidate: [breakKeys.all],
-    success: t.removed,
   })
 
   const label = (b: WorkBreak) =>
@@ -328,7 +238,12 @@ function BreaksDialog({ date, day, onClose }: BreaksDialogProps) {
     e.preventDefault()
     setSubmitted(true)
     if (error) return
-    add.mutate()
+    add.mutate({
+      workDate: date,
+      startTime: hasTimes ? from : null,
+      endTime: hasTimes ? to : null,
+      durationMinutes: minutes ?? 1,
+    })
   }
 
   return (

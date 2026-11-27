@@ -1,43 +1,15 @@
+import type { GoalDraft } from '../domain/time-goals'
 import { useQuery } from '@tanstack/react-query'
-import { Plus, Trash2 } from 'lucide-react'
-import { useId } from 'react'
 import { Button } from '#/components/ui/button'
 import { Select } from '#/components/ui/controls'
 import { Input } from '#/components/ui/input'
-import type { SprintTimeGoal } from '#/features/sprints/data/dto'
+import { taskTypesQuery } from '#/features/task-types/data/queries'
 import { parseDuration } from '#/features/time-entries/domain/entries'
 import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { settingsMessages } from '#/i18n/messages/settings'
-import { taskTypesQuery } from '#/features/task-types/data/queries'
-
-/** Wiersz formularza: rodzaj pracy i czas wpisany po ludzku („6h”, „1h 30m”, „90”). */
-export interface GoalDraft {
-  key: string
-  taskTypeId: string
-  time: string
-}
-
-export const goalDrafts = (
-  goals: ReadonlyArray<SprintTimeGoal>,
-  minutesLabel: (m: number) => string,
-): Array<GoalDraft> =>
-  goals.map((g) => ({
-    key: crypto.randomUUID(),
-    taskTypeId: g.taskTypeId,
-    time: minutesLabel(g.minutes),
-  }))
-
-/** Cele do zapisu albo null, gdy któryś wiersz jest niepoprawny. */
-export function goalsFromDrafts(
-  rows: ReadonlyArray<GoalDraft>,
-): Array<SprintTimeGoal> | null {
-  const goals = rows.map((r) => ({
-    taskTypeId: r.taskTypeId,
-    minutes: parseDuration(r.time) ?? 0,
-  }))
-  return goals.every((g) => g.taskTypeId && g.minutes > 0) ? goals : null
-}
+import { Plus, Trash2 } from 'lucide-react'
+import { useId } from 'react'
 
 export interface TimeGoalsFieldProps {
   rows: Array<GoalDraft>

@@ -6,13 +6,11 @@ import { Button } from '#/components/ui/button'
 import { Field } from '#/components/ui/controls'
 import { Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
-import { daysOffApi } from '../data/api'
+import { useSaveDaysOff } from '../controllers/use-days-off'
 import { DAY_OFF_KINDS } from '#/features/days-off/data/dto'
-import type { DayOff, DayOffKind } from '#/features/days-off/data/dto'
+import type { DayOffKind } from '#/features/days-off/data/dto'
 import { diffDays } from '#/shared/domain/dates'
-import { keys } from '#/shared/data/query-keys'
-import { useDataMutation } from '#/shared/data/mutations'
-import { useFormat, useMessages } from '#/i18n/context'
+import { useMessages } from '#/i18n/context'
 import { appMessages } from '#/i18n/messages/app'
 import { daysOffMessages } from '#/i18n/messages/days-off'
 import { cn } from '#/lib/utils'
@@ -59,7 +57,6 @@ export function DayOffDialog({
 }: DayOffDialogProps) {
   const t = useMessages(daysOffMessages)
   const app = useMessages(appMessages)
-  const format = useFormat()
   const [draft, setDraft] = useState({ ...initial, note: initial.note ?? '' })
   const [submitted, setSubmitted] = useState(false)
 
@@ -70,23 +67,7 @@ export function DayOffDialog({
         ? t.dialog.tooLong
         : null
 
-  const save = useDataMutation(
-    async (input: DayOffDraft) => {
-      if (replacing) {
-        const removed = await daysOffApi.remove(replacing.from, replacing.to)
-        if (!removed.ok) return removed
-      }
-      return daysOffApi.set(input)
-    },
-    {
-      invalidate: [keys.daysOff],
-      success: (saved: Array<DayOff>) =>
-        saved.length === 0
-          ? t.dialog.none
-          : format.plural(t.dialog.saved, saved.length),
-      onSuccess: onClose,
-    },
-  )
+  const save = useSaveDaysOff({ replacing, onSaved: onClose })
 
   const submit = (e: FormEvent) => {
     e.preventDefault()

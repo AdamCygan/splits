@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
-import { hourOptions } from '#/lib/clock'
-import type { FormEvent } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useSaveWorkday } from '../controllers/use-save-settings'
+import { settingsQuery } from '../data/queries'
+import { BREAK_OPTIONS, timeZones, toDraft } from '../domain/workday-draft'
+import type { Draft } from '../domain/workday-draft'
+import { QueryView, SaveBar, SectionHeader, SettingsCard } from './ui'
 import { CheckboxGroup, Field, Select, Switch } from '#/components/ui/controls'
-import { TimeInput } from '#/components/ui/time-input'
 import { Input } from '#/components/ui/input'
-import { settingsApi } from '../data/api'
+import { TimeInput } from '#/components/ui/time-input'
+import { useFreePlan } from '#/features/billing/controllers/use-free-plan'
+import { PlanLimit } from '#/features/billing/views/plan-limit'
 import type {
   RoundingMinutes,
   UserSettings,
@@ -13,34 +15,12 @@ import type {
 import { ROUNDING_OPTIONS, TIME_RE } from '#/features/task-types/domain/rules'
 import { useI18n, useMessages } from '#/i18n/context'
 import { fmt, weekdayNames } from '#/i18n/format'
-import { appMessages } from '#/i18n/messages/app'
-import { settingsMessages } from '#/i18n/messages/settings'
-import { keys } from '#/shared/data/query-keys'
-import { settingsQuery } from '../data/queries'
-import { useDataMutation } from '#/shared/data/mutations'
-import { markSetupStep } from '../controllers/setup-progress'
-import {
-  QueryView,
-  SaveBar,
-  SectionHeader,
-  SettingsCard,
-  useUnsavedWarning,
-} from './ui'
-import { PlanLimit, useFreePlan } from '#/features/billing/views/plan-limit'
 import { billingMessages } from '#/i18n/messages/billing'
-
-/** Lista stref IANA z przeglądarki; na starszych silnikach przynajmniej bieżąca i UTC. */
-function timeZones(current: string) {
-  // Starsze przeglądarki (Safari < 15.4) nie mają supportedValuesOf.
-  const intl = Intl as unknown as {
-    supportedValuesOf?: (key: string) => Array<string>
-  }
-  const list = intl.supportedValuesOf?.('timeZone') ?? []
-  return [...new Set(['UTC', current, ...list])].sort()
-}
-
-/** Dzienny limit przerw do wyboru (minuty); 0 = bez limitu. */
-const BREAK_OPTIONS = [0, 10, 15, 20, 30, 45, 60, 90, 120]
+import { settingsMessages } from '#/i18n/messages/settings'
+import { hourOptions } from '#/lib/clock'
+import { useUnsavedWarning } from '#/shared/controllers/use-unsaved-warning'
+import { useEffect, useMemo, useState } from 'react'
+import type { FormEvent } from 'react'
 
 export function WorkdaySettings() {
   const t = useMessages(settingsMessages)
@@ -54,26 +34,12 @@ export function WorkdaySettings() {
   )
 }
 
-type Draft = UserSettings & {
-  targetHours: string
-  reminderOn: boolean
-  reminderTime: string
-}
-
-const toDraft = (s: UserSettings): Draft => ({
-  ...s,
-  targetHours: String(s.workdayTargetMinutes / 60),
-  reminderOn: s.dailyReminderAt !== null,
-  reminderTime: s.dailyReminderAt ?? '17:00',
-})
-
 interface WorkdayFormProps {
   settings: UserSettings
 }
 
 function WorkdayForm({ settings }: WorkdayFormProps) {
   const t = useMessages(settingsMessages).workday
-  const app = useMessages(appMessages)
   const limits = useMessages(billingMessages).limits
   const isFree = useFreePlan()
   const { locale, tag } = useI18n()
@@ -81,11 +47,7 @@ function WorkdayForm({ settings }: WorkdayFormProps) {
   const [submitted, setSubmitted] = useState(false)
   useEffect(() => setDraft(toDraft(settings)), [settings])
 
-  const save = useDataMutation(settingsApi.update, {
-    invalidate: [keys.settings, keys.sprints],
-    success: app.status.saved,
-    onSuccess: () => markSetupStep('workday'),
-  })
+  const save = useSaveWorkday()
 
   const hours = Number(draft.targetHours.replace(',', '.'))
   const errors = {
@@ -317,9 +279,4 @@ function WorkdayForm({ settings }: WorkdayFormProps) {
       />
     </form>
   )
-}
-
-/** Hook pomocniczy do innych sekcji: bieżące ustawienia (np. dni robocze dla sprintów). */
-export function useSettings() {
-  return useQuery(settingsQuery).data
 }

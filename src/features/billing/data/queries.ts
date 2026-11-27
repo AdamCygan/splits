@@ -1,9 +1,7 @@
 import { billingApi } from './api'
-import { queryOptions, useMutation } from '@tanstack/react-query'
-import { ApiError, unwrap } from '#/lib/api-client'
-import { useErrorText } from '#/lib/use-error-text'
+import { queryOptions } from '@tanstack/react-query'
+import { unwrap } from '#/lib/api-client'
 import { keys } from '#/shared/data/query-keys'
-import { toast } from 'sonner'
 
 export const billingKeys = { status: ['billing', 'status'] as const }
 
@@ -12,29 +10,16 @@ export const billingQuery = queryOptions({
   queryFn: () => unwrap(billingApi.status()),
 })
 
-/**
- * Przejście do Stripe (Checkout albo Customer Portal): pełne przekierowanie,
- * więc przycisk zostaje zablokowany aż do opuszczenia strony.
- */
-export function useStripeRedirect<T>(
-  open: (arg: T) => ReturnType<typeof billingApi.portal>,
-) {
-  const errorText = useErrorText()
-  return useMutation({
-    mutationFn: async (arg: T) => {
-      const { url } = await unwrap(open(arg))
-      window.location.assign(url)
-      // Czekamy na nawigację, żeby przycisk nie odblokował się tuż przed przejściem.
-      await new Promise(() => undefined)
-    },
-    onError: (error) =>
-      toast.error(
-        error instanceof ApiError ? errorText(error.details) : String(error),
-      ),
-  })
-}
-
 export const invoicesQuery = queryOptions({
   queryKey: keys.invoices,
   queryFn: () => unwrap(billingApi.invoices()),
 })
+
+/** Potwierdzenie płatności po powrocie ze Stripe (raz na sesję Checkout). */
+export const checkoutSyncQuery = (sessionId: string) =>
+  queryOptions({
+    queryKey: ['billing', 'sync', sessionId],
+    queryFn: () => unwrap(billingApi.sync(sessionId)),
+    retry: 2,
+    staleTime: Infinity,
+  })

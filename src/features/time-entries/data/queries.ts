@@ -1,3 +1,4 @@
+import type { TaskRef } from './dto'
 import { entriesApi } from './api'
 import { queryOptions } from '@tanstack/react-query'
 import { unwrap } from '#/lib/api-client'
@@ -39,3 +40,23 @@ export const runningQuery = queryOptions({
   queryKey: entryKeys.running,
   queryFn: () => unwrap(entriesApi.running()),
 })
+
+/** Klucz zapytania o wszystkie sesje jednego zadania (unieważniany po zmianach wpisów). */
+export const taskQueryKey = (ref: TaskRef) =>
+  [...entryKeys.all, 'task', ref.taskTypeId, ref.link ?? '', ref.title] as const
+
+/** Wszystkie sesje zadania, od najstarszej. */
+export const taskSessionsQuery = (ref: TaskRef) =>
+  queryOptions({
+    queryKey: taskQueryKey(ref),
+    queryFn: () => unwrap(entriesApi.forTask(ref)),
+  })
+
+/** Wyszukiwanie zadań po tytule albo linku (od 2 znaków), wyniki ważne 10 s. */
+export const taskSearchQuery = (q: string) =>
+  queryOptions({
+    queryKey: [...entryKeys.all, 'search', q],
+    queryFn: () => unwrap(entriesApi.search(q)),
+    enabled: q.length >= 2,
+    staleTime: 10_000,
+  })

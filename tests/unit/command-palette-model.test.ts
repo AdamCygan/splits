@@ -5,8 +5,8 @@ import {
   orderResults,
   queryWords,
   typedCommands,
-} from '../../src/features/commands/domain/commands'
-import type { PaletteContext } from '../../src/features/commands/domain/commands'
+} from '../../src/features/commands/controllers/commands'
+import type { PaletteContext } from '../../src/features/commands/controllers/commands'
 import { appMessages } from '#/i18n/messages/app'
 import { settingsMessages } from '#/i18n/messages/settings'
 

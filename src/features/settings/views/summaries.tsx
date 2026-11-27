@@ -3,7 +3,6 @@ import type { FormEvent } from 'react'
 import { RotateCcw } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Textarea } from '#/components/ui/controls'
-import { settingsApi } from '../data/api'
 import type { UserSettings } from '#/features/settings/data/dto'
 import {
   SUMMARY_PLACEHOLDERS,
@@ -19,16 +18,10 @@ import {
 import { useI18n, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { settingsMessages } from '#/i18n/messages/settings'
-import { keys } from '#/shared/data/query-keys'
 import { settingsQuery } from '../data/queries'
-import { useDataMutation } from '#/shared/data/mutations'
-import {
-  QueryView,
-  SaveBar,
-  SectionHeader,
-  SettingsCard,
-  useUnsavedWarning,
-} from './ui'
+import { QueryView, SaveBar, SectionHeader, SettingsCard } from './ui'
+import { useUnsavedWarning } from '#/shared/controllers/use-unsaved-warning'
+import { useSaveSummaryTemplate } from '../controllers/use-save-settings'
 
 export function SummarySettings() {
   const t = useMessages(settingsMessages).summaries
@@ -56,11 +49,7 @@ function TemplateEditor({ settings }: TemplateEditorProps) {
   const ref = useRef<HTMLTextAreaElement>(null)
   useEffect(() => setValue(saved), [saved])
 
-  const save = useDataMutation(
-    (template: string | null) =>
-      settingsApi.update({ ...settings, summaryTemplate: template }),
-    { invalidate: [keys.settings], success: t.saved },
-  )
+  const save = useSaveSummaryTemplate(settings)
 
   const dirty = value !== saved
   useUnsavedWarning(dirty)

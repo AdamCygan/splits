@@ -12,7 +12,7 @@ import { useMessages } from '#/i18n/context'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { entryKeys } from '../data/queries'
 import { useUpdateNote } from './use-update-note'
-import { usePauseTimer, useResumeTask, useStopTimer } from '../views/timer'
+import { usePauseTimer, useResumeTask, useStopTimer } from './use-timer'
 
 /** Okno otwarte z listy dnia (jedno naraz). */
 export type EntryListDialog =

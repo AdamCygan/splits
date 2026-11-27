@@ -1,49 +1,19 @@
+import { useResumeTask } from '../controllers/use-timer'
+import { refOf, useFinishTask } from '../controllers/use-unfinished'
+import { unfinishedQuery } from '../data/queries'
+import { TaskProgress } from './task-progress'
 import { useQuery } from '@tanstack/react-query'
-import { Check, Play } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Badge } from '#/components/ui/controls'
-import { entriesApi } from '../data/api'
-import type {
-  TaskRef,
-  TimeEntry,
-  UnfinishedTask,
-} from '#/features/time-entries/data/dto'
-import { addDays } from '#/shared/domain/dates'
-import { TaskLink } from '#/features/tasks/views/task-link'
 import { projectsQuery } from '#/features/projects/data/queries'
 import { taskTypesQuery } from '#/features/task-types/data/queries'
-import { useDataMutation } from '#/shared/data/mutations'
+import { TaskLink } from '#/features/tasks/views/task-link'
+import type { UnfinishedTask } from '#/features/time-entries/data/dto'
 import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { entriesMessages } from '#/i18n/messages/entries'
-import { entryKeys, unfinishedQuery } from '../data/queries'
-import { TaskProgress } from './task-progress'
-import { useResumeTask } from './timer'
-
-const refOf = (e: TimeEntry): TaskRef => ({
-  title: e.title,
-  link: e.link,
-  taskTypeId: e.taskTypeId,
-})
-
-export interface FinishTaskInput {
-  ref: TaskRef
-  finished: boolean
-}
-
-/** Zakończone / z powrotem w toku: wszystkie sesje zadania naraz. */
-export function useFinishTask() {
-  const t = useMessages(entriesMessages).unfinished
-  return useDataMutation(
-    ({ ref, finished }: FinishTaskInput) =>
-      entriesApi.finishTask(ref, finished),
-    {
-      invalidate: [entryKeys.all],
-      success: (_, { ref, finished }) =>
-        fmt(finished ? t.finished : t.reopened, { name: ref.title }),
-    },
-  )
-}
+import { addDays } from '#/shared/domain/dates'
+import { Check, Play } from 'lucide-react'
 
 export interface UnfinishedTasksProps {
   today: string

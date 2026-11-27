@@ -14,12 +14,12 @@ import { templatesQuery } from '#/features/templates/data/queries'
 import {
   useEndBreak,
   useStartBreak,
-} from '#/features/time-entries/views/breaks'
+} from '#/features/breaks/controllers/use-breaks'
 import {
   usePauseTimer,
   useResumeTask,
   useStopTimer,
-} from '#/features/time-entries/views/timer'
+} from '#/features/time-entries/controllers/use-timer'
 import {
   entryKeys,
   pausedQuery,
@@ -42,8 +42,8 @@ import {
   queryWords,
   taskCommand,
   typedCommands,
-} from '../domain/commands'
-import type { Command, PaletteContext } from '../domain/commands'
+} from './commands'
+import type { Command, PaletteContext } from './commands'
 import { OPEN_EVENT } from '../domain/open'
 
 /** Aktywna opcja zapamiętana razem z listą wyników, do której należy. */

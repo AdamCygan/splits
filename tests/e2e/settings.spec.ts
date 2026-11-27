@@ -16,7 +16,10 @@ const sections = [
 ]
 
 test.describe('settings panel', () => {
-  test.beforeEach(async ({ page }) => signInWithSamples(page))
+  // Pro: przykładowe konto ma więcej projektów i szablonów, niż pozwala plan Free.
+  test.beforeEach(async ({ page }) =>
+    signInWithSamples(page, { subscription: 'active' }),
+  )
 
   testEach(sections)(
     'Should render $path without axe violations',

@@ -1,11 +1,8 @@
 import { useId, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { ArrowLeft, Check, Lock, ShieldCheck } from 'lucide-react'
 import { FormAlert } from '#/components/form/form-field'
 import { Button, buttonVariants } from '#/components/ui/button'
-import { billingApi } from '../data/api'
-import { useCurrentUser } from '#/features/auth/data/session'
 import { useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
 import { billingMessages } from '#/i18n/messages/billing'
@@ -20,7 +17,7 @@ import {
   renewalDate,
 } from '../domain/plans'
 import type { BillingInterval } from '../domain/plans'
-import { billingQuery, useStripeRedirect } from '../data/queries'
+import { useCheckout } from '../controllers/use-billing'
 
 export interface CheckoutPageProps {
   interval: BillingInterval
@@ -40,22 +37,11 @@ export function CheckoutPage({
   const t = useMessages(billingMessages).checkout
   const features = useMessages(marketingMessages).pricing.features
   const { tag, locale } = useI18n()
-  const billing = useQuery(billingQuery)
+  const { status, owned, pay, redirecting } = useCheckout()
   const plan = planById('pro')
   const price = formatPrice(PRO_PRICES[interval], tag)
   const [accepted, setAccepted] = useState(false)
   const consentId = useId()
-  const checkout = useStripeRedirect((next: BillingInterval) =>
-    billingApi.checkout(next),
-  )
-
-  const status = billing.data
-  const isAdmin = useCurrentUser()?.role === 'admin'
-  const owned =
-    isAdmin ||
-    status?.plan === 'lifetime' ||
-    status?.plan === 'pro' ||
-    (status?.subscription?.active && status.subscription.plan === 'pro')
 
   const intervalOptions = BILLING_INTERVALS.map((value) => ({
     value,
@@ -200,12 +186,12 @@ export function CheckoutPage({
             <Button
               size="lg"
               className="mt-5 h-12 w-full text-base"
-              disabled={!accepted || !status?.enabled || checkout.isPending}
-              aria-busy={checkout.isPending}
-              onClick={() => checkout.mutate(interval)}
+              disabled={!accepted || !status?.enabled || redirecting}
+              aria-busy={redirecting}
+              onClick={() => pay(interval)}
             >
               <Lock aria-hidden className="size-4" />
-              {checkout.isPending ? t.redirecting : t.pay}
+              {redirecting ? t.redirecting : t.pay}
             </Button>
             <p className="mt-3 text-xs text-ink-soft">{t.secure}</p>
           </section>

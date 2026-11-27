@@ -1,6 +1,6 @@
 import type { Dictionary } from '#/i18n/context'
 import type { LegalDoc } from './types'
-import { CONSENT_COOKIE } from '../data/consent'
+import { CONSENT_COOKIE } from './consent'
 
 /**
  * Polityka cookies (art. 399 ustawy z 12 lipca 2024 r. Prawo komunikacji elektronicznej):

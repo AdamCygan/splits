@@ -2,10 +2,8 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { CalendarOff } from 'lucide-react'
 import { Button } from '#/components/ui/button'
-import { daysOffApi } from '../data/api'
+import { useRemoveDaysOff } from '../controllers/use-days-off'
 import { daysOffQuery } from '#/features/days-off/data/queries'
-import { keys } from '#/shared/data/query-keys'
-import { useDataMutation } from '#/shared/data/mutations'
 import { useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { daysOffMessages } from '#/i18n/messages/days-off'
@@ -46,10 +44,7 @@ export function DayOffBanner({ date }: DayOffBannerProps) {
   const t = useMessages(daysOffMessages)
   const day = useQuery(daysOffQuery(date, date)).data?.[0]
   const [editing, setEditing] = useState(false)
-  const remove = useDataMutation(() => daysOffApi.remove(date, date), {
-    invalidate: [keys.daysOff],
-    success: t.banner.removed,
-  })
+  const remove = useRemoveDaysOff({ success: t.banner.removed })
   if (!day) return null
   const Icon = DAY_OFF_ICONS[day.kind]
   return (
@@ -82,7 +77,7 @@ export function DayOffBanner({ date }: DayOffBannerProps) {
           variant="ghost"
           size="sm"
           disabled={remove.isPending}
-          onClick={() => remove.mutate()}
+          onClick={() => remove.mutate({ from: date, to: date })}
         >
           {t.banner.remove}
         </Button>

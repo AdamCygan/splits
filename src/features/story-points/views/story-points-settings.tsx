@@ -1,9 +1,16 @@
-import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
-import { Plus, X } from 'lucide-react'
+import { useSaveScale } from '../controllers/use-save-scale'
+import { scaleQuery } from '../data/queries'
+import { parseRow, toRows } from '../domain/scale-rows'
+import type { Row } from '../domain/scale-rows'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
-import { spScaleApi } from '#/features/story-points/data/api'
+import {
+  QueryView,
+  SaveBar,
+  SectionHeader,
+  SettingsCard,
+  useAnnouncer,
+} from '#/features/settings/views/ui'
 import type { SpScaleStep } from '#/features/story-points/data/dto'
 import {
   SCALE_LIMITS,
@@ -15,43 +22,10 @@ import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { settingsMessages } from '#/i18n/messages/settings'
 import { cn } from '#/lib/utils'
-import { keys } from '#/shared/data/query-keys'
-import { scaleQuery } from '../data/queries'
-import { useDataMutation } from '#/shared/data/mutations'
-import { markSetupStep } from '#/features/settings/controllers/setup-progress'
-import {
-  QueryView,
-  SaveBar,
-  SectionHeader,
-  SettingsCard,
-  useAnnouncer,
-  useUnsavedWarning,
-} from '#/features/settings/views/ui'
-
-interface Row {
-  key: number
-  points: string
-  hours: string
-  minutes: string
-}
-
-let rowKey = 0
-const toRows = (
-  steps: ReadonlyArray<Pick<SpScaleStep, 'points' | 'maxMinutes'>>,
-): Array<Row> =>
-  steps.map((s) => ({
-    key: ++rowKey,
-    points: String(s.points),
-    hours: String(Math.floor(s.maxMinutes / 60)),
-    minutes: String(s.maxMinutes % 60),
-  }))
-
-const parseRow = (r: Row) => ({
-  points: Number(r.points.replace(',', '.')),
-  maxMinutes: Math.round(
-    (Number(r.hours || 0) || 0) * 60 + (Number(r.minutes || 0) || 0),
-  ),
-})
+import { useUnsavedWarning } from '#/shared/controllers/use-unsaved-warning'
+import { Plus, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 
 export function StoryPointSettings() {
   const t = useMessages(settingsMessages)
@@ -77,11 +51,7 @@ function ScaleEditor({ scale }: ScaleEditorProps) {
   const [announcer, announce] = useAnnouncer()
   useEffect(() => setRows(toRows(scale)), [scale])
 
-  const save = useDataMutation(spScaleApi.replace, {
-    invalidate: [keys.scale],
-    success: t.saved,
-    onSuccess: () => markSetupStep('storyPoints'),
-  })
+  const save = useSaveScale()
 
   const parsed = rows.map(parseRow)
   const issues = validateScale(parsed)

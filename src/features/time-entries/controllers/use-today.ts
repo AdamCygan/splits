@@ -14,7 +14,7 @@ import { taskTypesQuery } from '#/features/task-types/data/queries'
 import { useI18n, useMessages } from '#/i18n/context'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { entriesQuery } from '../data/queries'
-import type { EntryPrefill } from '../views/entry-form'
+import type { EntryPrefill } from '../domain/entry-form'
 
 /** Polecenie z palety (adres ?log=…&mode=… albo ?template=…), wykonywane raz po wejściu. */
 export interface TodayRequest {

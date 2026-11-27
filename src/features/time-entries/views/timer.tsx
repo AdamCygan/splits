@@ -1,100 +1,30 @@
-import { useEffect, useState } from 'react'
+import {
+  useDismissPaused,
+  useElapsed,
+  usePauseTimer,
+  useResumeTask,
+  useStopTimer,
+} from '../controllers/use-timer'
+import { entriesQuery, pausedQuery, runningQuery } from '../data/queries'
+import { formatClock } from '../domain/clock'
+import { BreakBar } from './breaks'
+import { EditEntryDialog } from './edit-entry-dialog'
+import { useTaskProgress } from '../controllers/use-task-progress'
 import { useQuery } from '@tanstack/react-query'
-import { Check, Coffee, Pause, Pencil, Play, Square } from 'lucide-react'
-import { toast } from 'sonner'
 import { Button } from '#/components/ui/button'
-import { entriesApi } from '../data/api'
-import type { TimeEntry } from '#/features/time-entries/data/dto'
-import { elapsedSeconds } from '#/features/time-entries/domain/entries'
-import { todayIn } from '#/shared/domain/dates'
+import { useStartBreak } from '#/features/breaks/controllers/use-breaks'
+import { runningBreakQuery } from '#/features/breaks/data/queries'
 import { taskGroupKey } from '#/features/reports/domain/report'
 import { settingsQuery } from '#/features/settings/data/queries'
 import { taskTypesQuery } from '#/features/task-types/data/queries'
-import { useDataMutation } from '#/shared/data/mutations'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { cn } from '#/lib/utils'
-import {
-  entriesQuery,
-  entryKeys,
-  pausedQuery,
-  runningQuery,
-} from '../data/queries'
-import { runningBreakQuery } from '#/features/breaks/data/queries'
-import { BreakBar, useStartBreak } from './breaks'
-import { EditEntryDialog } from './edit-entry-dialog'
-import { useTaskProgress } from './task-progress'
-
-/** Licznik sekund od startu, odświeżany co sekundę tylko gdy timer działa. */
-export function useElapsed(entry: TimeEntry | null | undefined) {
-  const [now, setNow] = useState(() => Date.now())
-  const active = Boolean(entry?.running)
-  useEffect(() => {
-    if (!active) return
-    const id = window.setInterval(() => setNow(Date.now()), 1000)
-    return () => window.clearInterval(id)
-  }, [active])
-  return entry?.running ? elapsedSeconds(entry.startedAt, now) : 0
-}
-
-export const formatClock = (seconds: number) =>
-  [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60]
-    .map((n, i) => (i === 0 ? String(n) : String(n).padStart(2, '0')))
-    .join(':')
-
-/** Zatrzymanie timera z komunikatem o zalogowanym czasie. */
-export function useStopTimer() {
-  const t = useMessages(entriesMessages)
-  const format = useFormat()
-  return useDataMutation((id: string) => entriesApi.stop(id), {
-    invalidate: [entryKeys.all],
-    success: (stopped) =>
-      fmt(t.timer.stopped, { time: format.minutes(stopped.durationMinutes) }),
-  })
-}
-
-/** Przerwa: sesja się kończy, a zadanie czeka na pasku z przyciskiem „Wznów”. */
-export function usePauseTimer() {
-  const t = useMessages(entriesMessages)
-  const format = useFormat()
-  return useDataMutation((id: string) => entriesApi.pause(id), {
-    invalidate: [entryKeys.all],
-    success: (paused) =>
-      fmt(t.timer.pausedDone, {
-        name: paused.title,
-        time: format.minutes(paused.durationMinutes),
-      }),
-  })
-}
-
-/** Wznowienie zadania (nowy odcinek czasu); działający timer innego zadania zostaje wstrzymany. */
-export function useResumeTask() {
-  const t = useMessages(entriesMessages)
-  const format = useFormat()
-  return useDataMutation((id: string) => entriesApi.resume(id), {
-    invalidate: [entryKeys.all],
-    success: (result) => fmt(t.timer.resumed, { name: result.started.title }),
-    onSuccess: (result) => {
-      if (result.stopped)
-        toast(
-          fmt(t.form.previousStopped, {
-            name: result.stopped.title,
-            time: format.minutes(result.stopped.durationMinutes),
-          }),
-        )
-    },
-  })
-}
-
-/** Zadanie skończone: znika z listy wstrzymanych. */
-export function useDismissPaused() {
-  const t = useMessages(entriesMessages)
-  return useDataMutation((entry: TimeEntry) => entriesApi.dismiss(entry.id), {
-    invalidate: [entryKeys.all],
-    success: (_, entry) => fmt(t.timer.dismissed, { name: entry.title }),
-  })
-}
+import { todayIn } from '#/shared/domain/dates'
+import { Check, Coffee, Pause, Pencil, Play, Square } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 /**
  * Pasek timera na każdej stronie panelu. Gdy timer działa: licznik, „Wstrzymaj” i „Stop”,

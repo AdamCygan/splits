@@ -39,7 +39,7 @@ import { useI18n, useMessages } from '#/i18n/context'
 import { formatDateRange } from '#/i18n/format'
 import { reportsMessages } from '#/i18n/messages/reports'
 import { downloadFile } from '#/lib/download'
-import type { ChartBucket } from '../views/charts'
+import type { ChartBucket } from '../domain/charts'
 
 /** Ile ostatnich sprintów pokazujemy w wyborze okresu. */
 const RECENT_SPRINTS = 8

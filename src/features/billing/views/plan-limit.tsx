@@ -1,14 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
-import { useCurrentUser } from '#/features/auth/data/session'
 import { useMessages } from '#/i18n/context'
 import { billingMessages } from '#/i18n/messages/billing'
-import { hasProAccess } from '../domain/plans'
-
-/** Czy zalogowany użytkownik jest na planie Free (bez Pro i bez roli administratora). */
-export function useFreePlan() {
-  return !hasProAccess(useCurrentUser())
-}
 
 export interface PlanLimitProps {
   /** Id do aria-describedby zablokowanego przycisku albo przełącznika. */

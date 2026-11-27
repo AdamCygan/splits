@@ -5,31 +5,27 @@ import { Button } from '#/components/ui/button'
 import { Badge, ColorDot, ColorPicker, Field } from '#/components/ui/controls'
 import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
-import { projectsApi } from '#/features/projects/data/api'
-import { tagsApi } from '#/features/tags/data/api'
 import { splitArchived } from '#/shared/domain/archive'
-import type { Project, ProjectInput } from '#/features/projects/data/dto'
+import type { Project } from '#/features/projects/data/dto'
 import type { Tag, TagInput } from '#/features/tags/data/dto'
 import { LIMITS, PROJECT_KEY_RE } from '#/features/task-types/domain/rules'
 import { useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { settingsMessages } from '#/i18n/messages/settings'
-import { keys } from '#/shared/data/query-keys'
-import { mutationFieldError, useDataMutation } from '#/shared/data/mutations'
+import { mutationFieldError } from '#/shared/data/mutations'
 import { projectsQuery } from '../data/queries'
 import { tagsQuery } from '#/features/tags/data/queries'
-import { useArchive } from '#/shared/controllers/use-archive'
 import { usePalette, withCurrent } from '#/features/settings/domain/palette'
 import {
   QueryView,
   SectionHeader,
   SettingsCard,
 } from '#/features/settings/views/ui'
-import { useQuery } from '@tanstack/react-query'
-import { FREE_LIMITS } from '#/features/billing/domain/plans'
-import { PlanLimit, useFreePlan } from '#/features/billing/views/plan-limit'
+import { PlanLimit } from '#/features/billing/views/plan-limit'
 import { billingMessages } from '#/i18n/messages/billing'
+import { useProjects, useSaveProject } from '../controllers/use-projects'
+import { useSaveTag, useTagActions } from '#/features/tags/controllers/use-tags'
 
 export function ProjectSettings() {
   const t = useMessages(settingsMessages)
@@ -47,14 +43,7 @@ function Projects() {
   const app = useMessages(appMessages)
   const limits = useMessages(billingMessages).limits
   const [editing, setEditing] = useState<Project | 'new' | null>(null)
-  const isFree = useFreePlan()
-  const activeCount = splitArchived(useQuery(projectsQuery).data ?? []).active
-    .length
-  const atLimit = isFree && activeCount >= FREE_LIMITS.projects
-  const archive = useArchive(projectsApi.setArchived, {
-    invalidate: keys.projects,
-    messages: t,
-  })
+  const { archive, atLimit } = useProjects()
 
   return (
     <SettingsCard
@@ -172,17 +161,7 @@ function ProjectDialog({ project, onClose }: ProjectDialogProps) {
     color: project?.color ?? '#2C8FD6',
   })
   const [submitted, setSubmitted] = useState(false)
-  const save = useDataMutation(
-    (input: ProjectInput) =>
-      project
-        ? projectsApi.update(project.id, input)
-        : projectsApi.create(input),
-    {
-      invalidate: [keys.projects],
-      success: project ? app.status.saved : t.created,
-      onSuccess: onClose,
-    },
-  )
+  const save = useSaveProject({ project, onSaved: onClose })
   const nameOk =
     draft.name.trim().length > 0 && draft.name.length <= LIMITS.projectName
   const keyOk = draft.key === '' || PROJECT_KEY_RE.test(draft.key)
@@ -304,18 +283,12 @@ function Tags() {
   const [editing, setEditing] = useState<Tag | null>(null)
   const [deleting, setDeleting] = useState<Tag | null>(null)
 
-  const create = useDataMutation((input: TagInput) => tagsApi.create(input), {
-    invalidate: [keys.tags],
-    success: t.tagCreated,
-    onSuccess: () => {
+  const { create, remove } = useTagActions({
+    onCreated: () => {
       setDraft({ name: '', color: draft.color })
       setSubmitted(false)
     },
-  })
-  const remove = useDataMutation((id: string) => tagsApi.remove(id), {
-    invalidate: [keys.tags],
-    success: t.tagDeleted,
-    onSuccess: () => setDeleting(null),
+    onRemoved: () => setDeleting(null),
   })
   const nameOk =
     draft.name.trim().length > 0 && draft.name.length <= LIMITS.tagName
@@ -435,10 +408,7 @@ function TagDialog({ tag, onClose }: TagDialogProps) {
     color: tag.color,
   })
   const [submitted, setSubmitted] = useState(false)
-  const save = useDataMutation(
-    (input: TagInput) => tagsApi.update(tag.id, input),
-    { invalidate: [keys.tags], success: app.status.saved, onSuccess: onClose },
-  )
+  const save = useSaveTag({ tag, onSaved: onClose })
   const nameOk =
     draft.name.trim().length > 0 && draft.name.length <= LIMITS.tagName
   return (

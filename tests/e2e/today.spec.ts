@@ -3,7 +3,8 @@ import { expectNoA11yViolations, signInWithSamples } from './helpers'
 
 test.describe('today: log time with notes', () => {
   test.beforeEach(async ({ page }) => {
-    await signInWithSamples(page)
+    // Pro: przykładowe konto ma więcej projektów i szablonów, niż pozwala plan Free.
+    await signInWithSamples(page, { subscription: 'active' })
     await page.goto('/app')
     await expect(
       page.getByRole('heading', { level: 1, name: 'Today' }),

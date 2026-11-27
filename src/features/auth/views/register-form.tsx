@@ -1,30 +1,14 @@
-import { useState } from 'react'
-import { useForm } from '@tanstack/react-form'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
+import { useRegister } from '../controllers/use-register'
 import {
   FormAlert,
   TextField,
   errorMessages,
 } from '#/components/form/form-field'
 import { Button } from '#/components/ui/button'
-import { authApi } from '../data/api'
-import { useI18n, useMessages } from '#/i18n/context'
+import { useMessages } from '#/i18n/context'
 import { authMessages } from '#/i18n/messages/auth'
-import { track } from '#/integrations/posthog/analytics'
-import { fieldErrorsOf, useErrorText } from '#/lib/use-error-text'
-import { registerSchema } from '../domain/validation'
-import { startSession } from '../data/session'
-import type { RegisterForm as RegisterValues } from '../domain/validation'
 import type { BillingInterval } from '#/features/billing/domain/plans'
-
-type ServerErrors = Partial<Record<keyof RegisterValues, Array<string>>>
-
-const defaultValues: RegisterValues = {
-  username: '',
-  email: '',
-  password: '',
-  acceptTerms: false,
-}
 
 export interface RegisterFormProps {
   next?: 'setup' | 'checkout'
@@ -37,47 +21,11 @@ export function RegisterForm({
   next = 'setup',
   interval = 'year',
 }: RegisterFormProps) {
-  const navigate = useNavigate()
   const t = useMessages(authMessages)
-  const { locale } = useI18n()
-  const errorText = useErrorText()
-  const [formError, setFormError] = useState<string | null>(null)
-  const [serverErrors, setServerErrors] = useState<ServerErrors>({})
-
-  const form = useForm({
-    defaultValues,
-    validators: { onSubmit: registerSchema(t.validation) },
-    onSubmit: async ({ value }) => {
-      setFormError(null)
-      setServerErrors({})
-      const result = await authApi.register({
-        username: value.username,
-        email: value.email,
-        password: value.password,
-        locale,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-      })
-      if (!result.ok) {
-        const fieldErrors = fieldErrorsOf(result.error)
-        setServerErrors(fieldErrors)
-        if (Object.keys(fieldErrors).length === 0)
-          setFormError(errorText(result.error))
-        return
-      }
-      startSession(result.value)
-      track('signup_completed', {
-        plan: next === 'checkout' ? `pro_${interval}` : 'free',
-        locale,
-      })
-      // Wybrany na cenniku Pro: po założeniu konta od razu koszyk.
-      await (next === 'checkout'
-        ? navigate({ to: '/app/checkout', search: { interval } })
-        : navigate({ to: '/app/settings' }))
-    },
+  const { form, formError, serverErrors, clearServerError } = useRegister({
+    next,
+    interval,
   })
-
-  const clearServerError = (name: keyof RegisterValues) =>
-    setServerErrors(({ [name]: _removed, ...rest }) => rest)
 
   return (
     <form

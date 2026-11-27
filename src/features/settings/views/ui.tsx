@@ -1,14 +1,14 @@
-import { useEffect, useId, useState } from 'react'
-import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { QueryKey, UseQueryOptions } from '@tanstack/react-query'
-import { AlertCircle, ArrowDown, ArrowUp } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { Button } from '#/components/ui/button'
 import { useMessages } from '#/i18n/context'
 import { appMessages } from '#/i18n/messages/app'
 import { panelMessages } from '#/i18n/messages/panel'
 import { cn } from '#/lib/utils'
+import { AlertCircle, ArrowDown, ArrowUp } from 'lucide-react'
+import { useEffect, useId, useState } from 'react'
+import type { ReactNode } from 'react'
 
 export interface SettingsCardProps {
   title: string
@@ -243,29 +243,6 @@ export function useAnnouncer() {
     </div>
   )
   return [node, setMessage] as const
-}
-
-/** Ostrzega przed opuszczeniem strony z niezapisanymi zmianami (zamknięcie karty). */
-export function useUnsavedWarning(dirty: boolean) {
-  useEffect(() => {
-    if (!dirty) return
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault()
-    }
-    window.addEventListener('beforeunload', handler)
-    return () => window.removeEventListener('beforeunload', handler)
-  }, [dirty])
-}
-
-export function move<T>(
-  list: ReadonlyArray<T>,
-  from: number,
-  to: number,
-): Array<T> {
-  const copy = [...list]
-  const [item] = copy.splice(from, 1)
-  copy.splice(to, 0, item!)
-  return copy
 }
 
 /** Konto demo nie ma własnego adresu ani hasła: zamiast formularzy krótka informacja. */

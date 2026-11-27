@@ -1,36 +1,24 @@
 import { Download } from 'lucide-react'
 import { Button } from '#/components/ui/button'
-import { accountApi } from '#/features/account/data/api'
+import { SettingsCard } from '#/features/settings/views/ui'
 import { useMessages } from '#/i18n/context'
 import { panelMessages } from '#/i18n/messages/panel'
-import { downloadFile } from '#/lib/download'
-import { useDataMutation } from '#/shared/data/mutations'
-import { SettingsCard } from '#/features/settings/views/ui'
+import { useExportData } from '../controllers/use-export-data'
 
 /** Pobranie wszystkich danych konta jako plik JSON (RODO: prawo do przenoszenia danych). */
 export function ExportDataCard() {
   const t = useMessages(panelMessages).export
-  const download = useDataMutation(() => accountApi.exportData(), {
-    invalidate: [],
-    success: t.done,
-    onSuccess: (payload) => {
-      downloadFile(
-        `timeblame-export-${new Date().toISOString().slice(0, 10)}.json`,
-        [JSON.stringify(payload, null, 2)],
-        'application/json',
-      )
-    },
-  })
+  const exportData = useExportData()
   return (
     <SettingsCard title={t.title} lead={t.lead}>
       <Button
         variant="outline"
-        disabled={download.isPending}
-        aria-busy={download.isPending}
-        onClick={() => download.mutate(undefined)}
+        disabled={exportData.busy}
+        aria-busy={exportData.busy}
+        onClick={exportData.start}
       >
         <Download aria-hidden className="size-4" />
-        {download.isPending ? t.busy : t.button}
+        {exportData.busy ? t.busy : t.button}
       </Button>
     </SettingsCard>
   )

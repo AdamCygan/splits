@@ -31,7 +31,7 @@ import { scaleQuery } from '#/features/story-points/data/queries'
 import { settingsQuery } from '#/features/settings/data/queries'
 import { sprintsQuery } from '#/features/sprints/data/queries'
 import { taskTypesQuery } from '#/features/task-types/data/queries'
-import { useResumeTask } from '#/features/time-entries/views/timer'
+import { useResumeTask } from '#/features/time-entries/controllers/use-timer'
 import { rangeEntriesQuery } from '#/features/time-entries/data/queries'
 
 /** Ile zadań pokazujemy naraz (dalej „Pokaż więcej”). */

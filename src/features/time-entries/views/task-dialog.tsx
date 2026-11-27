@@ -9,12 +9,7 @@ import { Button } from '#/components/ui/button'
 import { Badge, Field, Select } from '#/components/ui/controls'
 import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
-import { entriesApi } from '../data/api'
-import type {
-  TaskRef,
-  TimeEntry,
-  TaskUpdateInput,
-} from '#/features/time-entries/data/dto'
+import type { TaskRef, TimeEntry } from '#/features/time-entries/data/dto'
 import type { TaskType } from '#/features/task-types/data/dto'
 import {
   ENTRY_LIMITS,
@@ -22,7 +17,7 @@ import {
   parseDuration,
 } from '#/features/time-entries/domain/entries'
 import { maxEstimate, maxPoints } from '#/features/tasks/domain/summary'
-import { mutationFieldError, useDataMutation } from '#/shared/data/mutations'
+import { mutationFieldError } from '#/shared/data/mutations'
 import { projectsQuery } from '#/features/projects/data/queries'
 import { scaleQuery } from '#/features/story-points/data/queries'
 import { taskTypesQuery } from '#/features/task-types/data/queries'
@@ -30,12 +25,12 @@ import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'
-import { unwrap } from '#/lib/api-client'
-import { entryKeys } from '../data/queries'
+import { taskSessionsQuery } from '../data/queries'
 import { EntryForm } from './entry-form'
-
-export const taskQueryKey = (ref: TaskRef) =>
-  [...entryKeys.all, 'task', ref.taskTypeId, ref.link ?? '', ref.title] as const
+import {
+  useRemoveSession,
+  useUpdateTask,
+} from '../controllers/use-task-editing'
 
 export interface TaskDialogProps {
   task: TaskRef
@@ -55,10 +50,7 @@ export function TaskDialog({ task, onClose }: TaskDialogProps) {
   const type = (useQuery(taskTypesQuery).data ?? []).find(
     (x) => x.id === ref.taskTypeId,
   )
-  const sessions = useQuery({
-    queryKey: taskQueryKey(ref),
-    queryFn: () => unwrap(entriesApi.forTask(ref)),
-  })
+  const sessions = useQuery(taskSessionsQuery(ref))
   const list = sessions.data ?? []
   const total = list.reduce((sum, e) => sum + e.durationMinutes, 0)
 
@@ -137,17 +129,13 @@ export function TaskDetails({ entries, type, onSaved }: TaskDetailsProps) {
     taskTypeId: latest.taskTypeId,
   }
 
-  const save = useDataMutation(
-    (input: TaskUpdateInput) => entriesApi.updateTask(ref, input),
-    {
-      invalidate: [entryKeys.all],
-      success: t.task.saved,
-      onSuccess: (saved) => {
-        setSubmitted(false)
-        onSaved(saved)
-      },
+  const save = useUpdateTask({
+    task: ref,
+    onSaved: (saved) => {
+      setSubmitted(false)
+      onSaved(saved)
     },
-  )
+  })
 
   const spMode = type?.storyPointsRequirement ?? 'optional'
   const linkMode = type?.linkRequirement ?? 'optional'
@@ -332,11 +320,7 @@ export function Sessions({ entries }: SessionsProps) {
   const dayLabel = (entry: TimeEntry) =>
     format.day(entry.workDate, { year: true })
 
-  const remove = useDataMutation((id: string) => entriesApi.remove(id), {
-    invalidate: [entryKeys.all],
-    success: t.task.deleted,
-    onSuccess: () => setDeleting(null),
-  })
+  const remove = useRemoveSession(() => setDeleting(null))
 
   return (
     <section aria-labelledby="task-sessions">

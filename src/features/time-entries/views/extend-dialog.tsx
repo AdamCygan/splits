@@ -4,22 +4,17 @@ import { Button } from '#/components/ui/button'
 import { Field, Textarea } from '#/components/ui/controls'
 import { Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
-import { entriesApi } from '../data/api'
-import type {
-  TimeEntry,
-  TimeEntryInput,
-} from '#/features/time-entries/data/dto'
+import type { TimeEntry } from '#/features/time-entries/data/dto'
 import {
   ENTRY_LIMITS,
   parseDuration,
   withExtension,
 } from '#/features/time-entries/domain/entries'
-import { useDataMutation } from '#/shared/data/mutations'
 import { useFormat, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { entriesMessages } from '#/i18n/messages/entries'
-import { entryKeys } from '../data/queries'
+import { useSaveExtension } from '../controllers/use-task-editing'
 
 const QUICK = [15, 30, 45, 60]
 
@@ -53,20 +48,7 @@ export function ExtendDialog({ entry, onClose }: ExtendDialogProps) {
       ? t.issues.extensionNote.too_long
       : null
 
-  const save = useDataMutation(
-    (input: TimeEntryInput) => entriesApi.update(entry.id, input),
-    {
-      invalidate: [entryKeys.all],
-      success: (saved) =>
-        saved.extensionMinutes === null
-          ? t.extension.removed
-          : fmt(t.extension.saved, {
-              time: format.minutes(saved.extensionMinutes),
-              name: saved.title,
-            }),
-      onSuccess: onClose,
-    },
-  )
+  const save = useSaveExtension({ entryId: entry.id, onSaved: onClose })
 
   const submit = (e: FormEvent) => {
     e.preventDefault()

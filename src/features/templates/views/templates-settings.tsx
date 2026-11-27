@@ -7,43 +7,37 @@ import { Button } from '#/components/ui/button'
 import { ColorDot, Field, Select } from '#/components/ui/controls'
 import { ConfirmDialog, Dialog, DialogContent } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
-import { templatesApi } from '#/features/templates/data/api'
-import type {
-  QuickTemplate,
-  QuickTemplateInput,
-} from '#/features/templates/data/dto'
+import type { QuickTemplate } from '#/features/templates/data/dto'
 import { LIMITS } from '#/features/task-types/domain/rules'
 import { scheduleRuns } from '#/features/templates/domain/schedule'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, weekdayNames } from '#/i18n/format'
 import { appMessages } from '#/i18n/messages/app'
 import { settingsMessages } from '#/i18n/messages/settings'
-import { keys } from '#/shared/data/query-keys'
-import { mutationFieldError, useDataMutation } from '#/shared/data/mutations'
+import { mutationFieldError } from '#/shared/data/mutations'
 import { projectsQuery } from '#/features/projects/data/queries'
 import { scaleQuery } from '#/features/story-points/data/queries'
 import { settingsQuery } from '#/features/settings/data/queries'
 import { taskTypesQuery } from '#/features/task-types/data/queries'
 import { templatesQuery } from '../data/queries'
-import { markSetupStep } from '#/features/settings/controllers/setup-progress'
+import { ScheduleFields } from './template-schedule'
 import {
-  ScheduleFields,
   scheduleDraft,
   scheduleErrors,
   scheduleFromDraft,
-} from './template-schedule'
+} from '../domain/schedule-draft'
 import {
   QueryView,
   ReorderButtons,
   SectionHeader,
   SettingsCard,
-  move,
   useAnnouncer,
 } from '#/features/settings/views/ui'
+import { move } from '#/shared/domain/move'
 import { Kbd } from '#/components/ui/kbd'
-import { FREE_LIMITS } from '#/features/billing/domain/plans'
-import { PlanLimit, useFreePlan } from '#/features/billing/views/plan-limit'
+import { PlanLimit } from '#/features/billing/views/plan-limit'
 import { billingMessages } from '#/i18n/messages/billing'
+import { useSaveTemplate, useTemplates } from '../controllers/use-templates'
 
 /** Wartość pola „Projekt” dla szablonu, w którym projekt wybiera się przy użyciu. */
 const ANY = '__any'
@@ -54,8 +48,6 @@ export function TemplateSettings() {
   const format = useFormat()
   const types = useQuery(taskTypesQuery).data ?? []
   const projects = useQuery(projectsQuery).data ?? []
-  const templatesData = useQuery(templatesQuery).data
-  const isFree = useFreePlan()
   const limits = useMessages(billingMessages).limits
   const [editing, setEditing] = useState<QuickTemplate | 'new' | null>(null)
   const [deleting, setDeleting] = useState<QuickTemplate | null>(null)
@@ -72,18 +64,7 @@ export function TemplateSettings() {
       )
       .join(', ')
 
-  const reorder = useDataMutation(
-    (ids: Array<string>) => templatesApi.reorder(ids),
-    { invalidate: [keys.templates] },
-  )
-  const remove = useDataMutation((id: string) => templatesApi.remove(id), {
-    invalidate: [keys.templates],
-    success: t.deleted,
-    onSuccess: () => setDeleting(null),
-  })
-
-  const atLimit =
-    isFree && (templatesData ?? []).length >= FREE_LIMITS.quickTemplates
+  const { reorder, remove, atLimit } = useTemplates(() => setDeleting(null))
 
   return (
     <div>
@@ -269,20 +250,7 @@ function TemplateDialog({ template, onClose }: TemplateDialogProps) {
   const weekStartsOn = useQuery(settingsQuery).data?.weekStartsOn ?? 1
   const [submitted, setSubmitted] = useState(false)
 
-  const save = useDataMutation(
-    (input: QuickTemplateInput) =>
-      template
-        ? templatesApi.update(template.id, input)
-        : templatesApi.create(input),
-    {
-      invalidate: [keys.templates],
-      success: template ? app.status.saved : t.created,
-      onSuccess: () => {
-        markSetupStep('templates')
-        onClose()
-      },
-    },
-  )
+  const save = useSaveTemplate({ template, onSaved: onClose })
 
   const duration = draft.duration.trim() === '' ? null : Number(draft.duration)
   const errors = {

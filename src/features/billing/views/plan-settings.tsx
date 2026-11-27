@@ -1,31 +1,23 @@
-import { useEffect } from 'react'
-import { Link, useNavigate } from '@tanstack/react-router'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
 import { ArrowRight, Check, ExternalLink } from 'lucide-react'
 import { Button, buttonVariants } from '#/components/ui/button'
 import { Badge } from '#/components/ui/controls'
-import { billingApi } from '#/features/billing/data/api'
 import { InvoicesCard } from '#/features/billing/views/invoices'
 import {
   PRO_PRICES,
   formatPrice,
   planById,
 } from '#/features/billing/domain/plans'
-import {
-  billingKeys,
-  billingQuery,
-  useStripeRedirect,
-} from '#/features/billing/data/queries'
-import { track } from '#/integrations/posthog/analytics'
+import { billingQuery } from '#/features/billing/data/queries'
 import { useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
 import { billingMessages } from '#/i18n/messages/billing'
-import { unwrap } from '#/lib/api-client'
 import { marketingMessages } from '#/i18n/messages/marketing'
 import { settingsMessages } from '#/i18n/messages/settings'
 import { cn } from '#/lib/utils'
-import { keys as settingsKeys } from '#/shared/data/query-keys'
 import { meQuery } from '#/features/account/data/queries'
+import { useBillingPortal, useCheckoutReturn } from '../controllers/use-billing'
 import {
   DemoNotice,
   QueryView,
@@ -69,24 +61,8 @@ interface CheckoutReturnProps {
  */
 function CheckoutReturn({ sessionId }: CheckoutReturnProps) {
   const t = useMessages(billingMessages).plan
-  const queryClient = useQueryClient()
-  const navigate = useNavigate()
-  const sync = useQuery({
-    queryKey: ['billing', 'sync', sessionId],
-    queryFn: () => unwrap(billingApi.sync(sessionId)),
-    retry: 2,
-    staleTime: Infinity,
-  })
-  useEffect(() => {
-    if (!sync.data) return
-    void queryClient.invalidateQueries({ queryKey: settingsKeys.me })
-    void queryClient.invalidateQueries({ queryKey: billingKeys.status })
-    track('checkout_completed', { plan: sync.data.plan })
-    void navigate({ to: '/app/settings/plan', search: {}, replace: true })
-  }, [sync.data, queryClient, navigate])
-
-  if (sync.isPending) return null
-  const paid = sync.data?.plan === 'pro' || sync.data?.plan === 'lifetime'
+  const { pending, paid } = useCheckoutReturn(sessionId)
+  if (pending) return null
   return (
     <section
       role="status"
@@ -122,7 +98,7 @@ function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
   const pricing = useMessages(marketingMessages).pricing
   const { tag, locale } = useI18n()
   const billing = useQuery(billingQuery).data
-  const portal = useStripeRedirect(() => billingApi.portal())
+  const portal = useBillingPortal()
   const isFree = planId === 'free'
   const name = admin
     ? 'Admin'
@@ -211,12 +187,12 @@ function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
         <SettingsCard title={b.manage} lead={b.manageHint}>
           <Button
             variant="outline"
-            disabled={portal.isPending}
-            aria-busy={portal.isPending}
-            onClick={() => portal.mutate(undefined)}
+            disabled={portal.opening}
+            aria-busy={portal.opening}
+            onClick={portal.open}
           >
             <ExternalLink aria-hidden className="size-4" />
-            {portal.isPending ? b.opening : b.manage}
+            {portal.opening ? b.opening : b.manage}
           </Button>
         </SettingsCard>
       )}
