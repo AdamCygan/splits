@@ -8,7 +8,7 @@
 ARG PNPM_VERSION=12.16.1
 
 # --- 1. Zależności (cache'owane, dopóki nie zmieni się pnpm-lock.yaml)
-FROM node:24-alpine AS deps
+FROM node:26-alpine AS deps
 ARG PNPM_VERSION
 RUN npm install --global pnpm@${PNPM_VERSION}
 WORKDIR /app
@@ -16,7 +16,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # --- 2. Build. Zmienne VITE_* trafiają do kodu przeglądarki w czasie budowania (są publiczne).
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 ARG PNPM_VERSION
 RUN npm install --global pnpm@${PNPM_VERSION}
 WORKDIR /app
@@ -29,7 +29,7 @@ COPY . .
 RUN pnpm build
 
 # --- 3. Runtime: wynik builda (.output ma własne node_modules) + migracje SQL
-FROM node:24-alpine AS runtime
+FROM node:26-alpine AS runtime
 # Łatki bezpieczeństwa systemu z Alpine, nawet gdy obraz bazowy jest starszy niż ostatnie poprawki.
 RUN apk upgrade --no-cache
 WORKDIR /app
