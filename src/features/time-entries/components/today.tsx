@@ -14,6 +14,7 @@ import {
   TimerReset,
   Trash2,
 } from 'lucide-react'
+import { cn } from '#/lib/utils'
 import { Button } from '#/components/ui/button'
 import { Badge } from '#/components/ui/controls'
 import { ConfirmDialog } from '#/components/ui/dialog'
@@ -403,21 +404,30 @@ function EntryList({ entries }: { entries: Array<TimeEntry> }) {
                     className="mt-3 space-y-2 border-l-2 border-line pl-3"
                   >
                     {sessions.map((entry) => {
+                      // Wpis bez godzin (np. spotkanie wpisane czasem): pokazujemy sam czas trwania.
                       const interval =
                         entry.startTime && (entry.endTime || entry.running)
                           ? `${clock(entry.startTime)}–${entry.endTime ? clock(entry.endTime) : '…'}`
-                          : t.list.durationOnly
+                          : null
                       const label = fmt(t.list.sessionLabel, {
                         name: entry.title,
-                        interval,
+                        interval:
+                          interval ?? format.minutes(entry.durationMinutes),
                       })
                       return (
                         <li key={entry.id}>
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                            <span className="text-sm font-medium tabular-nums">
-                              {interval}
-                            </span>
-                            <span className="text-sm text-ink-soft tabular-nums">
+                            {interval && (
+                              <span className="text-sm font-medium tabular-nums">
+                                {interval}
+                              </span>
+                            )}
+                            <span
+                              className={cn(
+                                'text-sm tabular-nums',
+                                interval ? 'text-ink-soft' : 'font-medium',
+                              )}
+                            >
                               {entry.running ? (
                                 <RunningClock entry={entry} />
                               ) : (

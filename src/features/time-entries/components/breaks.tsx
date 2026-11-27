@@ -260,7 +260,6 @@ function BreaksDialog({
   onClose: () => void
 }) {
   const t = useMessages(entriesMessages).breaks
-  const list = useMessages(entriesMessages).list
   const app = useMessages(appMessages)
   const format = useFormat()
   const { tag } = useI18n()
@@ -311,7 +310,7 @@ function BreaksDialog({
       ? `${clockTime(tag, b.startTime)}–${clockTime(tag, b.endTime)}`
       : b.running && b.startTime
         ? `${clockTime(tag, b.startTime)}–${t.now}`
-        : list.durationOnly
+        : null
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -348,7 +347,9 @@ function BreaksDialog({
                     variant="ghost"
                     size="icon"
                     disabled={remove.isPending}
-                    aria-label={fmt(t.removeLabel, { time: label(b) })}
+                    aria-label={fmt(t.removeLabel, {
+                      time: label(b) ?? format.minutes(b.durationMinutes),
+                    })}
                     onClick={() => remove.mutate(b.id)}
                   >
                     <Trash2 aria-hidden className="size-4" />

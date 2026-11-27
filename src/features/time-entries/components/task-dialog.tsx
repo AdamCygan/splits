@@ -361,7 +361,7 @@ export function Sessions({ entries }: { entries: Array<TimeEntry> }) {
           const interval =
             entry.startTime && entry.endTime
               ? `${clockTime(tag, entry.startTime)}–${clockTime(tag, entry.endTime)}`
-              : t.list.durationOnly
+              : null
           const day = dayLabel(entry)
           return (
             <li
@@ -371,9 +371,11 @@ export function Sessions({ entries }: { entries: Array<TimeEntry> }) {
               <div className="min-w-0">
                 <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <span className="font-medium">{day}</span>
-                  <span className="text-sm text-ink-soft tabular-nums">
-                    {interval}
-                  </span>
+                  {interval && (
+                    <span className="text-sm text-ink-soft tabular-nums">
+                      {interval}
+                    </span>
+                  )}
                   <span className="text-sm font-semibold tabular-nums">
                     {format.minutes(entry.durationMinutes)}
                   </span>

@@ -37,6 +37,27 @@ test.describe('today: log time with notes', () => {
     await expect(form.getByLabel('Title')).toBeFocused()
   })
 
+  test('a meeting logged as a duration shows just the time', async ({
+    page,
+  }) => {
+    const form = page.getByRole('region', { name: 'Log time' })
+    await form.getByText('Meeting', { exact: true }).click()
+    await form.getByLabel('Title').fill('Sprint planning')
+    await form.getByRole('radio', { name: 'Duration' }).check({ force: true })
+    await form.getByRole('button', { name: '1h', exact: true }).click()
+    await form.getByRole('button', { name: 'Save entry' }).click()
+
+    const list = page.getByRole('region', { name: 'Today’s entries' })
+    const item = list
+      .getByRole('listitem')
+      .filter({ hasText: 'Sprint planning' })
+      .first()
+    await expect(
+      item.getByRole('list', { name: 'Sessions of Sprint planning' }),
+    ).toHaveText(/^\s*1h\b/)
+    await expect(item).not.toContainText('duration only')
+  })
+
   test('logs overtime with a description of what was done', async ({
     page,
   }) => {
