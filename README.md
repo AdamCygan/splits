@@ -26,16 +26,14 @@ w jednym procesie Node i wdrażają się jako jeden obraz Dockera.
 time-tracker/
 ├── src/
 │   ├── routes/                 # routing plikowy: _marketing, _auth, app/, api/v1/$ (całe API)
-│   ├── server/                 # tylko serwer: nigdy nie trafia do przeglądarki
-│   │   ├── app.ts              # aplikacja Hono: middleware, błędy, montowanie tras
-│   │   ├── db/schema.ts        # schemat bazy (Drizzle)
-│   │   ├── db/client.ts        # pula połączeń + migracje przy starcie
-│   │   ├── auth/               # hasła (scrypt), tokeny (JWT, refresh z rotacją)
-│   │   ├── features/           # trasy API: auth, account, config, sprints, entries
-│   │   └── seed-data.ts        # dane startowe nowego konta
-│   ├── domain/                 # Model: czyste reguły wspólne dla ekranów i API (z testami)
-│   ├── data/                   # kontrakt danych dla UI (DataSource) + adapter HTTP
-│   ├── features/               # UI per obszar (MVVM: use-*.ts = ViewModel, widoki dostają vm)
+│   ├── features/<obszar>/      # każda funkcja w warstwach (clean architecture):
+│   │   ├── domain/             #   czyste reguły, enumy, walidacje (bez Reacta i sieci, z testami)
+│   │   ├── data/               #   dto.ts (typy + Zod), api.ts (klient), queries.ts,
+│   │   │                       #   *.server.ts: repozytoria (Drizzle, transakcje), wejścia, mapery
+│   │   ├── controllers/        #   use-*.ts (view-modele), routes.server.ts (trasy Hono)
+│   │   └── views/              #   komponenty React: tylko wyświetlanie
+│   ├── shared/                 # wspólne: domain (daty, liczby, CSV), data (HTTP, klucze, mutacje)
+│   ├── server/                 # platforma serwera: app.ts (Hono), db/, http/, e-mail, zadania
 │   ├── i18n/messages/          # teksty EN/PL
 │   └── config/                 # site.ts (marka), legal.ts (dane do regulaminu)
 ├── drizzle/                    # migracje SQL (generowane: pnpm db:generate)
@@ -95,7 +93,7 @@ Wyłączysz to zmienną `MIGRATE_ON_START=false`.
   z pułapką fokusu i powrotem fokusu, przyciski „w górę / w dół” zamiast przeciągania,
   kolor nigdy nie jest jedyną informacją, tryb wysokiego kontrastu (`forced-colors`),
   `prefers-reduced-motion`, fokus nie chowa się pod przyklejonymi paskami (`scroll-padding`).
-- Deklaracja dostępności: `/accessibility` (`src/features/legal/accessibility.ts`). Przy każdym
+- Deklaracja dostępności: `/accessibility` (`src/features/legal/domain/accessibility.ts`). Przy każdym
   przeglądzie zmień `UPDATED` i uczciwie opisz znane ograniczenia.
 - Testy: każdy test e2e kończy się sprawdzeniem axe-core, a `tests/e2e/a11y.spec.ts` przechodzi
   przez **wszystkie strony** (oba motywy, komputer i telefon, reguły WCAG 2.2 AA + dobre praktyki),
@@ -150,7 +148,7 @@ Wyłączysz to zmienną `MIGRATE_ON_START=false`.
 ## Dokumenty prawne i cookies
 
 - Regulamin (`/terms`), polityka prywatności (`/privacy`), polityka cookies (`/cookies`) i deklaracja dostępności (`/accessibility`) po polsku i po angielsku:
-  `src/features/legal/*.ts`.
+  `src/features/legal/domain/*.ts`.
 - **Przed publikacją uzupełnij `src/config/legal.ts`** (dane firmy z CEIDG/KRS, adres, NIP, e-mail do spraw
   danych, faktyczni dostawcy hostingu, bazy i e-maili) i daj dokumenty do przejrzenia prawnikowi.
 - Baner cookies: statystyki (PostHog) ładują się wyłącznie po zgodzie; wybór w ciasteczku `app_consent`
@@ -162,7 +160,7 @@ Cennik ma trzy kafelki: **Free**, **Pro miesięcznie (6 USD)** i **Pro rocznie (
 ceny z VAT, jeśli dotyczy. Oba warianty Pro mają te same funkcje; różni je tylko okres płatności.
 Nie ma okresów próbnych: do oglądania jest demo (konta demo mają Pro).
 
-Plan Free jest mocno przycięty (limity w `FREE_LIMITS`, `src/features/billing/plans.ts`, pilnowane przez API):
+Plan Free jest mocno przycięty (limity w `FREE_LIMITS`, `src/features/billing/domain/plans.ts`, pilnowane przez API):
 historia i raporty z 7 dni, 1 projekt, 2 szybkie szablony, 4 domyślne statusy, tylko wbudowane typy pracy,
 bez eksportu CSV i bez codziennych przypomnień e-mail.
 
@@ -197,7 +195,7 @@ Lokalnie webhooki przekazuje Stripe CLI: `stripe listen --forward-to localhost:3
 
 W panelu Stripe włącz jeszcze: przypomnienia o odnowieniu (7 dni przed) i e-maile z fakturą
 (Settings → Billing → Subscriptions and emails), a gdy sprzedajesz konsumentom w UE: Stripe Tax
-i `STRIPE_AUTOMATIC_TAX=true` (VAT OSS). Zmiana ceny = nowa kwota w `PRO_PRICES` (`src/features/billing/plans.ts`)
+i `STRIPE_AUTOMATIC_TAX=true` (VAT OSS). Zmiana ceny = nowa kwota w `PRO_PRICES` (`src/features/billing/domain/plans.ts`)
 i ponowne `pnpm stripe:setup` (nowa cena przejmuje lookup key, stara zostaje wyłączona).
 
 ## Przed startem: `pnpm check:launch`

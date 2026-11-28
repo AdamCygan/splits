@@ -9,10 +9,12 @@ jako jeden obraz. Jeden język, jeden zestaw typów i jedno wdrożenie zamiast d
 
 - `src/routes/api/v1/$.ts` przekazuje każde żądanie `/api/v1/*` do aplikacji **Hono** (`src/server/app.ts`).
   Import jest dynamiczny, więc kod serwera (baza, hasła, tokeny) nie trafia do bundla przeglądarki.
-- Trasy API leżą w `src/server/features/*` (auth, account, config, sprints, entries). Handler sam
-  rozmawia z bazą przez Drizzle; dodatkowa warstwa repozytoriów tylko by to dublowała.
-- Reguły biznesowe są w `src/domain/*` i **te same funkcje** sprawdzają formularz w przeglądarce
-  i dane na serwerze (np. `validateEntry`, `validateScale`, `missingCadenceSprints`).
+- Kod jest podzielony **per funkcja** (`src/features/<obszar>`), a w środku na warstwy — patrz
+  „Warstwy funkcji” niżej. Trasy API to `controllers/routes.server.ts` (tylko HTTP: wejście,
+  ciasteczka, odpowiedź), zapytania i transakcje to `data/*.server.ts` (repozytoria Drizzle).
+- Reguły biznesowe są w `domain/` każdej funkcji (wspólne w `src/shared/domain`) i **te same funkcje**
+  sprawdzają formularz w przeglądarce i dane na serwerze (np. `validateEntry`, `validateScale`,
+  `missingCadenceSprints`).
 - Wcześniejszy szkielet backendu w .NET został usunięty: nie miał jeszcze logiki, a blokował pracę.
 
 Mikroserwisy nie mają tu sensu: jeden zespół, jedna baza, mały ruch.
@@ -42,34 +44,39 @@ Mikroserwisy nie mają tu sensu: jeden zespół, jedna baza, mały ruch.
 - Panel `/app` renderuje się tylko w przeglądarce (`ssr: false`): sesja żyje w pamięci i ciasteczku httpOnly.
 - **TanStack Query** do danych z serwera, **Zod** waliduje formularze i odpowiedzi API.
 
-### Komponenty: MVVM
+### Warstwy funkcji
 
-Większe ekrany panelu są w układzie **Model – ViewModel – View**, żeby logika nie mieszała się
-z JSX i żeby te same reguły nie powtarzały się na kilku stronach.
-
-- **Model** — czyste funkcje bez Reacta, z testami w `tests/unit`. Reguły wspólne dla wielu
-  ekranów (i dla API) są w `src/domain/*` (np. `task-groups`, `task-list`, `workday`,
-  `templates`, `sprints`, `report`, `day-summary`, `task-insights`, `numbers`, `archive`).
-  Reguły jednego formularza mogą leżeć obok niego w `model.ts` (np. `entry-form/model.ts`).
-- **ViewModel** — hook `useXViewModel(props)` w `use-x.ts`: zapytania (TanStack Query),
-  stan ekranu, mutacje, wartości pochodne i akcje. Zwraca jeden obiekt, a jego typ
-  eksportujemy jako `XViewModel = ReturnType<typeof useXViewModel>`.
-- **View** — komponenty, które dostają `vm` i tylko renderują albo wywołują akcje
-  (`vm.setFilter(...)`, `vm.resume(entry)`). Bez `useQuery` i bez obliczeń domenowych.
-
-Każdy taki ekran to katalog z `index.tsx` (wejście widoku), więc importy tras się nie zmieniają:
+Każda funkcja (`account`, `auth`, `billing`, `time-entries`, `sprints`, `projects`, …) ma ten sam układ:
 
 ```
-features/tasks/tasks-page/
-├── index.tsx          # TasksPage: układ strony, sekcje
-├── use-tasks.ts       # useTasksViewModel
-├── task-filters.tsx   # widoki sekcji, każdy dostaje { vm }
-├── task-row.tsx
-└── …
+src/features/billing/
+├── domain/        # plans.ts: plany, ceny, limity Free, enumy — czyste funkcje z testami
+├── data/
+│   ├── dto.ts                 # typy DTO + schematy Zod odpowiedzi API (wspólne: klient i serwer)
+│   ├── api.ts                 # klient HTTP tej funkcji (billingApi)
+│   ├── queries.ts             # zapytania TanStack Query
+│   ├── repository.server.ts   # baza: zapytania i transakcje (Drizzle), Stripe
+│   ├── inputs.server.ts       # schematy wejścia API
+│   └── mappers.server.ts      # wiersz bazy → DTO
+├── controllers/
+│   ├── use-billing.ts         # view-model: mutacje, przekierowania, stan ekranu
+│   └── routes.server.ts       # trasy Hono: parsowanie, limity, ciasteczka, odpowiedź
+└── views/         # komponenty React: tylko wyświetlanie i wywoływanie akcji
 ```
 
-W tym układzie są: Dziś (`time-entries/components/today`), formularz wpisu (`entry-form`), Konto (`settings/components/account`), komunikaty o koncie (`notices`), faktury (`billing/invoices`), potwierdzenie e-maila (`auth/confirm-email`), panel admina (`admin/users-page`, `admin/user-page`, `admin/log-page`),
-paleta poleceń (`commands`), Zadania, strona zadania, Raporty, Sprinty i podsumowanie dnia.
+Zależności idą w jedną stronę: `views → controllers → data / domain`. ESLint pilnuje granic:
+
+- widok nie importuje `data/api` ani `useDataMutation` (wywołania API i mutacje są w kontrolerach),
+- `domain/` nie importuje Reacta, sieci, kontrolerów ani widoków (wolno tylko typy z `data/dto`),
+- trasy (`controllers/*.server.ts`) nie importują Drizzle ani `#/server/db` — bazę obsługuje `data/`,
+- kod przeglądarki nie importuje `*.server.ts` ani `#/server/*`.
+
+Wspólne rzeczy bez jednej funkcji są w `src/shared` (`domain`: daty, liczby, tekst, CSV, markdown;
+`data`: pomocnicze HTTP, klucze zapytań, mutacje; `controllers`: archiwizacja, ostrzeżenie o zmianach).
+`src/server` to platforma: aplikacja Hono, baza, middleware HTTP, e-mail, zadania w tle.
+
+Większe ekrany mają view-model (`use-x.ts` w `controllers/`), który zwraca jeden obiekt `vm`,
+a widoki (`views/<ekran>/index.tsx` i sekcje) dostają `{ vm }` i tylko renderują.
 
 Wspólne klocki widoków są w `src/components/ui`: `StatGrid`/`StatTile` (liczby nad stroną),
 `Panel` (karta sekcji z nagłówkiem), `ProgressBar`, `Kbd`, `ActionMenu`. Formatowanie
