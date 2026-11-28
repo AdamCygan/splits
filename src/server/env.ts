@@ -33,7 +33,7 @@ if (isProduction && jwtSecret.length < 32)
 export const serverEnv = {
   isProduction,
   databaseUrl,
-  /** Migracje przez bezpośrednie połączenie (na Neonie adres bez -pooler). */
+  /** Migracje przez bezpośrednie połączenie, gdy DATABASE_URL idzie przez pooler (np. PgBouncer). */
   migrationUrl: env.DATABASE_URL_UNPOOLED ?? databaseUrl,
   databasePoolSize: Number(env.DATABASE_POOL_SIZE ?? 10),
   migrateOnStart: env.MIGRATE_ON_START !== 'false',
@@ -66,8 +66,8 @@ export const serverEnv = {
     : null,
   /** Sentry (np. https://klucz@o1.ingest.de.sentry.io/123); bez niego błędy są tylko w logach. */
   sentryDsn: env.SENTRY_DSN ?? null,
-  /** Wersja aplikacji w zgłoszeniach błędów (Fly ustawia FLY_IMAGE_REF przy każdym deployu). */
-  release: env.APP_RELEASE ?? env.FLY_IMAGE_REF ?? null,
+  /** Wersja aplikacji w zgłoszeniach błędów (Railway ustawia RAILWAY_GIT_COMMIT_SHA przy każdym deployu). */
+  release: env.APP_RELEASE ?? env.RAILWAY_GIT_COMMIT_SHA ?? null,
   emailFrom: env.EMAIL_FROM ?? 'Timeblame <no-reply@timeblame.com>',
   /**
    * Właściciele aplikacji (ADMIN_EMAILS, po przecinku): konto z takim potwierdzonym adresem
@@ -86,7 +86,7 @@ export const serverEnv = {
   adminRequire2fa: env.ADMIN_REQUIRE_2FA === 'true',
   /**
    * Nagłówek z adresem IP klienta ustawiany przez proxy hostingu (limity prób, lista sesji).
-   * Railway nadpisuje X-Real-IP, Fly.io ustawia Fly-Client-IP. Czytamy tylko ten jeden nagłówek:
+   * Railway nadpisuje X-Real-IP (inny hosting: np. Cloudflare CF-Connecting-IP). Czytamy tylko ten jeden nagłówek:
    * inne klient może podać sam i obejść limity prób.
    */
   clientIpHeader: (env.CLIENT_IP_HEADER ?? 'x-real-ip').trim().toLowerCase(),

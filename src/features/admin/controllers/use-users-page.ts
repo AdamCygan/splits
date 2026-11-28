@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { adminApi } from '../data/api'
@@ -12,6 +12,7 @@ import { downloadFile } from '#/lib/download'
 import { useErrorText } from '#/lib/use-error-text'
 import { activeUserFilters, pageCount, withoutEmpty } from '../domain/filters'
 import { adminStatsQuery, adminUsersQuery } from '../data/queries'
+import { useDebouncedFilter } from '#/shared/controllers/use-debounced-filter'
 
 export interface UsersPageOptions {
   /** Filtry z adresu strony (link do listy można komuś wysłać). */
@@ -40,13 +41,12 @@ export function useUsersPageViewModel({ filter, onFilter }: UsersPageOptions) {
   const update = (patch: Partial<AdminUserFilter>) =>
     onFilter(withoutEmpty({ ...filter, ...patch, page: patch.page }))
 
-  useEffect(() => {
-    const q = search.trim() || undefined
-    if (q === filter.q) return
-    const timer = setTimeout(() => update({ q }), SEARCH_DELAY)
-    return () => clearTimeout(timer)
-    // update zmienia się z każdym renderem; reagujemy tylko na tekst wyszukiwania.
-  }, [search, filter.q])
+  const q = search.trim() || undefined
+  useDebouncedFilter(
+    q === filter.q ? null : () => update({ q }),
+    SEARCH_DELAY,
+    [search, filter.q],
+  )
 
   const sort = { sort: filter.sort ?? 'created', dir: filter.dir ?? 'desc' }
 

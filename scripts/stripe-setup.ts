@@ -244,7 +244,7 @@ async function ensureWebhook() {
   console.log(`✓ Utworzono webhook ${url}`)
   console.log(`  STRIPE_WEBHOOK_SECRET=${created.secret}`)
   console.log(
-    '  Zapisz go jako sekret aplikacji, np.: fly secrets set STRIPE_WEBHOOK_SECRET=…',
+    '  Zapisz go jako sekret aplikacji, np. w Railway: Service → Variables → STRIPE_WEBHOOK_SECRET',
   )
 }
 

@@ -1,0 +1,41 @@
+name: Błąd
+description: Coś nie działa tak, jak powinno
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: Co się stało?
+      description: Co widzisz i czego się spodziewałeś.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Jak to powtórzyć
+      placeholder: |
+        1. Wejdź na /app/…
+        2. Kliknij …
+        3. Widzisz …
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Strona i urządzenie
+      placeholder: /app/tasks, Chrome na Windows, telefon…
+  - type: input
+    id: report
+    attributes:
+      label: Zgłoszenie z aplikacji albo Sentry
+      description: Numer zgłoszenia z panelu admina albo link do problemu w Sentry, jeśli jest.
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Jak bardzo przeszkadza
+      options:
+        - Blokuje pracę albo płatności
+        - Przeszkadza, ale da się obejść
+        - Drobiazg
+    validations:
+      required: true

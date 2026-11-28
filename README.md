@@ -10,15 +10,15 @@ w jednym procesie Node i wdrażają się jako jeden obraz Dockera.
 
 ## Stack
 
-| Warstwa   | Technologia                                                                                                  |
-| --------- | ------------------------------------------------------------------------------------------------------------ |
-| Strony    | TanStack Start (SSR) + Router + Query + Form, TailwindCSS 4, Radix, Zod                                      |
-| API       | Hono pod `/api/v1` (w tym samym procesie co strony), walidacja Zod                                           |
-| Baza      | PostgreSQL 18 (działa też na 16 i 17), lokalnie albo na [Neon](https://neon.com); Drizzle ORM + migracje SQL |
-| Logowanie | e-mail + hasło (scrypt), Google (OAuth 2.0 + PKCE), JWT 15 min + refresh token z rotacją                     |
-| E-maile   | Resend (reset hasła); bez klucza e-maile lądują w logu serwera                                               |
-| Analityka | PostHog (tylko po zgodzie na cookies)                                                                        |
-| Hosting   | Fly.io (Frankfurt) + Neon, alternatywnie dowolny serwer z Dockerem                                           |
+| Warstwa   | Technologia                                                                                 |
+| --------- | ------------------------------------------------------------------------------------------- |
+| Strony    | TanStack Start (SSR) + Router + Query + Form, TailwindCSS 4, Radix, Zod                     |
+| API       | Hono pod `/api/v1` (w tym samym procesie co strony), walidacja Zod                          |
+| Baza      | PostgreSQL 18 (działa też na 16 i 17), lokalnie albo na Railway; Drizzle ORM + migracje SQL |
+| Logowanie | e-mail + hasło (scrypt), Google (OAuth 2.0 + PKCE), JWT 15 min + refresh token z rotacją    |
+| E-maile   | Resend (reset hasła); bez klucza e-maile lądują w logu serwera                              |
+| Analityka | PostHog (tylko po zgodzie na cookies)                                                       |
+| Hosting   | Railway (aplikacja z Dockerfile + PostgreSQL), alternatywnie dowolny serwer z Dockerem      |
 
 ## Struktura repozytorium
 
@@ -38,7 +38,7 @@ time-tracker/
 │   └── config/                 # site.ts (marka), legal.ts (dane do regulaminu)
 ├── drizzle/                    # migracje SQL (generowane: pnpm db:generate)
 ├── tests/unit|api|e2e          # Vitest (domena), Vitest + Postgres (API), Playwright + axe
-├── Dockerfile, fly.toml        # jeden obraz, jedna aplikacja na Fly.io
+├── Dockerfile                  # jeden obraz: strony + API (Railway albo dowolny Docker)
 ├── compose.yaml                # lokalnie: Postgres + aplikacja
 ├── docs/                       # architektura, pierwotny projekt schematu
 └── marketing/                  # film promocyjny, obraz OG, teksty reklam
@@ -68,8 +68,8 @@ pnpm install
 pnpm dev                          # http://localhost:3000, migracje wgrywają się same
 ```
 
-Zamiast Dockera możesz od razu wpisać w `DATABASE_URL` adres bazy z Neona (osobna gałąź
-`dev` w Neonie, żeby nie ruszać danych produkcyjnych).
+Zamiast Dockera możesz wpisać w `DATABASE_URL` adres osobnej bazy deweloperskiej
+(nigdy produkcyjnej).
 
 ### Baza i migracje
 
@@ -201,47 +201,48 @@ i ponowne `pnpm stripe:setup` (nowa cena przejmuje lookup key, stara zostaje wy�
 ## Przed startem: `pnpm check:launch`
 
 Sprawdza, czy w `src/config/legal.ts` i `src/config/site.ts` nie zostały placeholdery (dane firmy,
-NIP, adres, dostawcy) ani adresy `@example.com`, i czy `fly.toml` ma jedną domenę w `APP_URL`,
-`VITE_APP_URL` i `EMAIL_FROM`. Przechodzi dopiero, gdy wszystko jest prawdziwe. Serwer produkcyjny
+NIP, adres, region hostingu) ani adresy `@example.com`, i czy `VITE_APP_URL` (z `.env`) i domyślny
+`EMAIL_FROM` używają tej samej domeny produkcyjnej. Uruchom z produkcyjnym `VITE_APP_URL`:
+`VITE_APP_URL=https://timeblame.com pnpm check:launch`. Przechodzi dopiero, gdy wszystko jest prawdziwe. Serwer produkcyjny
 z placeholderami też ostrzega (w logach i w Sentry).
 
-## Hosting i wdrożenie: Fly.io + Neon
+## Hosting i wdrożenie: Railway
 
-| Co                       | Gdzie                                                  | Koszt / mies. (start)     |
-| ------------------------ | ------------------------------------------------------ | ------------------------- |
-| Aplikacja (strony + API) | Fly.io, 1 maszyna `shared-cpu-1x` 512 MB, Frankfurt    | ok. 3–5 $                 |
-| Baza                     | Neon Free (1 GB danych, usypia się po 5 min bez ruchu) | 0 $                       |
-| Domena                   | dowolny rejestrator                                    | ok. 1 $ (10–15 $ rocznie) |
-| E-maile                  | Resend Free (3000 / mies.)                             | 0 $                       |
+| Co                       | Gdzie                                               | Koszt / mies. (start) |
+| ------------------------ | --------------------------------------------------- | --------------------- |
+| Aplikacja (strony + API) | Railway, usługa z `Dockerfile`, 1 replika           | ok. 5–15 $ (Hobby)    |
+| Baza                     | Railway PostgreSQL w tym samym projekcie i regionie | w cenie zużycia       |
+| Domena                   | `timeblame.com` (kupiona w Railway)                 | ok. 10–15 $ rocznie   |
+| E-maile                  | Resend Free (3000 / mies., 100 / dzień)             | 0 $                   |
 
-1. **Neon**: projekt w regionie _AWS Europe Central 1 (Frankfurt)_, Postgres 18. Skopiuj adres z _Connect_
-   (bez _Connection pooling_) i zamień końcówkę `?sslmode=require&channel_binding=require` na `?sslmode=verify-full`.
-2. **Fly.io**: `curl -L https://fly.io/install.sh | sh` (Windows: `iwr https://fly.io/install.ps1 -useb | iex`),
-   potem `fly auth signup` albo `fly auth login`.
-3. **Aplikacja** (w katalogu głównym repozytorium). W `fly.toml` wpisz własną nazwę w `app` oraz
-   `https://<nazwa>.fly.dev` w `APP_URL` i `VITE_APP_URL`, potem:
-   ```bash
-   fly apps create <nazwa>
-   fly secrets set DATABASE_URL="postgresql://…@ep-….eu-central-1.aws.neon.tech/neondb?sslmode=verify-full" \
-                   JWT_SECRET="$(openssl rand -base64 48)"
-   fly deploy --ha=false                       # jedna maszyna (domyślnie Fly stawia dwie)
-   curl https://<nazwa>.fly.dev/api/v1/health  # {"status":"ok"}
-   ```
-4. **Domena**: `fly certs add timeblame.com`, a u rejestratora rekordy DNS z `fly certs show`.
-5. **Google** (opcjonalnie): w Google Cloud Console utwórz _OAuth client ID_ (Web application) z adresem
-   przekierowania `https://timeblame.com/api/v1/auth/google/callback`, potem
-   `fly secrets set GOOGLE_CLIENT_ID=… GOOGLE_CLIENT_SECRET=…`. Przycisk „Continue with Google” pojawi się sam.
-6. **E-maile**: zweryfikuj domenę w Resend i `fly secrets set RESEND_API_KEY=…`.
-7. **Błędy**: załóż projekt w Sentry w regionie UE (sentry.io, _Data Storage Location: EU_), platforma Node,
-   i `fly secrets set SENTRY_DSN=https://…@o….ingest.de.sentry.io/…`. Trafiają tam błędy 5xx API,
-   nieudane webhooki Stripe (znacznik `area: stripe-webhook`) i ostrzeżenie startowe. Bez SDK, bez danych
-   z treści wpisów i bez adresów IP. W Sentry ustaw alert e-mailem na każdy nowy problem.
+1. **Projekt**: nowy projekt → _Deploy from GitHub repo_ (to repozytorium, gałąź `main`) i _+ New → Database → PostgreSQL_.
+   Wybierz region w UE (Service → Settings → Regions) i wpisz go w `src/config/legal.ts` (`processors.hosting`).
+2. **Zmienne usługi aplikacji** (Service → Variables):
+   - `DATABASE_URL=${{Postgres.DATABASE_URL}}`, `JWT_SECRET` (`openssl rand -base64 48`),
+   - `APP_URL=https://timeblame.com` i `VITE_APP_URL=https://timeblame.com` (ta druga trafia do builda),
+   - `ADMIN_EMAILS`, `RESEND_API_KEY`, `EMAIL_FROM`, `SENTRY_DSN`, klucze Stripe i Google (niżej).
+3. **Ustawienia usługi** (Service → Settings):
+   - _Networking_: domena `timeblame.com`, port **8080** (Railway podaje go aplikacji w `PORT`),
+   - _Healthcheck Path_: `/api/v1/health`,
+   - _Wait for CI_: włączone — wdraża tylko commity z zielonym CI,
+   - _Replicas_: **1** (limity prób są w pamięci, a przypomnienia i sprzątanie na timerze w procesie;
+     przy dwóch replikach maile szłyby dwa razy).
+4. **Kopie zapasowe**: wbudowane kopie bazy (_Backups_ w usłudze Postgres, dzienne/tygodniowe) są w planie
+   **Pro**. Na planie Hobby dodaj szablon Railway „Postgres S3 backup” z własnym bucketem S3/R2 albo
+   przejdź na Pro przed startem. Raz sprawdź przywracanie na osobnej bazie.
+5. **Google** (opcjonalnie): w Google Cloud Console _OAuth client ID_ (Web application) z adresem
+   przekierowania `https://timeblame.com/api/v1/auth/google/callback`, potem zmienne
+   `GOOGLE_CLIENT_ID` i `GOOGLE_CLIENT_SECRET`. Przycisk „Continue with Google” pojawi się sam.
+6. **E-maile**: zweryfikuj domenę w Resend (SPF, DKIM, DMARC) i ustaw `RESEND_API_KEY`.
+7. **Błędy**: projekt w Sentry w regionie UE (_Data Storage Location: EU_), platforma Node, zmienna `SENTRY_DSN`.
+   Trafiają tam błędy 5xx API, nieudane webhooki Stripe (znacznik `area: stripe-webhook`) i ostrzeżenie
+   startowe. Bez SDK, bez treści wpisów i bez adresów IP. Wersja w zgłoszeniu to `RAILWAY_GIT_COMMIT_SHA`.
+   W Sentry ustaw alert e-mailem na każdy nowy problem, a w zewnętrznym monitorze dostępności
+   sprawdzanie `https://timeblame.com/api/v1/health` co kilka minut.
 8. **Automatyczne wdrożenia**: GitHub Actions tylko testuje (`.github/workflows/ci.yml`: typy, lint, testy
-   jednostkowe i API z Postgresem, e2e z axe). Wdraża hosting z gałęzi `main`: na Railway to wbudowane
-   automatyczne wdrożenia; na Fly.io włącz je w panelu (GitHub → Deploy) albo uruchamiaj `fly deploy`.
-   Na Railway warto zaznaczyć „Wait for CI”, żeby wdrażał tylko commity z zielonym CI.
+   jednostkowe i API z Postgresem, e2e z axe). Railway wdraża `main` po zielonym CI.
 
-Ten sam obraz działa też na dowolnym serwerze z Dockerem (`docker compose up -d --build`) i na Railway.
+Ten sam obraz działa też na dowolnym serwerze z Dockerem (`docker compose up -d --build`).
 
 ## SEO i wydajność
 
@@ -263,7 +264,7 @@ Od niej zależą canonical, sitemap, Open Graph i dane strukturalne.
 Opis zabezpieczeń: `docs/architecture.md` (sekcje 5 i 5a), zgłaszanie podatności: `SECURITY.md`.
 Przy każdym pushu działa `.github/workflows/security.yml` (CodeQL, Semgrep, gitleaks, `pnpm audit`).
 Na Railway adres klienta do limitów prób przychodzi w `X-Real-IP` (domyślne `CLIENT_IP_HEADER`);
-na Fly.io ustaw `CLIENT_IP_HEADER=fly-client-ip`.
+za Cloudflare ustaw `CLIENT_IP_HEADER=cf-connecting-ip`.
 
 ## Przydatne komendy
 

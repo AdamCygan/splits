@@ -32,7 +32,7 @@ Mikroserwisy nie mają tu sensu: jeden zespół, jedna baza, mały ruch.
 
 - Schemat w `src/server/db/schema.ts`, migracje SQL w `drizzle/` (`pnpm db:generate`).
 - Migracje wykonują się przy starcie serwera pod blokadą doradczą (`pg_advisory_lock`), więc kilka maszyn
-  naraz nic nie psuje. Na Neonie migracje mogą iść adresem bez poolera (`DATABASE_URL_UNPOOLED`).
+  naraz nic nie psuje. Gdy `DATABASE_URL` idzie przez pooler, migracje mogą iść bezpośrednim adresem (`DATABASE_URL_UNPOOLED`).
 - Każdy rekord ma `user_id`; każde zapytanie filtruje po zalogowanym użytkowniku, a id typu czy projektu
   z innego konta traktujemy jak nieistniejące (test „keeps every account’s data private”).
 - Indeksy częściowe pilnują reguł: jeden działający timer, jeden status domyślny, unikalne skróty szablonów.
@@ -132,5 +132,7 @@ Pilnuje ich ESLint (`no-restricted-syntax` i `consistent-type-definitions` w `es
 ## 7. Wdrożenie
 
 - Obraz multi-stage na `node:24-alpine`, uruchamiany jako użytkownik `node`, z `HEALTHCHECK` na `/api/v1/health`.
-- Konfiguracja wyłącznie przez zmienne środowiskowe (`.env.example`); ten sam obraz działa na Fly.io,
+- Konfiguracja wyłącznie przez zmienne środowiskowe (`.env.example`); ten sam obraz działa na Railway,
   w `docker compose` i później w Kubernetesie (ConfigMap/Secret).
+- Railway wdraża `main` po zielonym CI („Wait for CI”). Jedna replika: limity prób są w pamięci,
+  a przypomnienia i sprzątanie działają na timerze w procesie (przy dwóch replikach maile szłyby dwa razy).

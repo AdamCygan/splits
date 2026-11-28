@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { AdminActionFilter } from '#/features/admin/data/dto'
 import { pageCount, withoutEmpty } from '../domain/filters'
 import { adminActionsQuery } from '../data/queries'
+import { useDebouncedFilter } from '#/shared/controllers/use-debounced-filter'
 
 export interface LogPageOptions {
   /** Filtry z adresu strony. */
@@ -21,15 +22,18 @@ export function useLogPageViewModel({ filter, onFilter }: LogPageOptions) {
     onFilter(withoutEmpty({ ...filter, ...patch, page: patch.page }))
 
   // Pola tekstowe trafiają do adresu chwilę po ostatnim wciśnięciu klawisza.
-  useEffect(() => {
-    const next = {
-      admin: admin.trim() || undefined,
-      target: target.trim() || undefined,
-    }
-    if (next.admin === filter.admin && next.target === filter.target) return
-    const timer = setTimeout(() => update(next), TYPE_DELAY)
-    return () => clearTimeout(timer)
-  }, [admin, target, filter.admin, filter.target])
+  const typed = {
+    admin: admin.trim() || undefined,
+    target: target.trim() || undefined,
+  }
+  const unchanged =
+    typed.admin === filter.admin && typed.target === filter.target
+  useDebouncedFilter(unchanged ? null : () => update(typed), TYPE_DELAY, [
+    admin,
+    target,
+    filter.admin,
+    filter.target,
+  ])
 
   return {
     filter,

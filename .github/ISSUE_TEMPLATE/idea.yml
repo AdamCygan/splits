@@ -1,0 +1,29 @@
+name: Pomysł
+description: Nowa funkcja albo usprawnienie
+labels: [idea]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Jaki problem rozwiązuje?
+      description: Opisz sytuację użytkownika, nie gotowe rozwiązanie.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Pomysł
+  - type: input
+    id: source
+    attributes:
+      label: Skąd pomysł
+      placeholder: zgłoszenie z aplikacji, rozmowa z użytkownikiem, własny…
+  - type: dropdown
+    id: plan
+    attributes:
+      label: Dla kogo
+      options:
+        - Free
+        - Pro
+        - Wszyscy
+        - Admin

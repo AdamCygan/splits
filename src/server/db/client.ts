@@ -6,13 +6,13 @@ import { serverEnv } from '../env'
 import * as schema from './schema'
 
 /**
- * Połączenie z Postgresem (lokalnie albo Neon). Na Fly.io aplikacja działa cały czas,
- * więc wystarcza zwykła pula połączeń `pg`; na Neonie użyj adresu z `-pooler`, gdy maszyn jest kilka.
+ * Połączenie z Postgresem (lokalnie albo na Railway). Aplikacja działa cały czas,
+ * więc wystarcza zwykła pula połączeń `pg`.
  */
 const pool = new pg.Pool({
   connectionString: serverEnv.databaseUrl,
   max: serverEnv.databasePoolSize,
-  // Neon usypia bazę po 5 min bezczynności: pierwsze połączenie po przerwie trwa dłużej.
+  // Zapas na wolne pierwsze połączenie (np. baza po restarcie albo uśpiona u dostawcy).
   connectionTimeoutMillis: 15_000,
   idleTimeoutMillis: 30_000,
 })

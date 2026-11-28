@@ -13,8 +13,8 @@ const ready = {
       privacy: 'privacy@timeblame.com',
     },
     processors: {
-      hosting: 'Fly.io, Inc. (region Frankfurt)',
-      database: 'Neon, Inc. (region UE)',
+      hosting: 'Railway Corporation (USA), region EU West (Amsterdam)',
+      database: 'Railway Corporation (PostgreSQL, EU West)',
       email: 'Resend, Inc.',
     },
   },

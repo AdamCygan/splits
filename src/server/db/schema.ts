@@ -1,5 +1,5 @@
 /**
- * Schemat bazy (PostgreSQL 16+, Neon). Model per użytkownik: każdy rekord domenowy ma user_id.
+ * Schemat bazy (PostgreSQL 16+). Model per użytkownik: każdy rekord domenowy ma user_id.
  * Migracje SQL generuje drizzle-kit (`pnpm db:generate`) do katalogu drizzle/.
  * Reguły (długości, formaty) są też w src/domain/* i walidacji API.
  */
