@@ -81,7 +81,7 @@ export function Logo({ className }: LogoProps) {
     <span
       role="img"
       aria-label={site.name}
-      className={cn('inline-flex items-center gap-2 text-ink', className)}
+      className={cn('flex w-fit items-center gap-2 text-ink', className)}
     >
       <LogoMark />
       <span
