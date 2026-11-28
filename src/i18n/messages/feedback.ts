@@ -52,10 +52,10 @@ const en = {
     dismissed: 'Closed',
   },
   admin: {
-    nav: 'Reports',
-    title: 'Reports',
+    nav: 'Feedback',
+    title: 'Feedback',
     lead: 'Problems and ideas sent from the app. A reply goes to the user by email.',
-    seoTitle: 'Reports | Admin',
+    seoTitle: 'Feedback | Admin',
     filters: {
       status: 'Status',
       kind: 'Type',
