@@ -213,19 +213,25 @@ test.describe('invoices', () => {
 
   test('Should list invoices with their PDF and Stripe page', async ({
     page,
+    isMobile,
   }) => {
     await signInWithSamples(page, { subscription: 'active' })
     await withBilling(page, invoices)
     await page.goto('/app/settings/plan')
-    const table = page.getByRole('table', {
-      name: 'Your invoices, newest first',
-    })
-    await expect(table.getByRole('row')).toHaveCount(3)
-    await expect(table.getByRole('row').nth(1)).toContainText('PH-0002')
-    await expect(table.getByRole('row').nth(1)).toContainText('$49.00')
-    await expect(table.getByRole('row').nth(1)).toContainText('Paid')
-    await expect(table.getByRole('row').nth(2)).toContainText('Draft')
-    await expect(table.getByRole('row').nth(2)).toContainText('Due')
+    const caption = 'Your invoices, newest first'
+    // Komputer: tabela (pierwszy wiersz to nagłówki); telefon: karty.
+    const table = isMobile
+      ? page.getByRole('list', { name: caption })
+      : page.getByRole('table', { name: caption })
+    const items = isMobile
+      ? table.getByRole('listitem')
+      : table.locator('tbody').getByRole('row')
+    await expect(items).toHaveCount(2)
+    await expect(items.nth(0)).toContainText('PH-0002')
+    await expect(items.nth(0)).toContainText('$49.00')
+    await expect(items.nth(0)).toContainText('Paid')
+    await expect(items.nth(1)).toContainText('Draft')
+    await expect(items.nth(1)).toContainText('Due')
     await expect(
       table.getByRole('link', { name: 'PDF of invoice PH-0002' }),
     ).toHaveAttribute('href', 'https://pay.stripe.com/invoice/in_2/pdf')

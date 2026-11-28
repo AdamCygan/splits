@@ -22,6 +22,11 @@ const english = {
   },
   footer: { tagline: 'Blame the meetings, not the people.' },
   language: { label: 'Language', change: 'Change language' },
+  sort: {
+    label: 'Sort by',
+    ascending: 'Ascending, tap to reverse',
+    descending: 'Descending, tap to reverse',
+  },
   time: {
     pick: 'Pick a time',
     list: 'Times',
@@ -96,6 +101,11 @@ const polish: CommonMessages = {
   },
   footer: { tagline: 'Winne są spotkania, nie ludzie.' },
   language: { label: 'Język', change: 'Zmień język' },
+  sort: {
+    label: 'Sortuj według',
+    ascending: 'Rosnąco, dotknij, by odwrócić',
+    descending: 'Malejąco, dotknij, by odwrócić',
+  },
   time: {
     pick: 'Wybierz godzinę',
     list: 'Godziny',

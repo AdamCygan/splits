@@ -1,5 +1,14 @@
 import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
 import { expectNoA11yViolations, signInWithSamples } from './helpers'
+
+/** Zadania raportu: wiersze tabeli na komputerze, karty na telefonie. */
+const taskItems = (page: Page, isMobile: boolean) =>
+  isMobile
+    ? page
+        .getByRole('list', { name: 'Tasks', exact: true })
+        .getByRole('listitem')
+    : page.getByRole('table').locator('tbody tr')
 
 test.describe('reports: story points and time per task', () => {
   test.beforeEach(async ({ page }) => {
@@ -12,43 +21,44 @@ test.describe('reports: story points and time per task', () => {
 
   test('Should show the current sprint with SP and time for each task', async ({
     page,
+    isMobile,
   }) => {
     await expect(page.getByLabel('Period')).toHaveValue(/^sprint:/)
-    const table = page.getByRole('table')
-    const refund = table
-      .getByRole('row')
-      .filter({ hasText: 'PAY-139 Refund API endpoint' })
+    const tasks = taskItems(page, isMobile)
+    const refund = tasks.filter({ hasText: 'PAY-139 Refund API endpoint' })
     // Dwie sesje tego samego zadania: czas się sumuje, SP liczą się raz.
-    await expect(
-      refund.getByRole('cell', { name: '5', exact: true }),
-    ).toBeVisible()
-    await expect(
-      refund.getByRole('cell', { name: '5h 35m', exact: true }),
-    ).toBeVisible()
-    await expect(
-      table.getByRole('row').filter({ hasText: 'CR !477' }),
-    ).toContainText('No SP')
-    await expect(
-      table.getByRole('row').filter({ hasText: 'Sprint planning' }),
-    ).toContainText('No SP')
+    await expect(refund.getByText('5', { exact: true })).toBeVisible()
+    await expect(refund.getByText('5h 35m', { exact: true })).toBeVisible()
+    await expect(tasks.filter({ hasText: 'CR !477' })).toContainText('No SP')
+    await expect(tasks.filter({ hasText: 'Sprint planning' })).toContainText(
+      'No SP',
+    )
     await expectNoA11yViolations(page)
   })
 
   test('Should filter by kind of work and sort by story points', async ({
     page,
+    isMobile,
   }) => {
     await page
       .getByRole('combobox', { name: 'Kind of work' })
       .selectOption({ label: 'Code review' })
-    const rows = page.getByRole('table').locator('tbody tr')
+    const rows = taskItems(page, isMobile)
     await expect(rows).toHaveCount(3)
-    await page.getByRole('button', { name: /^SP/ }).click()
-    await expect(
-      page.getByRole('columnheader', { name: /^SP/ }),
-    ).toHaveAttribute('aria-sort', 'descending')
-    await expect(
-      rows.first().getByRole('cell', { name: '0.5', exact: true }),
-    ).toBeVisible()
+    if (isMobile) {
+      await page
+        .getByRole('combobox', { name: 'Sort by' })
+        .selectOption({ label: 'SP' })
+      await expect(
+        page.getByRole('button', { name: /^Descending/ }),
+      ).toBeVisible()
+    } else {
+      await page.getByRole('button', { name: /^SP/ }).click()
+      await expect(
+        page.getByRole('columnheader', { name: /^SP/ }),
+      ).toHaveAttribute('aria-sort', 'descending')
+    }
+    await expect(rows.first().getByText('0.5', { exact: true })).toBeVisible()
     await expect(rows.last()).toContainText('CR !477')
     await expect(rows.last()).toContainText('No SP')
   })
@@ -62,18 +72,16 @@ test.describe('reports: story points and time per task', () => {
     ).toBeVisible()
   })
 
-  test('Should compare the estimate with the real time', async ({ page }) => {
+  test('Should compare the estimate with the real time', async ({
+    page,
+    isMobile,
+  }) => {
     await expect(page.getByText('Estimate vs. real time')).toBeVisible()
-    const row = page
-      .getByRole('table')
-      .getByRole('row')
-      .filter({ hasText: 'PAY-142 Payment gateway integration' })
+    const tasks = taskItems(page, isMobile)
+    const row = tasks.filter({ hasText: 'PAY-142 Payment gateway integration' })
     await expect(row.getByText('est. 5h', { exact: true })).toBeVisible()
     await expect(row.getByText('55m over est.', { exact: true })).toBeVisible()
-    const planning = page
-      .getByRole('table')
-      .getByRole('row')
-      .filter({ hasText: 'Sprint planning' })
+    const planning = tasks.filter({ hasText: 'Sprint planning' })
     await expect(planning.getByText('incl. 20m running over')).toBeVisible()
 
     await row
@@ -95,6 +103,7 @@ test.describe('reports: story points and time per task', () => {
 
   test('Should open a task from the report to edit it and its time', async ({
     page,
+    isMobile,
   }) => {
     await page
       .getByRole('button', { name: 'Edit task: PAY-139 Refund API endpoint' })
@@ -134,13 +143,10 @@ test.describe('reports: story points and time per task', () => {
     await expect(dialog).toContainText('1 session, ')
     await page.keyboard.press('Escape')
     await expect(dialog).toBeHidden()
-    const row = page
-      .getByRole('table')
-      .getByRole('row')
-      .filter({ hasText: 'PAY-139 Refund API' })
-    await expect(
-      row.getByRole('cell', { name: /^(2h 30m|3h 5m)$/ }),
-    ).toBeVisible()
+    const row = taskItems(page, isMobile).filter({
+      hasText: 'PAY-139 Refund API',
+    })
+    await expect(row.getByText(/^(2h 30m|3h 5m)$/)).toBeVisible()
   })
 })
 

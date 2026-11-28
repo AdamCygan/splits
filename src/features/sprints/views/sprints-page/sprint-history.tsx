@@ -3,6 +3,13 @@ import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDateRange } from '#/i18n/format'
 import { daysOffMessages } from '#/i18n/messages/days-off'
 import { panelMessages } from '#/i18n/messages/panel'
+import {
+  Fact,
+  Facts,
+  RecordCard,
+  RecordList,
+} from '#/components/ui/record-cards'
+import type { SprintStats } from '#/features/sprints/domain/sprint-stats'
 import { TypeBar } from './type-bar'
 import type { SprintsViewModel } from '../../controllers/use-sprints'
 
@@ -13,9 +20,7 @@ export interface SprintHistoryProps {
 /** Zakończone sprinty w tabeli (czas, SP, czas na SP, podział) ze średnią na SP. */
 export function SprintHistory({ viewModel }: SprintHistoryProps) {
   const messages = useMessages(panelMessages).sprints
-  const off = useMessages(daysOffMessages)
   const format = useFormat()
-  const { locale } = useI18n()
   return (
     <section
       aria-labelledby="sprint-history"
@@ -53,98 +58,165 @@ export function SprintHistory({ viewModel }: SprintHistoryProps) {
           {messages.emptyHistory}
         </p>
       ) : (
-        // relative: ukryte podpisy (sr-only) w komórkach nie wypychają strony w bok.
-        <div
-          className="relative overflow-x-auto"
-          role="region"
-          tabIndex={0}
-          aria-label={messages.tableRegion}
-        >
-          <table className="w-full min-w-[40rem] text-[0.9375rem]">
-            <thead>
-              <tr className="text-left text-sm text-ink-soft">
-                <th scope="col" className="px-5 py-3 font-medium sm:px-6">
-                  {messages.columns.sprint}
-                </th>
-                <th scope="col" className="px-3 py-3 text-right font-medium">
-                  {messages.columns.hours}
-                </th>
-                <th scope="col" className="px-3 py-3 text-right font-medium">
-                  {messages.columns.points}
-                </th>
-                <th scope="col" className="px-3 py-3 text-right font-medium">
-                  {messages.columns.perSp}
-                </th>
-                <th
-                  scope="col"
-                  className="w-[32%] px-5 py-3 font-medium sm:px-6"
-                >
-                  {messages.columns.split}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {viewModel.pastStats.map((sprintStats) => {
-                const daysOff = viewModel.availability(sprintStats.sprint).off
-                return (
-                  <tr
-                    key={sprintStats.sprint.id}
-                    className="border-t border-line"
+        <>
+          <RecordList label={messages.history}>
+            {viewModel.pastStats.map((sprintStats) => (
+              <RecordCard key={sprintStats.sprint.id}>
+                <SprintName sprintStats={sprintStats} viewModel={viewModel} />
+                <Facts className="grid-cols-3 text-sm">
+                  <Fact label={messages.columns.hours}>
+                    {format.minutes(sprintStats.minutes)}
+                  </Fact>
+                  <Fact label={messages.columns.points}>
+                    {format.number(sprintStats.storyPoints)}
+                  </Fact>
+                  <Fact label={messages.columns.perSp}>
+                    <PerStoryPoint sprintStats={sprintStats} />
+                  </Fact>
+                  <Fact label={messages.columns.split} className="col-span-3">
+                    <TypeSplit
+                      sprintStats={sprintStats}
+                      viewModel={viewModel}
+                    />
+                  </Fact>
+                </Facts>
+              </RecordCard>
+            ))}
+          </RecordList>
+          {/* relative: ukryte podpisy (sr-only) w komórkach nie wypychają strony w bok. */}
+          <div
+            className="relative hidden overflow-x-auto sm:block"
+            role="region"
+            tabIndex={0}
+            aria-label={messages.tableRegion}
+          >
+            <table className="w-full min-w-[40rem] text-[0.9375rem]">
+              <thead>
+                <tr className="text-left text-sm text-ink-soft">
+                  <th scope="col" className="px-5 py-3 font-medium sm:px-6">
+                    {messages.columns.sprint}
+                  </th>
+                  <th scope="col" className="px-3 py-3 text-right font-medium">
+                    {messages.columns.hours}
+                  </th>
+                  <th scope="col" className="px-3 py-3 text-right font-medium">
+                    {messages.columns.points}
+                  </th>
+                  <th scope="col" className="px-3 py-3 text-right font-medium">
+                    {messages.columns.perSp}
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[32%] px-5 py-3 font-medium sm:px-6"
                   >
-                    <th
-                      scope="row"
-                      className="px-5 py-3 text-left font-normal sm:px-6"
+                    {messages.columns.split}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {viewModel.pastStats.map((sprintStats) => {
+                  return (
+                    <tr
+                      key={sprintStats.sprint.id}
+                      className="border-t border-line"
                     >
-                      <Link
-                        to="/app/analytics"
-                        search={{ sprint: sprintStats.sprint.id }}
-                        className="font-semibold underline-offset-4 hover:underline"
+                      <th
+                        scope="row"
+                        className="px-5 py-3 text-left font-normal sm:px-6"
                       >
-                        {sprintStats.sprint.name}
-                      </Link>
-                      <span className="block text-sm text-ink-soft">
-                        {formatDateRange(
-                          locale,
-                          sprintStats.sprint.startsOn,
-                          sprintStats.sprint.endsOn,
-                        )}
-                        {daysOff > 0 &&
-                          `, ${format.plural(off.sprint.short, daysOff)}`}
-                      </span>
-                    </th>
-                    <td className="px-3 py-3 text-right tabular-nums">
-                      {format.minutes(sprintStats.minutes)}
-                    </td>
-                    <td className="px-3 py-3 text-right tabular-nums">
-                      {format.number(sprintStats.storyPoints)}
-                    </td>
-                    <td className="px-3 py-3 text-right font-semibold tabular-nums">
-                      {sprintStats.minutesPerSp === null
-                        ? '–'
-                        : format.minutes(sprintStats.minutesPerSp)}
-                    </td>
-                    <td className="px-5 py-3 sm:px-6">
-                      <TypeBar
-                        rows={sprintStats.types}
-                        types={viewModel.types}
-                        className="h-2.5"
-                      />
-                      <span className="sr-only">
-                        {sprintStats.types
-                          .map(
-                            (typeRow) =>
-                              `${viewModel.typeOf(typeRow.taskTypeId)?.name ?? '?'} ${format.minutes(typeRow.minutes)}`,
-                          )
-                          .join(', ')}
-                      </span>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                        <SprintName
+                          sprintStats={sprintStats}
+                          viewModel={viewModel}
+                        />
+                      </th>
+                      <td className="px-3 py-3 text-right tabular-nums">
+                        {format.minutes(sprintStats.minutes)}
+                      </td>
+                      <td className="px-3 py-3 text-right tabular-nums">
+                        {format.number(sprintStats.storyPoints)}
+                      </td>
+                      <td className="px-3 py-3 text-right font-semibold tabular-nums">
+                        <PerStoryPoint sprintStats={sprintStats} />
+                      </td>
+                      <td className="px-5 py-3 sm:px-6">
+                        <TypeSplit
+                          sprintStats={sprintStats}
+                          viewModel={viewModel}
+                        />
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </section>
+  )
+}
+
+interface SprintRowProps {
+  sprintStats: SprintStats
+  viewModel: SprintsViewModel
+}
+
+/** Nazwa sprintu (link do raportu), daty i dni wolne. */
+function SprintName({ sprintStats, viewModel }: SprintRowProps) {
+  const off = useMessages(daysOffMessages)
+  const format = useFormat()
+  const { locale } = useI18n()
+  const daysOff = viewModel.availability(sprintStats.sprint).off
+  return (
+    <>
+      <Link
+        to="/app/analytics"
+        search={{ sprint: sprintStats.sprint.id }}
+        className="font-semibold underline-offset-4 hover:underline"
+      >
+        {sprintStats.sprint.name}
+      </Link>
+      <span className="block text-sm text-ink-soft">
+        {formatDateRange(
+          locale,
+          sprintStats.sprint.startsOn,
+          sprintStats.sprint.endsOn,
+        )}
+        {daysOff > 0 && `, ${format.plural(off.sprint.short, daysOff)}`}
+      </span>
+    </>
+  )
+}
+
+interface SprintStatsProps {
+  sprintStats: SprintStats
+}
+
+function PerStoryPoint({ sprintStats }: SprintStatsProps) {
+  const format = useFormat()
+  const perStoryPoint = sprintStats.minutesPerSp
+  const hasNoPoints = perStoryPoint === null
+  return <>{hasNoPoints ? '–' : format.minutes(perStoryPoint)}</>
+}
+
+/** Podział czasu na rodzaje pracy: pasek i ten sam podział tekstem dla czytników ekranu. */
+function TypeSplit({ sprintStats, viewModel }: SprintRowProps) {
+  const format = useFormat()
+  return (
+    <>
+      <TypeBar
+        rows={sprintStats.types}
+        types={viewModel.types}
+        className="h-2.5"
+      />
+      <span className="sr-only">
+        {sprintStats.types
+          .map(
+            (typeRow) =>
+              `${viewModel.typeOf(typeRow.taskTypeId)?.name ?? '?'} ${format.minutes(typeRow.minutes)}`,
+          )
+          .join(', ')}
+      </span>
+    </>
   )
 }

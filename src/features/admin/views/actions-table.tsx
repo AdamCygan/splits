@@ -1,5 +1,11 @@
 import { isKind } from '../domain/actions'
 import { Link } from '@tanstack/react-router'
+import {
+  Fact,
+  Facts,
+  RecordCard,
+  RecordList,
+} from '#/components/ui/record-cards'
 import type { AdminAction } from '#/features/admin/data/dto'
 import { useI18n, useMessages } from '#/i18n/context'
 import { fmt } from '#/i18n/format'
@@ -26,61 +32,99 @@ export function ActionsTable({
       timeStyle: 'short',
     })
   return (
-    <div
-      className="relative overflow-x-auto"
-      role="region"
-      tabIndex={0}
-      aria-label={caption}
-    >
-      <table className="w-full min-w-[40rem] text-[0.9375rem]">
-        <caption className="sr-only">{caption}</caption>
-        <thead>
-          <tr className="text-left text-sm text-ink-soft">
-            <th scope="col" className="px-5 py-3 font-medium sm:px-6">
-              {messages.when}
-            </th>
-            <th scope="col" className="px-3 py-3 font-medium">
-              {messages.action}
-            </th>
-            {showTarget && (
-              <th scope="col" className="px-3 py-3 font-medium">
-                {messages.target}
-              </th>
-            )}
-            <th scope="col" className="px-5 py-3 font-medium sm:px-6">
-              {messages.admin}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {actions.map((action) => (
-            <tr key={action.id} className="border-t border-line align-top">
-              <td className="px-5 py-2.5 whitespace-nowrap text-ink-soft sm:px-6">
-                {stamp(action.createdAt)}
-              </td>
-              <td className="px-3 py-2.5">
-                {isKind(action.action)
-                  ? messages.actions[action.action]
-                  : action.action}
-                {action.detail && (
-                  <span className="block text-sm break-words text-ink-soft">
-                    {action.detail}
-                  </span>
-                )}
-              </td>
+    <>
+      <RecordList label={caption}>
+        {actions.map((action) => (
+          <RecordCard key={action.id}>
+            <p className="text-sm text-ink-soft">{stamp(action.createdAt)}</p>
+            <p className="mt-1 font-medium">
+              <ActionLabel action={action} />
+            </p>
+            <Facts className="text-sm">
               {showTarget && (
-                <td className="max-w-[16rem] truncate px-3 py-2.5">
-                  <ActionTarget action={action} />
-                </td>
+                <Fact label={messages.target} className="col-span-2">
+                  <span className="block truncate">
+                    <ActionTarget action={action} />
+                  </span>
+                </Fact>
               )}
-              <td className="max-w-[16rem] truncate px-5 py-2.5 text-ink-soft sm:px-6">
-                {action.adminEmail}
-              </td>
+              <Fact label={messages.admin} className="col-span-2">
+                <span className="block truncate font-normal text-ink-soft">
+                  {action.adminEmail}
+                </span>
+              </Fact>
+            </Facts>
+          </RecordCard>
+        ))}
+      </RecordList>
+      <div
+        className="relative hidden overflow-x-auto sm:block"
+        role="region"
+        tabIndex={0}
+        aria-label={caption}
+      >
+        <table className="w-full min-w-[40rem] text-[0.9375rem]">
+          <caption className="sr-only">{caption}</caption>
+          <thead>
+            <tr className="text-left text-sm text-ink-soft">
+              <th scope="col" className="px-5 py-3 font-medium sm:px-6">
+                {messages.when}
+              </th>
+              <th scope="col" className="px-3 py-3 font-medium">
+                {messages.action}
+              </th>
+              {showTarget && (
+                <th scope="col" className="px-3 py-3 font-medium">
+                  {messages.target}
+                </th>
+              )}
+              <th scope="col" className="px-5 py-3 font-medium sm:px-6">
+                {messages.admin}
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {actions.map((action) => (
+              <tr key={action.id} className="border-t border-line align-top">
+                <td className="px-5 py-2.5 whitespace-nowrap text-ink-soft sm:px-6">
+                  {stamp(action.createdAt)}
+                </td>
+                <td className="px-3 py-2.5">
+                  <ActionLabel action={action} />
+                </td>
+                {showTarget && (
+                  <td className="max-w-[16rem] truncate px-3 py-2.5">
+                    <ActionTarget action={action} />
+                  </td>
+                )}
+                <td className="max-w-[16rem] truncate px-5 py-2.5 text-ink-soft sm:px-6">
+                  {action.adminEmail}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  )
+}
+
+interface ActionLabelProps {
+  action: AdminAction
+}
+
+/** Co się stało (nazwa akcji) i szczegóły zmiany. */
+function ActionLabel({ action }: ActionLabelProps) {
+  const messages = useMessages(adminMessages).log
+  return (
+    <>
+      {isKind(action.action) ? messages.actions[action.action] : action.action}
+      {action.detail && (
+        <span className="block text-sm font-normal break-words text-ink-soft">
+          {action.detail}
+        </span>
+      )}
+    </>
   )
 }
 

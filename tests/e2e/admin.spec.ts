@@ -1,10 +1,19 @@
 import { readFile } from 'node:fs/promises'
 import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
 import {
   createSampleAccount,
   expectNoA11yViolations,
   signInWithSamples,
 } from './helpers'
+
+/** Konta na liście: wiersze tabeli na komputerze, karty na telefonie. */
+const userItems = (page: Page, isMobile: boolean) =>
+  isMobile
+    ? page
+        .getByRole('list', { name: 'Users', exact: true })
+        .getByRole('listitem')
+    : page.getByRole('row')
 
 test.describe('admin panel', () => {
   test('Should keep regular users out', async ({ page }) => {
@@ -15,6 +24,7 @@ test.describe('admin panel', () => {
 
   test('Should filter, sort and export users with the filters in the address', async ({
     page,
+    isMobile,
   }) => {
     await signInWithSamples(page, { role: 'admin' })
     const other = await createSampleAccount({ emailVerified: false })
@@ -31,11 +41,15 @@ test.describe('admin panel', () => {
     await expect(page).toHaveURL(/email=unverified/)
     await page.getByLabel('Search users').fill(other.email)
     await expect(page).toHaveURL(/q=sample-/)
-    const rows = page.getByRole('row').filter({ hasText: other.email })
+    const rows = userItems(page, isMobile).filter({ hasText: other.email })
     await expect(rows).toHaveCount(1)
     await expect(rows).toContainText('Email not confirmed')
 
-    await page.getByRole('button', { name: /^Entries/ }).click()
+    if (isMobile)
+      await page
+        .getByRole('combobox', { name: 'Sort by' })
+        .selectOption({ label: 'Entries' })
+    else await page.getByRole('button', { name: /^Entries/ }).click()
     await expect(page).toHaveURL(/sort=entries&dir=desc/)
 
     const download = page.waitForEvent('download')
@@ -54,6 +68,7 @@ test.describe('admin panel', () => {
 
   test('Should help a customer on their account page and record every step', async ({
     page,
+    isMobile,
   }) => {
     await signInWithSamples(page, { role: 'admin' })
     const other = await createSampleAccount({
@@ -63,8 +78,7 @@ test.describe('admin panel', () => {
     await page.goto('/app/admin')
     await page.getByLabel('Search users').fill(other.email)
     // Klik od razu, zanim wyszukiwanie trafi do adresu: spóźniony filtr nie może cofnąć na listę.
-    await page
-      .getByRole('row')
+    await userItems(page, isMobile)
       .filter({ hasText: other.email })
       .getByRole('link', { name: other.displayName })
       .click()
