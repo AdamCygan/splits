@@ -133,7 +133,10 @@ export async function latestSubscription(userId: string) {
 
 /** Klient Stripe dla konta: tworzony raz, z e-mailem i id użytkownika w metadanych. */
 export async function customerFor(user: typeof users.$inferSelect) {
-  if (user.stripeCustomerId) return user.stripeCustomerId
+  const savedCustomer = user.stripeCustomerId
+    ? await existingCustomer(user.stripeCustomerId)
+    : null
+  if (savedCustomer) return savedCustomer
   const customer = await stripe()
     .customers.create({
       email: user.email,
@@ -148,6 +151,25 @@ export async function customerFor(user: typeof users.$inferSelect) {
     .set({ stripeCustomerId: customer.id })
     .where(eq(users.id, user.id))
   return customer.id
+}
+
+/**
+ * Zapisany klient, o ile istnieje w bieżącym trybie Stripe. Tryb testowy i live mają
+ * osobnych klientów: po przejściu na klucze live klient z testów zostaje zastąpiony nowym.
+ */
+async function existingCustomer(customerId: string) {
+  const customer = await stripe()
+    .customers.retrieve(customerId)
+    .catch((error: unknown) => {
+      const isMissing =
+        typeof error === 'object' &&
+        error !== null &&
+        Reflect.get(error, 'code') === 'resource_missing'
+      if (isMissing) return null
+      throw new ApiError('billing.failed', 502)
+    })
+  const isUsable = customer !== null && !customer.deleted
+  return isUsable ? customer.id : null
 }
 
 export const checkoutInput = z.object({

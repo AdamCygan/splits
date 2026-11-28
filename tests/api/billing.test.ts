@@ -122,6 +122,14 @@ const fake = {
       state.customers.push(customer)
       return customer
     },
+    retrieve: async (id: string) => {
+      const customer = state.customers.find((saved) => saved.id === id)
+      if (customer) return customer
+      // Jak Stripe dla klienta z innego trybu (test/live) albo usuniętego.
+      throw Object.assign(new Error(`No such customer: '${id}'`), {
+        code: 'resource_missing',
+      })
+    },
   },
   checkout: {
     sessions: {
@@ -326,6 +334,33 @@ describe('billing (Stripe, Pro monthly or yearly)', () => {
     expect(state.customers.at(-1)!.email).toBe(me.body.email)
   })
 
+  it('Should replace a customer saved in test mode when the server switches to live keys', async () => {
+    const { apiClient } = await registered()
+    const me = await apiClient.get<{ id: string }>('/account')
+    await database
+      .update(users)
+      .set({ stripeCustomerId: 'cus_from_test_mode' })
+      .where(eq(users.id, me.body.id))
+
+    const response = await apiClient.post<{ url: string }>(
+      '/billing/checkout',
+      {
+        plan: 'pro',
+      },
+    )
+    expect(response.status).toBe(200)
+    const customer = state.customers.at(-1)!
+    expect(customer.email).toBe(
+      (await apiClient.get<{ email: string }>('/account')).body.email,
+    )
+    expect(state.checkoutParams.at(-1)!.customer).toBe(customer.id)
+    const [row] = await database
+      .select({ stripeCustomerId: users.stripeCustomerId })
+      .from(users)
+      .where(eq(users.id, me.body.id))
+    expect(row!.stripeCustomerId).toBe(customer.id)
+  })
+
   it('Should open a monthly Pro checkout with the monthly price', async () => {
     const { apiClient } = await registered()
     const before = state.checkoutParams.length
@@ -428,7 +463,10 @@ describe('billing (Stripe, Pro monthly or yearly)', () => {
 
   it('Should go back to Free when the subscription ends', async () => {
     const { apiClient, sub: subscription } = await buyPro()
-    state.subscriptions.set(subscription.id, { ...subscription, status: 'canceled' })
+    state.subscriptions.set(subscription.id, {
+      ...subscription,
+      status: 'canceled',
+    })
     await webhook({
       id: `evt_${++count}`,
       type: 'customer.subscription.deleted',
@@ -444,7 +482,10 @@ describe('billing (Stripe, Pro monthly or yearly)', () => {
 
   it('Should keep Pro during a payment retry (past_due)', async () => {
     const { apiClient, sub: subscription } = await buyPro()
-    state.subscriptions.set(subscription.id, { ...subscription, status: 'past_due' })
+    state.subscriptions.set(subscription.id, {
+      ...subscription,
+      status: 'past_due',
+    })
     await webhook({
       id: `evt_${++count}`,
       type: 'customer.subscription.updated',
