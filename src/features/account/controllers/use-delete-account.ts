@@ -15,7 +15,7 @@ import { isDeleteCode, normalizeDeleteCode } from '../domain/account-forms'
  * Działa tak samo dla kont z hasłem i z samym Google.
  */
 export function useDeleteAccountViewModel(user: User) {
-  const t = useMessages(settingsMessages).account
+  const messages = useMessages(settingsMessages).account
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [codeSent, setCodeSent] = useState(false)
@@ -25,7 +25,9 @@ export function useDeleteAccountViewModel(user: User) {
   const send = useDataMutation(() => accountApi.sendDeleteCode(), {
     invalidate: [],
     success: () =>
-      fmt(codeSent ? t.codeResent : t.codeSent, { email: user.email }),
+      fmt(codeSent ? messages.codeResent : messages.codeSent, {
+        email: user.email,
+      }),
     onSuccess: () => setCodeSent(true),
   })
   const remove = useDataMutation(
@@ -59,15 +61,15 @@ export function useDeleteAccountViewModel(user: User) {
     codeError: submitted
       ? valid
         ? mutationFieldError(remove.error, 'code')
-        : t.codeError
+        : messages.codeError
       : null,
     // akcje
     openDialog: () => setOpen(true),
     close,
     sendCode: () => send.mutate(undefined),
     setCode: (raw: string) => setCode(normalizeDeleteCode(raw)),
-    submit: (e: FormEvent) => {
-      e.preventDefault()
+    submit: (formEvent: FormEvent) => {
+      formEvent.preventDefault()
       setSubmitted(true)
       if (valid) remove.mutate(code)
     },

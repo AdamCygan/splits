@@ -8,12 +8,18 @@ import { settingsInput } from '../data/inputs.server'
 import { getSettings, updateSettings } from '../data/repository.server'
 
 export const settingsRoutes = new Hono<AppEnv>()
-  .get('/', async (c) => c.json(await getSettings(scopeOf(c))))
-  .put('/', async (c) => {
-    const input = await body(c, settingsInput)
-    const scope = scopeOf(c)
+  .get('/', async (context) =>
+    context.json(await getSettings(scopeOf(context))),
+  )
+  .put('/', async (context) => {
+    const input = await body(context, settingsInput)
+    const scope = scopeOf(context)
     // Dzień pracy (cel, dni robocze…) może trafić do wszystkich przestrzeni naraz.
-    return c.json(
-      await updateSettings(scope, input, await targetIds(scope, applyOf(c))),
+    return context.json(
+      await updateSettings(
+        scope,
+        input,
+        await targetIds(scope, applyOf(context)),
+      ),
     )
   })

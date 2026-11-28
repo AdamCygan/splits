@@ -15,22 +15,22 @@ import type { TaskViewModel } from '../../controllers/use-task'
 import { safeUrl } from '#/features/time-entries/domain/entries'
 
 export interface TaskHeaderProps {
-  vm: TaskViewModel
+  viewModel: TaskViewModel
 }
 
 /** Rodzaj, projekt, SP i stan zadania, tytuł z linkiem oraz akcje. */
-export function TaskHeader({ vm }: TaskHeaderProps) {
-  const t = useMessages(taskViewMessages)
+export function TaskHeader({ viewModel }: TaskHeaderProps) {
+  const messages = useMessages(taskViewMessages)
   const tu = useMessages(entriesMessages).unfinished
   const format = useFormat()
   const { locale } = useI18n()
-  const { latest, type, project, sp, finishedAt } = vm
+  const { latest, type, project, sp: storyPoints, finishedAt } = viewModel
   if (!latest) return null
   return (
     <header className="mt-2 mb-6 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
         <p className="flex flex-wrap items-center gap-2 text-sm text-ink-soft">
-          <ColorDot color={vm.color} />
+          <ColorDot color={viewModel.color} />
           {type?.name}
           {project && (
             <>
@@ -39,10 +39,10 @@ export function TaskHeader({ vm }: TaskHeaderProps) {
               {project.name}
             </>
           )}
-          {sp !== null && (
+          {storyPoints !== null && (
             <>
               <span aria-hidden>·</span>
-              {format.sp(sp)}
+              {format.sp(storyPoints)}
             </>
           )}
           {finishedAt ? (
@@ -70,26 +70,26 @@ export function TaskHeader({ vm }: TaskHeaderProps) {
           >
             <ExternalLink aria-hidden className="size-4 shrink-0" />
             <span className="truncate">{latest.link}</span>
-            <span className="sr-only">({t.openLink})</span>
+            <span className="sr-only">({messages.openLink})</span>
           </a>
         )}
       </div>
       <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"
-          disabled={vm.finishing}
-          onClick={vm.toggleFinished}
+          disabled={viewModel.finishing}
+          onClick={viewModel.toggleFinished}
         >
           {finishedAt ? <RotateCcw aria-hidden /> : <Check aria-hidden />}
           {finishedAt ? tu.reopen : tu.finish}
         </Button>
-        <Button variant="outline" onClick={vm.openSummary}>
+        <Button variant="outline" onClick={viewModel.openSummary}>
           <ClipboardCopy aria-hidden />
-          {t.summary}
+          {messages.summary}
         </Button>
-        <Button disabled={vm.resuming} onClick={vm.resume}>
+        <Button disabled={viewModel.resuming} onClick={viewModel.resume}>
           <Play aria-hidden fill="currentColor" className="size-3.5" />
-          {t.continue}
+          {messages.continue}
         </Button>
       </div>
     </header>

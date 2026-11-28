@@ -6,17 +6,17 @@ import { Label } from '#/components/ui/label'
 /** Błąd walidacji z TanStack Form (Zod zwraca obiekty z message) albo z serwera (string). */
 export function errorMessages(errors: ReadonlyArray<unknown>): Array<string> {
   const messages = errors
-    .map((e) =>
-      typeof e === 'string'
-        ? e
-        : e &&
-            typeof e === 'object' &&
-            'message' in e &&
-            typeof e.message === 'string'
-          ? e.message
+    .map((error) =>
+      typeof error === 'string'
+        ? error
+        : error &&
+            typeof error === 'object' &&
+            'message' in error &&
+            typeof error.message === 'string'
+          ? error.message
           : null,
     )
-    .filter((m): m is string => m !== null)
+    .filter((error): error is string => error !== null)
   return [...new Set(messages)]
 }
 
@@ -62,8 +62,8 @@ export function TextField({
       )}
       {errors.length > 0 && (
         <ul id={`${id}-error`} className="space-y-0.5 text-sm text-destructive">
-          {errors.map((e) => (
-            <li key={e}>{e}</li>
+          {errors.map((error) => (
+            <li key={error}>{error}</li>
           ))}
         </ul>
       )}

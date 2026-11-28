@@ -1,6 +1,6 @@
 import type { Dictionary } from '../context'
 
-const en = {
+const english = {
   checkout: {
     seoTitle: 'Your cart',
     title: 'Your cart',
@@ -124,9 +124,9 @@ const en = {
   },
 }
 
-export type BillingMessages = typeof en
+export type BillingMessages = typeof english
 
-const pl: BillingMessages = {
+const polish: BillingMessages = {
   checkout: {
     seoTitle: 'Twój koszyk',
     title: 'Twój koszyk',
@@ -249,4 +249,7 @@ const pl: BillingMessages = {
   },
 }
 
-export const billingMessages: Dictionary<BillingMessages> = { en, pl }
+export const billingMessages: Dictionary<BillingMessages> = {
+  en: english,
+  pl: polish,
+}

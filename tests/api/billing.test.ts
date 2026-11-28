@@ -5,7 +5,7 @@ import {
   planForPrice,
   setStripeClient,
 } from '../../src/features/billing/data/stripe.server'
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 import { payments, users } from '#/server/db/schema'
 import { client, lastDeleteCode, registered } from './helpers'
 
@@ -50,7 +50,7 @@ const state = {
       payment_status: string
     }
   >(),
-  subs: new Map<string, Sub>(),
+  subscriptions: new Map<string, Sub>(),
   checkoutParams: [] as Array<Record<string, unknown>>,
   canceled: [] as Array<string>,
 }
@@ -99,7 +99,7 @@ const PRICES = {
   legacy: { id: 'price_legacy_yearly', lookup_key: 'splits_pro_yearly' },
 }
 
-let n = 0
+let count = 0
 const nextYear = Math.floor(Date.now() / 1000) + 365 * 86_400
 
 const fake = {
@@ -118,7 +118,7 @@ const fake = {
   },
   customers: {
     create: async (params: CustomerParams) => {
-      const customer = { id: `cus_${++n}`, ...params }
+      const customer = { id: `cus_${++count}`, ...params }
       state.customers.push(customer)
       return customer
     },
@@ -127,7 +127,7 @@ const fake = {
     sessions: {
       create: async (params: Record<string, unknown>) => {
         state.checkoutParams.push(params)
-        const id = `cs_test_${++n}`
+        const id = `cs_test_${++count}`
         state.sessions.set(id, {
           client_reference_id: params.client_reference_id as string,
           subscription: null,
@@ -144,16 +144,16 @@ const fake = {
   },
   subscriptions: {
     retrieve: async (id: string) => {
-      const sub = state.subs.get(id)
-      if (!sub) throw new Error('No such subscription')
-      return sub
+      const subscription = state.subscriptions.get(id)
+      if (!subscription) throw new Error('No such subscription')
+      return subscription
     },
     cancel: async (id: string) => {
       state.canceled.push(id)
-      const sub = state.subs.get(id)
-      if (!sub) return { id, status: 'canceled' }
-      const ended = { ...sub, status: 'canceled' }
-      state.subs.set(id, ended)
+      const subscription = state.subscriptions.get(id)
+      if (!subscription) return { id, status: 'canceled' }
+      const ended = { ...subscription, status: 'canceled' }
+      state.subscriptions.set(id, ended)
       return ended
     },
   },
@@ -202,7 +202,7 @@ function makeSub(
   patch: Partial<Sub> = {},
 ): Sub {
   return {
-    id: `sub_${++n}`,
+    id: `sub_${++count}`,
     customer,
     status: 'active',
     metadata: { userId, plan: 'pro' },
@@ -237,26 +237,26 @@ interface Billing {
 async function buyPro(
   price: Sub['items']['data'][number]['price'] = PRICES.year,
 ) {
-  const { c } = await registered()
-  const me = await c.get<{ id: string }>('/account')
-  const checkout = await c.post<{ url: string }>('/billing/checkout', {
+  const { apiClient } = await registered()
+  const me = await apiClient.get<{ id: string }>('/account')
+  const checkout = await apiClient.post<{ url: string }>('/billing/checkout', {
     plan: 'pro',
   })
   const sessionId = /cs_test_\d+/.exec(checkout.body.url)![0]
   const customer = state.customers.at(-1)!.id
-  const sub = makeSub(me.body.id, customer, {
+  const subscription = makeSub(me.body.id, customer, {
     items: {
       data: [{ price, quantity: 1, current_period_end: nextYear }],
     },
   })
-  state.subs.set(sub.id, sub)
+  state.subscriptions.set(subscription.id, subscription)
   state.sessions.set(sessionId, {
     client_reference_id: me.body.id,
-    subscription: sub.id,
+    subscription: subscription.id,
     payment_status: 'paid',
   })
-  const res = await webhook({
-    id: `evt_${++n}`,
+  const response = await webhook({
+    id: `evt_${++count}`,
     type: 'checkout.session.completed',
     data: {
       object: {
@@ -264,13 +264,19 @@ async function buyPro(
         object: 'checkout.session',
         mode: 'subscription',
         client_reference_id: me.body.id,
-        subscription: sub.id,
+        subscription: subscription.id,
         customer,
       },
     },
   })
-  expect(res.status).toBe(200)
-  return { c, userId: me.body.id, sub, sessionId, customer }
+  expect(response.status).toBe(200)
+  return {
+    apiClient,
+    userId: me.body.id,
+    sub: subscription,
+    sessionId,
+    customer,
+  }
 }
 
 beforeEach(() => {
@@ -279,20 +285,23 @@ beforeEach(() => {
 
 describe('billing (Stripe, Pro monthly or yearly)', () => {
   it('Should open a yearly Pro checkout for a free account', async () => {
-    const { c } = await registered()
-    const me = await c.get<{ id: string; email: string }>('/account')
-    const status = await c.get<Billing>('/billing')
+    const { apiClient } = await registered()
+    const me = await apiClient.get<{ id: string; email: string }>('/account')
+    const status = await apiClient.get<Billing>('/billing')
     expect(status.body).toEqual({
       enabled: true,
       plan: 'free',
       subscription: null,
     })
 
-    const res = await c.post<{ url: string }>('/billing/checkout', {
-      plan: 'pro',
-    })
-    expect(res.status).toBe(200)
-    expect(res.body.url).toMatch(/^https:\/\/checkout\.stripe\.com\//)
+    const response = await apiClient.post<{ url: string }>(
+      '/billing/checkout',
+      {
+        plan: 'pro',
+      },
+    )
+    expect(response.status).toBe(200)
+    expect(response.body.url).toMatch(/^https:\/\/checkout\.stripe\.com\//)
     const params = state.checkoutParams[0]!
     expect(params).toMatchObject({
       mode: 'subscription',
@@ -311,20 +320,23 @@ describe('billing (Stripe, Pro monthly or yearly)', () => {
 
     // Drugie podejście używa tego samego klienta Stripe.
     const customers = state.customers.length
-    await c.post('/billing/checkout', { plan: 'pro' })
+    await apiClient.post('/billing/checkout', { plan: 'pro' })
     expect(state.customers.length).toBe(customers)
     expect(state.checkoutParams[1]!.customer).toBe(params.customer)
     expect(state.customers.at(-1)!.email).toBe(me.body.email)
   })
 
   it('Should open a monthly Pro checkout with the monthly price', async () => {
-    const { c } = await registered()
+    const { apiClient } = await registered()
     const before = state.checkoutParams.length
-    const res = await c.post<{ url: string }>('/billing/checkout', {
-      plan: 'pro',
-      interval: 'month',
-    })
-    expect(res.status).toBe(200)
+    const response = await apiClient.post<{ url: string }>(
+      '/billing/checkout',
+      {
+        plan: 'pro',
+        interval: 'month',
+      },
+    )
+    expect(response.status).toBe(200)
     const params = state.checkoutParams[before]!
     expect(params).toMatchObject({
       line_items: [{ price: 'price_pro_monthly', quantity: 1 }],
@@ -339,15 +351,17 @@ describe('billing (Stripe, Pro monthly or yearly)', () => {
     ['lifetime', { plan: 'lifetime' }],
     ['team', { plan: 'team' }],
     ['weekly Pro', { plan: 'pro', interval: 'week' }],
-  ])('Should reject %s at checkout', async (_, body) => {
-    const { c } = await registered()
-    expect((await c.post('/billing/checkout', body)).status).toBe(400)
+  ])('Should reject %s at checkout', async (_unused, body) => {
+    const { apiClient } = await registered()
+    expect((await apiClient.post('/billing/checkout', body)).status).toBe(400)
   })
 
   it('Should turn Pro on from a signed webhook and process each event once', async () => {
-    const { c, sub } = await buyPro()
-    expect((await c.get<{ plan: string }>('/account')).body.plan).toBe('pro')
-    const status = await c.get<Billing>('/billing')
+    const { apiClient, sub: subscription } = await buyPro()
+    expect((await apiClient.get<{ plan: string }>('/account')).body.plan).toBe(
+      'pro',
+    )
+    const status = await apiClient.get<Billing>('/billing')
     expect(status.body.subscription).toMatchObject({
       status: 'active',
       interval: 'year',
@@ -358,97 +372,113 @@ describe('billing (Stripe, Pro monthly or yearly)', () => {
       new Date(status.body.subscription!.currentPeriodEnd!).getTime(),
     ).toBe(nextYear * 1000)
     expect(
-      (await c.post<{ code: string }>('/billing/checkout', { plan: 'pro' }))
-        .body.code,
+      (
+        await apiClient.post<{ code: string }>('/billing/checkout', {
+          plan: 'pro',
+        })
+      ).body.code,
     ).toBe('billing.already_subscribed')
 
     const event = {
-      id: `evt_${++n}`,
+      id: `evt_${++count}`,
       type: 'customer.subscription.updated',
-      data: { object: { id: sub.id, object: 'subscription' } },
+      data: { object: { id: subscription.id, object: 'subscription' } },
     }
-    state.subs.set(sub.id, { ...sub, cancel_at_period_end: true })
+    state.subscriptions.set(subscription.id, {
+      ...subscription,
+      cancel_at_period_end: true,
+    })
     expect((await webhook(event)).body).toEqual({ received: true })
     expect((await webhook(event)).body).toEqual({
       received: true,
       duplicate: true,
     })
     expect(
-      (await c.get<Billing>('/billing')).body.subscription?.cancelAtPeriodEnd,
+      (await apiClient.get<Billing>('/billing')).body.subscription
+        ?.cancelAtPeriodEnd,
     ).toBe(true)
   })
 
   it.each<[string, Sub['items']['data'][number]['price'], 'month' | 'year']>([
     ['the monthly price', PRICES.month, 'month'],
     ['the old yearly price from before the new pricing', PRICES.legacy, 'year'],
-  ])('Should turn Pro on for %s', async (_, price, interval) => {
-    const { c } = await buyPro(price)
-    expect((await c.get<{ plan: string }>('/account')).body.plan).toBe('pro')
-    expect((await c.get<Billing>('/billing')).body.subscription?.interval).toBe(
-      interval,
+  ])('Should turn Pro on for %s', async (_unused, price, interval) => {
+    const { apiClient } = await buyPro(price)
+    expect((await apiClient.get<{ plan: string }>('/account')).body.plan).toBe(
+      'pro',
     )
+    expect(
+      (await apiClient.get<Billing>('/billing')).body.subscription?.interval,
+    ).toBe(interval)
   })
 
   it('Should reject webhooks with a wrong signature', async () => {
-    const res = await webhook(
+    const response = await webhook(
       {
-        id: `evt_${++n}`,
+        id: `evt_${++count}`,
         type: 'checkout.session.completed',
         data: { object: {} },
       },
       'whsec_someone_else',
     )
-    expect(res.status).toBe(400)
+    expect(response.status).toBe(400)
     const unsigned = await client().post('/stripe/webhook', { id: 'evt_x' })
     expect(unsigned.status).toBe(400)
   })
 
   it('Should go back to Free when the subscription ends', async () => {
-    const { c, sub } = await buyPro()
-    state.subs.set(sub.id, { ...sub, status: 'canceled' })
+    const { apiClient, sub: subscription } = await buyPro()
+    state.subscriptions.set(subscription.id, { ...subscription, status: 'canceled' })
     await webhook({
-      id: `evt_${++n}`,
+      id: `evt_${++count}`,
       type: 'customer.subscription.deleted',
-      data: { object: { id: sub.id, object: 'subscription' } },
+      data: { object: { id: subscription.id, object: 'subscription' } },
     })
-    expect((await c.get<{ plan: string }>('/account')).body.plan).toBe('free')
-    expect((await c.get<Billing>('/billing')).body.subscription?.active).toBe(
-      false,
+    expect((await apiClient.get<{ plan: string }>('/account')).body.plan).toBe(
+      'free',
     )
+    expect(
+      (await apiClient.get<Billing>('/billing')).body.subscription?.active,
+    ).toBe(false)
   })
 
   it('Should keep Pro during a payment retry (past_due)', async () => {
-    const { c, sub } = await buyPro()
-    state.subs.set(sub.id, { ...sub, status: 'past_due' })
+    const { apiClient, sub: subscription } = await buyPro()
+    state.subscriptions.set(subscription.id, { ...subscription, status: 'past_due' })
     await webhook({
-      id: `evt_${++n}`,
+      id: `evt_${++count}`,
       type: 'customer.subscription.updated',
-      data: { object: { id: sub.id, object: 'subscription' } },
+      data: { object: { id: subscription.id, object: 'subscription' } },
     })
-    expect((await c.get<{ plan: string }>('/account')).body.plan).toBe('pro')
-    expect((await c.get<Billing>('/billing')).body.subscription?.status).toBe(
-      'past_due',
+    expect((await apiClient.get<{ plan: string }>('/account')).body.plan).toBe(
+      'pro',
     )
+    expect(
+      (await apiClient.get<Billing>('/billing')).body.subscription?.status,
+    ).toBe('past_due')
   })
 
   it('Should sync right after returning from checkout, only for the owner', async () => {
-    const { c } = await registered()
-    const me = await c.get<{ id: string }>('/account')
-    const checkout = await c.post<{ url: string }>('/billing/checkout', {
-      plan: 'pro',
-    })
+    const { apiClient } = await registered()
+    const me = await apiClient.get<{ id: string }>('/account')
+    const checkout = await apiClient.post<{ url: string }>(
+      '/billing/checkout',
+      {
+        plan: 'pro',
+      },
+    )
     const sessionId = /cs_test_\d+/.exec(checkout.body.url)![0]
-    const sub = makeSub(me.body.id, state.customers.at(-1)!.id)
-    state.subs.set(sub.id, sub)
+    const subscription = makeSub(me.body.id, state.customers.at(-1)!.id)
+    state.subscriptions.set(subscription.id, subscription)
     state.sessions.set(sessionId, {
       client_reference_id: me.body.id,
-      subscription: sub.id,
+      subscription: subscription.id,
       payment_status: 'paid',
     })
 
-    const other = (await registered()).c
+    const other = (await registered()).apiClient
     expect((await other.post('/billing/sync', { sessionId })).status).toBe(404)
-    const synced = await c.post<{ plan: string; paid: boolean }>(
+    const synced = await apiClient.post<{ plan: string; paid: boolean }>(
       '/billing/sync',
       { sessionId },
     )
@@ -456,25 +486,25 @@ describe('billing (Stripe, Pro monthly or yearly)', () => {
   })
 
   it('Should open the customer portal and cancel billing when the account is deleted', async () => {
-    const { c, sub, customer } = await buyPro()
-    const me = await c.get<{ email: string }>('/account')
-    const portal = await c.post<{ url: string }>('/billing/portal')
+    const { apiClient, sub: subscription, customer } = await buyPro()
+    const me = await apiClient.get<{ email: string }>('/account')
+    const portal = await apiClient.post<{ url: string }>('/billing/portal')
     expect(portal.body.url).toBe(
       `https://billing.stripe.com/p/session/${customer}`,
     )
-    await c.post('/account/delete-code')
-    await c.del('/account', { code: lastDeleteCode(me.body.email) })
-    expect(state.canceled).toContain(sub.id)
+    await apiClient.post('/account/delete-code')
+    await apiClient.del('/account', { code: lastDeleteCode(me.body.email) })
+    expect(state.canceled).toContain(subscription.id)
   })
 
   it('Should end Pro and the subscription after a full refund, not a partial one', async () => {
-    const { c, sub, customer } = await buyPro()
+    const { apiClient, sub: subscription, customer } = await buyPro()
     const charge = (refunded: boolean) => ({
-      id: `evt_${++n}`,
+      id: `evt_${++count}`,
       type: 'charge.refunded',
       data: {
         object: {
-          id: `ch_${n}`,
+          id: `ch_${count}`,
           object: 'charge',
           customer,
           refunded,
@@ -485,24 +515,30 @@ describe('billing (Stripe, Pro monthly or yearly)', () => {
     })
 
     expect((await webhook(charge(false))).status).toBe(200)
-    expect(state.canceled).not.toContain(sub.id)
-    expect((await c.get<{ plan: string }>('/account')).body.plan).toBe('pro')
+    expect(state.canceled).not.toContain(subscription.id)
+    expect((await apiClient.get<{ plan: string }>('/account')).body.plan).toBe(
+      'pro',
+    )
 
     expect((await webhook(charge(true))).status).toBe(200)
-    expect(state.canceled).toContain(sub.id)
-    expect((await c.get<{ plan: string }>('/account')).body.plan).toBe('free')
-    expect((await c.get<Billing>('/billing')).body.subscription).toMatchObject({
+    expect(state.canceled).toContain(subscription.id)
+    expect((await apiClient.get<{ plan: string }>('/account')).body.plan).toBe(
+      'free',
+    )
+    expect(
+      (await apiClient.get<Billing>('/billing')).body.subscription,
+    ).toMatchObject({
       status: 'canceled',
       active: false,
     })
   })
 
   it('Should record each payment and its refunds for the revenue numbers', async () => {
-    const { c, customer } = await buyPro()
-    const me = await c.get<{ id: string }>('/account')
-    const chargeId = `ch_revenue_${++n}`
+    const { apiClient, customer } = await buyPro()
+    const me = await apiClient.get<{ id: string }>('/account')
+    const chargeId = `ch_revenue_${++count}`
     const charge = (type: string, refunded: number) => ({
-      id: `evt_${++n}`,
+      id: `evt_${++count}`,
       type,
       data: {
         object: {
@@ -520,7 +556,7 @@ describe('billing (Stripe, Pro monthly or yearly)', () => {
     })
     await webhook(charge('charge.succeeded', 0))
     await webhook(charge('charge.refunded', 1000))
-    const [row] = await db
+    const [row] = await database
       .select()
       .from(payments)
       .where(eq(payments.id, chargeId))
@@ -535,8 +571,8 @@ describe('billing (Stripe, Pro monthly or yearly)', () => {
   })
 
   it('Should limit Free reports to the last 30 days on the server', async () => {
-    const { c, email } = await registered()
-    const types = await c.get<Array<{ id: string }>>('/task-types')
+    const { apiClient, email } = await registered()
+    const types = await apiClient.get<Array<{ id: string }>>('/task-types')
     const today = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Europe/Warsaw',
     }).format(new Date())
@@ -557,21 +593,23 @@ describe('billing (Stripe, Pro monthly or yearly)', () => {
       running: false,
     })
     // Starszego wpisu Free nie doda (limit 30 dni), ale może go mieć z czasów Pro.
-    expect((await c.post('/time-entries', entry(old))).status).toBe(403)
-    await db
+    expect((await apiClient.post('/time-entries', entry(old))).status).toBe(403)
+    await database
       .update(users)
       .set({ plan: 'pro' })
       .where(sql`lower(${users.email}) = ${email}`)
-    await c.post('/time-entries', entry(old))
-    await db
+    await apiClient.post('/time-entries', entry(old))
+    await database
       .update(users)
       .set({ plan: 'free' })
       .where(sql`lower(${users.email}) = ${email}`)
-    await c.post('/time-entries', entry(today))
-    const range = await c.get<Array<{ workDate: string }>>(
+    await apiClient.post('/time-entries', entry(today))
+    const range = await apiClient.get<Array<{ workDate: string }>>(
       `/time-entries?from=2000-01-01&to=${today}`,
     )
-    expect(range.body.map((e) => e.workDate)).toEqual([today])
+    expect(range.body.map((listedEntry) => listedEntry.workDate)).toEqual([
+      today,
+    ])
   })
 })
 
@@ -588,9 +626,9 @@ describe('planForPrice', () => {
   })
 
   it('Should list the Stripe invoices of the customer with links to the files', async () => {
-    const { c, customer } = await buyPro()
+    const { apiClient, customer } = await buyPro()
     const invoices =
-      await c.get<Array<Record<string, unknown>>>('/billing/invoices')
+      await apiClient.get<Array<Record<string, unknown>>>('/billing/invoices')
     expect(invoices.body).toEqual([
       {
         id: `in_${customer}`,
@@ -606,7 +644,7 @@ describe('planForPrice', () => {
   })
 
   it('Should return no invoices for an account that never paid', async () => {
-    const { c } = await registered()
-    expect((await c.get('/billing/invoices')).body).toEqual([])
+    const { apiClient } = await registered()
+    expect((await apiClient.get('/billing/invoices')).body).toEqual([])
   })
 })

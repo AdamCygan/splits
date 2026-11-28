@@ -4,8 +4,8 @@ import { useEffect } from 'react'
 export function useUnsavedWarning(dirty: boolean) {
   useEffect(() => {
     if (!dirty) return
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault()
+    const handler = (beforeUnloadEvent: BeforeUnloadEvent) => {
+      beforeUnloadEvent.preventDefault()
     }
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)

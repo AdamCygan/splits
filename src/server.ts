@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 import { randomBytes } from 'node:crypto'
 import handler, { createServerEntry } from '@tanstack/react-start/server-entry'
 import { registerNonceStore } from '#/lib/csp-nonce'
-import { env } from '#/lib/env'
+import { environment } from '#/lib/env'
 import {
   PAGE_SECURITY_HEADERS,
   contentSecurityPolicy,
@@ -41,9 +41,9 @@ function finalize(
       'Content-Security-Policy',
       contentSecurityPolicy({
         nonce,
-        apiUrl: env.VITE_API_URL,
-        posthogHost: env.VITE_POSTHOG_KEY
-          ? (env.VITE_POSTHOG_HOST ?? 'https://eu.i.posthog.com')
+        apiUrl: environment.VITE_API_URL,
+        posthogHost: environment.VITE_POSTHOG_KEY
+          ? (environment.VITE_POSTHOG_HOST ?? 'https://eu.i.posthog.com')
           : undefined,
       }),
     )

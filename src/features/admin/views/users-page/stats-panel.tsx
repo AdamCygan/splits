@@ -12,7 +12,7 @@ export interface StatsPanelProps {
 
 /** Liczby na górze: konta, aktywni (wg wpisów), płatne plany, przychód i problemy z płatnością. */
 export function StatsPanel({ stats }: StatsPanelProps) {
-  const t = useMessages(adminMessages).stats
+  const messages = useMessages(adminMessages).stats
   const format = useFormat()
   if (!stats)
     return (
@@ -23,40 +23,42 @@ export function StatsPanel({ stats }: StatsPanelProps) {
     )
   const money = (key: 'last30' | 'last365') =>
     stats.revenue.length
-      ? stats.revenue.map((r) => format.money(r[key], r.currency)).join(' + ')
-      : t.noRevenue
+      ? stats.revenue
+          .map((revenue) => format.money(revenue[key], revenue.currency))
+          .join(' + ')
+      : messages.noRevenue
   const conversion = conversionRate(stats.pro + stats.lifetime, stats.users)
   const refunded = stats.revenue
-    .filter((r) => r.refunded365 > 0)
-    .map((r) => format.money(r.refunded365, r.currency))
+    .filter((revenue) => revenue.refunded365 > 0)
+    .map((revenue) => format.money(revenue.refunded365, revenue.currency))
     .join(' + ')
   return (
-    <section aria-label={t.label} className="mb-6">
+    <section aria-label={messages.label} className="mb-6">
       <StatGrid cols={4}>
         <StatTile
-          label={t.users}
+          label={messages.users}
           value={format.number(stats.users, 0)}
-          hint={fmt(t.newHint, { n: stats.new30 })}
+          hint={fmt(messages.newHint, { n: stats.new30 })}
         />
-        <StatTile label={t.new7} value={format.number(stats.new7, 0)} />
+        <StatTile label={messages.new7} value={format.number(stats.new7, 0)} />
         <StatTile
-          label={t.active7}
+          label={messages.active7}
           value={format.number(stats.active7, 0)}
-          hint={fmt(t.activeHint, { n: stats.active30 })}
+          hint={fmt(messages.activeHint, { n: stats.active30 })}
         />
         <StatTile
-          label={t.paid}
+          label={messages.paid}
           value={format.number(stats.pro + stats.lifetime, 0)}
-          hint={fmt(t.paidHint, { n: stats.activeSubscriptions })}
+          hint={fmt(messages.paidHint, { n: stats.activeSubscriptions })}
         />
-        <StatTile label={t.revenue30} value={money('last30')} />
+        <StatTile label={messages.revenue30} value={money('last30')} />
         <StatTile
-          label={t.revenue365}
+          label={messages.revenue365}
           value={money('last365')}
-          hint={refunded ? fmt(t.revenueHint, { refunded }) : undefined}
+          hint={refunded ? fmt(messages.revenueHint, { refunded }) : undefined}
         />
         <StatTile
-          label={t.problems}
+          label={messages.problems}
           value={format.number(stats.paymentProblems, 0)}
           warn={stats.paymentProblems > 0}
         >
@@ -66,33 +68,33 @@ export function StatsPanel({ stats }: StatsPanelProps) {
               search={{ payment: 'problem' }}
               className="text-sm font-medium underline underline-offset-4"
             >
-              {t.problemsLink}
+              {messages.problemsLink}
             </Link>
           )}
         </StatTile>
         <StatTile
-          label={t.mrr}
+          label={messages.mrr}
           value={format.money(stats.mrr, 'usd')}
-          hint={fmt(t.mrrHint, {
+          hint={fmt(messages.mrrHint, {
             monthly: stats.subscriptions.monthly,
             yearly: stats.subscriptions.yearly,
           })}
         />
         <StatTile
-          label={t.conversion}
+          label={messages.conversion}
           value={`${format.number(conversion, 1)}%`}
-          hint={fmt(t.conversionHint, {
+          hint={fmt(messages.conversionHint, {
             paid: stats.pro + stats.lifetime,
             users: stats.users,
           })}
         />
         <StatTile
-          label={t.cancelling}
+          label={messages.cancelling}
           value={format.number(stats.subscriptions.cancelling, 0)}
-          hint={t.cancellingHint}
+          hint={messages.cancellingHint}
           warn={stats.subscriptions.cancelling > 0}
         />
-        <StatTile label={t.demo} value={format.number(stats.demo, 0)} />
+        <StatTile label={messages.demo} value={format.number(stats.demo, 0)} />
       </StatGrid>
       <Signups rows={stats.signups} />
     </section>
@@ -105,33 +107,37 @@ interface SignupsProps {
 
 /** Rejestracje z 14 dni jako małe słupki; dokładne liczby w podpisach i w title. */
 function Signups({ rows }: SignupsProps) {
-  const t = useMessages(adminMessages).stats
+  const messages = useMessages(adminMessages).stats
   const { locale } = useI18n()
-  const days = Array.from({ length: 14 }, (_, i) =>
-    new Date(Date.now() - (13 - i) * 86_400_000).toISOString().slice(0, 10),
+  const days = Array.from({ length: 14 }, (_unused, index) =>
+    new Date(Date.now() - (13 - index) * 86_400_000).toISOString().slice(0, 10),
   )
-  const counts = days.map((day) => rows.find((r) => r.day === day)?.count ?? 0)
+  const counts = days.map(
+    (day) => rows.find((row) => row.day === day)?.count ?? 0,
+  )
   const peak = Math.max(1, ...counts)
-  const label = (day: string, n: number) =>
-    fmt(t.signupsDay, {
+  const label = (day: string, count: number) =>
+    fmt(messages.signupsDay, {
       date: formatDate(locale, day, { day: 'numeric', month: 'short' }),
-      n,
+      n: count,
     })
   return (
     <figure className="mt-3 rounded-2xl border border-line bg-surface px-4 py-3 sm:px-5">
-      <figcaption className="text-sm text-ink-soft">{t.signups}</figcaption>
+      <figcaption className="text-sm text-ink-soft">
+        {messages.signups}
+      </figcaption>
       <ol className="mt-2 flex h-12 items-end gap-1">
-        {days.map((day, i) => (
+        {days.map((day, index) => (
           <li
             key={day}
-            title={label(day, counts[i]!)}
+            title={label(day, counts[index]!)}
             className="bar-rise flex-1 rounded-sm bg-wt-task"
             style={{
-              height: `${Math.max(6, (counts[i]! / peak) * 100)}%`,
-              opacity: counts[i] ? 1 : 0.18,
+              height: `${Math.max(6, (counts[index]! / peak) * 100)}%`,
+              opacity: counts[index] ? 1 : 0.18,
             }}
           >
-            <span className="sr-only">{label(day, counts[i]!)}</span>
+            <span className="sr-only">{label(day, counts[index]!)}</span>
           </li>
         ))}
       </ol>

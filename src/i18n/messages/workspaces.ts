@@ -1,7 +1,7 @@
 import type { Dictionary } from '../context'
 
 /** Przestrzenie: przełącznik, wybór na start dnia, ustawienia i pytanie „gdzie zastosować”. */
-const en = {
+const english = {
   label: 'Workspace',
   switcher: {
     open: '(switch)',
@@ -115,7 +115,7 @@ const en = {
   },
 }
 
-const pl: typeof en = {
+const polish: typeof english = {
   label: 'Przestrzeń',
   switcher: {
     open: '(zmień)',
@@ -233,5 +233,8 @@ const pl: typeof en = {
   },
 }
 
-export type WorkspacesMessages = typeof en
-export const workspacesMessages: Dictionary<WorkspacesMessages> = { en, pl }
+export type WorkspacesMessages = typeof english
+export const workspacesMessages: Dictionary<WorkspacesMessages> = {
+  en: english,
+  pl: polish,
+}

@@ -4,7 +4,7 @@ import { z } from 'zod'
 
 import { ADMIN_ACTION_KINDS } from '#/features/admin/domain/admin'
 
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 
 import { adminActions } from '#/server/db/schema'
 
@@ -33,8 +33,8 @@ export async function listActions(input: z.infer<typeof actionsInput>) {
     input.action ? eq(adminActions.action, input.action) : undefined,
   )
   const [[total], rows] = await Promise.all([
-    db.select({ n: count() }).from(adminActions).where(where),
-    db
+    database.select({ count: count() }).from(adminActions).where(where),
+    database
       .select()
       .from(adminActions)
       .where(where)
@@ -43,16 +43,16 @@ export async function listActions(input: z.infer<typeof actionsInput>) {
       .offset((input.page - 1) * PAGE_SIZE),
   ])
   return {
-    items: rows.map((r) => ({
-      id: r.id,
-      adminEmail: r.adminEmail,
-      targetUserId: r.targetUserId,
-      targetEmail: r.targetEmail,
-      action: r.action,
-      detail: r.detail,
-      createdAt: r.createdAt.toISOString(),
+    items: rows.map((row) => ({
+      id: row.id,
+      adminEmail: row.adminEmail,
+      targetUserId: row.targetUserId,
+      targetEmail: row.targetEmail,
+      action: row.action,
+      detail: row.detail,
+      createdAt: row.createdAt.toISOString(),
     })),
-    total: total?.n ?? 0,
+    total: total?.count ?? 0,
     page: input.page,
     pageSize: PAGE_SIZE,
   }

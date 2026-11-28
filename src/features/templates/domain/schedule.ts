@@ -23,7 +23,9 @@ export function scheduledOn(
   const day = weekday(date)
   return templates
     .flatMap((template) => {
-      const slot = template.schedule.find((s) => s.day === day)
+      const slot = template.schedule.find(
+        (scheduleSlot) => scheduleSlot.day === day,
+      )
       if (!slot || template.defaultDurationMinutes === null) return []
       const end = Math.min(
         toMinutes(slot.time) + template.defaultDurationMinutes,
@@ -31,7 +33,7 @@ export function scheduledOn(
       )
       return [{ template, start: slot.time, end: fromMinutes(end) }]
     })
-    .sort((a, b) => a.start.localeCompare(b.start))
+    .sort((left, right) => left.start.localeCompare(right.start))
 }
 
 /** Czy spotkanie z szablonu jest już wpisane tego dnia (ten sam typ i tytuł). */
@@ -41,15 +43,15 @@ export function isLogged(
 ) {
   const title = template.title.trim().toLocaleLowerCase()
   return entries.some(
-    (e) =>
-      e.taskTypeId === template.taskTypeId &&
-      e.title.trim().toLocaleLowerCase() === title,
+    (part) =>
+      part.taskTypeId === template.taskTypeId &&
+      part.title.trim().toLocaleLowerCase() === title,
   )
 }
 
 /** Godzina wspólna dla wszystkich dni harmonogramu; null = dni mają różne godziny. */
 export function sameTime(schedule: TemplateSchedule): string | null {
-  const times = new Set(schedule.map((s) => s.time))
+  const times = new Set(schedule.map((slot) => slot.time))
   return times.size === 1 ? schedule[0]!.time : null
 }
 
@@ -61,8 +63,11 @@ export function scheduleRuns(
   schedule: TemplateSchedule,
   weekStartsOn: number,
 ): Array<{ from: number; to: number; time: string }> {
-  const order = Array.from({ length: 7 }, (_, i) => (weekStartsOn + i) % 7)
-  const byDay = new Map(schedule.map((s) => [s.day, s.time]))
+  const order = Array.from(
+    { length: 7 },
+    (_unused, index) => (weekStartsOn + index) % 7,
+  )
+  const byDay = new Map(schedule.map((slot) => [slot.day, slot.time]))
   const runs: Array<{ from: number; to: number; time: string }> = []
   let previous: number | null = null
   for (const day of order) {

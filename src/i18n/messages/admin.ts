@@ -5,7 +5,7 @@ import type {
 import type { Dictionary } from '../context'
 import type { Plural } from '../format'
 
-const en = {
+const english = {
   nav: 'Admin',
   seoTitle: 'Admin',
   tabs: { label: 'Admin sections', users: 'Users', log: 'Activity log' },
@@ -250,9 +250,9 @@ const en = {
   },
 }
 
-export type AdminMessages = typeof en
+export type AdminMessages = typeof english
 
-const pl: AdminMessages = {
+const polish: AdminMessages = {
   nav: 'Admin',
   seoTitle: 'Admin',
   tabs: {
@@ -520,4 +520,7 @@ const pl: AdminMessages = {
   },
 }
 
-export const adminMessages: Dictionary<AdminMessages> = { en, pl }
+export const adminMessages: Dictionary<AdminMessages> = {
+  en: english,
+  pl: polish,
+}

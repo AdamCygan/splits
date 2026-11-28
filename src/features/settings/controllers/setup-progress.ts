@@ -43,7 +43,7 @@ export function markSetupStep(step: SetupStep) {
   } catch {
     /* zablokowany storage: krok po prostu nie zostanie zapamiętany */
   }
-  listeners.forEach((l) => l())
+  listeners.forEach((listener) => listener())
 }
 
 export function useSetupSteps(): ReadonlyArray<SetupStep> {

@@ -4,7 +4,7 @@ import type { SprintTimeGoal } from '../../src/features/sprints/data/dto'
 import type { QuickTemplateInput } from '../../src/features/templates/data/dto'
 import { eq } from 'drizzle-orm'
 import { api } from '#/server/app'
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 import { users } from '#/server/db/schema'
 import { inSequence, lastDeleteCode, numbered, otherCode } from './helpers'
 
@@ -18,7 +18,10 @@ globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const headers = new Headers(init?.headers)
   headers.set('Origin', 'http://localhost:3000')
   if (jar.size)
-    headers.set('Cookie', [...jar].map(([k, v]) => `${k}=${v}`).join('; '))
+    headers.set(
+      'Cookie',
+      [...jar].map(([key, entryValue]) => `${key}=${entryValue}`).join('; '),
+    )
   const response = await api.request(url.toString(), { ...init, headers })
   for (const line of response.headers.getSetCookie()) {
     const [name, cookie = ''] = line.split(';')[0]!.split('=')
@@ -96,21 +99,21 @@ const overtimeEntry = (taskTypeId: string): TimeEntryInput => ({
 
 const extraWorkTypeId = async () =>
   (await value(data.taskTypes.list())).find(
-    (t) => t.kind === 'additional_work',
+    (taskType) => taskType.kind === 'additional_work',
   )!.id
 
-let n = 0
+let count = 0
 const stamp = Date.now().toString(36)
 beforeAll(() => {
   jar.clear()
 })
 beforeEach(async () => {
-  n++
+  count++
   jar.clear()
   const session = await value(
     data.auth.register({
-      username: `tester${stamp}${n}`,
-      email: `tester${stamp}${n}@example.com`,
+      username: `tester${stamp}${count}`,
+      email: `tester${stamp}${count}@example.com`,
       password: 'correct horse 1',
       locale: 'en',
     }),
@@ -121,17 +124,17 @@ beforeEach(async () => {
 })
 
 const setPlan = (plan: 'free' | 'pro') =>
-  db
+  database
     .update(users)
     .set({ plan })
-    .where(eq(users.email, `tester${stamp}${n}@example.com`))
+    .where(eq(users.email, `tester${stamp}${count}@example.com`))
 
 describe('API contract (frontend adapter against the real server)', () => {
   it('Should reject a duplicate username and a wrong password', async () => {
     expect(
       await errorCode(
         data.auth.register({
-          username: `TESTER${stamp}${n}`,
+          username: `TESTER${stamp}${count}`,
           email: 'x@example.com',
           password: 'abcdefghij1',
           locale: 'en',
@@ -140,12 +143,12 @@ describe('API contract (frontend adapter against the real server)', () => {
     ).toBe('auth.username_taken')
     expect(
       await errorCode(
-        data.auth.login({ login: `tester${stamp}${n}`, password: 'nope' }),
+        data.auth.login({ login: `tester${stamp}${count}`, password: 'nope' }),
       ),
     ).toBe('auth.invalid_credentials')
     const session = await value(
       data.auth.login({
-        login: `Tester${stamp}${n}@example.com`,
+        login: `Tester${stamp}${count}@example.com`,
         password: 'correct horse 1',
       }),
     )
@@ -154,7 +157,9 @@ describe('API contract (frontend adapter against the real server)', () => {
 
   it('Should create the default workspace on sign-up', async () => {
     const types = await value(data.taskTypes.list())
-    expect(types.map((t) => [t.kind, t.storyPointsRequirement])).toEqual([
+    expect(
+      types.map((taskType) => [taskType.kind, taskType.storyPointsRequirement]),
+    ).toEqual([
       ['task', 'required'],
       ['code_review', 'optional'],
       ['pair_programming', 'optional'],
@@ -162,19 +167,23 @@ describe('API contract (frontend adapter against the real server)', () => {
       ['meeting', 'hidden'],
     ])
     expect(
-      (await value(data.statuses.list())).filter((s) => s.isDefault),
+      (await value(data.statuses.list())).filter(
+        (taskStatus) => taskStatus.isDefault,
+      ),
     ).toHaveLength(1)
-    expect((await value(data.spScale.get())).map((s) => s.points)).toEqual([
-      0.5, 1, 2, 3, 5, 8, 13,
-    ])
+    expect(
+      (await value(data.spScale.get())).map(
+        (spScaleStep) => spScaleStep.points,
+      ),
+    ).toEqual([0.5, 1, 2, 3, 5, 8, 13])
     expect((await value(data.settings.get())).timezone).toBe('UTC')
     expect((await value(data.sprints.list())).length).toBeGreaterThanOrEqual(2)
   })
 
   it('Should keep custom work types unique and valid', async () => {
     const base = (await value(data.taskTypes.list()))[1]!
-    await inSequence(numbered(3), (i) =>
-      value(data.taskTypes.create({ ...base, name: `Custom ${i}` })),
+    await inSequence(numbered(3), (index) =>
+      value(data.taskTypes.create({ ...base, name: `Custom ${index}` })),
     )
     expect(
       await errorCode(data.taskTypes.create({ ...base, name: 'custom 1' })),
@@ -208,9 +217,12 @@ describe('API contract (frontend adapter against the real server)', () => {
 
     const type = (await value(data.taskTypes.list()))[0]!
     const existing = (await value(data.templates.list())).length
-    await inSequence(numbered(Math.max(0, 2 - existing)), (i) =>
+    await inSequence(numbered(Math.max(0, 2 - existing)), (index) =>
       value(
-        data.templates.create({ ...dailyTemplate(type.id), label: `T${i}` }),
+        data.templates.create({
+          ...dailyTemplate(type.id),
+          label: `T${index}`,
+        }),
       ),
     )
     expect(
@@ -239,10 +251,10 @@ describe('API contract (frontend adapter against the real server)', () => {
 
   it('Should protect default and system statuses', async () => {
     const statuses = await value(data.statuses.list())
-    const def = statuses.find((s) => s.isDefault)!
-    expect(await errorCode(data.statuses.setArchived(def.id, true))).toMatch(
-      /^status\./,
-    )
+    const definition = statuses.find((taskStatus) => taskStatus.isDefault)!
+    expect(
+      await errorCode(data.statuses.setArchived(definition.id, true)),
+    ).toMatch(/^status\./)
     const created = await value(
       data.statuses.create({
         name: 'Blocked',
@@ -252,11 +264,15 @@ describe('API contract (frontend adapter against the real server)', () => {
     )
     await value(data.statuses.setDefault(created.id))
     const after = await value(data.statuses.list())
-    expect(after.filter((s) => s.isDefault).map((s) => s.id)).toEqual([
-      created.id,
-    ])
+    expect(
+      after
+        .filter((taskStatus) => taskStatus.isDefault)
+        .map((taskStatus) => taskStatus.id),
+    ).toEqual([created.id])
     const reordered = await value(
-      data.statuses.reorder([...after].reverse().map((s) => s.id)),
+      data.statuses.reorder(
+        [...after].reverse().map((taskStatus) => taskStatus.id),
+      ),
     )
     expect(reordered[0]!.id).toBe(after.at(-1)!.id)
   })
@@ -342,7 +358,7 @@ describe('API contract (frontend adapter against the real server)', () => {
       }),
     )
     const sprints = await value(data.sprints.list())
-    const fromCadence = sprints.find((s) => s.fromCadence)!
+    const fromCadence = sprints.find((sprint) => sprint.fromCadence)!
     expect(fromCadence.name).toBe('Sprint 1')
     expect(await errorCode(data.sprints.remove(fromCadence.id))).toBe(
       'sprint.cadence_delete',
@@ -385,7 +401,9 @@ describe('API contract (frontend adapter against the real server)', () => {
       { day: 2, time: '09:30' },
     ])
     const listed = await value(data.templates.list())
-    expect(listed.find((x) => x.id === created.id)!.schedule).toHaveLength(2)
+    expect(
+      listed.find((quickTemplate) => quickTemplate.id === created.id)!.schedule,
+    ).toHaveLength(2)
   })
 
   it.each<[string, Partial<QuickTemplateInput>]>([
@@ -455,7 +473,7 @@ describe('API contract (frontend adapter against the real server)', () => {
         { points: 3, maxMinutes: 240 },
       ]),
     )
-    expect(saved.map((s) => s.points)).toEqual([2, 3])
+    expect(saved.map((spScaleStep) => spScaleStep.points)).toEqual([2, 3])
   })
 
   it('Should store overtime with its description', async () => {
@@ -506,8 +524,8 @@ describe('API contract (frontend adapter against the real server)', () => {
 
   it('Should store entries with notes, SP rules per work type and ranges', async () => {
     const types = await value(data.taskTypes.list())
-    const review = types.find((t) => t.kind === 'code_review')!
-    const meeting = types.find((t) => t.kind === 'meeting')!
+    const review = types.find((taskType) => taskType.kind === 'code_review')!
+    const meeting = types.find((taskType) => taskType.kind === 'meeting')!
     const input = {
       taskTypeId: review.id,
       projectId: null,
@@ -541,7 +559,9 @@ describe('API contract (frontend adapter against the real server)', () => {
       storyPoints: 0.5,
     })
     expect(
-      (await value(data.entries.list('2026-11-02'))).map((e) => e.id),
+      (await value(data.entries.list('2026-11-02'))).map(
+        (timeEntry) => timeEntry.id,
+      ),
     ).toEqual([created.id])
     expect(await errorCode(data.entries.create({ ...input, link: null }))).toBe(
       'validation.invalid',
@@ -566,9 +586,12 @@ describe('API contract (frontend adapter against the real server)', () => {
       }),
     )
     const range = await value(data.entries.range('2026-11-01', '2026-11-30'))
-    expect(range.map((e) => e.title)).toEqual(['CR !481', 'Planning'])
+    expect(range.map((timeEntry) => timeEntry.title)).toEqual([
+      'CR !481',
+      'Planning',
+    ])
     const task = await value(data.entries.forTask(created))
-    expect(task.map((e) => e.id)).toEqual([created.id])
+    expect(task.map((timeEntry) => timeEntry.id)).toEqual([created.id])
     await value(data.entries.remove(created.id))
     expect(await errorCode(data.entries.remove(created.id))).toBe('not_found')
   })
@@ -613,7 +636,7 @@ describe('API contract (frontend adapter against the real server)', () => {
       note: null,
       startTime: '00:00',
     }
-    const a = await value(
+    const entryValue = await value(
       data.entries.start({
         ...base,
         title: 'PAY-142 Gateway',
@@ -621,27 +644,27 @@ describe('API contract (frontend adapter against the real server)', () => {
       }),
     )
     // Nagłe zadanie: A zostaje wstrzymane, nie zamknięte.
-    const b = await value(
+    const started = await value(
       data.entries.start({ ...base, title: 'Hotfix', link: null }),
     )
-    expect(b.stopped).toMatchObject({
-      id: a.started.id,
+    expect(started.stopped).toMatchObject({
+      id: entryValue.started.id,
       running: false,
       paused: true,
     })
-    expect((await value(data.entries.paused())).map((e) => e.title)).toEqual([
-      'PAY-142 Gateway',
-    ])
+    expect(
+      (await value(data.entries.paused())).map((timeEntry) => timeEntry.title),
+    ).toEqual(['PAY-142 Gateway'])
 
     // Koniec B: zwykły stop, B nie trafia do wstrzymanych.
-    const doneB = await value(data.entries.stop(b.started.id))
+    const doneB = await value(data.entries.stop(started.started.id))
     expect(doneB.paused).toBe(false)
-    expect((await value(data.entries.paused())).map((e) => e.title)).toEqual([
-      'PAY-142 Gateway',
-    ])
+    expect(
+      (await value(data.entries.paused())).map((timeEntry) => timeEntry.title),
+    ).toEqual(['PAY-142 Gateway'])
 
     // Powrót do A: nowa sesja (nowy odcinek), A znika z wstrzymanych.
-    const resumed = await value(data.entries.resume(a.started.id))
+    const resumed = await value(data.entries.resume(entryValue.started.id))
     expect(resumed.stopped).toBeNull()
     expect(resumed.started).toMatchObject({
       title: 'PAY-142 Gateway',
@@ -649,10 +672,12 @@ describe('API contract (frontend adapter against the real server)', () => {
       storyPoints: 3,
       running: true,
     })
-    expect(resumed.started.id).not.toBe(a.started.id)
+    expect(resumed.started.id).not.toBe(entryValue.started.id)
     expect(await value(data.entries.paused())).toEqual([])
     const day = await value(data.entries.list(today))
-    expect(day.filter((e) => e.title === 'PAY-142 Gateway')).toHaveLength(2)
+    expect(
+      day.filter((timeEntry) => timeEntry.title === 'PAY-142 Gateway'),
+    ).toHaveLength(2)
 
     // Ręczna przerwa i „Gotowe”.
     const pausedA = await value(data.entries.pause(resumed.started.id))
@@ -668,15 +693,17 @@ describe('API contract (frontend adapter against the real server)', () => {
     jar.clear()
     const other = await value(
       data.auth.register({
-        username: `other${stamp}${n}`,
-        email: `other${stamp}${n}@example.com`,
+        username: `other${stamp}${count}`,
+        email: `other${stamp}${count}@example.com`,
         password: 'correct horse 1',
         locale: 'pl',
       }),
     )
     setAccessToken(other.accessToken)
     expect(
-      (await value(data.taskTypes.list())).some((t) => t.id === mine.id),
+      (await value(data.taskTypes.list())).some(
+        (taskType) => taskType.id === mine.id,
+      ),
     ).toBe(false)
     expect(
       await errorCode(

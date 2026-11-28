@@ -14,13 +14,13 @@ const defaultValues: LoginValues = { login: '', password: '' }
 /** Logowanie: walidacja, wywołanie API, sesja i przejście do panelu (albo `redirectTo`). */
 export function useLogin(redirectTo?: string) {
   const navigate = useNavigate()
-  const t = useMessages(authMessages)
+  const messages = useMessages(authMessages)
   const errorText = useErrorText()
   const [formError, setFormError] = useState<string | null>(null)
 
   const form = useForm({
     defaultValues,
-    validators: { onSubmit: loginSchema(t.validation) },
+    validators: { onSubmit: loginSchema(messages.validation) },
     onSubmit: async ({ value }) => {
       setFormError(null)
       const result = await authApi.login(value)
@@ -30,7 +30,7 @@ export function useLogin(redirectTo?: string) {
       }
       // Drugi krok (kod 2FA) dojdzie razem z ustawieniami bezpieczeństwa.
       if ('mfaRequired' in result.value) {
-        setFormError(t.login.twoFactorUnavailable)
+        setFormError(messages.login.twoFactorUnavailable)
         return
       }
       startSession(result.value)

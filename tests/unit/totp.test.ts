@@ -45,7 +45,7 @@ describe('TOTP', () => {
 })
 
 describe('active sessions', () => {
-  const at = (iso: string) => new Date(iso)
+  const at = (isoDate: string) => new Date(isoDate)
   const row = (
     familyId: string,
     created: string,
@@ -82,7 +82,11 @@ describe('active sessions', () => {
       now,
     )
     expect(
-      list.map((s) => [s.id, s.current, s.startedAt.slice(0, 10)]),
+      list.map((activeSession) => [
+        activeSession.id,
+        activeSession.current,
+        activeSession.startedAt.slice(0, 10),
+      ]),
     ).toEqual([
       ['phone', true, '2026-11-24'],
       ['laptop', false, '2026-11-20'],
@@ -99,15 +103,19 @@ describe('TOTP secret encryption', () => {
   })
 
   it('Should reject a stored secret with a tampered or shortened auth tag', () => {
-    const [iv, tag, data] = encryptSecret(SECRET).split('.')
+    const [initializationVector, tag, data] = encryptSecret(SECRET).split('.')
     const short = Buffer.from(tag!, 'base64url').subarray(0, 4)
     const flipped = Buffer.from(tag!, 'base64url')
     flipped[0] = flipped[0]! ^ 1
     expect(() =>
-      decryptSecret([iv, short.toString('base64url'), data].join('.')),
+      decryptSecret(
+        [initializationVector, short.toString('base64url'), data].join('.'),
+      ),
     ).toThrow()
     expect(() =>
-      decryptSecret([iv, flipped.toString('base64url'), data].join('.')),
+      decryptSecret(
+        [initializationVector, flipped.toString('base64url'), data].join('.'),
+      ),
     ).toThrow()
   })
 })

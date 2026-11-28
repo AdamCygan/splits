@@ -14,14 +14,14 @@ export interface LoginFormProps {
 }
 
 export function LoginForm({ redirectTo }: LoginFormProps) {
-  const t = useMessages(authMessages)
+  const messages = useMessages(authMessages)
   const { form, formError } = useLogin(redirectTo)
 
   return (
     <form
       noValidate
-      onSubmit={(e) => {
-        e.preventDefault()
+      onSubmit={(event) => {
+        event.preventDefault()
         void form.handleSubmit()
       }}
       className="space-y-5"
@@ -31,14 +31,14 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
       <form.Field name="login">
         {(field) => (
           <TextField
-            label={t.login.loginLabel}
+            label={messages.login.loginLabel}
             name={field.name}
             autoComplete="username"
             autoCapitalize="none"
             spellCheck={false}
             value={field.state.value}
             onBlur={field.handleBlur}
-            onChange={(e) => field.handleChange(e.target.value)}
+            onChange={(event) => field.handleChange(event.target.value)}
             errors={errorMessages(field.state.meta.errors)}
           />
         )}
@@ -47,27 +47,27 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
       <form.Field name="password">
         {(field) => (
           <TextField
-            label={t.login.password}
+            label={messages.login.password}
             type="password"
             name={field.name}
             autoComplete="current-password"
             value={field.state.value}
             onBlur={field.handleBlur}
-            onChange={(e) => field.handleChange(e.target.value)}
+            onChange={(event) => field.handleChange(event.target.value)}
             errors={errorMessages(field.state.meta.errors)}
             labelAction={
               <Link
                 to="/forgot-password"
                 className="rounded-sm text-sm text-ink-soft underline-offset-4 hover:text-ink hover:underline"
               >
-                {t.login.forgot}
+                {messages.login.forgot}
               </Link>
             }
           />
         )}
       </form.Field>
 
-      <form.Subscribe selector={(s) => s.isSubmitting}>
+      <form.Subscribe selector={(formState) => formState.isSubmitting}>
         {(isSubmitting) => (
           <Button
             type="submit"
@@ -76,7 +76,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
             disabled={isSubmitting}
             aria-busy={isSubmitting}
           >
-            {isSubmitting ? t.login.submitting : t.login.submit}
+            {isSubmitting ? messages.login.submitting : messages.login.submit}
           </Button>
         )}
       </form.Subscribe>

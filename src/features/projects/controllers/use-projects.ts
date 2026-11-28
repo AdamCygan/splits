@@ -14,12 +14,12 @@ import { projectsQuery } from '../data/queries'
 
 /** Archiwizacja projektu i czy plan Free pozwala dodać kolejny aktywny projekt. */
 export function useProjects() {
-  const t = useMessages(settingsMessages).projects
+  const messages = useMessages(settingsMessages).projects
   const isFree = useFreePlan()
   const active = splitArchived(useQuery(projectsQuery).data ?? []).active
   const archive = useArchive(projectsApi.setArchived, {
     invalidate: keys.projects,
-    messages: t,
+    messages,
   })
   return { archive, atLimit: isFree && active.length >= FREE_LIMITS.projects }
 }
@@ -32,7 +32,7 @@ export interface SaveProjectOptions {
 
 /** Zapis projektu: nowy albo zmiana istniejącego. */
 export function useSaveProject({ project, onSaved }: SaveProjectOptions) {
-  const t = useMessages(settingsMessages).projects
+  const messages = useMessages(settingsMessages).projects
   const app = useMessages(appMessages)
   return useDataMutation(
     (input: ProjectInput) =>
@@ -41,7 +41,7 @@ export function useSaveProject({ project, onSaved }: SaveProjectOptions) {
         : projectsApi.create(input),
     {
       invalidate: [keys.projects],
-      success: project ? app.status.saved : t.created,
+      success: project ? app.status.saved : messages.created,
       onSuccess: onSaved,
     },
   )

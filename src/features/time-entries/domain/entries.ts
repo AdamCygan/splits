@@ -54,14 +54,14 @@ export interface EntryIssue {
 }
 
 export const toMinutes = (time: string) => {
-  const [h, m] = time.split(':').map(Number)
-  return h! * 60 + m!
+  const [hours, minutes] = time.split(':').map(Number)
+  return hours! * 60 + minutes!
 }
 
 /** Minuty od północy → 'HH:MM'; wartości spoza doby zawijają się (−5 → 23:55, 1445 → 00:05). */
 export const fromMinutes = (minutes: number) => {
-  const m = ((Math.round(minutes) % 1440) + 1440) % 1440
-  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+  const minutesOfDay = ((Math.round(minutes) % 1440) + 1440) % 1440
+  return `${String(Math.floor(minutesOfDay / 60)).padStart(2, '0')}:${String(minutesOfDay % 60).padStart(2, '0')}`
 }
 
 /** Czas między godzinami w obrębie dnia; null, gdy koniec nie jest po początku. */
@@ -147,13 +147,14 @@ export function validateEntry(
     issues.push({ field: 'time', code: 'duration_range' })
   }
 
-  const sp = input.storyPoints
+  const storyPoints = input.storyPoints
   if (type.storyPointsRequirement === 'hidden') {
-    if (sp !== null) issues.push({ field: 'storyPoints', code: 'invalid' })
-  } else if (sp === null) {
+    if (storyPoints !== null)
+      issues.push({ field: 'storyPoints', code: 'invalid' })
+  } else if (storyPoints === null) {
     if (type.storyPointsRequirement === 'required')
       issues.push({ field: 'storyPoints', code: 'required' })
-  } else if (!(sp > 0 && sp <= 100)) {
+  } else if (!(storyPoints > 0 && storyPoints <= 100)) {
     issues.push({ field: 'storyPoints', code: 'invalid' })
   }
   if (!isValidDate(input.workDate))

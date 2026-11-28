@@ -51,8 +51,8 @@ export function resolveApply(
   workspaceCount: number,
 ): ApplyTarget | null {
   if (workspaceCount <= 1) return 'this'
-  const pref = applyPreference(prefs, kind)
-  return pref === 'ask' ? null : pref
+  const preference = applyPreference(prefs, kind)
+  return preference === 'ask' ? null : preference
 }
 
 /** Co można skopiować z innej przestrzeni (przy tworzeniu albo później z ustawień). */
@@ -120,11 +120,13 @@ export function shouldAskToday(input: AskTodayInput) {
 
 /** Unikalna nazwa kopii: „Acme (2)”, „Acme (3)”… */
 export function uniqueName(name: string, taken: ReadonlyArray<string>) {
-  const used = new Set(taken.map((n) => n.trim().toLowerCase()))
+  const used = new Set(
+    taken.map((existingName) => existingName.trim().toLowerCase()),
+  )
   const base = name.trim().slice(0, WORKSPACE_NAME_MAX)
   if (!used.has(base.toLowerCase())) return base
-  for (let i = 2; ; i++) {
-    const suffix = ` (${i})`
+  for (let index = 2; ; index++) {
+    const suffix = ` (${index})`
     const candidate = base.slice(0, WORKSPACE_NAME_MAX - suffix.length) + suffix
     if (!used.has(candidate.toLowerCase())) return candidate
   }

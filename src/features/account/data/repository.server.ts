@@ -17,7 +17,7 @@ import {
   otpauthUrl,
 } from '#/features/auth/data/totp.server'
 
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 
 import { users } from '#/server/db/schema'
 
@@ -54,10 +54,10 @@ import {
 
 import type { z } from 'zod'
 
-import * as t from '#/server/db/schema'
+import * as schema from '#/server/db/schema'
 
 export async function currentUser(userId: string) {
-  const [user] = await db.select().from(users).where(eq(users.id, userId))
+  const [user] = await database.select().from(users).where(eq(users.id, userId))
   if (!user) throw new ApiError('auth.no_session', 401)
   return user
 }
@@ -76,7 +76,7 @@ export async function updateProfile(
   input: z.infer<typeof profileInput>,
 ) {
   assertNotDemo(await currentUser(userId))
-  const [user] = await db
+  const [user] = await database
     .update(users)
     .set({ displayName: input.displayName })
     .where(eq(users.id, userId))
@@ -86,7 +86,9 @@ export async function updateProfile(
 
 /** Rezygnacja ze zmiany e-maila (link przestaje działać). */
 export async function cancelEmailChange(userId: string) {
-  await db.transaction((tx) => cancelPendingEmail(tx, userId))
+  await database.transaction((transaction) =>
+    cancelPendingEmail(transaction, userId),
+  )
   return
 }
 
@@ -96,7 +98,9 @@ export async function resendVerification(userId: string) {
   const user = await currentUser(userId)
   assertNotDemo(user)
   if (user.emailVerifiedAt) throw new ApiError('auth.already_verified', 409)
-  await db.transaction((tx) => sendEmailConfirmation(tx, user, null))
+  await database.transaction((transaction) =>
+    sendEmailConfirmation(transaction, user, null),
+  )
   return
 }
 
@@ -117,7 +121,9 @@ export async function listSessions(
 
 /** Wylogowanie jednego urządzenia. */
 export async function revokeOwnSession(userId: string, id: string) {
-  await db.transaction((tx) => revokeSession(tx, userId, id))
+  await database.transaction((transaction) =>
+    revokeSession(transaction, userId, id),
+  )
   return
 }
 
@@ -126,7 +132,9 @@ export async function sendDeleteCode(userId: string) {
   rateLimit(`delete-code:${userId}`, 5, 60 * 60_000)
   const user = await currentUser(userId)
   assertNotDemo(user)
-  await db.transaction((tx) => sendDeletionCode(tx, user))
+  await database.transaction((transaction) =>
+    sendDeletionCode(transaction, user),
+  )
   return
 }
 
@@ -149,68 +157,86 @@ export async function exportAccount(userId: string) {
     tags,
     templates,
     entries,
-    subs,
+    subscriptions,
     daysOff,
     breaks,
     workspaces,
     workspaceSettings,
   ] = await Promise.all([
-    db.select().from(t.userSettings).where(eq(t.userSettings.userId, userId)),
-    db
+    database
       .select()
-      .from(t.storyPointScale)
-      .where(eq(t.storyPointScale.userId, userId)),
-    db.select().from(t.taskTypes).where(eq(t.taskTypes.userId, userId)),
-    db.select().from(t.taskStatuses).where(eq(t.taskStatuses.userId, userId)),
-    db
+      .from(schema.userSettings)
+      .where(eq(schema.userSettings.userId, userId)),
+    database
       .select()
-      .from(t.sprintCadences)
-      .where(eq(t.sprintCadences.userId, userId)),
-    db
+      .from(schema.storyPointScale)
+      .where(eq(schema.storyPointScale.userId, userId)),
+    database
       .select()
-      .from(t.sprints)
-      .where(eq(t.sprints.userId, userId))
-      .orderBy(asc(t.sprints.startsOn)),
-    db.select().from(t.projects).where(eq(t.projects.userId, userId)),
-    db.select().from(t.tags).where(eq(t.tags.userId, userId)),
-    db
+      .from(schema.taskTypes)
+      .where(eq(schema.taskTypes.userId, userId)),
+    database
       .select()
-      .from(t.quickTemplates)
-      .where(eq(t.quickTemplates.userId, userId)),
-    db
+      .from(schema.taskStatuses)
+      .where(eq(schema.taskStatuses.userId, userId)),
+    database
       .select()
-      .from(t.timeEntries)
-      .where(eq(t.timeEntries.userId, userId))
-      .orderBy(asc(t.timeEntries.workDate), asc(t.timeEntries.createdAt)),
-    db
+      .from(schema.sprintCadences)
+      .where(eq(schema.sprintCadences.userId, userId)),
+    database
+      .select()
+      .from(schema.sprints)
+      .where(eq(schema.sprints.userId, userId))
+      .orderBy(asc(schema.sprints.startsOn)),
+    database
+      .select()
+      .from(schema.projects)
+      .where(eq(schema.projects.userId, userId)),
+    database.select().from(schema.tags).where(eq(schema.tags.userId, userId)),
+    database
+      .select()
+      .from(schema.quickTemplates)
+      .where(eq(schema.quickTemplates.userId, userId)),
+    database
+      .select()
+      .from(schema.timeEntries)
+      .where(eq(schema.timeEntries.userId, userId))
+      .orderBy(
+        asc(schema.timeEntries.workDate),
+        asc(schema.timeEntries.createdAt),
+      ),
+    database
       .select({
-        status: t.subscriptions.status,
-        plan: t.subscriptions.plan,
-        currentPeriodEnd: t.subscriptions.currentPeriodEnd,
-        cancelAtPeriodEnd: t.subscriptions.cancelAtPeriodEnd,
-        createdAt: t.subscriptions.createdAt,
+        status: schema.subscriptions.status,
+        plan: schema.subscriptions.plan,
+        currentPeriodEnd: schema.subscriptions.currentPeriodEnd,
+        cancelAtPeriodEnd: schema.subscriptions.cancelAtPeriodEnd,
+        createdAt: schema.subscriptions.createdAt,
       })
-      .from(t.subscriptions)
-      .where(eq(t.subscriptions.userId, userId)),
-    db
+      .from(schema.subscriptions)
+      .where(eq(schema.subscriptions.userId, userId)),
+    database
       .select()
-      .from(t.daysOff)
-      .where(eq(t.daysOff.userId, userId))
-      .orderBy(asc(t.daysOff.date)),
-    db
+      .from(schema.daysOff)
+      .where(eq(schema.daysOff.userId, userId))
+      .orderBy(asc(schema.daysOff.date)),
+    database
       .select()
-      .from(t.breaks)
-      .where(eq(t.breaks.userId, userId))
-      .orderBy(asc(t.breaks.workDate), asc(t.breaks.createdAt)),
-    db
+      .from(schema.breaks)
+      .where(eq(schema.breaks.userId, userId))
+      .orderBy(asc(schema.breaks.workDate), asc(schema.breaks.createdAt)),
+    database
       .select()
-      .from(t.workspaces)
-      .where(eq(t.workspaces.userId, userId))
-      .orderBy(asc(t.workspaces.sortOrder), asc(t.workspaces.createdAt)),
-    db
+      .from(schema.workspaces)
+      .where(eq(schema.workspaces.userId, userId))
+      .orderBy(
+        asc(schema.workspaces.sortOrder),
+        asc(schema.workspaces.createdAt),
+      ),
+    database
       .select()
-      .from(t.workspaceSettings)
-      .where(eq(t.workspaceSettings.userId, userId)),
+      .from(schema.workspaceSettings)
+      .where(eq(schema.workspaceSettings.userId, userId)),
   ])
   return {
     format: 'splits-export',
@@ -239,7 +265,7 @@ export async function exportAccount(userId: string) {
     timeEntries: own(entries),
     daysOff: own(daysOff),
     breaks: own(breaks),
-    subscriptions: subs,
+    subscriptions,
   }
 }
 
@@ -252,13 +278,13 @@ export async function requestEmailChange(
   input: z.infer<typeof emailChangeInput>,
   email: string,
 ) {
-  await db.transaction(async (tx) => {
+  await database.transaction(async (transaction) => {
     const user = await currentUser(userId)
     assertNotDemo(user)
-    await confirmIdentity(tx, user, input)
+    await confirmIdentity(transaction, user, input)
     if (email.toLowerCase() === user.email.toLowerCase())
       throw new ApiError('auth.email_same', 400, 'email')
-    const [taken] = await tx
+    const [taken] = await transaction
       .select({ id: users.id })
       .from(users)
       .where(
@@ -268,7 +294,7 @@ export async function requestEmailChange(
         ),
       )
     if (taken) throw conflict('auth.email_taken', 'email')
-    await sendEmailConfirmation(tx, user, email)
+    await sendEmailConfirmation(transaction, user, email)
   })
   return
 }
@@ -278,11 +304,11 @@ export async function disableTwoFactorRequest(
   userId: string,
   input: z.infer<typeof identityInput>,
 ) {
-  const user = await db.transaction(async (tx) => {
+  const user = await database.transaction(async (transaction) => {
     const account = await currentUser(userId)
     if (!account.totpEnabledAt) return account
-    await confirmIdentity(tx, account, input)
-    await disableTwoFactor(tx, userId)
+    await confirmIdentity(transaction, account, input)
+    await disableTwoFactor(transaction, userId)
     return account
   })
   await notify(user, 'twoFactorOff')
@@ -295,12 +321,12 @@ export async function newRecoveryCodesRequest(
   input: z.infer<typeof identityInput>,
   codes: string[],
 ) {
-  await db.transaction(async (tx) => {
+  await database.transaction(async (transaction) => {
     const user = await currentUser(userId)
     if (!user.totpEnabledAt)
       throw new ApiError('auth.invalid_code', 400, 'code')
-    await confirmIdentity(tx, user, input)
-    await tx
+    await confirmIdentity(transaction, user, input)
+    await transaction
       .update(users)
       .set({ recoveryCodes: codes.map(hashRecoveryCode) })
       .where(eq(users.id, userId))
@@ -315,7 +341,7 @@ export async function enableTwoFactorRequest(
   currentToken: string | undefined,
   codes: string[],
 ) {
-  const user = await db.transaction(async (tx) => {
+  const user = await database.transaction(async (transaction) => {
     const account = await currentUser(userId)
     assertNotDemo(account)
     if (
@@ -325,7 +351,7 @@ export async function enableTwoFactorRequest(
       throw new ApiError('auth.wrong_password', 400, 'password')
     const step = verifyTotp(input.secret, input.code, null)
     if (step === null) throw new ApiError('auth.invalid_code', 400, 'code')
-    await tx
+    await transaction
       .update(users)
       .set({
         totpSecret: encryptSecret(input.secret),
@@ -335,7 +361,7 @@ export async function enableTwoFactorRequest(
       })
       .where(eq(users.id, userId))
     // Pozostałe urządzenia logują się od nowa, już z drugim krokiem.
-    await revokeOtherSessions(tx, userId, currentToken)
+    await revokeOtherSessions(transaction, userId, currentToken)
     return account
   })
   await notify(user, 'twoFactorOn')
@@ -347,7 +373,9 @@ export async function revokeOtherSessionsRequest(
   userId: string,
   currentToken: string | undefined,
 ) {
-  await db.transaction((tx) => revokeOtherSessions(tx, userId, currentToken))
+  await database.transaction((transaction) =>
+    revokeOtherSessions(transaction, userId, currentToken),
+  )
   return
 }
 
@@ -365,12 +393,12 @@ export async function changePasswordRequest(
   )
     throw new ApiError('auth.wrong_password', 400, 'currentPassword')
   const passwordHash = await hashPassword(input.newPassword)
-  await db.transaction(async (tx) => {
-    await tx
+  await database.transaction(async (transaction) => {
+    await transaction
       .update(users)
       .set({ passwordHash, passwordChangedAt: new Date() })
       .where(eq(users.id, userId))
-    await revokeOtherSessions(tx, userId, currentToken)
+    await revokeOtherSessions(transaction, userId, currentToken)
   })
   await notify(user, 'passwordChanged')
   return
@@ -381,10 +409,12 @@ export async function deleteAccountRequest(
   input: z.infer<typeof deleteAccountInput>,
 ) {
   const user = await currentUser(userId)
-  await db.transaction((tx) => consumeDeletionCode(tx, userId, input.code))
+  await database.transaction((transaction) =>
+    consumeDeletionCode(transaction, userId, input.code),
+  )
   // Najpierw koniec płatności, potem ON DELETE CASCADE usuwa wszystkie dane konta.
   if (billingEnabled()) await cancelSubscriptionsFor(userId)
-  await db.delete(users).where(eq(users.id, userId))
+  await database.delete(users).where(eq(users.id, userId))
   await notify(user, 'accountDeleted')
   cutAccess(userId)
   return

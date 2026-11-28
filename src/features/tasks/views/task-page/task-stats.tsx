@@ -5,73 +5,73 @@ import { taskViewMessages } from '#/i18n/messages/task-view'
 import type { TaskViewModel } from '../../controllers/use-task'
 
 export interface TaskStatsProps {
-  vm: TaskViewModel
+  viewModel: TaskViewModel
 }
 
 /** Czas (wobec estymaty albo na SP), sesje, dni i przerwania w pracy nad zadaniem. */
-export function TaskStats({ vm }: TaskStatsProps) {
-  const t = useMessages(taskViewMessages).stats
+export function TaskStats({ viewModel }: TaskStatsProps) {
+  const messages = useMessages(taskViewMessages).stats
   const format = useFormat()
   const { locale } = useI18n()
-  const { insights, estimate, sp } = vm
+  const { insights, estimate, sp: storyPoints } = viewModel
   if (!insights) return null
-  const dateShort = (d: string) =>
-    formatDate(locale, d, { day: 'numeric', month: 'short' })
+  const dateShort = (isoDate: string) =>
+    formatDate(locale, isoDate, { day: 'numeric', month: 'short' })
   return (
     <StatGrid className="mb-8">
       <StatTile
-        label={t.time}
+        label={messages.time}
         value={format.minutes(insights.minutes)}
         hint={[
           estimate !== null
-            ? fmt(t.estimate, {
+            ? fmt(messages.estimate, {
                 estimate: format.minutes(estimate),
-                diff: format.delta(vm.overEstimate, t),
+                diff: format.delta(viewModel.overEstimate, messages),
               })
-            : sp
-              ? `${format.minutes(Math.round(insights.minutes / sp))} / SP`
+            : storyPoints
+              ? `${format.minutes(Math.round(insights.minutes / storyPoints))} / SP`
               : null,
           insights.overtimeMinutes > 0
-            ? fmt(t.extra, {
+            ? fmt(messages.extra, {
                 overtime: format.minutes(insights.overtimeMinutes),
               })
             : null,
           insights.extensionMinutes > 0
-            ? fmt(t.extension, {
+            ? fmt(messages.extension, {
                 time: format.minutes(insights.extensionMinutes),
               })
             : null,
         ]
           .filter(Boolean)
           .join('; ')}
-        warn={vm.overEstimate > 0}
+        warn={viewModel.overEstimate > 0}
       />
       <StatTile
-        label={t.sessions}
+        label={messages.sessions}
         value={String(insights.sessions)}
-        hint={fmt(t.average, {
+        hint={fmt(messages.average, {
           time: format.minutes(insights.averageSession),
           longest: format.minutes(insights.longestSession),
         })}
       />
       <StatTile
-        label={t.days}
+        label={messages.days}
         value={String(insights.days.length)}
         hint={format
           .plural(
-            t.span,
+            messages.span,
             insights.firstDate === insights.lastDate ? 1 : insights.spanDays,
           )
           .replace('{from}', dateShort(insights.firstDate))
           .replace('{to}', dateShort(insights.lastDate))}
       />
       <StatTile
-        label={t.interruptions}
+        label={messages.interruptions}
         value={String(insights.gaps.length)}
         hint={
           insights.minutesPerInterruption === null
-            ? t.none
-            : fmt(t.every, {
+            ? messages.none
+            : fmt(messages.every, {
                 time: format.minutes(insights.minutesPerInterruption),
               })
         }

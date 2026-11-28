@@ -6,43 +6,46 @@ import { FieldError, FieldLabel, fieldA11y } from './fields'
 import type { EntryFormViewModel } from '../../controllers/use-entry-form'
 
 export interface TaskFieldsProps {
-  vm: EntryFormViewModel
+  viewModel: EntryFormViewModel
 }
 
 /** Tytuł zadania i link (link wg ustawień typu: ukryty, opcjonalny albo wymagany). */
-export function TaskFields({ vm }: TaskFieldsProps) {
-  const { t, type, draft } = vm
+export function TaskFields({ viewModel }: TaskFieldsProps) {
+  const { messages, type, draft } = viewModel
   if (!type) return null
-  const linkHint = Boolean(vm.taskKey) && !vm.issueText('link')
+  const linkHint = Boolean(viewModel.taskKey) && !viewModel.issueText('link')
   return (
     <>
       <div className="sm:col-span-2">
-        <FieldLabel htmlFor={vm.fieldId('title')} note={t.form.required}>
+        <FieldLabel
+          htmlFor={viewModel.fieldId('title')}
+          note={messages.form.required}
+        >
           {type.titleLabel}
         </FieldLabel>
         <Input
-          ref={vm.titleRef}
-          {...fieldA11y(vm, 'title')}
+          ref={viewModel.titleRef}
+          {...fieldA11y(viewModel, 'title')}
           className="mt-2"
           autoComplete="off"
           maxLength={ENTRY_LIMITS.title}
           value={draft.title}
-          onChange={(e) => vm.update({ title: e.target.value })}
+          onChange={(event) => viewModel.update({ title: event.target.value })}
         />
-        <FieldError vm={vm} field="title" />
+        <FieldError viewModel={viewModel} field="title" />
       </div>
 
       {type.linkRequirement !== 'hidden' && (
         <div className="sm:col-span-2">
           <FieldLabel
-            htmlFor={vm.fieldId('link')}
+            htmlFor={viewModel.fieldId('link')}
             note={
               type.linkRequirement === 'required'
-                ? t.form.required
-                : t.form.optional
+                ? messages.form.required
+                : messages.form.optional
             }
           >
-            {type.linkLabel || t.form.link}
+            {type.linkLabel || messages.form.link}
           </FieldLabel>
           <div className="relative mt-2">
             <Link2
@@ -50,25 +53,27 @@ export function TaskFields({ vm }: TaskFieldsProps) {
               className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-soft"
             />
             <Input
-              {...fieldA11y(vm, 'link', Boolean(vm.taskKey))}
+              {...fieldA11y(viewModel, 'link', Boolean(viewModel.taskKey))}
               type="url"
               inputMode="url"
               className="pl-10"
               placeholder="https://"
               spellCheck={false}
               value={draft.link}
-              onChange={(e) => vm.update({ link: e.target.value })}
+              onChange={(event) =>
+                viewModel.update({ link: event.target.value })
+              }
             />
           </div>
-          {linkHint && vm.taskKey && (
+          {linkHint && viewModel.taskKey && (
             <p
-              id={`${vm.fieldId('link')}-hint`}
+              id={`${viewModel.fieldId('link')}-hint`}
               className="mt-1.5 text-sm text-ink-soft"
             >
-              {fmt(t.form.detected, { key: vm.taskKey })}
+              {fmt(messages.form.detected, { key: viewModel.taskKey })}
             </p>
           )}
-          <FieldError vm={vm} field="link" />
+          <FieldError viewModel={viewModel} field="link" />
         </div>
       )}
     </>

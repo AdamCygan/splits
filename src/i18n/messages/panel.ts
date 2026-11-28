@@ -2,7 +2,7 @@ import type { Dictionary } from '../context'
 import type { Plural } from '../format'
 
 /** Teksty ekranów panelu: komunikaty o koncie, demo, Sprinty, Zadania i eksport danych. */
-const en = {
+const english = {
   notices: {
     label: 'Account notices',
     unverified: 'Confirm your email address: we sent a link to {email}.',
@@ -196,9 +196,9 @@ const en = {
   },
 }
 
-export type PanelMessages = typeof en
+export type PanelMessages = typeof english
 
-const pl: PanelMessages = {
+const polish: PanelMessages = {
   notices: {
     label: 'Komunikaty o koncie',
     unverified: 'Potwierdź adres e-mail: wysłaliśmy link na {email}.',
@@ -412,4 +412,7 @@ const pl: PanelMessages = {
   },
 }
 
-export const panelMessages: Dictionary<PanelMessages> = { en, pl }
+export const panelMessages: Dictionary<PanelMessages> = {
+  en: english,
+  pl: polish,
+}

@@ -70,7 +70,7 @@ export function useEntryFormReady() {
     useQuery(taskTypesQuery),
     useQuery(scaleQuery),
     useQuery(projectsQuery),
-  ].every((q) => q.isSuccess)
+  ].every((query) => query.isSuccess)
 }
 
 /**
@@ -85,9 +85,9 @@ export function useEntryFormViewModel({
   prefill,
   copyOf = null,
 }: EntryFormProps) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const format = useFormat()
-  const uid = useId()
+  const userId = useId()
   const types = selectable(
     useQuery(taskTypesQuery).data ?? [],
     entry?.taskTypeId,
@@ -114,19 +114,22 @@ export function useEntryFormViewModel({
   // Zmiana dnia na przeszły w trakcie wypełniania: timer przechodzi na „czas trwania”.
   useEffect(() => {
     if (!timerAllowed && !editing && draft.mode === 'timer')
-      setDraft((d) => ({ ...d, mode: 'duration' }))
+      setDraft((currentDraft) => ({ ...currentDraft, mode: 'duration' }))
   }, [timerAllowed, editing, draft.mode])
 
   // Wybór z wyszukiwarki lub palety: tylko przy nowym kluczu, nie przy każdym renderze.
   const prefillKey = prefill?.key
   useEffect(() => {
     if (!prefill) return
-    setDraft((d) => withPrefill(d, prefill, { timerAllowed, now: nowTime() }))
+    setDraft((currentDraft) =>
+      withPrefill(currentDraft, prefill, { timerAllowed, now: nowTime() }),
+    )
     focusTitle()
     if (!prefill.entry) titleRef.current?.scrollIntoView({ block: 'center' })
   }, [prefillKey])
 
-  const type = types.find((x) => x.id === draft.taskTypeId) ?? types[0]
+  const type =
+    types.find((archivable) => archivable.id === draft.taskTypeId) ?? types[0]
 
   const save = useDataMutation(
     (input: TimeEntryInput) =>
@@ -134,14 +137,14 @@ export function useEntryFormViewModel({
     {
       invalidate: [entryKeys.all],
       success: entry
-        ? t.form.updated
+        ? messages.form.updated
         : copyOf
-          ? t.form.duplicated
-          : t.form.saved,
+          ? messages.form.duplicated
+          : messages.form.saved,
       onSuccess: (saved) => {
         onSaved?.(saved)
         if (!editing) {
-          setDraft((d) => afterSave(d, type))
+          setDraft((currentDraft) => afterSave(currentDraft, type))
           setSubmitted(false)
           focusTitle()
         }
@@ -153,18 +156,18 @@ export function useEntryFormViewModel({
     (input: TimerStartInput) => entriesApi.start(input),
     {
       invalidate: [entryKeys.all],
-      success: t.form.timerStarted,
+      success: messages.form.timerStarted,
       onSuccess: (result) => {
         if (result.stopped) {
           toast(
-            fmt(t.form.previousStopped, {
+            fmt(messages.form.previousStopped, {
               name: result.stopped.title,
               time: format.minutes(result.stopped.durationMinutes),
             }),
           )
         }
         onSaved?.(result.started)
-        setDraft((d) => afterTimerStart(d, type))
+        setDraft((currentDraft) => afterTimerStart(currentDraft, type))
         setSubmitted(false)
         focusTitle()
       },
@@ -183,7 +186,7 @@ export function useEntryFormViewModel({
     type && input ? validateEntry(input, type) : []
   if (
     draft.mode === 'timer' &&
-    !issues.some((i) => i.field === 'time') &&
+    !issues.some((entryIssue) => entryIssue.field === 'time') &&
     isFutureStart(draft.start, nowTime())
   ) {
     issues.push({ field: 'time', code: 'future' })
@@ -193,18 +196,19 @@ export function useEntryFormViewModel({
   const startsTimer = draft.mode === 'timer' && !editing
 
   const messageFor = (issue: EntryIssue): string => {
-    const group = t.issues[issue.field as keyof typeof t.issues] as
-      Record<string, string> | undefined
-    return group?.[issue.code] ?? t.issues.time.invalid
+    const group = messages.issues[
+      issue.field as keyof typeof messages.issues
+    ] as Record<string, string> | undefined
+    return group?.[issue.code] ?? messages.issues.time.invalid
   }
   /** Komunikat błędu pola po pierwszej próbie zapisu (walidacja albo odpowiedź serwera). */
   const issueText = (field: EntryField) => {
     if (!submitted) return null
-    const issue = issues.find((i) => i.field === field)
+    const issue = issues.find((entryIssue) => entryIssue.field === field)
     if (issue) return messageFor(issue)
     return mutationFieldError(save.error, field)
   }
-  const fieldId = (field: string) => `${uid}-${field}`
+  const fieldId = (field: string) => `${userId}-${field}`
   /** aria-describedby: błąd pola i (opcjonalnie) jego podpowiedź. */
   const describedBy = (field: EntryField, hint?: boolean) =>
     [
@@ -215,16 +219,18 @@ export function useEntryFormViewModel({
       .join(' ') || undefined
 
   const update = (patch: Partial<Draft>) =>
-    setDraft((d) => ({ ...d, ...patch }))
+    setDraft((currentDraft) => ({ ...currentDraft, ...patch }))
 
   const quickLog = (next: TaskType, value: number | 'timer') => {
-    setDraft((d) => withQuickLog(d, next, value, { now: nowTime(), editing }))
+    setDraft((currentDraft) =>
+      withQuickLog(currentDraft, next, value, { now: nowTime(), editing }),
+    )
     // Po zamknięciu menu/okna Radix oddaje fokus; tytuł przejmuje go chwilę później.
     window.setTimeout(focusTitle, 30)
   }
 
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
+  const submit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     setSubmitted(true)
     if (!input) return
     if (issues.length > 0) {
@@ -236,17 +242,20 @@ export function useEntryFormViewModel({
   }
 
   /** Ctrl/⌘+Enter zapisuje z dowolnego pola. */
-  const onKeyDown = (e: KeyboardEvent<HTMLFormElement>) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault()
-      e.currentTarget.requestSubmit()
+  const onKeyDown = (keyboardEvent: KeyboardEvent<HTMLFormElement>) => {
+    if (
+      keyboardEvent.key === 'Enter' &&
+      (keyboardEvent.ctrlKey || keyboardEvent.metaKey)
+    ) {
+      keyboardEvent.preventDefault()
+      keyboardEvent.currentTarget.requestSubmit()
     }
   }
 
   return {
-    t,
+    messages,
     format,
-    uid,
+    userId,
     fieldId,
     titleRef,
     // dane
@@ -265,7 +274,7 @@ export function useEntryFormViewModel({
     taskKey: draft.link ? extractTaskKey(draft.link) : null,
     timeOptions: timeModesFor(entry, timerAllowed).map((value) => ({
       value,
-      label: t.form.timeModes[value],
+      label: messages.form.timeModes[value],
     })),
     pending: save.isPending || startTimer.isPending,
     customFor,
@@ -274,10 +283,14 @@ export function useEntryFormViewModel({
     describedBy,
     // akcje
     update,
-    changeType: (next: TaskType) => setDraft((d) => withType(d, next, editing)),
+    changeType: (next: TaskType) =>
+      setDraft((currentDraft) => withType(currentDraft, next, editing)),
     setMode: (mode: DraftMode) =>
-      setDraft((d) =>
-        withMode(d, mode, { now: nowTime(), entryStart: entry?.startTime }),
+      setDraft((currentDraft) =>
+        withMode(currentDraft, mode, {
+          now: nowTime(),
+          entryStart: entry?.startTime,
+        }),
       ),
     startNow: () => update({ start: nowTime() }),
     quickLog,

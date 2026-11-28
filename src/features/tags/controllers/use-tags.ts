@@ -13,13 +13,13 @@ export interface TagActionsOptions {
 
 /** Dodawanie i usuwanie tagów. */
 export function useTagActions({ onCreated, onRemoved }: TagActionsOptions) {
-  const t = useMessages(settingsMessages).projects
+  const messages = useMessages(settingsMessages).projects
   const create = useApplyMutation(
     'tags',
     (input: TagInput, apply) => tagsApi.create(input, apply),
     {
       invalidate: [keys.tags],
-      success: t.tagCreated,
+      success: messages.tagCreated,
       onSuccess: onCreated,
     },
   )
@@ -28,7 +28,7 @@ export function useTagActions({ onCreated, onRemoved }: TagActionsOptions) {
     (id: string, apply) => tagsApi.remove(id, apply),
     {
       invalidate: [keys.tags],
-      success: t.tagDeleted,
+      success: messages.tagDeleted,
       onSuccess: onRemoved,
     },
   )

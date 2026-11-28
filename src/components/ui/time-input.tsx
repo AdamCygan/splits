@@ -9,10 +9,10 @@ import { cn } from '#/lib/utils'
 import { fromMinutes, toMinutes } from '#/features/time-entries/domain/entries'
 import { Input } from './input'
 
-const SLOTS = Array.from({ length: 96 }, (_, i) => {
-  const h = String(Math.floor(i / 4)).padStart(2, '0')
-  const m = String((i % 4) * 15).padStart(2, '0')
-  return `${h}:${m}`
+const SLOTS = Array.from({ length: 96 }, (_unused, index) => {
+  const hash = String(Math.floor(index / 4)).padStart(2, '0')
+  const match = String((index % 4) * 15).padStart(2, '0')
+  return `${hash}:${match}`
 })
 
 /**
@@ -32,7 +32,7 @@ export function TimeInput({
   onChange: (value: string) => void
 }) {
   const { tag } = useI18n()
-  const t = useMessages(commonMessages).time
+  const messages = useMessages(commonMessages).time
   const twelve = uses12h(tag, useClockPref())
   // Tekst w trakcie edycji; null = pokazujemy sformatowaną wartość.
   const [draft, setDraft] = useState<string | null>(null)
@@ -49,10 +49,10 @@ export function TimeInput({
     // Lista przewija się do wybranej godziny (albo najbliższej).
     const id = requestAnimationFrame(() => {
       const target = parsed ?? fromMinutes(9 * 60)
-      const slot = SLOTS.reduce((best, s) =>
-        Math.abs(toMinutes(s) - toMinutes(target)) <
+      const slot = SLOTS.reduce((best, slotOption) =>
+        Math.abs(toMinutes(slotOption) - toMinutes(target)) <
         Math.abs(toMinutes(best) - toMinutes(target))
-          ? s
+          ? slotOption
           : best,
       )
       listRef.current
@@ -71,39 +71,39 @@ export function TimeInput({
           inputMode="text"
           autoComplete="off"
           spellCheck={false}
-          title={t.hint}
+          title={messages.hint}
           value={shown}
-          onFocus={(e) => {
+          onFocus={(event) => {
             setDraft(displayTime(value, twelve))
-            props.onFocus?.(e)
+            props.onFocus?.(event)
           }}
-          onChange={(e) => {
-            setDraft(e.target.value)
-            commit(e.target.value)
+          onChange={(event) => {
+            setDraft(event.target.value)
+            commit(event.target.value)
           }}
-          onBlur={(e) => {
+          onBlur={(event) => {
             if (draft !== null) commit(draft)
             setDraft(null)
-            props.onBlur?.(e)
+            props.onBlur?.(event)
           }}
-          onKeyDown={(e) => {
-            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-              e.preventDefault()
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+              event.preventDefault()
               const step =
-                (e.shiftKey ? 60 : 5) * (e.key === 'ArrowUp' ? 1 : -1)
+                (event.shiftKey ? 60 : 5) * (event.key === 'ArrowUp' ? 1 : -1)
               const base = parsed ? toMinutes(parsed) : 9 * 60 - step
               const next = fromMinutes(Math.round((base + step) / 5) * 5)
               onChange(next)
               setDraft(displayTime(next, twelve))
             }
-            props.onKeyDown?.(e)
+            props.onKeyDown?.(event)
           }}
           className="w-full pr-10 tabular-nums"
         />
         <Popover.Trigger asChild>
           <button
             type="button"
-            aria-label={t.pick}
+            aria-label={messages.pick}
             className="absolute top-1/2 right-1.5 grid size-8 -translate-y-1/2 place-items-center rounded-md text-ink-soft hover:bg-muted hover:text-ink"
           >
             <Clock aria-hidden className="size-4" />
@@ -119,7 +119,7 @@ export function TimeInput({
           <div
             ref={listRef}
             role="group"
-            aria-label={t.list}
+            aria-label={messages.list}
             className="max-h-64 overflow-y-auto"
           >
             {SLOTS.map((slot) => (

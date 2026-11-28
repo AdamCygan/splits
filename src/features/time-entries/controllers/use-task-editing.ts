@@ -18,19 +18,23 @@ export interface UpdateTaskOptions {
 
 /** Zmiana tytułu, linku, projektu i SP we wszystkich sesjach zadania. */
 export function useUpdateTask({ task, onSaved }: UpdateTaskOptions) {
-  const t = useMessages(entriesMessages).task
+  const messages = useMessages(entriesMessages).task
   return useDataMutation(
     (input: TaskUpdateInput) => entriesApi.updateTask(task, input),
-    { invalidate: [entryKeys.all], success: t.saved, onSuccess: onSaved },
+    {
+      invalidate: [entryKeys.all],
+      success: messages.saved,
+      onSuccess: onSaved,
+    },
   )
 }
 
 /** Usunięcie jednej sesji zadania. */
 export function useRemoveSession(onRemoved: () => void) {
-  const t = useMessages(entriesMessages).task
+  const messages = useMessages(entriesMessages).task
   return useDataMutation((id: string) => entriesApi.remove(id), {
     invalidate: [entryKeys.all],
-    success: t.deleted,
+    success: messages.deleted,
     onSuccess: onRemoved,
   })
 }
@@ -42,7 +46,7 @@ export interface SaveExtensionOptions {
 
 /** Zapis dodatkowego czasu (spotkanie przeciągnęło się) albo jego usunięcie. */
 export function useSaveExtension({ entryId, onSaved }: SaveExtensionOptions) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const format = useFormat()
   return useDataMutation(
     (input: TimeEntryInput) => entriesApi.update(entryId, input),
@@ -50,8 +54,8 @@ export function useSaveExtension({ entryId, onSaved }: SaveExtensionOptions) {
       invalidate: [entryKeys.all],
       success: (saved) =>
         saved.extensionMinutes === null
-          ? t.extension.removed
-          : fmt(t.extension.saved, {
+          ? messages.extension.removed
+          : fmt(messages.extension.saved, {
               time: format.minutes(saved.extensionMinutes),
               name: saved.title,
             }),

@@ -26,20 +26,23 @@ export function ScheduleFields({
   errors,
   durationMissing,
 }: ScheduleFieldsProps) {
-  const t = useMessages(settingsMessages).templates.schedule
+  const messages = useMessages(settingsMessages).templates.schedule
   const { locale } = useI18n()
   const id = useId()
   const short = weekdayNames(locale, 'short')
   const long = weekdayNames(locale, 'long')
-  const order = Array.from({ length: 7 }, (_, i) => (weekStartsOn + i) % 7)
-  const selected = order.filter((d) => value.days.includes(d))
+  const order = Array.from(
+    { length: 7 },
+    (_unused, index) => (weekStartsOn + index) % 7,
+  )
+  const selected = order.filter((day) => value.days.includes(day))
 
   return (
     <fieldset className="space-y-4 rounded-xl border border-line px-4 py-4">
-      <legend className="px-1 text-sm font-medium">{t.legend}</legend>
+      <legend className="px-1 text-sm font-medium">{messages.legend}</legend>
       <Switch
-        label={t.enable}
-        description={t.hint}
+        label={messages.enable}
+        description={messages.hint}
         checked={value.enabled}
         onCheckedChange={(enabled) => onChange({ ...value, enabled })}
       />
@@ -51,15 +54,15 @@ export function ScheduleFields({
             </p>
           )}
           <CheckboxGroup
-            legend={t.days}
+            legend={messages.days}
             error={errors?.days}
             value={value.days}
             onChange={(days) => onChange({ ...value, days })}
-            options={order.map((d) => ({ value: d, label: short[d]! }))}
+            options={order.map((day) => ({ value: day, label: short[day]! }))}
           />
           <div role="radiogroup" aria-labelledby={`${id}-mode`}>
             <p id={`${id}-mode`} className="sr-only">
-              {t.legend}
+              {messages.legend}
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
               {(['same', 'each'] as const).map((mode) => (
@@ -85,9 +88,9 @@ export function ScheduleFields({
                         times:
                           mode === 'each'
                             ? Object.fromEntries(
-                                value.days.map((d) => [
-                                  d,
-                                  value.times[d] ?? value.time,
+                                value.days.map((day) => [
+                                  day,
+                                  value.times[day] ?? value.time,
                                 ]),
                               )
                             : value.times,
@@ -95,7 +98,7 @@ export function ScheduleFields({
                     }
                     className="size-4 accent-ink"
                   />
-                  {mode === 'same' ? t.same : t.each}
+                  {mode === 'same' ? messages.same : messages.each}
                 </label>
               ))}
             </div>
@@ -103,7 +106,7 @@ export function ScheduleFields({
           {value.mode === 'same' ? (
             <TimeField
               id={`${id}-time`}
-              label={t.time}
+              label={messages.time}
               value={value.time}
               error={errors?.time ?? null}
               onChange={(time) => onChange({ ...value, time })}
@@ -115,7 +118,7 @@ export function ScheduleFields({
                   <TimeField
                     id={`${id}-time-${day}`}
                     label={long[day]!}
-                    ariaLabel={fmt(t.dayTime, { day: long[day]! })}
+                    ariaLabel={fmt(messages.dayTime, { day: long[day]! })}
                     value={value.times[day] ?? value.time}
                     error={errors?.dayTimes[day] ?? null}
                     onChange={(time) =>

@@ -27,14 +27,14 @@ export const Route = createFileRoute('/_auth/forgot-password')({
 })
 
 function ForgotPasswordPage() {
-  const t = useMessages(authMessages)
+  const messages = useMessages(authMessages)
   const errorText = useErrorText()
   const [sentTo, setSentTo] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
 
   const form = useForm({
     defaultValues: { email: '' },
-    validators: { onSubmit: forgotPasswordSchema(t.validation) },
+    validators: { onSubmit: forgotPasswordSchema(messages.validation) },
     onSubmit: async ({ value }) => {
       setFormError(null)
       const result = await authApi.forgotPassword(value.email)
@@ -49,15 +49,15 @@ function ForgotPasswordPage() {
   if (sentTo) {
     return (
       <div role="status">
-        <h1 className="type-display text-5xl">{t.forgot.sentTitle}</h1>
+        <h1 className="type-display text-5xl">{messages.forgot.sentTitle}</h1>
         <p className="mt-4 text-ink-soft">
-          {fmt(t.forgot.sentText, { email: sentTo })}
+          {fmt(messages.forgot.sentText, { email: sentTo })}
         </p>
         <Link
           to="/login"
           className="mt-8 inline-block rounded-sm font-medium underline underline-offset-4"
         >
-          {t.forgot.back}
+          {messages.forgot.back}
         </Link>
       </div>
     )
@@ -65,12 +65,12 @@ function ForgotPasswordPage() {
 
   return (
     <div>
-      <h1 className="type-display text-5xl">{t.forgot.title}</h1>
-      <p className="mt-3 mb-8 text-ink-soft">{t.forgot.lead}</p>
+      <h1 className="type-display text-5xl">{messages.forgot.title}</h1>
+      <p className="mt-3 mb-8 text-ink-soft">{messages.forgot.lead}</p>
       <form
         noValidate
-        onSubmit={(e) => {
-          e.preventDefault()
+        onSubmit={(event) => {
+          event.preventDefault()
           void form.handleSubmit()
         }}
         className="space-y-5"
@@ -79,18 +79,18 @@ function ForgotPasswordPage() {
         <form.Field name="email">
           {(field) => (
             <TextField
-              label={t.forgot.email}
+              label={messages.forgot.email}
               type="email"
               name={field.name}
               autoComplete="email"
               value={field.state.value}
               onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              onChange={(event) => field.handleChange(event.target.value)}
               errors={errorMessages(field.state.meta.errors)}
             />
           )}
         </form.Field>
-        <form.Subscribe selector={(s) => s.isSubmitting}>
+        <form.Subscribe selector={(formState) => formState.isSubmitting}>
           {(isSubmitting) => (
             <Button
               type="submit"
@@ -99,7 +99,9 @@ function ForgotPasswordPage() {
               disabled={isSubmitting}
               aria-busy={isSubmitting}
             >
-              {isSubmitting ? t.forgot.submitting : t.forgot.submit}
+              {isSubmitting
+                ? messages.forgot.submitting
+                : messages.forgot.submit}
             </Button>
           )}
         </form.Subscribe>
@@ -107,7 +109,7 @@ function ForgotPasswordPage() {
           to="/login"
           className="block rounded-sm text-center text-sm text-ink-soft hover:text-ink"
         >
-          {t.forgot.back}
+          {messages.forgot.back}
         </Link>
       </form>
     </div>

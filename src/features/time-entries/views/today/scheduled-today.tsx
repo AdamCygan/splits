@@ -11,7 +11,7 @@ import { entriesQuery } from '../../data/queries'
 import type { QuickTemplatesViewModel } from '../../controllers/use-quick-templates'
 
 export interface ScheduledTodayProps {
-  vm: QuickTemplatesViewModel
+  viewModel: QuickTemplatesViewModel
 }
 
 /**
@@ -19,21 +19,22 @@ export interface ScheduledTodayProps {
  * już wpisane mają znacznik, te, które się zaczęły, wpisuje się jednym kliknięciem
  * z godzinami od–do. W dzień wolny lista się nie pokazuje.
  */
-export function ScheduledToday({ vm }: ScheduledTodayProps) {
-  const t = vm.t.scheduled
+export function ScheduledToday({ viewModel }: ScheduledTodayProps) {
+  const messages = viewModel.t.scheduled
   const format = useFormat()
   const timeZone = useQuery(settingsQuery).data?.timezone
-  const entries = useQuery(entriesQuery(vm.workDate)).data ?? []
-  const dayOff = useQuery(daysOffQuery(vm.workDate, vm.workDate)).data?.[0]
-  const meetings = scheduledOn(vm.templates, vm.workDate)
+  const entries = useQuery(entriesQuery(viewModel.workDate)).data ?? []
+  const dayOff = useQuery(daysOffQuery(viewModel.workDate, viewModel.workDate))
+    .data?.[0]
+  const meetings = scheduledOn(viewModel.templates, viewModel.workDate)
   if (meetings.length === 0 || dayOff) return null
-  const now = vm.isToday ? nowTimeIn(timeZone) : '24:00'
-  const rows = meetings.map((m) => ({
-    ...m,
-    logged: isLogged(entries, m.template),
-    started: m.start <= now,
+  const now = viewModel.isToday ? nowTimeIn(timeZone) : '24:00'
+  const rows = meetings.map((scheduledMeeting) => ({
+    ...scheduledMeeting,
+    logged: isLogged(entries, scheduledMeeting.template),
+    started: scheduledMeeting.start <= now,
   }))
-  const open = rows.filter((r) => !r.logged && r.started)
+  const open = rows.filter((row) => !row.logged && row.started)
   return (
     <section
       aria-labelledby="scheduled-today"
@@ -41,58 +42,62 @@ export function ScheduledToday({ vm }: ScheduledTodayProps) {
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="scheduled-today" className="font-semibold">
-          {vm.isToday ? t.titleToday : t.title}
+          {viewModel.isToday ? messages.titleToday : messages.title}
         </h2>
         {open.length > 1 && (
           <Button
             size="sm"
             variant="outline"
-            disabled={vm.busy}
-            onClick={() => vm.logAll(open)}
+            disabled={viewModel.busy}
+            onClick={() => viewModel.logAll(open)}
           >
-            {fmt(t.logAll, { n: open.length })}
+            {fmt(messages.logAll, { n: open.length })}
           </Button>
         )}
       </div>
       <ul className="mt-2 divide-y divide-line">
-        {rows.map((r) => {
-          const when = format.timeRange(r.start, r.end)
+        {rows.map((row) => {
+          const when = format.timeRange(row.start, row.end)
           return (
             <li
-              key={r.template.id}
+              key={row.template.id}
               className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5"
             >
               <span
                 aria-hidden
                 className="size-2.5 shrink-0 rounded-full"
-                style={{ background: vm.typeOf(r.template.taskTypeId)?.color }}
+                style={{
+                  background: viewModel.typeOf(row.template.taskTypeId)?.color,
+                }}
               />
               <span className="min-w-0 flex-1">
-                <span className="font-medium">{r.template.label}</span>{' '}
+                <span className="font-medium">{row.template.label}</span>{' '}
                 <span className="text-sm text-ink-soft tabular-nums">
                   {when}
                 </span>
               </span>
-              {r.logged ? (
+              {row.logged ? (
                 <span className="inline-flex items-center gap-1.5 text-sm font-medium text-ok">
                   <Check aria-hidden className="size-4" />
-                  {t.logged}
+                  {messages.logged}
                 </span>
-              ) : r.started ? (
+              ) : row.started ? (
                 <Button
                   size="sm"
-                  disabled={vm.busy}
-                  onClick={() => vm.use(r.template, r)}
-                  aria-label={fmt(t.logNamed, {
-                    name: r.template.label,
+                  disabled={viewModel.busy}
+                  onClick={() => viewModel.use(row.template, row)}
+                  aria-label={fmt(messages.logNamed, {
+                    name: row.template.label,
                     time: when,
                   })}
                 >
                   <Plus aria-hidden className="size-4" />
-                  {t.log}
+                  {messages.log}
                 </Button>
               ) : (
-                <span className="text-sm text-ink-soft">{t.upcoming}</span>
+                <span className="text-sm text-ink-soft">
+                  {messages.upcoming}
+                </span>
               )}
             </li>
           )

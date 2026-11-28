@@ -8,15 +8,18 @@ import { settingsMessages } from '#/i18n/messages/settings'
 
 /** Język aplikacji i e-maili o koncie (zapis w ustawieniach konta). */
 export function LanguageCard() {
-  const t = useMessages(settingsMessages).account
+  const messages = useMessages(settingsMessages).account
   const { locale, change } = useLanguage()
   return (
-    <SettingsCard title={t.languageTitle} lead={t.languageLead}>
+    <SettingsCard title={messages.languageTitle} lead={messages.languageLead}>
       <Segmented<Locale>
-        label={t.languageTitle}
+        label={messages.languageTitle}
         hideLabel
         value={locale}
-        options={locales.map((l) => ({ value: l, label: localeNames[l] }))}
+        options={locales.map((availableLocale) => ({
+          value: availableLocale,
+          label: localeNames[availableLocale],
+        }))}
         onChange={change}
       />
     </SettingsCard>

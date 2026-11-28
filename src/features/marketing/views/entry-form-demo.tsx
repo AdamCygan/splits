@@ -26,23 +26,32 @@ type FieldSpec =
 
 type FormKind = Exclude<WorkKind, 'meeting'>
 
-function buildForms(t: Copy, tabLabel: (k: FormKind) => string) {
-  const f = t.fields
-  const v = t.values
+function buildForms(copy: Copy, tabLabel: (formKind: FormKind) => string) {
+  const fieldLabels = copy.fields
+  const values = copy.values
   return (
     [
       [
         'task',
         [
-          { kind: 'text', label: f.title, value: v.taskTitle, required: true },
           {
             kind: 'text',
-            label: f.taskLink,
+            label: fieldLabels.title,
+            value: values.taskTitle,
+            required: true,
+          },
+          {
+            kind: 'text',
+            label: fieldLabels.taskLink,
             value: 'https://jira.example.com/browse/PAY-142',
           },
           { kind: 'sp', value: 3 },
           { kind: 'range', from: '09:15', to: '11:25' },
-          { kind: 'text', label: f.description, value: v.description },
+          {
+            kind: 'text',
+            label: fieldLabels.description,
+            value: values.description,
+          },
         ],
       ],
       [
@@ -50,7 +59,7 @@ function buildForms(t: Copy, tabLabel: (k: FormKind) => string) {
         [
           {
             kind: 'text',
-            label: f.mrLink,
+            label: fieldLabels.mrLink,
             value: 'https://gitlab.example.com/shop/-/merge_requests/481',
             required: true,
           },
@@ -61,7 +70,12 @@ function buildForms(t: Copy, tabLabel: (k: FormKind) => string) {
       [
         'pair_programming',
         [
-          { kind: 'text', label: f.title, value: v.pairTitle, required: true },
+          {
+            kind: 'text',
+            label: fieldLabels.title,
+            value: values.pairTitle,
+            required: true,
+          },
           { kind: 'duration', value: '1 h' },
           { kind: 'sp', value: 1 },
         ],
@@ -69,7 +83,12 @@ function buildForms(t: Copy, tabLabel: (k: FormKind) => string) {
       [
         'additional_work',
         [
-          { kind: 'text', label: f.title, value: v.extraTitle, required: true },
+          {
+            kind: 'text',
+            label: fieldLabels.title,
+            value: values.extraTitle,
+            required: true,
+          },
           { kind: 'duration', value: '40 min' },
           { kind: 'sp', value: 0.5 },
         ],
@@ -79,8 +98,8 @@ function buildForms(t: Copy, tabLabel: (k: FormKind) => string) {
         [
           {
             kind: 'text',
-            label: f.typeName,
-            value: v.customTitle,
+            label: fieldLabels.typeName,
+            value: values.customTitle,
             required: true,
           },
           { kind: 'toggles' },
@@ -90,7 +109,7 @@ function buildForms(t: Copy, tabLabel: (k: FormKind) => string) {
   ).map(([kind, fields]) => ({
     kind,
     tab: tabLabel(kind),
-    note: t.notes[kind],
+    note: copy.notes[kind],
     fields,
   }))
 }
@@ -120,10 +139,10 @@ function FakeInput({ label, value, required, requiredLabel }: FakeInputProps) {
 
 interface FieldProps {
   spec: FieldSpec
-  t: Copy
+  messages: Copy
 }
 
-function Field({ spec, t }: FieldProps) {
+function Field({ spec, messages }: FieldProps) {
   switch (spec.kind) {
     case 'text':
       return (
@@ -131,51 +150,51 @@ function Field({ spec, t }: FieldProps) {
           label={spec.label}
           value={spec.value}
           required={spec.required}
-          requiredLabel={t.required}
+          requiredLabel={messages.required}
         />
       )
     case 'duration':
       return (
         <FakeInput
-          label={t.duration}
+          label={messages.duration}
           value={spec.value}
           required
-          requiredLabel={t.required}
+          requiredLabel={messages.required}
         />
       )
     case 'range':
       return (
         <div className="grid grid-cols-2 gap-3">
           <FakeInput
-            label={t.start}
+            label={messages.start}
             value={spec.from}
             required
-            requiredLabel={t.required}
+            requiredLabel={messages.required}
           />
           <FakeInput
-            label={t.end}
+            label={messages.end}
             value={spec.to}
             required
-            requiredLabel={t.required}
+            requiredLabel={messages.required}
           />
         </div>
       )
     case 'sp':
       return (
         <div>
-          <p className="mb-1 text-sm font-medium">{t.storyPoints}</p>
+          <p className="mb-1 text-sm font-medium">{messages.storyPoints}</p>
           <div className="flex flex-wrap gap-1.5">
-            {spScale.map((p) => (
+            {spScale.map((points) => (
               <span
-                key={p}
+                key={points}
                 className={cn(
                   'min-w-10 rounded-md border px-2 py-1 text-center text-sm',
-                  p === spec.value
+                  points === spec.value
                     ? 'border-ink bg-ink font-semibold text-white'
                     : 'border-line text-ink-soft',
                 )}
               >
-                {p}
+                {points}
               </span>
             ))}
           </div>
@@ -184,7 +203,7 @@ function Field({ spec, t }: FieldProps) {
     case 'toggles':
       return (
         <ul className="space-y-2 text-sm">
-          {t.toggles.map(([name, value]) => (
+          {messages.toggles.map(([name, value]) => (
             <li
               key={name}
               className="flex items-center justify-between rounded-lg border border-line px-3 py-2"
@@ -199,25 +218,26 @@ function Field({ spec, t }: FieldProps) {
 }
 
 export function EntryFormDemo() {
-  const t = useMessages(marketingMessages).formDemo
+  const messages = useMessages(marketingMessages).formDemo
   const workTypes = useMessages(commonMessages).workTypes
-  const forms = buildForms(t, (k) =>
-    k === 'custom' ? t.customTab : workTypes[k],
+  const forms = buildForms(messages, (kind) =>
+    kind === 'custom' ? messages.customTab : workTypes[kind],
   )
   const [active, setActive] = useState(0)
   const form = forms[active] ?? forms[0]!
 
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+  const onKeyDown = (keyboardEvent: KeyboardEvent<HTMLDivElement>) => {
     const keys: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1 }
     let next: number | null = null
-    if (e.key in keys)
-      next = (active + (keys[e.key] ?? 0) + forms.length) % forms.length
-    if (e.key === 'Home') next = 0
-    if (e.key === 'End') next = forms.length - 1
+    if (keyboardEvent.key in keys)
+      next =
+        (active + (keys[keyboardEvent.key] ?? 0) + forms.length) % forms.length
+    if (keyboardEvent.key === 'Home') next = 0
+    if (keyboardEvent.key === 'End') next = forms.length - 1
     if (next === null) return
-    e.preventDefault()
+    keyboardEvent.preventDefault()
     setActive(next)
-    e.currentTarget
+    keyboardEvent.currentTarget
       .querySelectorAll<HTMLButtonElement>('[role="tab"]')
       [next]?.focus()
   }
@@ -226,23 +246,23 @@ export function EntryFormDemo() {
     <div className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
       <div
         role="tablist"
-        aria-label={t.tabsLabel}
+        aria-label={messages.tabsLabel}
         onKeyDown={onKeyDown}
         className="-mx-1 flex gap-1 overflow-x-auto pb-1"
       >
-        {forms.map((f, i) => (
+        {forms.map((demoForm, index) => (
           <button
-            key={f.kind}
-            id={`entry-tab-${f.kind}`}
+            key={demoForm.kind}
+            id={`entry-tab-${demoForm.kind}`}
             role="tab"
             type="button"
-            aria-selected={i === active}
+            aria-selected={index === active}
             aria-controls="entry-form-panel"
-            tabIndex={i === active ? 0 : -1}
-            onClick={() => setActive(i)}
+            tabIndex={index === active ? 0 : -1}
+            onClick={() => setActive(index)}
             className={cn(
               'flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
-              i === active
+              index === active
                 ? 'bg-ink text-white'
                 : 'text-ink-soft hover:bg-muted hover:text-ink',
             )}
@@ -250,9 +270,9 @@ export function EntryFormDemo() {
             <span
               aria-hidden
               className="size-2 rounded-full"
-              style={{ background: workKindColors[f.kind].color }}
+              style={{ background: workKindColors[demoForm.kind].color }}
             />
-            {f.tab}
+            {demoForm.tab}
           </button>
         ))}
       </div>
@@ -264,13 +284,17 @@ export function EntryFormDemo() {
         className="mt-5 space-y-4"
       >
         <p className="text-[0.9375rem] text-ink-soft">{form.note}</p>
-        {form.fields.map((spec, i) => (
-          <Field key={`${form.kind}-${i}`} spec={spec} t={t} />
+        {form.fields.map((spec, index) => (
+          <Field
+            key={`${form.kind}-${index}`}
+            spec={spec}
+            messages={messages}
+          />
         ))}
         <div className="flex items-center justify-end gap-2 pt-1">
           <span className="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white">
             <Check aria-hidden className="size-4" />
-            {t.save}
+            {messages.save}
           </span>
         </div>
       </div>

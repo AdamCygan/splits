@@ -30,7 +30,7 @@ const REASON_MIN = 10
  * i historia zmian, z akcjami obsługi klienta. Każda akcja odświeża konto i dziennik.
  */
 export function useUserPageViewModel(id: string) {
-  const t = useMessages(adminMessages)
+  const messages = useMessages(adminMessages)
   const navigate = useNavigate()
   const me = useCurrentUser()
   const user = useQuery(adminUserQuery(id))
@@ -49,8 +49,8 @@ export function useUserPageViewModel(id: string) {
   const [confirmEmail, setConfirmEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
 
-  const u = user.data
-  const name = u?.displayName ?? ''
+  const data = user.data
+  const name = data?.displayName ?? ''
   const refresh = [adminKeys.user(id), adminKeys.all]
   const closeDialog = () => {
     setDialog(null)
@@ -63,16 +63,26 @@ export function useUserPageViewModel(id: string) {
     (change: AdminUserChange) => adminApi.updateUser(id, change),
     {
       invalidate: refresh,
-      success: (_, change) =>
+      success: (_unused, change) =>
         change.plan
-          ? fmt(t.toast.plan, { plan: t.plans[change.plan] })
+          ? fmt(messages.toast.plan, { plan: messages.plans[change.plan] })
           : change.role
-            ? fmt(change.role === 'admin' ? t.toast.roleOn : t.toast.roleOff, {
-                name,
-              })
-            : fmt(change.disabled ? t.toast.blocked : t.toast.unblocked, {
-                name,
-              }),
+            ? fmt(
+                change.role === 'admin'
+                  ? messages.toast.roleOn
+                  : messages.toast.roleOff,
+                {
+                  name,
+                },
+              )
+            : fmt(
+                change.disabled
+                  ? messages.toast.blocked
+                  : messages.toast.unblocked,
+                {
+                  name,
+                },
+              ),
       onSuccess: () => {
         setPlan(null)
         closeDialog()
@@ -81,28 +91,29 @@ export function useUserPageViewModel(id: string) {
   )
   const revokeAll = useDataMutation(() => adminApi.revokeSessions(id), {
     invalidate: refresh,
-    success: fmt(t.toast.revoked, { name }),
+    success: fmt(messages.toast.revoked, { name }),
   })
   const revokeOne = useDataMutation(
     ({ sessionId }: SessionTarget) => adminApi.revokeSession(id, sessionId),
     {
       invalidate: refresh,
-      success: (_, v) => fmt(t.user.security.signedOut, { device: v.label }),
+      success: (_unused, sessionTarget) =>
+        fmt(messages.user.security.signedOut, { device: sessionTarget.label }),
     },
   )
   const resend = useDataMutation(() => adminApi.resendVerification(id), {
     invalidate: refresh,
-    success: fmt(t.user.security.resent, { email: u?.email ?? '' }),
+    success: fmt(messages.user.security.resent, { email: data?.email ?? '' }),
   })
   const cancelPending = useDataMutation(() => adminApi.cancelEmailChange(id), {
     invalidate: refresh,
-    success: t.user.security.pendingCanceled,
+    success: messages.user.security.pendingCanceled,
   })
   const disable2fa = useDataMutation(
     (value: string) => adminApi.disableTwoFactor(id, value),
     {
       invalidate: refresh,
-      success: fmt(t.user.security.disabled2fa, { name }),
+      success: fmt(messages.user.security.disabled2fa, { name }),
       onSuccess: closeDialog,
     },
   )
@@ -110,12 +121,12 @@ export function useUserPageViewModel(id: string) {
     (value: string) => adminApi.deleteUser(id, value),
     {
       invalidate: [adminKeys.all],
-      success: fmt(t.toast.deleted, { name }),
+      success: fmt(messages.toast.deleted, { name }),
       onSuccess: () => void navigate({ to: '/app/admin' }),
     },
   )
 
-  const self = u?.id === me?.id
+  const self = data?.id === me?.id
   const reasonValid = reason.trim().length >= REASON_MIN
   const busy =
     update.isPending ||
@@ -125,32 +136,33 @@ export function useUserPageViewModel(id: string) {
     disable2fa.isPending
 
   return {
-    user: u,
+    user: data,
     pending: user.isPending,
     missing: user.isError,
     self,
     // Własne konto i konto właściciela: bez zmiany roli, blokady, 2FA i usuwania.
-    locked: self || Boolean(u?.isOwner),
-    plan: plan ?? u?.plan ?? 'free',
-    planChanged: plan !== null && plan !== u?.plan,
+    locked: self || Boolean(data?.isOwner),
+    plan: plan ?? data?.plan ?? 'free',
+    planChanged: plan !== null && plan !== data?.plan,
     busy,
     dialog,
     reason,
     confirmEmail,
-    reasonError: submitted && !reasonValid ? t.user.security.reasonError : null,
+    reasonError:
+      submitted && !reasonValid ? messages.user.security.reasonError : null,
     confirmError: mutationFieldError(remove.error, 'confirmEmail'),
     blocking: update.isPending,
     deleting: remove.isPending,
     disabling: disable2fa.isPending,
     resending: resend.isPending,
     canceling: cancelPending.isPending,
-    sessions: (u?.sessions ?? []).map((s) => {
-      const device = describeDevice(s.userAgent)
+    sessions: (data?.sessions ?? []).map((session) => {
+      const device = describeDevice(session.userAgent)
       return {
-        ...s,
+        ...session,
         label: device
-          ? `${device.browser}, ${device.os}`
-          : t.user.security.unknownDevice,
+          ? `${device.browser}, ${device.operatingSystem}`
+          : messages.user.security.unknownDevice,
       }
     }),
     showInvoices,
@@ -178,13 +190,13 @@ export function useUserPageViewModel(id: string) {
     closeDialog,
     setReason,
     setConfirmEmail,
-    submitTwoFactor: (e: FormEvent) => {
-      e.preventDefault()
+    submitTwoFactor: (formEvent: FormEvent) => {
+      formEvent.preventDefault()
       setSubmitted(true)
       if (reasonValid) disable2fa.mutate(reason.trim())
     },
-    submitDelete: (e: FormEvent) => {
-      e.preventDefault()
+    submitDelete: (formEvent: FormEvent) => {
+      formEvent.preventDefault()
       remove.mutate(confirmEmail.trim())
     },
   }

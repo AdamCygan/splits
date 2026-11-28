@@ -3,21 +3,21 @@ import { useMessages } from '#/i18n/context'
 import { appMessages } from '#/i18n/messages/app'
 
 export interface ShortcutsHelpProps {
-  mod: string
+  modifierKey: string
   onBack: () => void
 }
 
 /** Lista skrótów klawiszowych w palecie (polecenie „Skróty klawiszowe”). */
-export function ShortcutsHelp({ mod, onBack }: ShortcutsHelpProps) {
-  const c = useMessages(appMessages).commands
+export function ShortcutsHelp({ modifierKey: module, onBack }: ShortcutsHelpProps) {
+  const messages = useMessages(appMessages).commands
   const rows: Array<[string, string]> = [
-    [`${mod} K`, c.keys.palette],
-    ['Alt 1–9', c.keys.template],
-    [`${mod} Enter`, c.keys.save],
-    ['↑ ↓', c.keys.time],
-    ['Enter', c.keys.open],
-    [`${mod} Enter`, c.keys.continue],
-    ['Esc', c.keys.close],
+    [`${module} K`, messages.keys.palette],
+    ['Alt 1–9', messages.keys.template],
+    [`${module} Enter`, messages.keys.save],
+    ['↑ ↓', messages.keys.time],
+    ['Enter', messages.keys.open],
+    [`${module} Enter`, messages.keys.continue],
+    ['Esc', messages.keys.close],
   ]
   return (
     <div className="overflow-y-auto p-5">
@@ -26,13 +26,13 @@ export function ShortcutsHelp({ mod, onBack }: ShortcutsHelpProps) {
           type="button"
           onClick={onBack}
           className="grid size-9 place-items-center rounded-lg hover:bg-muted"
-          aria-label={c.back}
+          aria-label={messages.back}
           // Fokus na powrocie, żeby Esc/Enter od razu działały w tym widoku.
           autoFocus
         >
           <ArrowLeft aria-hidden className="size-4" />
         </button>
-        <h2 className="type-heading text-xl">{c.shortcutsTitle}</h2>
+        <h2 className="type-heading text-xl">{messages.shortcutsTitle}</h2>
       </div>
       <dl className="divide-y divide-line">
         {rows.map(([keys, label]) => (

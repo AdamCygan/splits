@@ -15,7 +15,7 @@ export interface DayOffButtonProps {
 
 /** Przycisk „Dzień wolny” w nagłówku Dziś (gdy wybrany dzień nie jest jeszcze wolny). */
 export function DayOffButton({ date }: DayOffButtonProps) {
-  const t = useMessages(daysOffMessages)
+  const messages = useMessages(daysOffMessages)
   const day = useQuery(daysOffQuery(date, date)).data?.[0]
   const [open, setOpen] = useState(false)
   if (day) return null
@@ -23,7 +23,7 @@ export function DayOffButton({ date }: DayOffButtonProps) {
     <>
       <Button variant="outline" onClick={() => setOpen(true)}>
         <CalendarOff aria-hidden />
-        {t.mark}
+        {messages.mark}
       </Button>
       {open && (
         <DayOffDialog
@@ -41,15 +41,15 @@ export interface DayOffBannerProps {
 
 /** Baner na Dziś, gdy wybrany dzień jest wolny: rodzaj, notatka, zmiana albo usunięcie. */
 export function DayOffBanner({ date }: DayOffBannerProps) {
-  const t = useMessages(daysOffMessages)
+  const messages = useMessages(daysOffMessages)
   const day = useQuery(daysOffQuery(date, date)).data?.[0]
   const [editing, setEditing] = useState(false)
-  const remove = useRemoveDaysOff({ success: t.banner.removed })
+  const remove = useRemoveDaysOff({ success: messages.banner.removed })
   if (!day) return null
   const Icon = DAY_OFF_ICONS[day.kind]
   return (
     <section
-      aria-label={t.kinds[day.kind]}
+      aria-label={messages.kinds[day.kind]}
       className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border border-line border-l-4 bg-surface px-4 py-3.5 sm:px-5"
       style={{ borderLeftColor: DAY_OFF_COLORS[day.kind] }}
     >
@@ -62,16 +62,16 @@ export function DayOffBanner({ date }: DayOffBannerProps) {
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-semibold">
-          {fmt(t.banner.title, { kind: t.kinds[day.kind] })}
+          {fmt(messages.banner.title, { kind: messages.kinds[day.kind] })}
           {day.note && (
             <span className="font-normal text-ink-soft">: {day.note}</span>
           )}
         </p>
-        <p className="text-sm text-ink-soft">{t.banner.lead}</p>
+        <p className="text-sm text-ink-soft">{messages.banner.lead}</p>
       </div>
       <div className="flex gap-2">
         <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-          {t.banner.change}
+          {messages.banner.change}
         </Button>
         <Button
           variant="ghost"
@@ -79,7 +79,7 @@ export function DayOffBanner({ date }: DayOffBannerProps) {
           disabled={remove.isPending}
           onClick={() => remove.mutate({ from: date, to: date })}
         >
-          {t.banner.remove}
+          {messages.banner.remove}
         </Button>
       </div>
       {editing && (

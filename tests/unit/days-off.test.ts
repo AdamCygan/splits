@@ -46,7 +46,9 @@ describe('days off', () => {
 
   it('Should not join days with a working day between them', () => {
     const ranges = groupDaysOff([off('2026-11-16'), off('2026-11-18')], WEEK)
-    expect(ranges.map((r) => [r.from, r.to])).toEqual([
+    expect(
+      ranges.map((dayOffRange) => [dayOffRange.from, dayOffRange.to]),
+    ).toEqual([
       ['2026-11-16', '2026-11-16'],
       ['2026-11-18', '2026-11-18'],
     ])

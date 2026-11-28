@@ -38,21 +38,23 @@ export function ActionMenu({
   className,
 }: ActionMenuProps) {
   const pending = useRef<(() => void) | null>(null)
-  const items = actions.filter((a): a is Action => !!a)
-  const plain = items.filter((a) => !a.destructive)
-  const destructive = items.filter((a) => a.destructive)
-  const item = (a: Action) => (
+  const items = actions.filter((action): action is Action => !!action)
+  const plain = items.filter((action) => !action.destructive)
+  const destructive = items.filter((action) => action.destructive)
+  const item = (action: Action) => (
     <DropdownMenuItem
-      key={a.label}
+      key={action.label}
       onSelect={() => {
-        pending.current = a.onSelect
+        pending.current = action.onSelect
       }}
       className={
-        a.destructive ? 'text-destructive [&_svg]:text-destructive' : undefined
+        action.destructive
+          ? 'text-destructive [&_svg]:text-destructive'
+          : undefined
       }
     >
-      <a.icon aria-hidden />
-      {a.label}
+      <action.icon aria-hidden />
+      {action.label}
     </DropdownMenuItem>
   )
   return (

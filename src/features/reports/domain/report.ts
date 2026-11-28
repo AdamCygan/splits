@@ -93,7 +93,7 @@ export function groupTasks(
   types: ReadonlyArray<Pick<TaskType, 'id' | 'storyPointsRequirement'>>,
 ): Array<TaskRow> {
   const requirement = new Map(
-    types.map((t) => [t.id, t.storyPointsRequirement]),
+    types.map((type) => [type.id, type.storyPointsRequirement]),
   )
   const groups = new Map<string, Array<TimeEntry>>()
   for (const entry of entries) {
@@ -103,9 +103,9 @@ export function groupTasks(
     else groups.set(key, [entry])
   }
   return [...groups].map(([key, list]) => {
-    const sorted = [...list].sort((a, b) =>
-      (a.workDate + (a.startTime ?? '') + a.createdAt).localeCompare(
-        b.workDate + (b.startTime ?? '') + b.createdAt,
+    const sorted = [...list].sort((left, right) =>
+      (left.workDate + (left.startTime ?? '') + left.createdAt).localeCompare(
+        right.workDate + (right.startTime ?? '') + right.createdAt,
       ),
     )
     const latest = sorted.at(-1)!
@@ -119,50 +119,63 @@ export function groupTasks(
       storyPoints: countsSp(requirement.get(latest.taskTypeId))
         ? maxPoints(sorted)
         : null,
-      minutes: sorted.reduce((sum, e) => sum + e.durationMinutes, 0),
-      overtimeMinutes: sorted.reduce(
-        (sum, e) => sum + (e.overtimeMinutes ?? 0),
+      minutes: sorted.reduce(
+        (sum, timeEntry) => sum + timeEntry.durationMinutes,
         0,
       ),
-      overtimeNotes: sorted.flatMap((e) =>
-        e.overtimeNote ? [e.overtimeNote] : [],
+      overtimeMinutes: sorted.reduce(
+        (sum, timeEntry) => sum + (timeEntry.overtimeMinutes ?? 0),
+        0,
+      ),
+      overtimeNotes: sorted.flatMap((timeEntry) =>
+        timeEntry.overtimeNote ? [timeEntry.overtimeNote] : [],
       ),
       estimateMinutes: maxEstimate(sorted),
       extensionMinutes: sorted.reduce(
-        (sum, e) => sum + (e.extensionMinutes ?? 0),
+        (sum, timeEntry) => sum + (timeEntry.extensionMinutes ?? 0),
         0,
       ),
-      extensionNotes: sorted.flatMap((e) =>
-        e.extensionNote ? [e.extensionNote] : [],
+      extensionNotes: sorted.flatMap((timeEntry) =>
+        timeEntry.extensionNote ? [timeEntry.extensionNote] : [],
       ),
       sessions: sorted.length,
-      days: new Set(sorted.map((e) => e.workDate)).size,
+      days: new Set(sorted.map((timeEntry) => timeEntry.workDate)).size,
       first: sorted[0]!.workDate,
       last: latest.workDate,
-      running: sorted.some((e) => e.running),
+      running: sorted.some((timeEntry) => timeEntry.running),
     }
   })
 }
 
 export function totalsOf(rows: ReadonlyArray<TaskRow>): ReportTotals {
-  const withSp = rows.filter((r) => r.storyPoints !== null)
-  const sp = withSp.reduce((sum, r) => sum + r.storyPoints!, 0)
-  const spMinutes = withSp.reduce((sum, r) => sum + r.minutes, 0)
+  const withSp = rows.filter((taskRow) => taskRow.storyPoints !== null)
+  const storyPoints = withSp.reduce(
+    (sum, taskRow) => sum + taskRow.storyPoints!,
+    0,
+  )
+  const spMinutes = withSp.reduce((sum, taskRow) => sum + taskRow.minutes, 0)
   return {
-    minutes: rows.reduce((sum, r) => sum + r.minutes, 0),
-    overtimeMinutes: rows.reduce((sum, r) => sum + r.overtimeMinutes, 0),
-    storyPoints: sp,
+    minutes: rows.reduce((sum, taskRow) => sum + taskRow.minutes, 0),
+    overtimeMinutes: rows.reduce(
+      (sum, taskRow) => sum + taskRow.overtimeMinutes,
+      0,
+    ),
+    storyPoints,
     tasks: rows.length,
-    minutesPerSp: sp > 0 ? Math.round(spMinutes / sp) : null,
-    extensionMinutes: rows.reduce((sum, r) => sum + r.extensionMinutes, 0),
+    minutesPerSp: storyPoints > 0 ? Math.round(spMinutes / storyPoints) : null,
+    extensionMinutes: rows.reduce(
+      (sum, taskRow) => sum + taskRow.extensionMinutes,
+      0,
+    ),
     estimated: rows.reduce(
-      (acc, r) =>
-        r.estimateMinutes === null
-          ? acc
+      (accumulator, taskRow) =>
+        taskRow.estimateMinutes === null
+          ? accumulator
           : {
-              tasks: acc.tasks + 1,
-              estimateMinutes: acc.estimateMinutes + r.estimateMinutes,
-              actualMinutes: acc.actualMinutes + r.minutes,
+              tasks: accumulator.tasks + 1,
+              estimateMinutes:
+                accumulator.estimateMinutes + taskRow.estimateMinutes,
+              actualMinutes: accumulator.actualMinutes + taskRow.minutes,
             },
       { tasks: 0, estimateMinutes: 0, actualMinutes: 0 },
     ),
@@ -174,26 +187,26 @@ export function byType(
   typeOrder: ReadonlyArray<string>,
 ): Array<TypeRow> {
   const map = new Map<string, TypeRow>()
-  for (const r of rows) {
-    const row = map.get(r.taskTypeId) ?? {
-      taskTypeId: r.taskTypeId,
+  for (const taskRow of rows) {
+    const row = map.get(taskRow.taskTypeId) ?? {
+      taskTypeId: taskRow.taskTypeId,
       minutes: 0,
       storyPoints: 0,
       tasks: 0,
       withoutSp: 0,
     }
-    row.minutes += r.minutes
-    row.storyPoints += r.storyPoints ?? 0
+    row.minutes += taskRow.minutes
+    row.storyPoints += taskRow.storyPoints ?? 0
     row.tasks += 1
-    if (r.storyPoints === null) row.withoutSp += 1
-    map.set(r.taskTypeId, row)
+    if (taskRow.storyPoints === null) row.withoutSp += 1
+    map.set(taskRow.taskTypeId, row)
   }
   const order = (id: string) => {
-    const i = typeOrder.indexOf(id)
-    return i < 0 ? typeOrder.length : i
+    const index = typeOrder.indexOf(id)
+    return index < 0 ? typeOrder.length : index
   }
   return [...map.values()].sort(
-    (a, b) => order(a.taskTypeId) - order(b.taskTypeId),
+    (left, right) => order(left.taskTypeId) - order(right.taskTypeId),
   )
 }
 
@@ -205,21 +218,23 @@ export function sortRows(
   direction: 'asc' | 'desc',
 ): Array<TaskRow> {
   const sign = direction === 'asc' ? 1 : -1
-  const value = (r: TaskRow) =>
+  const value = (taskRow: TaskRow) =>
     by === 'storyPoints'
-      ? (r.storyPoints ?? -1)
+      ? (taskRow.storyPoints ?? -1)
       : by === 'minutes'
-        ? r.minutes
+        ? taskRow.minutes
         : 0
-  return [...rows].sort((a, b) => {
+  return [...rows].sort((left, right) => {
     const diff =
       by === 'title'
-        ? a.title.localeCompare(b.title)
+        ? left.title.localeCompare(right.title)
         : by === 'last'
-          ? a.last.localeCompare(b.last)
-          : value(a) - value(b)
+          ? left.last.localeCompare(right.last)
+          : value(left) - value(right)
     return (
-      diff * sign || b.minutes - a.minutes || a.title.localeCompare(b.title)
+      diff * sign ||
+      right.minutes - left.minutes ||
+      left.title.localeCompare(right.title)
     )
   })
 }
@@ -240,13 +255,15 @@ export const withElapsed = (
   entries: ReadonlyArray<TimeEntry>,
   now: number,
 ): Array<TimeEntry> =>
-  entries.map((e) =>
-    e.running
+  entries.map((timeEntry) =>
+    timeEntry.running
       ? {
-          ...e,
-          durationMinutes: Math.floor(elapsedSeconds(e.startedAt, now) / 60),
+          ...timeEntry,
+          durationMinutes: Math.floor(
+            elapsedSeconds(timeEntry.startedAt, now) / 60,
+          ),
         }
-      : e,
+      : timeEntry,
   )
 
 // ---------- Okresy raportu ----------
@@ -274,8 +291,8 @@ export function presetRange(
     case 'this_month':
       return { from: month, to: addDays(nextMonth(month), -1) }
     case 'last_month': {
-      const prev = previousMonth(month)
-      return { from: prev, to: addDays(month, -1) }
+      const previous = previousMonth(month)
+      return { from: previous, to: addDays(month, -1) }
     }
     case 'last_30':
       return { from: addDays(today, -29), to: today }
@@ -283,17 +300,17 @@ export function presetRange(
 }
 
 function nextMonth(first: string) {
-  const [y, m] = first.split('-').map(Number)
-  return m === 12
-    ? `${y! + 1}-01-01`
-    : `${y}-${String(m! + 1).padStart(2, '0')}-01`
+  const [year, month] = first.split('-').map(Number)
+  return month === 12
+    ? `${year! + 1}-01-01`
+    : `${year}-${String(month! + 1).padStart(2, '0')}-01`
 }
 
 function previousMonth(first: string) {
-  const [y, m] = first.split('-').map(Number)
-  return m === 1
-    ? `${y! - 1}-12-01`
-    : `${y}-${String(m! - 1).padStart(2, '0')}-01`
+  const [year, month] = first.split('-').map(Number)
+  return month === 1
+    ? `${year! - 1}-12-01`
+    : `${year}-${String(month! - 1).padStart(2, '0')}-01`
 }
 
 export const REPORT_PRESETS: ReadonlyArray<PeriodPreset> = [
@@ -359,26 +376,28 @@ export function reportCsv(
 ): string {
   return toCsv([
     labels.head,
-    ...rows.map((r) => [
-      r.title,
-      r.taskKey ?? '',
-      r.link ?? '',
-      labels.typeName(r.taskTypeId),
-      labels.projectName(r.projectId),
-      r.storyPoints ?? '',
-      r.minutes,
-      (r.minutes / 60).toFixed(2),
-      r.sessions,
-      r.days,
-      r.first,
-      r.last,
-      r.overtimeMinutes,
-      (r.overtimeMinutes / 60).toFixed(2),
-      r.overtimeNotes.join(' | '),
-      r.estimateMinutes ?? '',
-      r.estimateMinutes === null ? '' : r.minutes - r.estimateMinutes,
-      r.extensionMinutes,
-      r.extensionNotes.join(' | '),
+    ...rows.map((taskRow) => [
+      taskRow.title,
+      taskRow.taskKey ?? '',
+      taskRow.link ?? '',
+      labels.typeName(taskRow.taskTypeId),
+      labels.projectName(taskRow.projectId),
+      taskRow.storyPoints ?? '',
+      taskRow.minutes,
+      (taskRow.minutes / 60).toFixed(2),
+      taskRow.sessions,
+      taskRow.days,
+      taskRow.first,
+      taskRow.last,
+      taskRow.overtimeMinutes,
+      (taskRow.overtimeMinutes / 60).toFixed(2),
+      taskRow.overtimeNotes.join(' | '),
+      taskRow.estimateMinutes ?? '',
+      taskRow.estimateMinutes === null
+        ? ''
+        : taskRow.minutes - taskRow.estimateMinutes,
+      taskRow.extensionMinutes,
+      taskRow.extensionNotes.join(' | '),
     ]),
   ])
 }

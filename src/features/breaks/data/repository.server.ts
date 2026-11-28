@@ -8,11 +8,11 @@ import { nowTimeIn, todayIn } from '#/shared/domain/dates'
 
 import { minutesBetween } from '#/features/time-entries/domain/entries'
 
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 
 import type { Tx } from '#/server/db/client'
 
-import * as t from '#/server/db/schema'
+import * as schema from '#/server/db/schema'
 
 import { ApiError, invalid, notFound } from '#/server/http/errors'
 
@@ -30,7 +30,7 @@ import {
 
 import type { z } from 'zod'
 
-export type Row = typeof t.breaks.$inferSelect
+export type Row = typeof schema.breaks.$inferSelect
 
 export const toBreak = (row: Row): WorkBreak => ({
   id: row.id,
@@ -43,13 +43,13 @@ export const toBreak = (row: Row): WorkBreak => ({
   resumeEntryId: row.resumeEntryId,
 })
 
-export const mine = (scope: Scope) => inScope(t.breaks, scope)
+export const mine = (scope: Scope) => inScope(schema.breaks, scope)
 
-export async function ownBreak(tx: Tx, scope: Scope, id: string) {
-  const [row] = await tx
+export async function ownBreak(transaction: Tx, scope: Scope, id: string) {
+  const [row] = await transaction
     .select()
-    .from(t.breaks)
-    .where(and(mine(scope), eq(t.breaks.id, id)))
+    .from(schema.breaks)
+    .where(and(mine(scope), eq(schema.breaks.id, id)))
     .for('update')
   if (!row) throw notFound()
   return row
@@ -60,20 +60,20 @@ export async function listBreaks(
   scope: Scope,
   date: z.infer<typeof dateQuery>['date'],
 ) {
-  const rows = await db
+  const rows = await database
     .select()
-    .from(t.breaks)
-    .where(and(mine(scope), eq(t.breaks.workDate, date)))
-    .orderBy(asc(t.breaks.createdAt))
+    .from(schema.breaks)
+    .where(and(mine(scope), eq(schema.breaks.workDate, date)))
+    .orderBy(asc(schema.breaks.createdAt))
   return rows.map(toBreak)
 }
 
 /** Trwająca przerwa albo null. */
 export async function getRunningBreak(scope: Scope) {
-  const [row] = await db
+  const [row] = await database
     .select()
-    .from(t.breaks)
-    .where(and(mine(scope), eq(t.breaks.running, true)))
+    .from(schema.breaks)
+    .where(and(mine(scope), eq(schema.breaks.running, true)))
   return row ? toBreak(row) : null
 }
 
@@ -82,18 +82,23 @@ export async function getRunningBreak(scope: Scope) {
  * zapamiętuje je, żeby „Koniec przerwy” mogło je od razu wznowić.
  */
 export async function startBreak(scope: Scope) {
-  const result = await db.transaction(async (tx) => {
-    const [running] = await tx
+  const result = await database.transaction(async (transaction) => {
+    const [running] = await transaction
       .select()
-      .from(t.breaks)
+      .from(schema.breaks)
       // Jedna trwająca przerwa na konto, niezależnie od przestrzeni.
-      .where(and(eq(t.breaks.userId, scope.userId), eq(t.breaks.running, true)))
+      .where(
+        and(
+          eq(schema.breaks.userId, scope.userId),
+          eq(schema.breaks.running, true),
+        ),
+      )
       .for('update')
     if (running) throw new ApiError('break.running', 409)
-    const timezone = await userTimezone(tx, scope)
-    const paused = await stopRunning(tx, scope, timezone)
-    const [started] = await tx
-      .insert(t.breaks)
+    const timezone = await userTimezone(transaction, scope)
+    const paused = await stopRunning(transaction, scope, timezone)
+    const [started] = await transaction
+      .insert(schema.breaks)
       .values({
         ...owner(scope),
         workDate: todayIn(timezone),
@@ -117,10 +122,10 @@ export async function endBreak(
   id: string,
   resume: z.infer<typeof breakEndInput>['resume'],
 ) {
-  const result = await db.transaction(async (tx) => {
-    const row = await ownBreak(tx, scope, id)
+  const result = await database.transaction(async (transaction) => {
+    const row = await ownBreak(transaction, scope, id)
     if (!row.running) return { ended: row, resumed: null }
-    const timezone = await userTimezone(tx, scope)
+    const timezone = await userTimezone(transaction, scope)
     const minutes = Math.min(
       1440,
       Math.max(
@@ -131,8 +136,8 @@ export async function endBreak(
       ),
     )
     const sameDay = row.workDate === todayIn(timezone)
-    const [ended] = await tx
-      .update(t.breaks)
+    const [ended] = await transaction
+      .update(schema.breaks)
       .set({
         running: false,
         durationMinutes: minutes,
@@ -140,11 +145,11 @@ export async function endBreak(
         startTime: sameDay ? row.startTime : null,
         endTime: sameDay ? nowTimeIn(timezone) : null,
       })
-      .where(eq(t.breaks.id, row.id))
+      .where(eq(schema.breaks.id, row.id))
       .returning()
     const resumed =
       resume && row.resumeEntryId
-        ? (await resumeEntry(tx, scope, row.resumeEntryId)).started
+        ? (await resumeEntry(transaction, scope, row.resumeEntryId)).started
         : null
     return { ended: ended!, resumed }
   })
@@ -159,8 +164,8 @@ export async function addBreak(
   scope: Scope,
   input: z.infer<typeof breakInput>,
 ) {
-  const row = await db.transaction(async (tx) => {
-    const timezone = await userTimezone(tx, scope)
+  const row = await database.transaction(async (transaction) => {
+    const timezone = await userTimezone(transaction, scope)
     if (input.workDate > todayIn(timezone)) throw invalid('workDate')
     let minutes = input.durationMinutes
     if (input.startTime || input.endTime) {
@@ -171,8 +176,8 @@ export async function addBreak(
       if (between === null || between < 1) throw invalid('endTime')
       minutes = between
     }
-    const [created] = await tx
-      .insert(t.breaks)
+    const [created] = await transaction
+      .insert(schema.breaks)
       .values({
         ...owner(scope),
         workDate: input.workDate,
@@ -187,9 +192,9 @@ export async function addBreak(
 }
 
 export async function removeBreak(scope: Scope, id: string) {
-  await db.transaction(async (tx) => {
-    const row = await ownBreak(tx, scope, id)
-    await tx.delete(t.breaks).where(eq(t.breaks.id, row.id))
+  await database.transaction(async (transaction) => {
+    const row = await ownBreak(transaction, scope, id)
+    await transaction.delete(schema.breaks).where(eq(schema.breaks.id, row.id))
   })
   return
 }

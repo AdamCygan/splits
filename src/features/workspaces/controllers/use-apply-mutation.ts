@@ -8,21 +8,21 @@ import type { ApplyKind } from '../domain/workspaces'
 import { useApplyTarget } from './apply-scope'
 
 interface Applied<TVars> {
-  vars: TVars
+  variables: TVars
   apply: ApplyTo
 }
 
 /** Wywołanie zwrotne jednego `mutate` (jak w TanStack Query). */
 export interface MutateCallbacks<TVars, TData> {
-  onSuccess?: (data: TData, vars: TVars) => void
+  onSuccess?: (data: TData, variables: TVars) => void
 }
 
 export interface ApplyMutationOptions<TVars, TData> {
   invalidate: ReadonlyArray<QueryKey>
-  success?: string | ((data: TData, vars: TVars) => string)
-  onSuccess?: (data: TData, vars: TVars) => void
+  success?: string | ((data: TData, variables: TVars) => string)
+  onSuccess?: (data: TData, variables: TVars) => void
   /** Czy ta zmiana w ogóle dotyczy rzeczy z przestrzeni (np. sam język: nie pytamy). */
-  asks?: (vars: TVars) => boolean
+  asks?: (variables: TVars) => boolean
 }
 
 /**
@@ -32,40 +32,44 @@ export interface ApplyMutationOptions<TVars, TData> {
  */
 export function useApplyMutation<TVars, TData>(
   kind: ApplyKind,
-  fn: (vars: TVars, apply: ApplyTo) => R<TData>,
+  callback: (variables: TVars, apply: ApplyTo) => R<TData>,
   options: ApplyMutationOptions<TVars, TData>,
 ) {
-  const t = useMessages(workspacesMessages).apply
+  const messages = useMessages(workspacesMessages).apply
   const target = useApplyTarget()
   const { success, onSuccess, asks } = options
   const inner = useDataMutation(
-    ({ vars, apply }: Applied<TVars>) => fn(vars, apply),
+    ({ variables, apply }: Applied<TVars>) => callback(variables, apply),
     {
       invalidate: options.invalidate,
       success: success
-        ? (data, v) => {
+        ? (data, applied) => {
             const text =
-              typeof success === 'function' ? success(data, v.vars) : success
-            return v.apply === 'all' ? `${text} ${t.suffix}` : text
+              typeof success === 'function'
+                ? success(data, applied.variables)
+                : success
+            return applied.apply === 'all' ? `${text} ${messages.suffix}` : text
           }
         : undefined,
-      onSuccess: onSuccess ? (data, v) => onSuccess(data, v.vars) : undefined,
+      onSuccess: onSuccess
+        ? (data, applied) => onSuccess(data, applied.variables)
+        : undefined,
     },
   )
   const { mutate: run, mutateAsync: runAsync } = inner
   const resolve = useCallback(
-    async (vars: TVars) =>
-      asks && !asks(vars) ? ('this' as const) : target(kind),
+    async (variables: TVars) =>
+      asks && !asks(variables) ? ('this' as const) : target(kind),
     [asks, target, kind],
   )
   const mutate = useCallback(
-    (vars: TVars, call?: MutateCallbacks<TVars, TData>) => {
-      void resolve(vars).then((apply) => {
+    (variables: TVars, call?: MutateCallbacks<TVars, TData>) => {
+      void resolve(variables).then((apply) => {
         if (!apply) return
         run(
-          { vars, apply },
+          { variables, apply },
           call?.onSuccess
-            ? { onSuccess: (data) => call.onSuccess?.(data, vars) }
+            ? { onSuccess: (data) => call.onSuccess?.(data, variables) }
             : undefined,
         )
       })
@@ -73,9 +77,9 @@ export function useApplyMutation<TVars, TData>(
     [resolve, run],
   )
   const mutateAsync = useCallback(
-    async (vars: TVars) => {
-      const apply = await resolve(vars)
-      return apply ? runAsync({ vars, apply }) : undefined
+    async (variables: TVars) => {
+      const apply = await resolve(variables)
+      return apply ? runAsync({ variables, apply }) : undefined
     },
     [resolve, runAsync],
   )

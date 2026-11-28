@@ -13,7 +13,7 @@ import { templatesQuery } from '../data/queries'
 
 /** Kolejność i usuwanie szablonów oraz limit szablonów w planie Free. */
 export function useTemplates(onRemoved: () => void) {
-  const t = useMessages(settingsMessages).templates
+  const messages = useMessages(settingsMessages).templates
   const count = (useQuery(templatesQuery).data ?? []).length
   const isFree = useFreePlan()
   const reorder = useDataMutation(
@@ -22,7 +22,7 @@ export function useTemplates(onRemoved: () => void) {
   )
   const remove = useDataMutation((id: string) => templatesApi.remove(id), {
     invalidate: [keys.templates],
-    success: t.deleted,
+    success: messages.deleted,
     onSuccess: onRemoved,
   })
   return {
@@ -40,7 +40,7 @@ export interface SaveTemplateOptions {
 
 /** Zapis szablonu (nowy albo zmiana); krok konfiguracji „szablony” zaliczony. */
 export function useSaveTemplate({ template, onSaved }: SaveTemplateOptions) {
-  const t = useMessages(settingsMessages).templates
+  const messages = useMessages(settingsMessages).templates
   const app = useMessages(appMessages)
   return useDataMutation(
     (input: QuickTemplateInput) =>
@@ -49,7 +49,7 @@ export function useSaveTemplate({ template, onSaved }: SaveTemplateOptions) {
         : templatesApi.create(input),
     {
       invalidate: [keys.templates],
-      success: template ? app.status.saved : t.created,
+      success: template ? app.status.saved : messages.created,
       onSuccess: () => {
         markSetupStep('templates')
         onSaved()

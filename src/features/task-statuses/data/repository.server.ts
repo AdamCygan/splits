@@ -4,80 +4,90 @@ import type { TaskStatusInput } from './dto'
 import { toStatus } from './mappers.server'
 import { FREE_LIMITS } from '#/features/billing/domain/plans'
 import { assertFreeSlot } from '#/features/billing/data/limits.server'
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 import type { Tx } from '#/server/db/client'
 import { countRows, lowerName, reorder } from '#/server/db/helpers'
-import * as t from '#/server/db/schema'
+import * as schema from '#/server/db/schema'
 import { conflict, notFound } from '#/server/http/errors'
 import { and, asc, eq, isNull, ne, sql } from 'drizzle-orm'
 
-export const activeStatuses = (tx: Tx, scope: Scope) =>
+export const activeStatuses = (transaction: Tx, scope: Scope) =>
   countRows(
-    tx
+    transaction
       .select({ n: sql<number>`count(*)::int` })
-      .from(t.taskStatuses)
+      .from(schema.taskStatuses)
       .where(
-        and(inScope(t.taskStatuses, scope), isNull(t.taskStatuses.archivedAt)),
+        and(
+          inScope(schema.taskStatuses, scope),
+          isNull(schema.taskStatuses.archivedAt),
+        ),
       ),
   )
 
-export const listStatuses = (tx: Tx, scope: Scope) =>
-  tx
+export const listStatuses = (transaction: Tx, scope: Scope) =>
+  transaction
     .select()
-    .from(t.taskStatuses)
-    .where(inScope(t.taskStatuses, scope))
-    .orderBy(asc(t.taskStatuses.sortOrder))
+    .from(schema.taskStatuses)
+    .where(inScope(schema.taskStatuses, scope))
+    .orderBy(asc(schema.taskStatuses.sortOrder))
 
-export async function ownStatus(tx: Tx, scope: Scope, id: string) {
-  const [row] = await tx
+export async function ownStatus(transaction: Tx, scope: Scope, id: string) {
+  const [row] = await transaction
     .select()
-    .from(t.taskStatuses)
-    .where(and(eq(t.taskStatuses.id, id), inScope(t.taskStatuses, scope)))
+    .from(schema.taskStatuses)
+    .where(
+      and(eq(schema.taskStatuses.id, id), inScope(schema.taskStatuses, scope)),
+    )
   if (!row) throw notFound()
   return row
 }
 
 /** Każda grupa (do zrobienia / w trakcie / gotowe) musi mieć choć jeden aktywny status. */
 export async function assertNotLastInCategory(
-  tx: Tx,
-  status: typeof t.taskStatuses.$inferSelect,
+  transaction: Tx,
+  status: typeof schema.taskStatuses.$inferSelect,
 ) {
-  const [row] = await tx
+  const [row] = await transaction
     .select({ n: sql<number>`count(*)::int` })
-    .from(t.taskStatuses)
+    .from(schema.taskStatuses)
     .where(
       and(
-        eq(t.taskStatuses.workspaceId, status.workspaceId),
-        eq(t.taskStatuses.category, status.category),
-        isNull(t.taskStatuses.archivedAt),
-        ne(t.taskStatuses.id, status.id),
+        eq(schema.taskStatuses.workspaceId, status.workspaceId),
+        eq(schema.taskStatuses.category, status.category),
+        isNull(schema.taskStatuses.archivedAt),
+        ne(schema.taskStatuses.id, status.id),
       ),
     )
   if ((row?.n ?? 0) === 0) throw conflict('status.last_in_category')
 }
 
-const freeStatusSlot = (tx: Tx, scope: Scope) =>
+const freeStatusSlot = (transaction: Tx, scope: Scope) =>
   assertFreeSlot(
     scope.userId,
-    () => activeStatuses(tx, scope),
+    () => activeStatuses(transaction, scope),
     FREE_LIMITS.statuses,
     'plan.limit_statuses',
   )
 
 /** Statusy konta w ustalonej kolejności. */
 export async function getStatuses(scope: Scope) {
-  return (await listStatuses(db, scope)).map(toStatus)
+  return (await listStatuses(database, scope)).map(toStatus)
 }
 
 /** Nowy status na końcu listy (unikalna nazwa, limit planu Free). */
 export async function createStatus(scope: Scope, input: TaskStatusInput) {
-  const row = await db.transaction(async (tx) => {
-    await freeStatusSlot(tx, scope)
-    const all = await listStatuses(tx, scope)
-    if (all.some((s) => lowerName(s.name) === lowerName(input.name)))
+  const row = await database.transaction(async (transaction) => {
+    await freeStatusSlot(transaction, scope)
+    const all = await listStatuses(transaction, scope)
+    if (
+      all.some(
+        (existingStatus) =>
+          lowerName(existingStatus.name) === lowerName(input.name),
+      )
+    )
       throw conflict('name_taken', 'name')
-    const [created] = await tx
-      .insert(t.taskStatuses)
+    const [created] = await transaction
+      .insert(schema.taskStatuses)
       .values({ ...input, ...owner(scope), sortOrder: all.length })
       .returning()
     return created!
@@ -87,9 +97,9 @@ export async function createStatus(scope: Scope, input: TaskStatusInput) {
 
 /** Nowa kolejność statusów (wszystkie id konta). */
 export async function reorderStatuses(scope: Scope, ids: Array<string>) {
-  const rows = await db.transaction(async (tx) => {
-    await reorder(tx, t.taskStatuses, scope, ids)
-    return listStatuses(tx, scope)
+  const rows = await database.transaction(async (transaction) => {
+    await reorder(transaction, schema.taskStatuses, scope, ids)
+    return listStatuses(transaction, scope)
   })
   return rows.map(toStatus)
 }
@@ -100,21 +110,23 @@ export async function updateStatus(
   id: string,
   input: TaskStatusInput,
 ) {
-  const row = await db.transaction(async (tx) => {
-    const status = await ownStatus(tx, scope, id)
-    const all = await listStatuses(tx, scope)
+  const row = await database.transaction(async (transaction) => {
+    const status = await ownStatus(transaction, scope, id)
+    const all = await listStatuses(transaction, scope)
     if (
       all.some(
-        (s) => s.id !== id && lowerName(s.name) === lowerName(input.name),
+        (existingStatus) =>
+          existingStatus.id !== id &&
+          lowerName(existingStatus.name) === lowerName(input.name),
       )
     )
       throw conflict('name_taken', 'name')
     if (status.category !== input.category && !status.archivedAt)
-      await assertNotLastInCategory(tx, status)
-    const [updated] = await tx
-      .update(t.taskStatuses)
+      await assertNotLastInCategory(transaction, status)
+    const [updated] = await transaction
+      .update(schema.taskStatuses)
       .set(input)
-      .where(eq(t.taskStatuses.id, id))
+      .where(eq(schema.taskStatuses.id, id))
       .returning()
     return updated!
   })
@@ -123,18 +135,18 @@ export async function updateStatus(
 
 /** Status domyślny dla nowych zadań (dokładnie jeden). */
 export async function setDefaultStatus(scope: Scope, id: string) {
-  const rows = await db.transaction(async (tx) => {
-    const status = await ownStatus(tx, scope, id)
+  const rows = await database.transaction(async (transaction) => {
+    const status = await ownStatus(transaction, scope, id)
     if (status.archivedAt) throw notFound()
-    await tx
-      .update(t.taskStatuses)
+    await transaction
+      .update(schema.taskStatuses)
       .set({ isDefault: false })
-      .where(inScope(t.taskStatuses, scope))
-    await tx
-      .update(t.taskStatuses)
+      .where(inScope(schema.taskStatuses, scope))
+    await transaction
+      .update(schema.taskStatuses)
       .set({ isDefault: true })
-      .where(eq(t.taskStatuses.id, id))
-    return listStatuses(tx, scope)
+      .where(eq(schema.taskStatuses.id, id))
+    return listStatuses(transaction, scope)
   })
   return rows.map(toStatus)
 }
@@ -148,19 +160,19 @@ export async function setStatusArchived(
   id: string,
   archived: boolean,
 ) {
-  const row = await db.transaction(async (tx) => {
-    const status = await ownStatus(tx, scope, id)
+  const row = await database.transaction(async (transaction) => {
+    const status = await ownStatus(transaction, scope, id)
     if (archived) {
       if (status.isSystem) throw conflict('status.system_archive')
       if (status.isDefault) throw conflict('status.default_archive')
-      await assertNotLastInCategory(tx, status)
+      await assertNotLastInCategory(transaction, status)
     } else if (status.archivedAt) {
-      await freeStatusSlot(tx, scope)
+      await freeStatusSlot(transaction, scope)
     }
-    const [updated] = await tx
-      .update(t.taskStatuses)
+    const [updated] = await transaction
+      .update(schema.taskStatuses)
       .set({ archivedAt: archived ? new Date() : null })
-      .where(eq(t.taskStatuses.id, id))
+      .where(eq(schema.taskStatuses.id, id))
       .returning()
     return updated!
   })

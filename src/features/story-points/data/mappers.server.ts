@@ -1,6 +1,10 @@
 import type { SpScaleStep } from '#/features/story-points/data/dto'
-import type * as t from '#/server/db/schema'
+import type * as schema from '#/server/db/schema'
 
 export const toScaleStep = (
-  s: typeof t.storyPointScale.$inferSelect,
-): SpScaleStep => ({ id: s.id, points: s.points, maxMinutes: s.maxMinutes })
+  storyPointScaleRow: typeof schema.storyPointScale.$inferSelect,
+): SpScaleStep => ({
+  id: storyPointScaleRow.id,
+  points: storyPointScaleRow.points,
+  maxMinutes: storyPointScaleRow.maxMinutes,
+})

@@ -6,17 +6,17 @@ import { Pagination } from '../pagination'
 import type { SectionProps } from './account-section'
 
 /** Historia działań administratorów na tym koncie (od najnowszych). */
-export function HistorySection({ vm }: SectionProps) {
+export function HistorySection({ viewModel }: SectionProps) {
   const messages = useMessages(adminMessages)
-  const t = messages.user.history
+  const copy = messages.user.history
   return (
-    <Panel title={t.title}>
-      {vm.history.length === 0 ? (
-        <p className="text-sm text-ink-soft">{t.empty}</p>
+    <Panel title={copy.title}>
+      {viewModel.history.length === 0 ? (
+        <p className="text-sm text-ink-soft">{copy.empty}</p>
       ) : (
         <div className="-mx-5 sm:-mx-6">
           <ActionsTable
-            actions={vm.history}
+            actions={viewModel.history}
             showTarget={false}
             caption={messages.log.title}
           />
@@ -24,9 +24,9 @@ export function HistorySection({ vm }: SectionProps) {
       )}
       <div className="mt-3 flex justify-end">
         <Pagination
-          page={vm.historyPage}
-          pages={vm.historyPages}
-          onPage={vm.setHistoryPage}
+          page={viewModel.historyPage}
+          pages={viewModel.historyPages}
+          onPage={viewModel.setHistoryPage}
         />
       </div>
     </Panel>

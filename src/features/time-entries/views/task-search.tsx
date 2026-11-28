@@ -27,7 +27,7 @@ export interface TaskSearchProps {
  * linku. Wybrane można kontynuować od razu (nowa sesja z timerem) albo wpisać w formularz.
  */
 export function TaskSearch({ isToday, onUse }: TaskSearchProps) {
-  const t = useMessages(entriesMessages).search
+  const messages = useMessages(entriesMessages).search
   const format = useFormat()
   const { locale } = useI18n()
   const id = useId()
@@ -36,46 +36,48 @@ export function TaskSearch({ isToday, onUse }: TaskSearchProps) {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
   const [selected, setSelected] = useState<TaskSearchResult | null>(null)
-  const q = useDeferredValue(query.trim())
-  const search = useQuery(taskSearchQuery(q))
-  const results = q.length >= 2 ? (search.data ?? []) : []
+  const deferredQuery = useDeferredValue(query.trim())
+  const search = useQuery(taskSearchQuery(deferredQuery))
+  const results = deferredQuery.length >= 2 ? (search.data ?? []) : []
   const resume = useResumeTask()
-  const expanded = open && q.length >= 2
+  const expanded = open && deferredQuery.length >= 2
 
-  const typeOf = (r: TaskSearchResult) =>
-    types.find((x) => x.id === r.entry.taskTypeId)
-  const meta = (r: TaskSearchResult) =>
+  const typeOf = (taskSearchResult: TaskSearchResult) =>
+    types.find((type) => type.id === taskSearchResult.entry.taskTypeId)
+  const meta = (taskSearchResult: TaskSearchResult) =>
     [
-      typeOf(r)?.name,
-      fmt(t.last, {
-        date: formatDate(locale, r.lastDate, {
+      typeOf(taskSearchResult)?.name,
+      fmt(messages.last, {
+        date: formatDate(locale, taskSearchResult.lastDate, {
           day: 'numeric',
           month: 'short',
         }),
       }),
-      format.minutes(r.workedMinutes),
+      format.minutes(taskSearchResult.workedMinutes),
     ]
       .filter(Boolean)
       .join(', ')
 
-  const choose = (r: TaskSearchResult | undefined) => {
-    if (!r) return
-    setSelected(r)
+  const choose = (taskSearchResult: TaskSearchResult | undefined) => {
+    if (!taskSearchResult) return
+    setSelected(taskSearchResult)
     setOpen(false)
     setQuery('')
   }
-  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      e.preventDefault()
+  const onKeyDown = (keyboardEvent: KeyboardEvent<HTMLInputElement>) => {
+    if (keyboardEvent.key === 'ArrowDown' || keyboardEvent.key === 'ArrowUp') {
+      keyboardEvent.preventDefault()
       setOpen(true)
-      const step = e.key === 'ArrowDown' ? 1 : -1
-      setActive((i) =>
-        results.length ? (i + step + results.length) % results.length : 0,
+      const step = keyboardEvent.key === 'ArrowDown' ? 1 : -1
+      setActive((currentActive) =>
+        results.length
+          ? (currentActive + step + results.length) % results.length
+          : 0,
       )
-    } else if (e.key === 'Enter' && expanded && results[active]) {
-      e.preventDefault()
+    } else if (keyboardEvent.key === 'Enter' && expanded && results[active]) {
+      keyboardEvent.preventDefault()
       choose(results[active])
-    } else if (e.key === 'Escape') {
+    } else if (keyboardEvent.key === 'Escape') {
       if (expanded) setOpen(false)
       else setQuery('')
     }
@@ -84,7 +86,7 @@ export function TaskSearch({ isToday, onUse }: TaskSearchProps) {
   return (
     <div className="mb-5">
       <label htmlFor={`${id}-input`} className="text-sm font-medium">
-        {t.label}
+        {messages.label}
       </label>
       <div className="relative mt-1.5">
         <Search
@@ -101,11 +103,11 @@ export function TaskSearch({ isToday, onUse }: TaskSearchProps) {
             expanded && results[active] ? `${id}-opt-${active}` : undefined
           }
           autoComplete="off"
-          placeholder={t.placeholder}
+          placeholder={messages.placeholder}
           className="pl-9"
           value={query}
-          onChange={(e) => {
-            setQuery(e.target.value)
+          onChange={(event) => {
+            setQuery(event.target.value)
             setOpen(true)
             setActive(0)
           }}
@@ -117,7 +119,7 @@ export function TaskSearch({ isToday, onUse }: TaskSearchProps) {
           <ul
             id={`${id}-list`}
             role="listbox"
-            aria-label={t.results}
+            aria-label={messages.results}
             className="absolute inset-x-0 top-full z-30 mt-1 max-h-80 overflow-y-auto rounded-xl border border-line bg-surface py-1 shadow-lg"
           >
             {results.length === 0 ? (
@@ -125,43 +127,45 @@ export function TaskSearch({ isToday, onUse }: TaskSearchProps) {
                 role="presentation"
                 className="px-3 py-2.5 text-sm text-ink-soft"
               >
-                {search.isFetching ? t.searching : t.none}
+                {search.isFetching ? messages.searching : messages.none}
               </li>
             ) : (
-              results.map((r, i) => (
+              results.map((result, index) => (
                 <li
-                  key={r.entry.id}
-                  id={`${id}-opt-${i}`}
+                  key={result.entry.id}
+                  id={`${id}-opt-${index}`}
                   role="option"
-                  aria-selected={i === active}
+                  aria-selected={index === active}
                   // mousedown zamiast click: pole nie traci fokusu przed wyborem.
-                  onMouseDown={(e) => {
-                    e.preventDefault()
-                    choose(r)
+                  onMouseDown={(event) => {
+                    event.preventDefault()
+                    choose(result)
                   }}
-                  onMouseEnter={() => setActive(i)}
+                  onMouseEnter={() => setActive(index)}
                   className={cn(
                     'flex cursor-pointer items-start gap-2.5 px-3 py-2',
-                    i === active && 'bg-muted',
+                    index === active && 'bg-muted',
                   )}
                 >
                   <span
                     aria-hidden
                     className="mt-1.5 size-2.5 shrink-0 rounded-full"
-                    style={{ background: typeOf(r)?.color }}
+                    style={{ background: typeOf(result)?.color }}
                   />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">
-                      {r.entry.title}
+                      {result.entry.title}
                     </span>
                     <span className="block truncate text-sm text-ink-soft">
-                      {meta(r)}
+                      {meta(result)}
                     </span>
                   </span>
-                  {r.running ? (
-                    <Badge tone="muted">{t.running}</Badge>
+                  {result.running ? (
+                    <Badge tone="muted">{messages.running}</Badge>
                   ) : (
-                    r.finished && <Badge tone="success">{t.done}</Badge>
+                    result.finished && (
+                      <Badge tone="success">{messages.done}</Badge>
+                    )
                   )}
                 </li>
               ))
@@ -173,7 +177,7 @@ export function TaskSearch({ isToday, onUse }: TaskSearchProps) {
       {selected && (
         <div
           role="group"
-          aria-label={fmt(t.selected, { name: selected.entry.title })}
+          aria-label={fmt(messages.selected, { name: selected.entry.title })}
           className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-line bg-muted/40 px-3 py-2.5"
         >
           <span className="min-w-0 flex-1 basis-48">
@@ -182,7 +186,7 @@ export function TaskSearch({ isToday, onUse }: TaskSearchProps) {
             </span>
             <span className="block text-sm text-ink-soft">
               {meta(selected)}
-              {selected.finished && `, ${t.doneLower}`}
+              {selected.finished && `, ${messages.doneLower}`}
             </span>
           </span>
           <span className="flex flex-wrap gap-2">
@@ -197,7 +201,7 @@ export function TaskSearch({ isToday, onUse }: TaskSearchProps) {
                 }
               >
                 <Play aria-hidden className="size-4" />
-                {t.continue}
+                {messages.continue}
               </Button>
             )}
             <Button
@@ -209,13 +213,13 @@ export function TaskSearch({ isToday, onUse }: TaskSearchProps) {
               }}
             >
               <FormInput aria-hidden className="size-4" />
-              {t.use}
+              {messages.use}
             </Button>
             <Button
               size="icon"
               variant="ghost"
               className="size-8"
-              aria-label={t.clear}
+              aria-label={messages.clear}
               onClick={() => setSelected(null)}
             >
               <X aria-hidden className="size-4" />

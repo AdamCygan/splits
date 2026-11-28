@@ -9,13 +9,13 @@ import { scaleInput } from '../data/inputs.server'
 import { getScale, replaceScale } from '../data/repository.server'
 
 export const scaleRoutes = new Hono<AppEnv>()
-  .get('/', async (c) => c.json(await getScale(scopeOf(c))))
-  .put('/', async (c) => {
-    const { steps } = await body(c, scaleInput)
+  .get('/', async (context) => context.json(await getScale(scopeOf(context))))
+  .put('/', async (context) => {
+    const { steps } = await body(context, scaleInput)
     if (validateScale(steps).length > 0)
       throw new ApiError('scale.invalid', 400)
-    return c.json(
-      await inTargets(scopeOf(c), applyOf(c), (scope) =>
+    return context.json(
+      await inTargets(scopeOf(context), applyOf(context), (scope) =>
         replaceScale(scope, steps),
       ),
     )

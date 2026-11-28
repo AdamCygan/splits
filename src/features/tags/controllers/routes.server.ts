@@ -16,37 +16,37 @@ import {
 } from '../data/repository.server'
 
 export const tagRoutes = new Hono<AppEnv>()
-  .get('/', async (c) => c.json(await listTags(scopeOf(c))))
-  .post('/', async (c) => {
-    const input = await body(c, tagInput)
-    const scope = scopeOf(c)
+  .get('/', async (context) => context.json(await listTags(scopeOf(context))))
+  .post('/', async (context) => {
+    const input = await body(context, tagInput)
+    const scope = scopeOf(context)
     const created = await mirrored(
       scope,
-      applyOf(c),
+      applyOf(context),
       'tags',
       null,
       () => createTag(scope, input),
-      (r) => r.id,
+      (tag) => tag.id,
     )
-    return c.json(created, 201)
+    return context.json(created, 201)
   })
-  .put('/:id', async (c) => {
-    const input = await body(c, tagInput)
-    const scope = scopeOf(c)
-    const id = c.req.param('id')
-    return c.json(
-      await mirrored(scope, applyOf(c), 'tags', id, () =>
+  .put('/:id', async (context) => {
+    const input = await body(context, tagInput)
+    const scope = scopeOf(context)
+    const id = context.req.param('id')
+    return context.json(
+      await mirrored(scope, applyOf(context), 'tags', id, () =>
         updateTag(scope, id, input),
       ),
     )
   })
-  .delete('/:id', async (c) => {
+  .delete('/:id', async (context) => {
     await removedEverywhere(
-      scopeOf(c),
-      applyOf(c),
+      scopeOf(context),
+      applyOf(context),
       'tags',
-      c.req.param('id'),
+      context.req.param('id'),
       removeTag,
     )
-    return c.body(null, 204)
+    return context.body(null, 204)
   })

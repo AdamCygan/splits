@@ -13,17 +13,17 @@ export interface InvoicesCardProps {
 
 /** Faktury ze Stripe: data, numer, kwota i status, z PDF-em i stroną faktury. */
 export function InvoicesCard({ isDemo }: InvoicesCardProps) {
-  const t = useMessages(billingMessages).plan.invoices
-  const vm = useInvoicesViewModel(isDemo)
-  if (!vm.visible) return null
+  const messages = useMessages(billingMessages).plan.invoices
+  const viewModel = useInvoicesViewModel(isDemo)
+  if (!viewModel.visible) return null
   return (
-    <SettingsCard title={t.title} lead={t.lead}>
-      {vm.pending ? (
+    <SettingsCard title={messages.title} lead={messages.lead}>
+      {viewModel.pending ? (
         <div aria-hidden className="h-24 animate-pulse rounded-lg bg-muted" />
-      ) : vm.invoices.length === 0 ? (
-        <p className="text-ink-soft">{t.empty}</p>
+      ) : viewModel.invoices.length === 0 ? (
+        <p className="text-ink-soft">{messages.empty}</p>
       ) : (
-        <InvoicesTable invoices={vm.invoices} />
+        <InvoicesTable invoices={viewModel.invoices} />
       )}
     </SettingsCard>
   )
@@ -37,8 +37,8 @@ export interface InvoicesTableProps {
 
 /** Tabela faktur (strona planu klienta i strona konta w panelu admina). */
 export function InvoicesTable({ invoices, caption }: InvoicesTableProps) {
-  const t = useMessages(billingMessages).plan.invoices
-  const label = caption ?? t.caption
+  const messages = useMessages(billingMessages).plan.invoices
+  const label = caption ?? messages.caption
   return (
     <div
       className="relative -mx-1 overflow-x-auto px-1"
@@ -51,19 +51,19 @@ export function InvoicesTable({ invoices, caption }: InvoicesTableProps) {
         <thead className="text-ink-soft">
           <tr className="border-b border-line">
             <th scope="col" className="py-2 pr-3 font-medium">
-              {t.date}
+              {messages.date}
             </th>
             <th scope="col" className="px-3 py-2 font-medium">
-              {t.number}
+              {messages.number}
             </th>
             <th scope="col" className="px-3 py-2 text-right font-medium">
-              {t.amount}
+              {messages.amount}
             </th>
             <th scope="col" className="px-3 py-2 font-medium">
-              {t.status}
+              {messages.status}
             </th>
             <th scope="col" className="py-2 pl-3 text-right font-medium">
-              {t.actions}
+              {messages.actions}
             </th>
           </tr>
         </thead>
@@ -82,9 +82,9 @@ interface InvoiceRowProps {
 }
 
 function InvoiceRow({ invoice }: InvoiceRowProps) {
-  const t = useMessages(billingMessages).plan.invoices
+  const messages = useMessages(billingMessages).plan.invoices
   const format = useFormat()
-  const number = invoice.number ?? t.noNumber
+  const number = invoice.number ?? messages.noNumber
   return (
     <tr className="border-b border-line last:border-0">
       <td className="py-3 pr-3 whitespace-nowrap">
@@ -96,7 +96,7 @@ function InvoiceRow({ invoice }: InvoiceRowProps) {
       </td>
       <td className="px-3 py-3">
         <Badge tone={invoice.status === 'paid' ? 'success' : 'muted'}>
-          {t.statuses[invoice.status] ?? invoice.status}
+          {messages.statuses[invoice.status] ?? invoice.status}
         </Badge>
       </td>
       <td className="py-3 pl-3">
@@ -109,8 +109,11 @@ function InvoiceRow({ invoice }: InvoiceRowProps) {
               className="inline-flex items-center gap-1 font-medium underline-offset-4 hover:underline"
             >
               <Download aria-hidden className="size-3.5" />
-              {t.pdf}
-              <span className="sr-only"> {fmt(t.pdfOf, { number })}</span>
+              {messages.pdf}
+              <span className="sr-only">
+                {' '}
+                {fmt(messages.pdfOf, { number })}
+              </span>
             </a>
           )}
           {invoice.url && (
@@ -121,8 +124,11 @@ function InvoiceRow({ invoice }: InvoiceRowProps) {
               className="inline-flex items-center gap-1 font-medium underline-offset-4 hover:underline"
             >
               <ExternalLink aria-hidden className="size-3.5" />
-              {t.view}
-              <span className="sr-only"> {fmt(t.viewOf, { number })}</span>
+              {messages.view}
+              <span className="sr-only">
+                {' '}
+                {fmt(messages.viewOf, { number })}
+              </span>
             </a>
           )}
         </span>

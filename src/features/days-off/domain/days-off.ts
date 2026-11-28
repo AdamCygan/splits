@@ -19,7 +19,9 @@ export function groupDaysOff(
   days: ReadonlyArray<DayOff>,
   workingDays: ReadonlyArray<number>,
 ): Array<DayOffRange> {
-  const sorted = [...days].sort((a, b) => a.date.localeCompare(b.date))
+  const sorted = [...days].sort((left, right) =>
+    left.date.localeCompare(right.date),
+  )
   const out: Array<DayOffRange> = []
   for (const day of sorted) {
     const last = out.at(-1)
@@ -27,9 +29,10 @@ export function groupDaysOff(
       last &&
       last.kind === day.kind &&
       last.note === day.note &&
-      Array.from({ length: diffDays(last.to, day.date) - 1 }, (_, i) =>
-        addDays(last.to, i + 1),
-      ).every((d) => !workingDays.includes(weekday(d)))
+      Array.from(
+        { length: diffDays(last.to, day.date) - 1 },
+        (_unused, index) => addDays(last.to, index + 1),
+      ).every((part) => !workingDays.includes(weekday(part)))
     if (last && joins) {
       last.to = day.date
       last.days++
@@ -45,12 +48,12 @@ export function sprintAvailability(
   daysOff: ReadonlyArray<DayOff>,
 ) {
   const total = diffDays(sprint.startsOn, sprint.endsOn) + 1
-  const dates = Array.from({ length: total }, (_, i) =>
-    addDays(sprint.startsOn, i),
-  ).filter((d) => workingDays.includes(weekday(d)))
-  const off = daysOff.filter((d) => dates.includes(d.date))
+  const dates = Array.from({ length: total }, (_unused, index) =>
+    addDays(sprint.startsOn, index),
+  ).filter((part) => workingDays.includes(weekday(part)))
+  const off = daysOff.filter((dayOff) => dates.includes(dayOff.date))
   const byKind: Partial<Record<DayOffKind, number>> = {}
-  for (const d of off) byKind[d.kind] = (byKind[d.kind] ?? 0) + 1
+  for (const dayOff of off) byKind[dayOff.kind] = (byKind[dayOff.kind] ?? 0) + 1
   return {
     working: dates.length,
     off: off.length,

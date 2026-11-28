@@ -49,9 +49,12 @@ export interface TaskInsights {
   extensionMinutes: number
 }
 
-const interval = (e: Pick<TimeEntry, 'startTime' | 'endTime'>) =>
-  e.startTime && e.endTime
-    ? { start: toMinutes(e.startTime), end: toMinutes(e.endTime) }
+const interval = (timeEntry: Pick<TimeEntry, 'startTime' | 'endTime'>) =>
+  timeEntry.startTime && timeEntry.endTime
+    ? {
+        start: toMinutes(timeEntry.startTime),
+        end: toMinutes(timeEntry.endTime),
+      }
     : null
 
 /**
@@ -64,47 +67,58 @@ export function taskInsights(
   sameDays: ReadonlyArray<TimeEntry>,
 ): TaskInsights | null {
   if (sessions.length === 0) return null
-  const ids = new Set(sessions.map((s) => s.id))
-  const sorted = [...sessions].sort((a, b) =>
-    (a.workDate + (a.startTime ?? '99:99')).localeCompare(
-      b.workDate + (b.startTime ?? '99:99'),
+  const ids = new Set(sessions.map((timeEntry) => timeEntry.id))
+  const sorted = [...sessions].sort((left, right) =>
+    (left.workDate + (left.startTime ?? '99:99')).localeCompare(
+      right.workDate + (right.startTime ?? '99:99'),
     ),
   )
-  const durations = sorted.map((s) => s.durationMinutes)
-  const minutes = durations.reduce((a, b) => a + b, 0)
+  const durations = sorted.map((timeEntry) => timeEntry.durationMinutes)
+  const minutes = durations.reduce(
+    (accumulator, duration) => accumulator + duration,
+    0,
+  )
 
   const byDate = new Map<string, Array<TimeEntry>>()
-  for (const s of sorted)
-    byDate.set(s.workDate, [...(byDate.get(s.workDate) ?? []), s])
+  for (const timeEntry of sorted)
+    byDate.set(timeEntry.workDate, [
+      ...(byDate.get(timeEntry.workDate) ?? []),
+      timeEntry,
+    ])
   const days = [...byDate.entries()].map(([date, list]) => ({
     date,
-    minutes: list.reduce((sum, s) => sum + s.durationMinutes, 0),
+    minutes: list.reduce(
+      (sum, timeEntry) => sum + timeEntry.durationMinutes,
+      0,
+    ),
     sessions: list.length,
   }))
 
   const gaps: Array<TaskGap> = []
   for (const [date, list] of byDate) {
     const timed = list
-      .map((s) => ({ s, at: interval(s) }))
-      .filter((x) => x.at !== null)
-      .sort((a, b) => a.at!.start - b.at!.start)
-    for (let i = 1; i < timed.length; i++) {
-      const prev = timed[i - 1]!.at!
-      const next = timed[i]!.at!
-      if (next.start <= prev.end) continue
+      .map((timeEntry) => ({ s: timeEntry, at: interval(timeEntry) }))
+      .filter((point) => point.at !== null)
+      .sort((left, right) => left.at!.start - right.at!.start)
+    for (let index = 1; index < timed.length; index++) {
+      const previous = timed[index - 1]!.at!
+      const next = timed[index]!.at!
+      if (next.start <= previous.end) continue
       const between = sameDays
-        .filter((e) => e.workDate === date && !ids.has(e.id))
-        .flatMap((e) => {
-          const at = interval(e)
+        .filter(
+          (timeEntry) => timeEntry.workDate === date && !ids.has(timeEntry.id),
+        )
+        .flatMap((timeEntry) => {
+          const at = interval(timeEntry)
           if (!at) return []
           const overlap =
-            Math.min(at.end, next.start) - Math.max(at.start, prev.end)
+            Math.min(at.end, next.start) - Math.max(at.start, previous.end)
           return overlap > 0
             ? [
                 {
-                  id: e.id,
-                  title: e.title,
-                  taskTypeId: e.taskTypeId,
+                  id: timeEntry.id,
+                  title: timeEntry.title,
+                  taskTypeId: timeEntry.taskTypeId,
                   minutes: overlap,
                 },
               ]
@@ -112,9 +126,9 @@ export function taskInsights(
         })
       gaps.push({
         date,
-        from: timed[i - 1]!.s.endTime!,
-        to: timed[i]!.s.startTime!,
-        minutes: next.start - prev.end,
+        from: timed[index - 1]!.s.endTime!,
+        to: timed[index]!.s.startTime!,
+        minutes: next.start - previous.end,
         between,
       })
     }
@@ -122,17 +136,17 @@ export function taskInsights(
 
   const interrupters = new Map<string, Interrupter>()
   for (const gap of gaps)
-    for (const e of gap.between) {
-      const key = `${e.taskTypeId}|${e.title}`
+    for (const interruption of gap.between) {
+      const key = `${interruption.taskTypeId}|${interruption.title}`
       const known = interrupters.get(key)
       if (known) {
-        known.minutes += e.minutes
+        known.minutes += interruption.minutes
         known.times++
       } else
         interrupters.set(key, {
-          title: e.title,
-          taskTypeId: e.taskTypeId,
-          minutes: e.minutes,
+          title: interruption.title,
+          taskTypeId: interruption.taskTypeId,
+          minutes: interruption.minutes,
           times: 1,
         })
     }
@@ -153,10 +167,18 @@ export function taskInsights(
     minutesPerInterruption:
       gaps.length > 0 ? Math.round(minutes / gaps.length) : null,
     interruptedBy: [...interrupters.values()].sort(
-      (a, b) => b.minutes - a.minutes,
+      (left, right) => right.minutes - left.minutes,
     ),
-    overtimeMinutes: sorted.reduce((s, e) => s + (e.overtimeMinutes ?? 0), 0),
-    extensionMinutes: sorted.reduce((s, e) => s + (e.extensionMinutes ?? 0), 0),
+    overtimeMinutes: sorted.reduce(
+      (accumulator, timeEntry) =>
+        accumulator + (timeEntry.overtimeMinutes ?? 0),
+      0,
+    ),
+    extensionMinutes: sorted.reduce(
+      (accumulator, timeEntry) =>
+        accumulator + (timeEntry.extensionMinutes ?? 0),
+      0,
+    ),
   }
 }
 
@@ -183,33 +205,42 @@ export function taskDayTimeline<
   sessions: ReadonlyArray<TEntry>,
   sameDays: ReadonlyArray<TEntry>,
 ) {
-  const own = new Set(sessions.map((s) => s.id))
-  const segments: Array<TaskDaySegment<TEntry>> = sameDays.flatMap((e) =>
-    e.workDate === date && e.startTime && e.endTime
+  const own = new Set(sessions.map((session) => session.id))
+  const segments: Array<TaskDaySegment<TEntry>> = sameDays.flatMap((sameDay) =>
+    sameDay.workDate === date && sameDay.startTime && sameDay.endTime
       ? [
           {
-            entry: e,
-            start: toMinutes(e.startTime),
-            end: toMinutes(e.endTime),
-            own: own.has(e.id),
+            entry: sameDay,
+            start: toMinutes(sameDay.startTime),
+            end: toMinutes(sameDay.endTime),
+            own: own.has(sameDay.id),
           },
         ]
       : [],
   )
-  const from = Math.min(...segments.map((x) => x.start), 24 * 60)
-  const to = Math.max(...segments.map((x) => x.end), 0)
+  const from = Math.min(
+    ...segments.map((taskDaySegment) => taskDaySegment.start),
+    24 * 60,
+  )
+  const to = Math.max(
+    ...segments.map((taskDaySegment) => taskDaySegment.end),
+    0,
+  )
   const span = Math.max(60, to - from)
   return {
     segments,
     from,
     to,
     untimedMinutes: sessions
-      .filter((s) => s.workDate === date && !(s.startTime && s.endTime))
-      .reduce((sum, s) => sum + s.durationMinutes, 0),
+      .filter(
+        (session) =>
+          session.workDate === date && !(session.startTime && session.endTime),
+      )
+      .reduce((sum, session) => sum + session.durationMinutes, 0),
     /** Pozycja i szerokość odcinka na osi (w procentach). */
-    place: (x: MinuteRange) => ({
-      left: ((x.start - from) / span) * 100,
-      width: (Math.max(1, x.end - x.start) / span) * 100,
+    place: (minuteRange: MinuteRange) => ({
+      left: ((minuteRange.start - from) / span) * 100,
+      width: (Math.max(1, minuteRange.end - minuteRange.start) / span) * 100,
     }),
   }
 }
@@ -232,24 +263,24 @@ export function taskNotes(
     >
   >,
 ) {
-  return sessions.flatMap((s) =>
+  return sessions.flatMap((session) =>
     (
       [
-        ['note', s.note],
-        ['overtime', s.overtimeNote],
-        ['extension', s.extensionNote],
+        ['note', session.note],
+        ['overtime', session.overtimeNote],
+        ['extension', session.extensionNote],
       ] as const
     )
       .filter(([, text]) => Boolean(text))
       .map(([kind, text]) => ({
-        id: `${s.id}-${kind}`,
-        kind: kind,
+        id: `${session.id}-${kind}`,
+        kind,
         text: text!,
-        entryId: s.id,
-        date: s.workDate,
-        start: s.startTime,
-        end: s.endTime,
-        minutes: s.durationMinutes,
+        entryId: session.id,
+        date: session.workDate,
+        start: session.startTime,
+        end: session.endTime,
+        minutes: session.durationMinutes,
       })),
   )
 }

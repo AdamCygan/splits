@@ -31,7 +31,7 @@ export interface RegisterOptions {
 /** Rejestracja: walidacja, konto w API, sesja, zdarzenie analityki i dalszy krok. */
 export function useRegister({ next, interval }: RegisterOptions) {
   const navigate = useNavigate()
-  const t = useMessages(authMessages)
+  const messages = useMessages(authMessages)
   const { locale } = useI18n()
   const errorText = useErrorText()
   const [formError, setFormError] = useState<string | null>(null)
@@ -39,7 +39,7 @@ export function useRegister({ next, interval }: RegisterOptions) {
 
   const form = useForm({
     defaultValues,
-    validators: { onSubmit: registerSchema(t.validation) },
+    validators: { onSubmit: registerSchema(messages.validation) },
     onSubmit: async ({ value }) => {
       setFormError(null)
       setServerErrors({})

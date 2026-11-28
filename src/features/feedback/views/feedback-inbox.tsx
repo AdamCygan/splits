@@ -26,70 +26,71 @@ export type FeedbackInboxProps = FeedbackInboxOptions
 
 /** Panel admina → Zgłoszenia: problemy i pomysły z aplikacji, odpowiedź idzie mailem. */
 export function FeedbackInbox(props: FeedbackInboxProps) {
-  const t = useMessages(feedbackMessages)
-  const vm = useFeedbackInbox(props)
+  const messages = useMessages(feedbackMessages)
+  const viewModel = useFeedbackInbox(props)
   return (
     <>
-      <SectionHeader title={t.admin.title} lead={t.admin.lead} />
+      <SectionHeader title={messages.admin.title} lead={messages.admin.lead} />
       <div className="mb-4 flex flex-wrap items-end gap-3">
-        <Field label={t.admin.filters.status} className="w-44">
+        <Field label={messages.admin.filters.status} className="w-44">
           {(control) => (
             <Select
               {...control}
-              value={vm.filter.status ?? ''}
-              onChange={(e) =>
-                vm.setStatus(
-                  (e.target.value ||
+              value={viewModel.filter.status ?? ''}
+              onChange={(event) =>
+                viewModel.setStatus(
+                  (event.target.value ||
                     undefined) as AdminFeedbackFilter['status'],
                 )
               }
             >
-              <option value="">{t.admin.filters.allStatuses}</option>
-              <option value="open">{t.admin.filters.open}</option>
+              <option value="">{messages.admin.filters.allStatuses}</option>
+              <option value="open">{messages.admin.filters.open}</option>
               {FEEDBACK_STATUSES.map((status) => (
                 <option key={status} value={status}>
-                  {t.statuses[status]}
+                  {messages.statuses[status]}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label={t.admin.filters.kind} className="w-48">
+        <Field label={messages.admin.filters.kind} className="w-48">
           {(control) => (
             <Select
               {...control}
-              value={vm.filter.kind ?? ''}
-              onChange={(e) =>
-                vm.setKind(
-                  (e.target.value || undefined) as AdminFeedbackFilter['kind'],
+              value={viewModel.filter.kind ?? ''}
+              onChange={(event) =>
+                viewModel.setKind(
+                  (event.target.value ||
+                    undefined) as AdminFeedbackFilter['kind'],
                 )
               }
             >
-              <option value="">{t.admin.filters.allKinds}</option>
+              <option value="">{messages.admin.filters.allKinds}</option>
               {FEEDBACK_KINDS.map((kind) => (
                 <option key={kind} value={kind}>
-                  {t.dialog.kinds[kind]}
+                  {messages.dialog.kinds[kind]}
                 </option>
               ))}
             </Select>
           )}
         </Field>
         <p role="status" className="pb-2 text-sm text-ink-soft">
-          {fmt(t.admin.count, {
-            new: vm.open.new,
-            inProgress: vm.open.inProgress,
+          {fmt(messages.admin.count, {
+            new: viewModel.open.new,
+            inProgress: viewModel.open.inProgress,
           })}
         </p>
       </div>
-      {vm.pending ? (
+      {viewModel.pending ? (
         <div aria-hidden className="h-40 animate-pulse rounded-2xl bg-muted" />
-      ) : vm.items.length === 0 ? (
+      ) : viewModel.items.length === 0 ? (
         <p className="rounded-2xl border border-line bg-surface px-6 py-8 text-ink-soft">
-          {t.admin.empty}
+          {messages.admin.empty}
         </p>
       ) : (
         <ul className="space-y-4">
-          {vm.items.map((report) => (
+          {viewModel.items.map((report) => (
             <ReportCard
               key={`${report.id}-${report.updatedAt}`}
               report={report}
@@ -98,7 +99,11 @@ export function FeedbackInbox(props: FeedbackInboxProps) {
         </ul>
       )}
       <div className="mt-4 flex justify-end">
-        <Pagination page={vm.page} pages={vm.pages} onPage={vm.setPage} />
+        <Pagination
+          page={viewModel.page}
+          pages={viewModel.pages}
+          onPage={viewModel.setPage}
+        />
       </div>
     </>
   )
@@ -109,15 +114,15 @@ interface ReportCardProps {
 }
 
 function ReportCard({ report }: ReportCardProps) {
-  const t = useMessages(feedbackMessages)
+  const messages = useMessages(feedbackMessages)
   const format = useFormat()
   const save = useUpdateFeedback(report)
   const [status, setStatus] = useState<FeedbackStatus>(report.status)
   const [reply, setReply] = useState(report.reply ?? '')
   const [note, setNote] = useState(report.note ?? '')
 
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
+  const submit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     save.mutate({
       status,
       reply: reply.trim() || null,
@@ -129,16 +134,18 @@ function ReportCard({ report }: ReportCardProps) {
     <li className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <Badge tone={STATUS_TONES[report.status]}>
-          {t.statuses[report.status]}
+          {messages.statuses[report.status]}
         </Badge>
-        <span className="font-medium">{t.dialog.kinds[report.kind]}</span>
+        <span className="font-medium">
+          {messages.dialog.kinds[report.kind]}
+        </span>
         <span className="text-ink-soft">
           {format.day(report.createdAt.slice(0, 10), { year: true })}
         </span>
       </div>
       <p className="mt-3 whitespace-pre-wrap break-words">{report.message}</p>
       <dl className="mt-4 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
-        <dt className="text-ink-soft">{t.admin.from}</dt>
+        <dt className="text-ink-soft">{messages.admin.from}</dt>
         <dd>
           <Link
             to="/app/admin/users/$id"
@@ -151,13 +158,13 @@ function ReportCard({ report }: ReportCardProps) {
         </dd>
         {report.page && (
           <>
-            <dt className="text-ink-soft">{t.admin.page}</dt>
+            <dt className="text-ink-soft">{messages.admin.page}</dt>
             <dd className="break-all">{report.page}</dd>
           </>
         )}
         {report.userAgent && (
           <>
-            <dt className="text-ink-soft">{t.admin.browser}</dt>
+            <dt className="text-ink-soft">{messages.admin.browser}</dt>
             <dd title={report.userAgent}>{browserLabel(report.userAgent)}</dd>
           </>
         )}
@@ -166,40 +173,42 @@ function ReportCard({ report }: ReportCardProps) {
         onSubmit={submit}
         className="mt-5 grid gap-4 border-t border-line pt-5 lg:grid-cols-[12rem_1fr_1fr]"
       >
-        <Field label={t.admin.status}>
+        <Field label={messages.admin.status}>
           {(control) => (
             <Select
               {...control}
               value={status}
-              onChange={(e) => setStatus(e.target.value as FeedbackStatus)}
+              onChange={(event) =>
+                setStatus(event.target.value as FeedbackStatus)
+              }
             >
-              {FEEDBACK_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {t.statuses[s]}
+              {FEEDBACK_STATUSES.map((feedbackStatus) => (
+                <option key={feedbackStatus} value={feedbackStatus}>
+                  {messages.statuses[feedbackStatus]}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label={t.admin.reply} hint={t.admin.replyHint}>
+        <Field label={messages.admin.reply} hint={messages.admin.replyHint}>
           {(control) => (
             <Textarea
               {...control}
               rows={3}
               maxLength={4000}
               value={reply}
-              onChange={(e) => setReply(e.target.value)}
+              onChange={(event) => setReply(event.target.value)}
             />
           )}
         </Field>
-        <Field label={t.admin.note} hint={t.admin.noteHint}>
+        <Field label={messages.admin.note} hint={messages.admin.noteHint}>
           {(control) => (
             <Textarea
               {...control}
               rows={3}
               maxLength={2000}
               value={note}
-              onChange={(e) => setNote(e.target.value)}
+              onChange={(event) => setNote(event.target.value)}
             />
           )}
         </Field>
@@ -209,7 +218,7 @@ function ReportCard({ report }: ReportCardProps) {
             disabled={save.isPending}
             aria-busy={save.isPending}
           >
-            {t.admin.save}
+            {messages.admin.save}
           </Button>
         </div>
       </form>

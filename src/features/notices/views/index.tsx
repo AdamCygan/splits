@@ -13,31 +13,33 @@ export interface AccountNoticesProps {
 
 /** Paski nad treścią panelu: nieudana płatność i niepotwierdzony adres e-mail. */
 export function AccountNotices({ user }: AccountNoticesProps) {
-  const t = useMessages(panelMessages).notices
-  const vm = useAccountNoticesViewModel(user)
-  if (vm.notices.length === 0) return null
+  const messages = useMessages(panelMessages).notices
+  const viewModel = useAccountNoticesViewModel(user)
+  if (viewModel.notices.length === 0) return null
   return (
-    <section aria-label={t.label}>
-      {vm.notices.map((notice) =>
+    <section aria-label={messages.label}>
+      {viewModel.notices.map((notice) =>
         notice === 'pastDue' ? (
           <Notice
             key={notice}
             tone="danger"
             icon={<CreditCard aria-hidden className="size-4 shrink-0" />}
-            text={t.pastDue}
-            action={vm.opening ? t.opening : t.updatePayment}
-            busy={vm.opening}
-            onAction={vm.updatePayment}
+            text={messages.pastDue}
+            action={
+              viewModel.opening ? messages.opening : messages.updatePayment
+            }
+            busy={viewModel.opening}
+            onAction={viewModel.updatePayment}
           />
         ) : (
           <Notice
             key={notice}
             tone="warn"
             icon={<MailWarning aria-hidden className="size-4 shrink-0" />}
-            text={fmt(t.unverified, { email: vm.email })}
-            action={t.resend}
-            busy={vm.resending || vm.resent}
-            onAction={vm.resend}
+            text={fmt(messages.unverified, { email: viewModel.email })}
+            action={messages.resend}
+            busy={viewModel.resending || viewModel.resent}
+            onAction={viewModel.resend}
           />
         ),
       )}

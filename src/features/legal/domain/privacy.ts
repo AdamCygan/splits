@@ -2,7 +2,7 @@ import type { Dictionary } from '#/i18n/context'
 import type { LegalDoc } from './types'
 
 /** Polityka prywatności (art. 13 i 14 RODO). */
-const pl: LegalDoc = {
+const polish: LegalDoc = {
   title: 'Polityka prywatności',
   summary:
     'Jakie dane przetwarza {name}, po co, na jakiej podstawie, jak długo, komu je powierzamy i jakie masz prawa.',
@@ -142,7 +142,7 @@ const pl: LegalDoc = {
   ],
 }
 
-const en: LegalDoc = {
+const english: LegalDoc = {
   title: 'Privacy Policy',
   summary:
     'What personal data {name} processes, why, on what legal basis, for how long, who we share it with and what your rights are.',
@@ -282,4 +282,4 @@ const en: LegalDoc = {
   ],
 }
 
-export const privacyDoc: Dictionary<LegalDoc> = { en, pl }
+export const privacyDoc: Dictionary<LegalDoc> = { en: english, pl: polish }

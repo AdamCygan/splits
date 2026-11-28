@@ -7,10 +7,10 @@ import { site } from '#/config/site'
 
 export const Route = createFileRoute('/_marketing/cookies')({
   head: () => {
-    const doc = legalDocs.cookies[getLocale()]
+    const legalDocument = legalDocs.cookies[getLocale()]
     return seo({
-      title: `${doc.title} | ${site.name}`,
-      description: fillLegal(doc.summary, ''),
+      title: `${legalDocument.title} | ${site.name}`,
+      description: fillLegal(legalDocument.summary, ''),
       path: '/cookies',
     })
   },

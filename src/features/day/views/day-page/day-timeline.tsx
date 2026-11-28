@@ -14,74 +14,76 @@ const BREAK_FILL =
   'repeating-linear-gradient(135deg, var(--ink-faint) 0 2px, transparent 2px 6px)'
 
 export interface DayTimelineProps {
-  vm: DayViewModel
+  viewModel: DayViewModel
 }
 
 /**
  * Oś dnia: sesje w kolorze rodzaju pracy, przerwy w paski. Mysz albo strzałki wybierają
  * odcinek (dymek ze szczegółami), kliknięcie albo Enter otwiera zadanie.
  */
-export function DayTimeline({ vm }: DayTimelineProps) {
-  const t = useMessages(dayViewMessages).timeline
+export function DayTimeline({ viewModel }: DayTimelineProps) {
+  const messages = useMessages(dayViewMessages).timeline
   const format = useFormat()
   const [active, setActive] = useState<number | null>(null)
   const liveId = useId()
-  const { blocks, span, untimedMinutes } = vm.summary
+  const { blocks, span, untimedMinutes } = viewModel.summary
   const untimed = untimedMinutes > 0 && (
     <p className={cn('text-sm text-ink-soft', span ? 'mt-3' : 'mt-1')}>
-      {fmt(t.untimed, { time: format.minutes(untimedMinutes) })}
+      {fmt(messages.untimed, { time: format.minutes(untimedMinutes) })}
     </p>
   )
 
   if (!span)
     return (
-      <Panel title={t.title} lead={t.lead}>
-        <p className="text-sm text-ink-soft">{t.noTimes}</p>
+      <Panel title={messages.title} lead={messages.lead}>
+        <p className="text-sm text-ink-soft">{messages.noTimes}</p>
         {untimed}
       </Panel>
     )
 
   const axis = timelineAxis(span)
   const used = stackOrder(
-    vm.types.filter((x) => blocks.some((b) => b.taskTypeId === x.id)),
+    viewModel.types.filter((type) =>
+      blocks.some((dayBlock) => dayBlock.taskTypeId === type.id),
+    ),
   )
-  const labelOf = (b: DayBlock) =>
-    fmt(t.block, {
+  const labelOf = (dayBlock: DayBlock) =>
+    fmt(messages.block, {
       name:
-        b.kind === 'break'
-          ? t.break
-          : `${vm.typeOf(b.taskTypeId)?.name ?? ''}: ${b.title}`,
-      from: format.time(b.start),
-      to: format.time(b.end),
-      time: format.minutes(b.minutes),
+        dayBlock.kind === 'break'
+          ? messages.break
+          : `${viewModel.typeOf(dayBlock.taskTypeId)?.name ?? ''}: ${dayBlock.title}`,
+      from: format.time(dayBlock.start),
+      to: format.time(dayBlock.end),
+      time: format.minutes(dayBlock.minutes),
     })
-  const minuteAt = (e: MouseEvent<HTMLElement>) => {
-    const box = e.currentTarget.getBoundingClientRect()
-    return axis.at((e.clientX - box.left) / box.width)
+  const minuteAt = (mouseEvent: MouseEvent<HTMLElement>) => {
+    const box = mouseEvent.currentTarget.getBoundingClientRect()
+    return axis.at((mouseEvent.clientX - box.left) / box.width)
   }
   const current = active !== null ? blocks[active] : undefined
 
   return (
-    <Panel title={t.title} lead={t.lead} className="mt-6">
+    <Panel title={messages.title} lead={messages.lead} className="mt-6">
       <ul className="mb-4 flex flex-wrap gap-x-4 gap-y-1.5 text-sm">
-        {used.map((k) => (
-          <li key={k.id} className="flex items-center gap-1.5">
+        {used.map((workType) => (
+          <li key={workType.id} className="flex items-center gap-1.5">
             <span
               aria-hidden
               className="size-2.5 rounded-full"
-              style={{ background: k.color }}
+              style={{ background: workType.color }}
             />
-            {k.name}
+            {workType.name}
           </li>
         ))}
-        {blocks.some((b) => b.kind === 'break') && (
+        {blocks.some((dayBlock) => dayBlock.kind === 'break') && (
           <li className="flex items-center gap-1.5">
             <span
               aria-hidden
               className="size-2.5 rounded-full border border-ink-faint"
               style={{ background: BREAK_FILL }}
             />
-            {t.break}
+            {messages.break}
           </li>
         )}
       </ul>
@@ -89,48 +91,60 @@ export function DayTimeline({ vm }: DayTimelineProps) {
         <div
           role="group"
           tabIndex={0}
-          aria-label={t.keys}
+          aria-label={messages.keys}
           aria-describedby={liveId}
           className="relative h-14 cursor-pointer rounded-md bg-muted outline-offset-4"
-          onPointerMove={(e) => {
-            const i = blockIndexAt(blocks, minuteAt(e))
-            setActive(i === -1 ? null : i)
+          onPointerMove={(event) => {
+            const blockIndexAtItem = blockIndexAt(blocks, minuteAt(event))
+            setActive(blockIndexAtItem === -1 ? null : blockIndexAtItem)
           }}
           onPointerLeave={() => setActive(null)}
           // Odcinek pod kursorem (także przy dotyku, gdzie nie ma najechania).
-          onClick={(e) =>
-            vm.openBlock(blocks[blockIndexAt(blocks, minuteAt(e))])
+          onClick={(event) =>
+            viewModel.openBlock(blocks[blockIndexAt(blocks, minuteAt(event))])
           }
-          onFocus={() => setActive((v) => v ?? 0)}
+          onFocus={() => setActive((previousIndex) => previousIndex ?? 0)}
           onBlur={() => setActive(null)}
-          onKeyDown={(e) => {
+          onKeyDown={(event) => {
             const move =
-              e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
+              event.key === 'ArrowRight'
+                ? 1
+                : event.key === 'ArrowLeft'
+                  ? -1
+                  : 0
             if (move)
-              setActive((v) =>
-                Math.min(blocks.length - 1, Math.max(0, (v ?? -1) + move)),
+              setActive((previousIndex) =>
+                Math.min(
+                  blocks.length - 1,
+                  Math.max(0, (previousIndex ?? -1) + move),
+                ),
               )
-            else if (e.key === 'Home') setActive(0)
-            else if (e.key === 'End') setActive(blocks.length - 1)
-            else if (e.key === 'Enter' || e.key === ' ') vm.openBlock(current)
+            else if (event.key === 'Home') setActive(0)
+            else if (event.key === 'End') setActive(blocks.length - 1)
+            else if (event.key === 'Enter' || event.key === ' ')
+              viewModel.openBlock(current)
             else return
-            e.preventDefault()
+            event.preventDefault()
           }}
         >
-          {blocks.map((b, i) => (
+          {blocks.map((dayBlock, index) => (
             <span
-              key={b.id}
+              key={dayBlock.id}
               aria-hidden
               className={cn(
                 'pointer-events-none absolute border-x border-surface',
-                b.kind === 'break' ? 'inset-y-3 rounded-sm' : 'inset-y-0',
-                active === i && 'z-10 ring-2 ring-ink ring-offset-1',
+                dayBlock.kind === 'break'
+                  ? 'inset-y-3 rounded-sm'
+                  : 'inset-y-0',
+                active === index && 'z-10 ring-2 ring-ink ring-offset-1',
               )}
               style={{
-                left: `${axis.x(b.start)}%`,
-                width: `max(3px, ${axis.x(b.end) - axis.x(b.start)}%)`,
+                left: `${axis.x(dayBlock.start)}%`,
+                width: `max(3px, ${axis.x(dayBlock.end) - axis.x(dayBlock.start)}%)`,
                 background:
-                  b.kind === 'break' ? BREAK_FILL : vm.colorOf(b.taskTypeId),
+                  dayBlock.kind === 'break'
+                    ? BREAK_FILL
+                    : viewModel.colorOf(dayBlock.taskTypeId),
               }}
             />
           ))}
@@ -148,14 +162,14 @@ export function DayTimeline({ vm }: DayTimelineProps) {
             }}
           >
             <p className="font-semibold">
-              {current.kind === 'break' ? t.break : current.title}
+              {current.kind === 'break' ? messages.break : current.title}
             </p>
             <p className="mt-0.5 text-ink-soft tabular-nums">
               {format.timeRange(current.start, current.end)},{' '}
               {format.minutes(current.minutes)}
             </p>
             {current.kind === 'work' && (
-              <p className="mt-0.5 text-ink-soft">{t.open}</p>
+              <p className="mt-0.5 text-ink-soft">{messages.open}</p>
             )}
           </div>
         )}
@@ -163,18 +177,22 @@ export function DayTimeline({ vm }: DayTimelineProps) {
           aria-hidden
           className="relative mt-1.5 h-4 text-xs text-ink-soft tabular-nums"
         >
-          {axis.ticks.map((m, i) => {
-            const edge = i === 0 || i === axis.ticks.length - 1
+          {axis.ticks.map((tick, index) => {
+            const edge = index === 0 || index === axis.ticks.length - 1
             return (
               <span
-                key={m}
+                key={tick}
                 className={cn(
                   'absolute',
-                  i === 0 ? 'left-0' : edge ? 'right-0' : '-translate-x-1/2',
+                  index === 0
+                    ? 'left-0'
+                    : edge
+                      ? 'right-0'
+                      : '-translate-x-1/2',
                 )}
-                style={edge ? undefined : { left: `${axis.x(m)}%` }}
+                style={edge ? undefined : { left: `${axis.x(tick)}%` }}
               >
-                {format.time(m)}
+                {format.time(tick)}
               </span>
             )
           })}

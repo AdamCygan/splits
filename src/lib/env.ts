@@ -27,7 +27,7 @@ const optional = (value: unknown) =>
 
 const source = import.meta.env as Record<string, unknown>
 
-export const env: Env = {
+export const environment: Env = {
   VITE_API_URL: optional(source.VITE_API_URL)
     ? url('VITE_API_URL', source.VITE_API_URL)
     : '',

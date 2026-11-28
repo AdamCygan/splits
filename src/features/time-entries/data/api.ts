@@ -29,10 +29,10 @@ export interface EntriesApi {
   /** Zadanie zakończone albo z powrotem w toku (wszystkie sesje); zwraca liczbę sesji. */
   finishTask: (ref: TaskRef, finished: boolean) => R<{ updated: number }>
   /** Zadania (także zakończone) pasujące do tytułu albo linku, najnowsze najpierw. */
-  search: (q: string) => R<Array<TaskSearchResult>>
+  search: (query: string) => R<Array<TaskSearchResult>>
   /** Paleta poleceń: cała historia, tytuł, link i notatki; fragment notatki przy trafieniu w nią. */
   searchAll: (
-    q: string,
+    query: string,
   ) => R<Array<TaskSearchResult & { snippet: string | null }>>
   /** Niezakończone zadania z poprzednich dni, najświeższe najpierw. */
   unfinished: () => R<Array<UnfinishedTask>>
@@ -102,9 +102,9 @@ export const entriesApi: EntriesApi = {
         finished,
       },
     ),
-  search: (q) =>
+  search: (query) =>
     get(
-      `/time-entries/search?${new URLSearchParams({ q }).toString()}`,
+      `/time-entries/search?${new URLSearchParams({ q: query }).toString()}`,
       z.array(
         z.object({
           entry: timeEntrySchema,
@@ -116,9 +116,9 @@ export const entriesApi: EntriesApi = {
         }),
       ),
     ),
-  searchAll: (q) =>
+  searchAll: (query) =>
     get(
-      `/time-entries/search/all?${new URLSearchParams({ q }).toString()}`,
+      `/time-entries/search/all?${new URLSearchParams({ q: query }).toString()}`,
       z.array(
         z.object({
           entry: timeEntrySchema,

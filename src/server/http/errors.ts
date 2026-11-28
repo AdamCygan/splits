@@ -38,28 +38,33 @@ export function problem(
     status,
     detail: message,
     code,
-    errors: Object.fromEntries(fields.map((f) => [f, [message]])),
+    errors: Object.fromEntries(fields.map((field) => [field, [message]])),
     traceId,
   }
 }
 
 /** Naruszenia ograniczeń w Postgresie (np. równoległe żądania) zamieniamy na czytelne błędy. */
 export function fromDatabaseError(error: unknown): ApiError | null {
-  const pg =
+  const postgres =
     (error as { cause?: { code?: string; constraint?: string } }).cause ??
     (error as { code?: string; constraint?: string })
-  if (pg.code === '23505') {
-    const c = pg.constraint ?? ''
-    if (c.includes('username'))
+  if (postgres.code === '23505') {
+    const character = postgres.constraint ?? ''
+    if (character.includes('username'))
       return conflict('auth.username_taken', 'username')
-    if (c.includes('email')) return conflict('auth.email_taken', 'email')
-    if (c.includes('hotkey')) return conflict('hotkey_taken', 'hotkey')
-    if (c === 'projects_key_key') return conflict('key_taken', 'key')
-    if (c.includes('name')) return conflict('name_taken', 'name')
+    if (character.includes('email'))
+      return conflict('auth.email_taken', 'email')
+    if (character.includes('hotkey')) return conflict('hotkey_taken', 'hotkey')
+    if (character === 'projects_key_key') return conflict('key_taken', 'key')
+    if (character.includes('name')) return conflict('name_taken', 'name')
     return conflict('validation.invalid')
   }
-  if (pg.code === '23514' || pg.code === '22P02' || pg.code === '22007')
+  if (
+    postgres.code === '23514' ||
+    postgres.code === '22P02' ||
+    postgres.code === '22007'
+  )
     return invalid()
-  if (pg.code === '23503') return new ApiError('validation.invalid', 400)
+  if (postgres.code === '23503') return new ApiError('validation.invalid', 400)
   return null
 }

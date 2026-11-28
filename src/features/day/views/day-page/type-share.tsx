@@ -6,30 +6,30 @@ import { dayViewMessages } from '#/i18n/messages/day-view'
 import type { DayViewModel } from '../../controllers/use-day'
 
 export interface TypeShareProps {
-  vm: DayViewModel
+  viewModel: DayViewModel
 }
 
 /** Udział rodzajów pracy: poziome paski od największego, z czasem i procentem. */
-export function TypeShare({ vm }: TypeShareProps) {
-  const t = useMessages(dayViewMessages).types
+export function TypeShare({ viewModel }: TypeShareProps) {
+  const messages = useMessages(dayViewMessages).types
   const format = useFormat()
-  const { summary } = vm
+  const { summary } = viewModel
   const top = summary.byType[0]?.minutes ?? 1
   return (
-    <Panel title={t.title} lead={t.lead}>
+    <Panel title={messages.title} lead={messages.lead}>
       <ul className="space-y-3">
         {summary.byType.map((row) => (
           <li key={row.taskTypeId}>
             <p className="flex items-baseline justify-between gap-3 text-sm">
               <span className="min-w-0 truncate font-medium">
-                {vm.typeOf(row.taskTypeId)?.name}
+                {viewModel.typeOf(row.taskTypeId)?.name}
               </span>
               <span className="shrink-0 tabular-nums">
                 <span className="font-semibold">
                   {format.minutes(row.minutes)}
                 </span>{' '}
                 <span className="text-ink-soft">
-                  {fmt(t.share, {
+                  {fmt(messages.share, {
                     percent: percentOf(row.minutes, summary.minutes),
                   })}
                 </span>
@@ -40,7 +40,7 @@ export function TypeShare({ vm }: TypeShareProps) {
               className="mt-1 block h-2 rounded-r-[4px]"
               style={{
                 width: `${(row.minutes / top) * 100}%`,
-                background: vm.colorOf(row.taskTypeId),
+                background: viewModel.colorOf(row.taskTypeId),
               }}
             />
           </li>

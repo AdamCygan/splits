@@ -1,7 +1,7 @@
 import type { Dictionary } from '../context'
 import type { Plural } from '../format'
 
-const en = {
+const english = {
   charts: {
     title: 'Analysis',
     showTable: 'Show as a table',
@@ -148,9 +148,9 @@ const en = {
   ],
 }
 
-export type ReportsMessages = typeof en
+export type ReportsMessages = typeof english
 
-const pl: ReportsMessages = {
+const polish: ReportsMessages = {
   charts: {
     title: 'Analiza',
     showTable: 'Pokaż jako tabelę',
@@ -310,4 +310,7 @@ const pl: ReportsMessages = {
   ],
 }
 
-export const reportsMessages: Dictionary<ReportsMessages> = { en, pl }
+export const reportsMessages: Dictionary<ReportsMessages> = {
+  en: english,
+  pl: polish,
+}

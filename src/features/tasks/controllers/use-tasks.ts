@@ -79,7 +79,7 @@ export function useTasksViewModel({
   // Sprinty, które już się zaczęły (najnowsze pierwsze); w Free tylko te z ostatnich 30 dni.
   const sprintOptions = startedSprints(allSprints, today, oldest).slice(0, 26)
   const sprint = choice.startsWith('sprint:')
-    ? allSprints.find((s) => `sprint:${s.id}` === choice)
+    ? allSprints.find((allSprint) => `sprint:${allSprint.id}` === choice)
     : undefined
   const { from, to } = taskPeriodRange({
     choice,
@@ -100,23 +100,31 @@ export function useTasksViewModel({
         sort,
         sort === 'title' ? 'asc' : 'desc',
       ).map((row) => ({ row, estimate: estimateOf(row, scale) })),
-      latest: new Map(tasks.map((x) => [x.key, x.latest])),
-      finished: new Set(tasks.filter((x) => x.finished).map((x) => x.key)),
+      latest: new Map(
+        tasks.map((taskAggregate) => [taskAggregate.key, taskAggregate.latest]),
+      ),
+      finished: new Set(
+        tasks
+          .filter((taskAggregate) => taskAggregate.finished)
+          .map((taskAggregate) => taskAggregate.key),
+      ),
     }
   }, [entries.data, types, scale, sort])
 
   const allFilters: TaskFilters = { ...filters, query }
   const filtered = filterTaskRows(rows, allFilters, finished)
   const visible = filtered.slice(0, limit)
-  const estimated = filtered.filter((x) => x.estimate !== null)
-  const typeOf = (id: string) => types.find((x) => x.id === id)
+  const estimated = filtered.filter(
+    (listedTask) => listedTask.estimate !== null,
+  )
+  const typeOf = (id: string) => types.find((type) => type.id === id)
 
   // Zmiana filtrów wraca do pierwszej strony wyników.
   const setFilter = <TKey extends keyof typeof filters>(
     key: TKey,
     value: (typeof filters)[TKey],
   ) => {
-    setFilters((f) => ({ ...f, [key]: value }))
+    setFilters((currentFilters) => ({ ...currentFilters, [key]: value }))
     setLimit(PAGE)
   }
 
@@ -139,17 +147,28 @@ export function useTasksViewModel({
       filters.status !== 'all',
     ),
     pending: entries.isPending,
-    usedTypes: types.filter((x) => rows.some((r) => r.row.taskTypeId === x.id)),
+    usedTypes: types.filter((type) =>
+      rows.some((row) => row.row.taskTypeId === type.id),
+    ),
     filtered,
     visible,
     groups: groupTaskList(visible, grouping),
-    longest: Math.max(1, ...visible.map((x) => x.row.minutes)),
-    totals: totalsOf(filtered.map((x) => x.row)),
-    spTotal: filtered.reduce((sum, x) => sum + (x.row.storyPoints ?? 0), 0),
-    doneCount: filtered.filter((x) => taskStatus(x.row, finished) === 'done')
-      .length,
+    longest: Math.max(
+      1,
+      ...visible.map((listedTask) => listedTask.row.minutes),
+    ),
+    totals: totalsOf(filtered.map((listedTask) => listedTask.row)),
+    spTotal: filtered.reduce(
+      (sum, listedTask) => sum + (listedTask.row.storyPoints ?? 0),
+      0,
+    ),
+    doneCount: filtered.filter(
+      (listedTask) => taskStatus(listedTask.row, finished) === 'done',
+    ).length,
     estimatedCount: estimated.length,
-    overCount: estimated.filter((x) => x.estimate?.status === 'over').length,
+    overCount: estimated.filter(
+      (listedTask) => listedTask.estimate?.status === 'over',
+    ).length,
     hasMore: filtered.length > limit,
     moreCount: Math.min(PAGE, filtered.length - limit),
     resumeBusy: resume.isPending,
@@ -171,12 +190,13 @@ export function useTasksViewModel({
     },
     setGrouping,
     setSort,
-    toggleFilters: () => setFiltersOpen((v) => !v),
+    toggleFilters: () =>
+      setFiltersOpen((currentFiltersOpen) => !currentFiltersOpen),
     clearFilters: () => {
       setSearch('')
       setFilters(NO_TASK_FILTERS)
     },
-    showMore: () => setLimit((n) => n + PAGE),
+    showMore: () => setLimit((currentLimit) => currentLimit + PAGE),
     resume: (entry: TimeEntry) => resume.mutate(entry.id),
     summarize: setSummarizing,
     closeSummary: () => setSummarizing(null),

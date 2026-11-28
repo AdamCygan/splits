@@ -20,19 +20,20 @@ export interface WorkspaceFormOptions {
 
 /** Kolor nowej przestrzeni: pierwszy z palety, którego jeszcze nie używa żadna przestrzeń. */
 const nextColor = (used: ReadonlyArray<string>) =>
-  PALETTE.find((p) => !used.includes(p.value))?.value ?? PALETTE[0].value
+  PALETTE.find((swatch) => !used.includes(swatch.value))?.value ??
+  PALETTE[0].value
 
 /**
  * Formularz przestrzeni: nazwa, kolor, a dla nowej także źródło kopii i co skopiować.
  * Nowa przestrzeń od razu staje się bieżącą.
  */
 export function useWorkspaceForm({ workspace, onDone }: WorkspaceFormOptions) {
-  const t = useMessages(workspacesMessages).dialog
+  const messages = useMessages(workspacesMessages).dialog
   const { items, current } = useWorkspaces()
   const actions = useWorkspaceActions()
   const [name, setName] = useState(workspace?.name ?? '')
   const [color, setColor] = useState(
-    workspace?.color ?? nextColor(items.map((w) => w.color)),
+    workspace?.color ?? nextColor(items.map((item) => item.color)),
   )
   const [copyFrom, setCopyFrom] = useState(workspace ? '' : (current?.id ?? ''))
   const [copy, setCopy] = useState<Array<CopyKind>>([...DEFAULT_COPY])
@@ -46,7 +47,7 @@ export function useWorkspaceForm({ workspace, onDone }: WorkspaceFormOptions) {
     ? null
     : nameOk
       ? mutationFieldError(error, 'name')
-      : t.nameError
+      : messages.nameError
 
   const submit = () => {
     setSubmitted(true)

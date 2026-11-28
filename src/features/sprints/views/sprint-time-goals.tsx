@@ -26,49 +26,58 @@ export function TimeGoalsField({
   onChange,
   showErrors,
 }: TimeGoalsFieldProps) {
-  const t = useMessages(settingsMessages).sprints.timeGoals
+  const messages = useMessages(settingsMessages).sprints.timeGoals
   const format = useFormat()
   const types = useQuery(taskTypesQuery).data ?? []
   const id = useId()
-  const free = types.filter((x) => !rows.some((r) => r.taskTypeId === x.id))
+  const free = types.filter(
+    (type) => !rows.some((goalDraft) => goalDraft.taskTypeId === type.id),
+  )
   const update = (key: string, patch: Partial<GoalDraft>) =>
-    onChange(rows.map((r) => (r.key === key ? { ...r, ...patch } : r)))
+    onChange(
+      rows.map((goalDraft) =>
+        goalDraft.key === key ? { ...goalDraft, ...patch } : goalDraft,
+      ),
+    )
 
   return (
     <fieldset className="space-y-3">
-      <legend className="text-sm font-medium">{t.legend}</legend>
+      <legend className="text-sm font-medium">{messages.legend}</legend>
       <p id={`${id}-hint`} className="text-sm text-ink-soft">
-        {t.hint}
+        {messages.hint}
       </p>
       {rows.length > 0 && (
         <ul className="space-y-2.5">
-          {rows.map((row, i) => {
-            const type = types.find((x) => x.id === row.taskTypeId)
+          {rows.map((row, index) => {
+            const type = types.find(
+              (workType) => workType.id === row.taskTypeId,
+            )
             const minutes = parseDuration(row.time)
-            const timeError = showErrors && !minutes ? t.timeError : null
-            const typeError = showErrors && !row.taskTypeId ? t.typeError : null
-            const name = type?.name ?? fmt(t.row, { n: i + 1 })
+            const timeError = showErrors && !minutes ? messages.timeError : null
+            const typeError =
+              showErrors && !row.taskTypeId ? messages.typeError : null
+            const name = type?.name ?? fmt(messages.row, { n: index + 1 })
             return (
               <li key={row.key} className="flex flex-wrap items-start gap-2">
                 <div className="min-w-40 flex-1">
                   <Select
-                    aria-label={fmt(t.typeLabel, { n: i + 1 })}
+                    aria-label={fmt(messages.typeLabel, { n: index + 1 })}
                     aria-invalid={typeError ? true : undefined}
                     value={row.taskTypeId}
-                    onChange={(e) =>
-                      update(row.key, { taskTypeId: e.target.value })
+                    onChange={(event) =>
+                      update(row.key, { taskTypeId: event.target.value })
                     }
                   >
-                    <option value="">{t.pickType}</option>
+                    <option value="">{messages.pickType}</option>
                     {types
                       .filter(
-                        (x) =>
-                          x.id === row.taskTypeId ||
-                          free.some((f) => f.id === x.id),
+                        (workType) =>
+                          workType.id === row.taskTypeId ||
+                          free.some((freeType) => freeType.id === workType.id),
                       )
-                      .map((x) => (
-                        <option key={x.id} value={x.id}>
-                          {x.name}
+                      .map((workType) => (
+                        <option key={workType.id} value={workType.id}>
+                          {workType.name}
                         </option>
                       ))}
                   </Select>
@@ -78,13 +87,15 @@ export function TimeGoalsField({
                 </div>
                 <div className="w-32">
                   <Input
-                    aria-label={fmt(t.timeLabel, { name })}
+                    aria-label={fmt(messages.timeLabel, { name })}
                     aria-invalid={timeError ? true : undefined}
                     aria-describedby={`${id}-hint`}
                     inputMode="text"
                     placeholder="6h"
                     value={row.time}
-                    onChange={(e) => update(row.key, { time: e.target.value })}
+                    onChange={(event) =>
+                      update(row.key, { time: event.target.value })
+                    }
                     onBlur={() =>
                       minutes &&
                       update(row.key, { time: format.minutes(minutes) })
@@ -98,9 +109,11 @@ export function TimeGoalsField({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  aria-label={fmt(t.remove, { name })}
+                  aria-label={fmt(messages.remove, { name })}
                   onClick={() =>
-                    onChange(rows.filter((r) => r.key !== row.key))
+                    onChange(
+                      rows.filter((goalDraft) => goalDraft.key !== row.key),
+                    )
                   }
                 >
                   <Trash2 aria-hidden className="size-4" />
@@ -123,7 +136,7 @@ export function TimeGoalsField({
           }
         >
           <Plus aria-hidden className="size-4" />
-          {t.add}
+          {messages.add}
         </Button>
       )}
     </fieldset>

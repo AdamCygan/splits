@@ -6,38 +6,41 @@ import { taskViewMessages } from '#/i18n/messages/task-view'
 import type { TaskViewModel } from '../../controllers/use-task'
 
 export interface InterruptedProps {
-  vm: TaskViewModel
+  viewModel: TaskViewModel
 }
 
 /** Co wpisało się między sesje: zbiorczo wg zadania, a pod spodem każda luka po kolei. */
-export function Interrupted({ vm }: InterruptedProps) {
-  const t = useMessages(taskViewMessages).interrupted
+export function Interrupted({ viewModel }: InterruptedProps) {
+  const messages = useMessages(taskViewMessages).interrupted
   const format = useFormat()
   const { locale } = useI18n()
-  const { insights } = vm
+  const { insights } = viewModel
   if (!insights) return null
   return (
-    <Panel title={t.title} lead={t.lead}>
+    <Panel title={messages.title} lead={messages.lead}>
       {insights.interruptedBy.length === 0 ? (
-        <p className="text-sm text-ink-soft">{t.empty}</p>
+        <p className="text-sm text-ink-soft">{messages.empty}</p>
       ) : (
         <ul className="divide-y divide-line">
-          {insights.interruptedBy.map((x) => {
-            const kind = vm.typeOf(x.taskTypeId)
+          {insights.interruptedBy.map((interrupter) => {
+            const kind = viewModel.typeOf(interrupter.taskTypeId)
             return (
               <li
-                key={`${x.taskTypeId}|${x.title}`}
+                key={`${interrupter.taskTypeId}|${interrupter.title}`}
                 className="flex items-center gap-3 py-2.5"
               >
                 <ColorDot color={kind?.color ?? 'var(--wt-custom)'} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">{x.title}</span>
+                  <span className="block truncate font-medium">
+                    {interrupter.title}
+                  </span>
                   <span className="block text-xs text-ink-soft">
-                    {kind?.name}, {format.plural(t.times, x.times)}
+                    {kind?.name},{' '}
+                    {format.plural(messages.times, interrupter.times)}
                   </span>
                 </span>
                 <span className="text-sm font-semibold tabular-nums">
-                  {format.minutes(x.minutes)}
+                  {format.minutes(interrupter.minutes)}
                 </span>
               </li>
             )
@@ -47,27 +50,29 @@ export function Interrupted({ vm }: InterruptedProps) {
       {insights.gaps.length > 0 && (
         <details className="mt-4">
           <summary className="cursor-pointer text-sm font-medium">
-            {t.gaps} ({insights.gaps.length})
+            {messages.gaps} ({insights.gaps.length})
           </summary>
           <ul className="mt-2 space-y-1.5 text-sm">
-            {insights.gaps.map((g) => (
-              <li key={`${g.date}-${g.from}`}>
+            {insights.gaps.map((taskGap) => (
+              <li key={`${taskGap.date}-${taskGap.from}`}>
                 <span className="tabular-nums">
-                  {fmt(t.gapLine, {
-                    date: formatDate(locale, g.date, {
+                  {fmt(messages.gapLine, {
+                    date: formatDate(locale, taskGap.date, {
                       day: 'numeric',
                       month: 'short',
                     }),
-                    from: format.time(g.from),
-                    to: format.time(g.to),
-                    time: format.minutes(g.minutes),
+                    from: format.time(taskGap.from),
+                    to: format.time(taskGap.to),
+                    time: format.minutes(taskGap.minutes),
                   })}
                 </span>
                 <span className="text-ink-soft">
                   {': '}
-                  {g.between.length
-                    ? g.between.map((b) => b.title).join(', ')
-                    : t.nothing}
+                  {taskGap.between.length
+                    ? taskGap.between
+                        .map((interruption) => interruption.title)
+                        .join(', ')
+                    : messages.nothing}
                 </span>
               </li>
             ))}

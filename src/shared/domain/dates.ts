@@ -3,8 +3,8 @@
 export const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
 export function parseDate(value: string): Date {
-  const [y, m, d] = value.split('-').map(Number)
-  return new Date(Date.UTC(y!, m! - 1, d))
+  const [year, month, day] = value.split('-').map(Number)
+  return new Date(Date.UTC(year!, month! - 1, day))
 }
 
 export function toIsoDate(date: Date): string {
@@ -12,9 +12,9 @@ export function toIsoDate(date: Date): string {
 }
 
 export function addDays(value: string, days: number): string {
-  const d = parseDate(value)
-  d.setUTCDate(d.getUTCDate() + days)
-  return toIsoDate(d)
+  const date = parseDate(value)
+  date.setUTCDate(date.getUTCDate() + days)
+  return toIsoDate(date)
 }
 
 export function diffDays(from: string, to: string): number {

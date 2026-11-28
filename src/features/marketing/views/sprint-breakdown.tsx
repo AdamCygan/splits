@@ -22,11 +22,11 @@ const sprint: Array<{
   { kind: 'meeting', sp: 3, minutes: 540, items: 12 },
 ]
 
-const totalMinutes = sprint.reduce((a, r) => a + r.minutes, 0)
-const totalSp = sprint.reduce((a, r) => a + r.sp, 0)
+const totalMinutes = sprint.reduce((total, row) => total + row.minutes, 0)
+const totalSp = sprint.reduce((total, row) => total + row.sp, 0)
 
 export function SprintBreakdown() {
-  const t = useMessages(marketingMessages).sprintDemo
+  const messages = useMessages(marketingMessages).sprintDemo
   const workTypes = useMessages(commonMessages).workTypes
   const format = useFormat()
   const { locale } = useI18n()
@@ -34,19 +34,20 @@ export function SprintBreakdown() {
   return (
     <div className="rounded-2xl border border-line bg-surface p-5 sm:p-7">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="type-heading text-2xl">{t.name}</p>
+        <p className="type-heading text-2xl">{messages.name}</p>
         <p className="text-sm text-ink-soft">
-          {formatDateRange(locale, '2025-11-03', '2025-11-14')}, {t.workingDays}
+          {formatDateRange(locale, '2025-11-03', '2025-11-14')},{' '}
+          {messages.workingDays}
         </p>
       </div>
 
       <dl className="mt-6 grid grid-cols-2 gap-4 sm:max-w-sm">
         <div>
-          <dt className="text-sm text-ink-soft">{t.completed}</dt>
+          <dt className="text-sm text-ink-soft">{messages.completed}</dt>
           <dd className="type-heading text-4xl">{format.sp(totalSp)}</dd>
         </div>
         <div>
-          <dt className="text-sm text-ink-soft">{t.logged}</dt>
+          <dt className="text-sm text-ink-soft">{messages.logged}</dt>
           <dd className="type-heading text-4xl">
             {format.minutes(totalMinutes)}
           </dd>
@@ -56,14 +57,14 @@ export function SprintBreakdown() {
       <div
         className="mt-6 flex h-4 gap-[3px] overflow-hidden rounded-full"
         role="img"
-        aria-label={t.breakdownLabel}
+        aria-label={messages.breakdownLabel}
       >
-        {sprint.map((r) => (
+        {sprint.map((row) => (
           <div
-            key={r.kind}
+            key={row.kind}
             style={{
-              width: `${(r.minutes / totalMinutes) * 100}%`,
-              background: workKindColors[r.kind].color,
+              width: `${(row.minutes / totalMinutes) * 100}%`,
+              background: workKindColors[row.kind].color,
             }}
           />
         ))}
@@ -73,37 +74,37 @@ export function SprintBreakdown() {
         <thead className="text-ink-soft">
           <tr>
             <th scope="col" className="pb-2 font-normal">
-              {t.headers.type}
+              {messages.headers.type}
             </th>
             <th scope="col" className="pb-2 text-right font-normal">
-              {t.headers.entries}
+              {messages.headers.entries}
             </th>
             <th scope="col" className="pb-2 text-right font-normal">
-              {t.headers.sp}
+              {messages.headers.sp}
             </th>
             <th scope="col" className="pb-2 text-right font-normal">
-              {t.headers.time}
+              {messages.headers.time}
             </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line border-t border-line">
-          {sprint.map((r) => (
-            <tr key={r.kind}>
+          {sprint.map((row) => (
+            <tr key={row.kind}>
               <th scope="row" className="py-2 font-normal">
                 <span className="inline-flex items-center gap-2">
                   <span
                     aria-hidden
                     className="size-2.5 rounded-sm"
-                    style={{ background: workKindColors[r.kind].color }}
+                    style={{ background: workKindColors[row.kind].color }}
                   />
-                  {workTypes[r.kind]}
+                  {workTypes[row.kind]}
                 </span>
               </th>
-              <td className="py-2 text-right text-ink-soft">{r.items}</td>
+              <td className="py-2 text-right text-ink-soft">{row.items}</td>
               <td className="py-2 text-right font-medium">
-                {format.number(r.sp)}
+                {format.number(row.sp)}
               </td>
-              <td className="py-2 text-right">{format.minutes(r.minutes)}</td>
+              <td className="py-2 text-right">{format.minutes(row.minutes)}</td>
             </tr>
           ))}
         </tbody>
@@ -114,15 +115,15 @@ export function SprintBreakdown() {
 
 /** Linijka skali SP: wartość i górny limit czasu. */
 export function SpScaleRuler() {
-  const t = useMessages(marketingMessages).sprintDemo
+  const messages = useMessages(marketingMessages).sprintDemo
   const format = useFormat()
   return (
     <ol className="grid grid-cols-[repeat(auto-fit,minmax(6.25rem,1fr))] gap-px overflow-hidden rounded-xl border border-line bg-line">
-      {defaultSpScale.map((s) => (
-        <li key={s.points} className="bg-surface px-3 py-3">
-          <p className="type-heading text-2xl">{format.number(s.points)}</p>
+      {defaultSpScale.map((step) => (
+        <li key={step.points} className="bg-surface px-3 py-3">
+          <p className="type-heading text-2xl">{format.number(step.points)}</p>
           <p className="text-sm text-ink-soft">
-            {fmt(t.upTo, { time: format.minutes(s.maxMinutes) })}
+            {fmt(messages.upTo, { time: format.minutes(step.maxMinutes) })}
           </p>
         </li>
       ))}

@@ -1,5 +1,5 @@
 import { z } from '#/lib/zod'
-import { env } from './env'
+import { environment } from './env'
 import { getAccessToken } from './auth-token'
 import { failure, success } from './result'
 import type { Result } from './result'
@@ -67,7 +67,7 @@ export async function apiRequest<T>(
 
   let response: Response
   try {
-    response = await fetch(`${env.VITE_API_URL}${path}`, {
+    response = await fetch(`${environment.VITE_API_URL}${path}`, {
       method,
       signal,
       credentials: 'include', // refresh token w ciasteczku httpOnly

@@ -85,14 +85,14 @@ describe('sprints', () => {
   })
   it('Should preview upcoming sprints starting with the current one', () => {
     const preview = previewCadence(cadence, '2026-11-02', 3)
-    expect(preview.map((s) => s.number)).toEqual([3, 4, 5])
+    expect(preview.map((sprint) => sprint.number)).toEqual([3, 4, 5])
   })
   it('Should create missing cadence sprints without overlapping manual ones', () => {
     const manual = [
       { number: null, startsOn: '2026-10-19', endsOn: '2026-10-25' },
     ]
     const missing = missingCadenceSprints(cadence, manual, '2026-11-02')
-    expect(missing.map((s) => s.number)).toEqual([1, 3, 4])
+    expect(missing.map((sprint) => sprint.number)).toEqual([1, 3, 4])
     expect(
       missingCadenceSprints(
         { ...cadence, autoCreate: false },

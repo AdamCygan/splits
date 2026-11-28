@@ -1,14 +1,14 @@
 import type { User } from '#/features/auth/data/dto'
-import type * as t from '#/server/db/schema'
+import type * as schema from '#/server/db/schema'
 
-export const toUser = (u: typeof t.users.$inferSelect): User => ({
-  id: u.id,
-  username: u.username,
-  email: u.email,
-  displayName: u.displayName,
-  role: u.role,
-  plan: u.plan,
-  hasPassword: u.passwordHash !== null,
-  isDemo: u.isDemo,
-  emailVerified: u.emailVerifiedAt !== null || u.isDemo,
+export const toUser = (userRow: typeof schema.users.$inferSelect): User => ({
+  id: userRow.id,
+  username: userRow.username,
+  email: userRow.email,
+  displayName: userRow.displayName,
+  role: userRow.role,
+  plan: userRow.plan,
+  hasPassword: userRow.passwordHash !== null,
+  isDemo: userRow.isDemo,
+  emailVerified: userRow.emailVerifiedAt !== null || userRow.isDemo,
 })

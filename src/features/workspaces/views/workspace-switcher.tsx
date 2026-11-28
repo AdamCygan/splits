@@ -50,7 +50,7 @@ export interface WorkspaceSwitcherProps {
  * Alt+Shift+1…9, nowa przestrzeń i ustawienia. Jedno kliknięcie zmienia całą aplikację.
  */
 export function WorkspaceSwitcher({ compact = false }: WorkspaceSwitcherProps) {
-  const t = useMessages(workspacesMessages)
+  const messages = useMessages(workspacesMessages)
   const { items, current, canCreate, shortcutOf } = useWorkspaces()
   const switchTo = useSwitchWorkspace()
   if (!current) return null
@@ -76,12 +76,12 @@ export function WorkspaceSwitcher({ compact = false }: WorkspaceSwitcherProps) {
             <span
               className={compact ? 'sr-only' : 'block text-xs text-ink-soft'}
             >
-              {t.label}
+              {messages.label}
             </span>
             <span className="block truncate text-sm font-semibold">
               {current.name}
             </span>
-            <span className="sr-only">{t.switcher.open}</span>
+            <span className="sr-only">{messages.switcher.open}</span>
           </span>
           <ChevronsUpDown
             aria-hidden
@@ -90,7 +90,7 @@ export function WorkspaceSwitcher({ compact = false }: WorkspaceSwitcherProps) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-72">
-        <DropdownMenuLabel>{t.switcher.heading}</DropdownMenuLabel>
+        <DropdownMenuLabel>{messages.switcher.heading}</DropdownMenuLabel>
         {items.map((workspace) => {
           const active = workspace.id === current.id
           const shortcut = shortcutOf(workspace.id)
@@ -105,7 +105,7 @@ export function WorkspaceSwitcher({ compact = false }: WorkspaceSwitcherProps) {
               {active ? (
                 <>
                   <Check aria-hidden className="size-4" />
-                  <span className="sr-only">{t.switcher.current}</span>
+                  <span className="sr-only">{messages.switcher.current}</span>
                 </>
               ) : (
                 shortcut && <Kbd className="text-ink-soft">{shortcut}</Kbd>
@@ -117,21 +117,21 @@ export function WorkspaceSwitcher({ compact = false }: WorkspaceSwitcherProps) {
         {canCreate ? (
           <DropdownMenuItem onSelect={openNewWorkspace}>
             <Plus aria-hidden />
-            {t.switcher.create}
+            {messages.switcher.create}
           </DropdownMenuItem>
         ) : (
           <DropdownMenuItem asChild>
             <Link to="/app/settings/plan">
               <Plus aria-hidden />
-              <span className="flex-1">{t.switcher.create}</span>
-              <Badge tone="info">{t.switcher.proOnly}</Badge>
+              <span className="flex-1">{messages.switcher.create}</span>
+              <Badge tone="info">{messages.switcher.proOnly}</Badge>
             </Link>
           </DropdownMenuItem>
         )}
         <DropdownMenuItem asChild>
           <Link to="/app/settings/workspaces">
             <Settings2 aria-hidden />
-            {t.switcher.manage}
+            {messages.switcher.manage}
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>

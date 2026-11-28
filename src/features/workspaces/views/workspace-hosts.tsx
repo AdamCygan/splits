@@ -45,7 +45,7 @@ function NewWorkspaceHost() {
 
 /** „W czym dziś pracujesz?”: duże przyciski przestrzeni z numerami skrótów. */
 function DailyPicker() {
-  const t = useMessages(workspacesMessages).picker
+  const messages = useMessages(workspacesMessages).picker
   const app = useMessages(appMessages)
   const picker = useDailyPicker()
   if (!picker.open) return null
@@ -53,14 +53,14 @@ function DailyPicker() {
     <Dialog open onOpenChange={(open) => !open && picker.close()}>
       <DialogContent
         size="md"
-        title={t.title}
-        description={t.lead}
+        title={messages.title}
+        description={messages.lead}
         closeLabel={app.actions.close}
       >
         <ul className="grid gap-2">
-          {picker.items.map((workspace, i) => {
+          {picker.items.map((workspace, index) => {
             const current = workspace.id === picker.current?.id
-            const shortcut = workspaceShortcut(i)
+            const shortcut = workspaceShortcut(index)
             return (
               <li key={workspace.id}>
                 <button
@@ -93,12 +93,12 @@ function DailyPicker() {
           <input
             type="checkbox"
             checked={picker.dontAsk}
-            onChange={(e) => picker.setDontAsk(e.target.checked)}
+            onChange={(event) => picker.setDontAsk(event.target.checked)}
             className="mt-0.5 size-4 accent-[var(--ink)]"
           />
           <span>
-            <span className="font-medium">{t.dontAsk}</span>
-            <span className="block text-ink-soft">{t.dontAskHint}</span>
+            <span className="font-medium">{messages.dontAsk}</span>
+            <span className="block text-ink-soft">{messages.dontAskHint}</span>
           </span>
         </label>
       </DialogContent>
@@ -108,41 +108,41 @@ function DailyPicker() {
 
 /** Pytanie, czy zmiana (dni wolne, sprint, rodzaj pracy…) ma trafić do wszystkich przestrzeni. */
 function ApplyDialog() {
-  const t = useMessages(workspacesMessages)
+  const messages = useMessages(workspacesMessages)
   const app = useMessages(appMessages)
   const dialog = useApplyDialog()
   if (!dialog.open || !dialog.kind) return null
-  const thing = t.kinds[dialog.kind]
+  const thing = messages.kinds[dialog.kind]
   const options = [
     {
       value: 'this' as const,
-      label: fmt(t.apply.onlyHere, { name: dialog.currentName }),
+      label: fmt(messages.apply.onlyHere, { name: dialog.currentName }),
       hint: null,
     },
     {
       value: 'all' as const,
-      label: t.apply.everywhere,
-      hint: t.apply.everywhereHint,
+      label: messages.apply.everywhere,
+      hint: messages.apply.everywhereHint,
     },
   ]
   return (
     <Dialog open onOpenChange={(open) => !open && dialog.cancel()}>
       <DialogContent
         size="sm"
-        title={t.apply.title}
-        description={fmt(t.apply.lead, { count: dialog.count, thing })}
+        title={messages.apply.title}
+        description={fmt(messages.apply.lead, { count: dialog.count, thing })}
         closeLabel={app.actions.close}
         footer={
           <>
             <Button variant="outline" onClick={dialog.cancel}>
               {app.actions.cancel}
             </Button>
-            <Button onClick={dialog.confirm}>{t.apply.apply}</Button>
+            <Button onClick={dialog.confirm}>{messages.apply.apply}</Button>
           </>
         }
       >
         <fieldset>
-          <legend className="sr-only">{t.apply.title}</legend>
+          <legend className="sr-only">{messages.apply.title}</legend>
           <div className="grid gap-2">
             {options.map((option) => (
               <label
@@ -179,14 +179,16 @@ function ApplyDialog() {
           <input
             type="checkbox"
             checked={dialog.remember}
-            onChange={(e) => dialog.setRemember(e.target.checked)}
+            onChange={(event) => dialog.setRemember(event.target.checked)}
             className="mt-0.5 size-4 accent-[var(--ink)]"
           />
           <span>
             <span className="font-medium">
-              {fmt(t.apply.dontAsk, { thing })}
+              {fmt(messages.apply.dontAsk, { thing })}
             </span>
-            <span className="block text-ink-soft">{t.apply.dontAskHint}</span>
+            <span className="block text-ink-soft">
+              {messages.apply.dontAskHint}
+            </span>
           </span>
         </label>
       </DialogContent>
@@ -199,7 +201,7 @@ function ApplyDialog() {
  * do tamtej przestrzeni. Znika, gdy timer ruszy tutaj.
  */
 export function RunningElsewhere() {
-  const t = useMessages(workspacesMessages).elsewhere
+  const messages = useMessages(workspacesMessages).elsewhere
   const elsewhere = useRunningElsewhere()
   if (!elsewhere) return null
   const { workspace, entry, go } = elsewhere
@@ -211,10 +213,10 @@ export function RunningElsewhere() {
       <Timer aria-hidden className="size-4 shrink-0" />
       <WorkspaceMark workspace={workspace} className="size-5 text-[0.625rem]" />
       <span className="min-w-0 flex-1 truncate">
-        {fmt(t.running, { name: workspace.name, title: entry.title })}
+        {fmt(messages.running, { name: workspace.name, title: entry.title })}
       </span>
       <Button size="sm" variant="outline" onClick={go}>
-        {fmt(t.go, { name: workspace.name })}
+        {fmt(messages.go, { name: workspace.name })}
       </Button>
     </div>
   )

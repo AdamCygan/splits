@@ -26,14 +26,14 @@ export function DayPicker({
   limited,
   onChange,
 }: DayPickerProps) {
-  const t = useMessages(entriesMessages).day
+  const messages = useMessages(entriesMessages).day
   const format = useFormat()
   const isToday = value === today
   const atMin = min !== null && value <= min
 
   return (
     <div className="flex flex-col items-start gap-2 sm:items-end">
-      <nav aria-label={t.nav} className="flex items-center gap-2">
+      <nav aria-label={messages.nav} className="flex items-center gap-2">
         <Button
           variant="outline"
           size="icon"
@@ -41,7 +41,7 @@ export function DayPicker({
           onClick={() => onChange(addDays(value, -1))}
         >
           <ChevronLeft aria-hidden className="size-4" />
-          <span className="sr-only">{t.previous}</span>
+          <span className="sr-only">{messages.previous}</span>
         </Button>
         {/* Data w formacie aplikacji („czw., 26 lis”), a pod spodem przezroczyste pole daty:
             kliknięcie otwiera systemowy kalendarz, klawiatura i czytniki dostają zwykłe pole. */}
@@ -57,20 +57,20 @@ export function DayPicker({
           </span>
           <input
             type="date"
-            aria-label={t.date}
+            aria-label={messages.date}
             value={value}
             max={today}
             min={min ?? undefined}
             required
-            onClick={(e) => {
+            onClick={(event) => {
               try {
-                e.currentTarget.showPicker()
+                event.currentTarget.showPicker()
               } catch {
                 // Starsze przeglądarki otwierają kalendarz same po kliknięciu.
               }
             }}
-            onChange={(e) => {
-              const next = e.target.value
+            onChange={(event) => {
+              const next = event.target.value
               if (!next) return
               onChange(
                 next > today ? today : min !== null && next < min ? min : next,
@@ -86,23 +86,23 @@ export function DayPicker({
           onClick={() => onChange(addDays(value, 1))}
         >
           <ChevronRight aria-hidden className="size-4" />
-          <span className="sr-only">{t.next}</span>
+          <span className="sr-only">{messages.next}</span>
         </Button>
         {!isToday && (
           <Button variant="outline" onClick={() => onChange(today)}>
-            {t.backToToday}
+            {messages.backToToday}
           </Button>
         )}
       </nav>
       {limited && atMin && (
         <p className="text-sm text-ink-soft">
-          {t.freeLimit}{' '}
+          {messages.freeLimit}{' '}
           <Link
             to="/app/checkout"
             search={{ interval: 'year' }}
             className="font-medium text-ink underline underline-offset-2"
           >
-            {t.upgrade}
+            {messages.upgrade}
           </Link>
         </p>
       )}

@@ -8,7 +8,7 @@ import type { AppEnv } from '#/server/http/context'
  * Wcześniej ekran „Dziś” wysyłał 8 osobnych żądań, a lista wpisów czekała dodatkowo
  * na ustawienia (strefa czasowa). Tu serwer zna strefę, więc wszystko wraca naraz.
  */
-export const bootstrapRoutes = new Hono<AppEnv>().get('/', async (c) => {
-  const scope = scopeOf(c)
-  return c.json(await getBootstrap(scope))
+export const bootstrapRoutes = new Hono<AppEnv>().get('/', async (context) => {
+  const scope = scopeOf(context)
+  return context.json(await getBootstrap(scope))
 })

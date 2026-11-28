@@ -57,7 +57,7 @@ const colors = {
 } as const
 
 function AuthLayout() {
-  const t = useMessages(authMessages)
+  const messages = useMessages(authMessages)
   const common = useMessages(commonMessages)
   const { locale } = useI18n()
   const days = weekdayNames(locale, 'short').slice(1, 6)
@@ -89,15 +89,15 @@ function AuthLayout() {
         className="hidden flex-col justify-between bg-[var(--ink-fixed)] p-12 text-white lg:flex"
         aria-hidden
       >
-        <p className="type-display max-w-[14ch] text-5xl">{t.aside}</p>
+        <p className="type-display max-w-[14ch] text-5xl">{messages.aside}</p>
         <div className="space-y-3">
           {week.map((blocks, row) => (
             <div key={days[row]} className="flex items-center gap-4">
               <span className="w-10 text-sm text-white/70">{days[row]}</span>
               <div className="flex h-6 flex-1 gap-[3px] overflow-hidden rounded">
-                {blocks.map(([kind, width], i) => (
+                {blocks.map(([kind, width], index) => (
                   <span
-                    key={i}
+                    key={index}
                     style={{ width: `${width}%`, background: colors[kind] }}
                   />
                 ))}

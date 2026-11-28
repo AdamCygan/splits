@@ -16,23 +16,25 @@ export interface TimeGoalsProps {
  * i czy tempo się zgadza (cel rozłożony równo na dni sprintu).
  */
 export function TimeGoals({ progress, types }: TimeGoalsProps) {
-  const t = useMessages(panelMessages).sprints.timeGoals
+  const messages = useMessages(panelMessages).sprints.timeGoals
   const format = useFormat()
   return (
     <section aria-labelledby="sprint-time-goals" className="mt-6">
       <h3 id="sprint-time-goals" className="mb-3 font-semibold">
-        {t.title}
+        {messages.title}
       </h3>
       <ul className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
-        {progress.map((g) => {
-          const type = types.find((x) => x.id === g.taskTypeId)
+        {progress.map((goalProgress) => {
+          const type = types.find(
+            (taskType) => taskType.id === goalProgress.taskTypeId,
+          )
           const name = type?.name ?? '?'
-          const ofGoal = fmt(t.of, {
-            done: format.minutes(g.minutes),
-            goal: format.minutes(g.goal),
+          const ofGoal = fmt(messages.of, {
+            done: format.minutes(goalProgress.minutes),
+            goal: format.minutes(goalProgress.goal),
           })
           return (
-            <li key={g.taskTypeId}>
+            <li key={goalProgress.taskTypeId}>
               <p className="flex items-baseline justify-between gap-3 text-[0.9375rem]">
                 <span className="flex min-w-0 items-center gap-2">
                   <ColorDot color={type?.color ?? 'var(--wt-custom)'} />
@@ -42,41 +44,50 @@ export function TimeGoals({ progress, types }: TimeGoalsProps) {
               </p>
               <div
                 role="progressbar"
-                aria-label={fmt(t.label, { name })}
+                aria-label={fmt(messages.label, { name })}
                 aria-valuemin={0}
-                aria-valuemax={g.goal}
-                aria-valuenow={Math.min(g.minutes, g.goal)}
+                aria-valuemax={goalProgress.goal}
+                aria-valuenow={Math.min(
+                  goalProgress.minutes,
+                  goalProgress.goal,
+                )}
                 aria-valuetext={ofGoal}
                 className="relative mt-1.5 h-2.5 overflow-hidden rounded-full bg-muted"
               >
                 <div
                   className="bar-grow h-full rounded-full"
                   style={{
-                    width: `${percentOf(g.minutes, g.goal, true)}%`,
+                    width: `${percentOf(goalProgress.minutes, goalProgress.goal, true)}%`,
                     background: type?.color ?? 'var(--wt-custom)',
                   }}
                 />
                 {/* Gdzie powinno być przy równym tempie. */}
-                {g.status !== 'done' && (
+                {goalProgress.status !== 'done' && (
                   <span
                     aria-hidden
                     className="absolute inset-y-0 w-0.5 bg-ink"
                     style={{
-                      left: `${Math.min(100, (g.expected / g.goal) * 100)}%`,
+                      left: `${Math.min(100, (goalProgress.expected / goalProgress.goal) * 100)}%`,
                     }}
                   />
                 )}
               </div>
               <p className="mt-1 text-sm text-ink-soft">
-                {g.status === 'done'
-                  ? g.minutes > g.goal
-                    ? fmt(t.over, { time: format.minutes(g.minutes - g.goal) })
-                    : t.done
-                  : `${fmt(t.left, { time: format.minutes(g.left) })}; ${
-                      g.status === 'onTrack'
-                        ? t.onTrack
-                        : fmt(t.behind, {
-                            time: format.minutes(g.expected - g.minutes),
+                {goalProgress.status === 'done'
+                  ? goalProgress.minutes > goalProgress.goal
+                    ? fmt(messages.over, {
+                        time: format.minutes(
+                          goalProgress.minutes - goalProgress.goal,
+                        ),
+                      })
+                    : messages.done
+                  : `${fmt(messages.left, { time: format.minutes(goalProgress.left) })}; ${
+                      goalProgress.status === 'onTrack'
+                        ? messages.onTrack
+                        : fmt(messages.behind, {
+                            time: format.minutes(
+                              goalProgress.expected - goalProgress.minutes,
+                            ),
                           })
                     }`}
               </p>
@@ -84,7 +95,7 @@ export function TimeGoals({ progress, types }: TimeGoalsProps) {
           )
         })}
       </ul>
-      <p className="mt-3 text-xs text-ink-soft">{t.paceHint}</p>
+      <p className="mt-3 text-xs text-ink-soft">{messages.paceHint}</p>
     </section>
   )
 }

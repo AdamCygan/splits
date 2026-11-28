@@ -67,7 +67,7 @@ type IndexUpdate = number | ((index: number) => number)
  * opcja i obsługa klawiatury. Co jest poleceniem, decyduje `model.ts`.
  */
 export function useCommandPaletteViewModel() {
-  const t = useMessages(appMessages)
+  const messages = useMessages(appMessages)
   const settingsText = useMessages(settingsMessages)
   const feedbackText = useMessages(feedbackMessages)
   const format = useFormat()
@@ -87,10 +87,10 @@ export function useCommandPaletteViewModel() {
   const ranRef = useRef(false)
 
   useEffect(() => {
-    const onKey = (e: globalThis.KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        setOpen((v) => !v)
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setOpen((currentOpen) => !currentOpen)
       }
     }
     const onOpen = () => setOpen(true)
@@ -141,15 +141,15 @@ export function useCommandPaletteViewModel() {
   const switchWorkspace = useSwitchWorkspace()
   const workspaceText = useMessages(workspacesMessages)
 
-  const ctx: PaletteContext = {
-    text: t,
+  const context: PaletteContext = {
+    text: messages,
     settingsText,
     feedbackLabel: feedbackText.open,
     workspaces: {
-      items: workspaces.items.map((w) => ({
-        id: w.id,
-        name: w.name,
-        shortcut: workspaces.shortcutOf(w.id),
+      items: workspaces.items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        shortcut: workspaces.shortcutOf(item.id),
       })),
       currentId: workspaces.current?.id ?? null,
       switchLabel: workspaceText.palette.switchTo,
@@ -163,7 +163,7 @@ export function useCommandPaletteViewModel() {
     runningBreak,
     templates,
     currentSprint: currentSprint(sprints, today),
-    typeOf: (id) => types.find((x) => x.id === id),
+    typeOf: (id) => types.find((type) => type.id === id),
     formatMinutes: format.minutes,
     formatDay: (date) => format.day(date),
     actions: {
@@ -175,11 +175,11 @@ export function useCommandPaletteViewModel() {
       endBreak: (id) => endBreak.mutate({ id, resume: true }),
       setTheme,
       setClock,
-      setLocale: (l) => void setLocale(l),
+      setLocale: (nextLocale) => void setLocale(nextLocale),
       signOut: () => void signOut().then(() => navigate({ to: '/login' })),
       showShortcuts: () => setHelp(true),
       switchWorkspace: (id) => {
-        const target = workspaces.items.find((w) => w.id === id)
+        const target = workspaces.items.find((item) => item.id === id)
         if (target) void switchWorkspace(target)
       },
       newWorkspace: () =>
@@ -196,26 +196,26 @@ export function useCommandPaletteViewModel() {
   )
   const words = queryWords(typed)
   const taskResults: Array<Command> = searching
-    ? (found.data ?? []).map((r) =>
-        taskCommand(ctx, r.entry, 'found', {
-          minutes: r.workedMinutes,
-          finished: r.finished,
-          running: r.running,
-          snippet: r.snippet,
+    ? (found.data ?? []).map((result) =>
+        taskCommand(context, result.entry, 'found', {
+          minutes: result.workedMinutes,
+          finished: result.finished,
+          running: result.running,
+          snippet: result.snippet,
         }),
       )
     : typed
       ? []
-      : recentTasks.map((task) => taskCommand(ctx, task.latest, 'tasks'))
+      : recentTasks.map((task) => taskCommand(context, task.latest, 'tasks'))
   const results = orderResults([
     ...taskResults,
-    ...buildCommands(ctx).filter((cmd) => matchesWords(cmd, words)),
-    ...typedCommands(ctx, typed),
+    ...buildCommands(context).filter((command) => matchesWords(command, words)),
+    ...typedCommands(context, typed),
   ])
 
   // Nowa lista wyników (albo ponowne otwarcie) zaczyna od pierwszej opcji już w tym samym
   // renderze, a nie dopiero po efekcie: Enter wciśnięty w międzyczasie nie trafi w starą pozycję.
-  const resultKey = `${open}|${results.map((r) => r.id).join('|')}`
+  const resultKey = `${open}|${results.map((command) => command.id).join('|')}`
   const active = selection.key === resultKey ? selection.index : 0
   const setActive = (next: IndexUpdate) =>
     setSelection({
@@ -234,34 +234,36 @@ export function useCommandPaletteViewModel() {
     setDebounced('')
     setHelp(false)
   }
-  const run = (cmd: Command | undefined, alt = false) => {
-    if (!cmd) return
-    if (cmd.id === 'shortcuts') {
+  const run = (command: Command | undefined, alternative = false) => {
+    if (!command) return
+    if (command.id === 'shortcuts') {
       setHelp(true)
       return
     }
     ranRef.current = true
     close()
-    if (alt && cmd.alt) cmd.alt()
-    else cmd.run()
+    if (alternative && command.alt) command.alt()
+    else command.run()
   }
 
   /** Strzałki przesuwają aktywną opcję, Enter ją uruchamia (Ctrl/⌘+Enter: druga akcja). */
-  const onInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setActive((i) => Math.min(results.length - 1, i + 1))
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setActive((i) => Math.max(0, i - 1))
-    } else if (e.key === 'Enter') {
-      e.preventDefault()
-      run(results.at(active), e.ctrlKey || e.metaKey)
+  const onInputKeyDown = (keyboardEvent: KeyboardEvent<HTMLInputElement>) => {
+    if (keyboardEvent.key === 'ArrowDown') {
+      keyboardEvent.preventDefault()
+      setActive((currentActive) =>
+        Math.min(results.length - 1, currentActive + 1),
+      )
+    } else if (keyboardEvent.key === 'ArrowUp') {
+      keyboardEvent.preventDefault()
+      setActive((currentActive) => Math.max(0, currentActive - 1))
+    } else if (keyboardEvent.key === 'Enter') {
+      keyboardEvent.preventDefault()
+      run(results.at(active), keyboardEvent.ctrlKey || keyboardEvent.metaKey)
     }
   }
 
   return {
-    t,
+    messages,
     open,
     help,
     query,
@@ -274,8 +276,8 @@ export function useCommandPaletteViewModel() {
     listId,
     listRef,
     inputRef,
-    mod: modifierKey(),
-    optionId: (i: number) => `${listId}-${i}`,
+    modifierKey: modifierKey(),
+    optionId: (index: number) => `${listId}-${index}`,
     setQuery,
     setActive,
     onInputKeyDown,

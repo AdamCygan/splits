@@ -2,10 +2,10 @@ import { and, eq, isNull, ne, sql } from 'drizzle-orm'
 import type { Context } from 'hono'
 import { isApplyTarget } from '#/features/workspaces/domain/workspaces'
 import type { ApplyTarget } from '#/features/workspaces/domain/workspaces'
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 import type { Tx } from '#/server/db/client'
 import { lowerName } from '#/server/db/helpers'
-import * as t from '#/server/db/schema'
+import * as schema from '#/server/db/schema'
 import { inScope, owner } from '#/server/db/scope'
 import type { Scope } from '#/server/db/scope'
 import type { AppEnv } from '#/server/http/context'
@@ -21,8 +21,8 @@ import { applyTargets } from './repository.server'
  */
 
 /** ?apply=all|this z adresu żądania (brak = tylko bieżąca przestrzeń). */
-export function applyOf(c: Context<AppEnv>): ApplyTarget | undefined {
-  const value = c.req.query('apply')
+export function applyOf(context: Context<AppEnv>): ApplyTarget | undefined {
+  const value = context.req.query('apply')
   return isApplyTarget(value) ? value : undefined
 }
 
@@ -30,18 +30,19 @@ export function applyOf(c: Context<AppEnv>): ApplyTarget | undefined {
 export async function inTargets<T>(
   scope: Scope,
   apply: ApplyTarget | undefined,
-  op: (target: Scope) => Promise<T>,
+  operation: (target: Scope) => Promise<T>,
 ) {
-  const targets = await applyTargets(db, scope, apply)
-  const result = await op(targets[0]!)
-  for (const target of targets.slice(1)) await bestEffort(() => op(target))
+  const targets = await applyTargets(database, scope, apply)
+  const result = await operation(targets[0]!)
+  for (const target of targets.slice(1))
+    await bestEffort(() => operation(target))
   return result
 }
 
 /** Zapis w innej przestrzeni: błąd reguł (konflikt, walidacja) pomija tylko tę przestrzeń. */
-async function bestEffort(op: () => Promise<unknown>) {
+async function bestEffort(operation: () => Promise<unknown>) {
   try {
-    await op()
+    await operation()
   } catch (error) {
     if (!isRuleError(error)) throw error
   }
@@ -72,7 +73,7 @@ export async function snapshot(
   scope: Scope,
   id: string,
 ): Promise<Snapshot | null> {
-  const row = await sourceRow(db, kind, scope, id)
+  const row = await sourceRow(database, kind, scope, id)
   if (!row) return null
   return {
     syncId: row.syncId,
@@ -82,39 +83,51 @@ export async function snapshot(
   }
 }
 
-function sourceRow(tx: Tx, kind: MirrorKind, scope: Scope, id: string) {
+function sourceRow(
+  transaction: Tx,
+  kind: MirrorKind,
+  scope: Scope,
+  id: string,
+) {
   const one = <TRow>(rows: Promise<Array<TRow>>) =>
-    rows.then((r) => r[0] ?? null)
+    rows.then((resultRows) => resultRows[0] ?? null)
   switch (kind) {
     case 'workTypes':
       return one(
-        tx
+        transaction
           .select()
-          .from(t.taskTypes)
-          .where(and(eq(t.taskTypes.id, id), inScope(t.taskTypes, scope))),
+          .from(schema.taskTypes)
+          .where(
+            and(eq(schema.taskTypes.id, id), inScope(schema.taskTypes, scope)),
+          ),
       )
     case 'statuses':
       return one(
-        tx
+        transaction
           .select()
-          .from(t.taskStatuses)
+          .from(schema.taskStatuses)
           .where(
-            and(eq(t.taskStatuses.id, id), inScope(t.taskStatuses, scope)),
+            and(
+              eq(schema.taskStatuses.id, id),
+              inScope(schema.taskStatuses, scope),
+            ),
           ),
       )
     case 'tags':
       return one(
-        tx
+        transaction
           .select()
-          .from(t.tags)
-          .where(and(eq(t.tags.id, id), inScope(t.tags, scope))),
+          .from(schema.tags)
+          .where(and(eq(schema.tags.id, id), inScope(schema.tags, scope))),
       )
     case 'sprints':
       return one(
-        tx
+        transaction
           .select()
-          .from(t.sprints)
-          .where(and(eq(t.sprints.id, id), inScope(t.sprints, scope))),
+          .from(schema.sprints)
+          .where(
+            and(eq(schema.sprints.id, id), inScope(schema.sprints, scope)),
+          ),
       )
   }
 }
@@ -128,17 +141,17 @@ export async function mirrored<T>(
   apply: ApplyTarget | undefined,
   kind: MirrorKind,
   id: string | null,
-  op: () => Promise<T>,
+  operation: () => Promise<T>,
   idOf: (result: T) => string = () => id!,
 ) {
-  if (apply !== 'all') return op()
+  if (apply !== 'all') return operation()
   const before = id ? await snapshot(kind, scope, id) : null
-  const result = await op()
-  const targets = (await applyTargets(db, scope, 'all')).slice(1)
+  const result = await operation()
+  const targets = (await applyTargets(database, scope, 'all')).slice(1)
   for (const target of targets)
     await bestEffort(() =>
-      db.transaction((tx) =>
-        mirrorInto(tx, kind, scope, target, idOf(result), before),
+      database.transaction((transaction) =>
+        mirrorInto(transaction, kind, scope, target, idOf(result), before),
       ),
     )
   return result
@@ -150,72 +163,73 @@ export async function removedEverywhere(
   apply: ApplyTarget | undefined,
   kind: 'tags' | 'sprints',
   id: string,
-  op: (target: Scope, id: string) => Promise<unknown>,
+  operation: (target: Scope, id: string) => Promise<unknown>,
 ): Promise<void> {
   if (apply !== 'all') {
-    await op(scope, id)
+    await operation(scope, id)
     return
   }
   const before = await snapshot(kind, scope, id)
-  await op(scope, id)
+  await operation(scope, id)
   if (!before) return
-  const targets = (await applyTargets(db, scope, 'all')).slice(1)
+  const targets = (await applyTargets(database, scope, 'all')).slice(1)
   for (const target of targets) {
-    const match = await counterpart(db, kind, target, before)
-    if (match) await bestEffort(() => op(target, match.id))
+    const match = await counterpart(database, kind, target, before)
+    if (match) await bestEffort(() => operation(target, match.id))
   }
 }
 
 async function counterpart(
-  tx: Tx,
+  transaction: Tx,
   kind: MirrorKind,
   target: Scope,
   before: Snapshot,
 ): Promise<{ id: string } | null> {
   if (kind === 'sprints') {
-    const rows = await tx
+    const rows = await transaction
       .select()
-      .from(t.sprints)
-      .where(inScope(t.sprints, target))
+      .from(schema.sprints)
+      .where(inScope(schema.sprints, target))
     return (
-      rows.find((r) => r.syncId === before.syncId) ??
+      rows.find((row) => row.syncId === before.syncId) ??
       rows.find(
-        (r) => r.startsOn === before.startsOn && r.endsOn === before.endsOn,
+        (row) =>
+          row.startsOn === before.startsOn && row.endsOn === before.endsOn,
       ) ??
       null
     )
   }
   const table =
     kind === 'workTypes'
-      ? t.taskTypes
+      ? schema.taskTypes
       : kind === 'statuses'
-        ? t.taskStatuses
-        : t.tags
-  const rows = await tx
+        ? schema.taskStatuses
+        : schema.tags
+  const rows = await transaction
     .select({ id: table.id, syncId: table.syncId, name: table.name })
-    .from(table as typeof t.tags)
+    .from(table as typeof schema.tags)
     .where(inScope(table, target))
   return (
-    rows.find((r) => r.syncId === before.syncId) ??
+    rows.find((row) => row.syncId === before.syncId) ??
     (before.name
-      ? rows.find((r) => lowerName(r.name) === lowerName(before.name!))
+      ? rows.find((row) => lowerName(row.name) === lowerName(before.name!))
       : undefined) ??
     null
   )
 }
 
 async function mirrorInto(
-  tx: Tx,
+  transaction: Tx,
   kind: MirrorKind,
   from: Scope,
   to: Scope,
   id: string,
   before: Snapshot | null,
 ) {
-  const source = await sourceRow(tx, kind, from, id)
+  const source = await sourceRow(transaction, kind, from, id)
   if (!source) return
   const match = await counterpart(
-    tx,
+    transaction,
     kind,
     to,
     before ?? {
@@ -227,104 +241,136 @@ async function mirrorInto(
   )
   switch (kind) {
     case 'workTypes': {
-      const s = source as typeof t.taskTypes.$inferSelect
-      const { id: _i, userId: _u, workspaceId: _w, createdAt: _c, ...data } = s
+      const sourceTaskType = source as typeof schema.taskTypes.$inferSelect
+      const {
+        id: _id,
+        userId: _userId,
+        workspaceId: _workspaceId,
+        createdAt: _createdAt,
+        ...data
+      } = sourceTaskType
       if (match)
-        await tx
-          .update(t.taskTypes)
+        await transaction
+          .update(schema.taskTypes)
           .set(data)
-          .where(eq(t.taskTypes.id, match.id))
+          .where(eq(schema.taskTypes.id, match.id))
       else
-        await tx.insert(t.taskTypes).values({
+        await transaction.insert(schema.taskTypes).values({
           ...data,
-          sortOrder: await nextOrder(tx, t.taskTypes, to),
+          sortOrder: await nextOrder(transaction, schema.taskTypes, to),
           ...owner(to),
         })
       return
     }
     case 'statuses': {
-      const s = source as typeof t.taskStatuses.$inferSelect
-      const { id: _i, userId: _u, workspaceId: _w, sortOrder: _o, ...data } = s
+      const sourceStatus = source as typeof schema.taskStatuses.$inferSelect
+      const {
+        id: _id,
+        userId: _userId,
+        workspaceId: _workspaceId,
+        sortOrder: _sortOrder,
+        ...data
+      } = sourceStatus
       if (match && data.archivedAt) {
         // Archiwizacja nie może zostawić grupy bez aktywnego statusu.
-        const [left] = await tx
+        const [left] = await transaction
           .select({ n: sql<number>`count(*)::int` })
-          .from(t.taskStatuses)
+          .from(schema.taskStatuses)
           .where(
             and(
-              inScope(t.taskStatuses, to),
-              eq(t.taskStatuses.category, data.category),
-              isNull(t.taskStatuses.archivedAt),
-              ne(t.taskStatuses.id, match.id),
+              inScope(schema.taskStatuses, to),
+              eq(schema.taskStatuses.category, data.category),
+              isNull(schema.taskStatuses.archivedAt),
+              ne(schema.taskStatuses.id, match.id),
             ),
           )
         if ((left?.n ?? 0) === 0) return
       }
       if (data.isDefault)
-        await tx
-          .update(t.taskStatuses)
+        await transaction
+          .update(schema.taskStatuses)
           .set({ isDefault: false })
-          .where(inScope(t.taskStatuses, to))
+          .where(inScope(schema.taskStatuses, to))
       if (match)
-        await tx
-          .update(t.taskStatuses)
+        await transaction
+          .update(schema.taskStatuses)
           .set(data)
-          .where(eq(t.taskStatuses.id, match.id))
+          .where(eq(schema.taskStatuses.id, match.id))
       else
-        await tx.insert(t.taskStatuses).values({
+        await transaction.insert(schema.taskStatuses).values({
           ...data,
-          sortOrder: await nextOrder(tx, t.taskStatuses, to),
+          sortOrder: await nextOrder(transaction, schema.taskStatuses, to),
           ...owner(to),
         })
       return
     }
     case 'tags': {
-      const s = source as typeof t.tags.$inferSelect
-      const { id: _i, userId: _u, workspaceId: _w, ...data } = s
+      const sourceTag = source as typeof schema.tags.$inferSelect
+      const {
+        id: _id,
+        userId: _userId,
+        workspaceId: _workspaceId,
+        ...data
+      } = sourceTag
       if (match)
-        await tx.update(t.tags).set(data).where(eq(t.tags.id, match.id))
-      else await tx.insert(t.tags).values({ ...data, ...owner(to) })
+        await transaction
+          .update(schema.tags)
+          .set(data)
+          .where(eq(schema.tags.id, match.id))
+      else
+        await transaction.insert(schema.tags).values({ ...data, ...owner(to) })
       return
     }
     case 'sprints': {
-      const s = source as typeof t.sprints.$inferSelect
-      const { id: _i, userId: _u, workspaceId: _w, ...data } = s
-      const types = await taskTypeMap(tx, from, to)
+      const sourceSprint = source as typeof schema.sprints.$inferSelect
+      const {
+        id: _id,
+        userId: _userId,
+        workspaceId: _workspaceId,
+        ...data
+      } = sourceSprint
+      const types = await taskTypeMap(transaction, from, to)
       const values = {
         ...data,
-        timeGoals: s.timeGoals.flatMap((g) => {
-          const typeId = types.get(g.taskTypeId)
-          return typeId ? [{ ...g, taskTypeId: typeId }] : []
+        timeGoals: sourceSprint.timeGoals.flatMap((sprintTimeGoal) => {
+          const typeId = types.get(sprintTimeGoal.taskTypeId)
+          return typeId ? [{ ...sprintTimeGoal, taskTypeId: typeId }] : []
         }),
       }
       // Sprinty w przestrzeni nie mogą na siebie nachodzić (poza tym, który zmieniamy).
-      const overlapping = await tx
-        .select({ id: t.sprints.id })
-        .from(t.sprints)
+      const overlapping = await transaction
+        .select({ id: schema.sprints.id })
+        .from(schema.sprints)
         .where(
           and(
-            inScope(t.sprints, to),
-            match ? ne(t.sprints.id, match.id) : undefined,
-            sql`${t.sprints.startsOn} <= ${values.endsOn} and ${t.sprints.endsOn} >= ${values.startsOn}`,
+            inScope(schema.sprints, to),
+            match ? ne(schema.sprints.id, match.id) : undefined,
+            sql`${schema.sprints.startsOn} <= ${values.endsOn} and ${schema.sprints.endsOn} >= ${values.startsOn}`,
           ),
         )
       if (overlapping.length) return
       if (match)
-        await tx.update(t.sprints).set(values).where(eq(t.sprints.id, match.id))
-      else await tx.insert(t.sprints).values({ ...values, ...owner(to) })
+        await transaction
+          .update(schema.sprints)
+          .set(values)
+          .where(eq(schema.sprints.id, match.id))
+      else
+        await transaction
+          .insert(schema.sprints)
+          .values({ ...values, ...owner(to) })
       return
     }
   }
 }
 
 async function nextOrder(
-  tx: Tx,
-  table: typeof t.taskTypes | typeof t.taskStatuses,
+  transaction: Tx,
+  table: typeof schema.taskTypes | typeof schema.taskStatuses,
   scope: Scope,
 ) {
-  const [row] = await tx
+  const [row] = await transaction
     .select({ n: sql<number>`coalesce(max(${table.sortOrder}) + 1, 0)::int` })
-    .from(table as typeof t.taskStatuses)
+    .from(table as typeof schema.taskStatuses)
     .where(inScope(table, scope))
   return row?.n ?? 0
 }

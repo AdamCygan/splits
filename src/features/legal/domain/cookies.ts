@@ -6,7 +6,7 @@ import { CONSENT_COOKIE } from './consent'
  * Polityka cookies (art. 399 ustawy z 12 lipca 2024 r. Prawo komunikacji elektronicznej):
  * informacje niezbędne do działania usługi nie wymagają zgody, pozostałe tylko za zgodą.
  */
-const pl: LegalDoc = {
+const polish: LegalDoc = {
   title: 'Polityka cookies',
   summary:
     'Jakie pliki cookies i dane w pamięci przeglądarki zapisuje {name}, po co i jak zmienić swój wybór.',
@@ -103,7 +103,7 @@ const pl: LegalDoc = {
   ],
 }
 
-const en: LegalDoc = {
+const english: LegalDoc = {
   title: 'Cookie Policy',
   summary:
     'Which cookies and browser storage {name} uses, why, and how to change your choice.',
@@ -200,4 +200,4 @@ const en: LegalDoc = {
   ],
 }
 
-export const cookiesDoc: Dictionary<LegalDoc> = { en, pl }
+export const cookiesDoc: Dictionary<LegalDoc> = { en: english, pl: polish }

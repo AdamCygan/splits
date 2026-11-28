@@ -71,30 +71,30 @@ export const Route = createRootRoute({
 })
 
 function NotFound() {
-  const t = useMessages(commonMessages).notFound
+  const messages = useMessages(commonMessages).notFound
   return (
     <main
       id="main"
       tabIndex={-1}
       className="flex min-h-dvh flex-col items-center justify-center gap-4 px-4 text-center outline-none"
     >
-      <p className="text-sm text-ink-soft">{t.code}</p>
-      <h1 className="type-heading text-4xl">{t.title}</h1>
+      <p className="text-sm text-ink-soft">{messages.code}</p>
+      <h1 className="type-heading text-4xl">{messages.title}</h1>
       <Link to="/" className="font-medium underline underline-offset-4">
-        {t.back}
+        {messages.back}
       </Link>
     </main>
   )
 }
 
 function SkipLink() {
-  const t = useMessages(commonMessages)
+  const messages = useMessages(commonMessages)
   return (
     <a
       href="#main"
       className="fixed top-3 left-3 z-[100] -translate-y-24 rounded-lg bg-[var(--ink-fixed)] px-4 py-2.5 font-medium text-white shadow-lg transition-transform focus:translate-y-0"
     >
-      {t.skipLink}
+      {messages.skipLink}
     </a>
   )
 }

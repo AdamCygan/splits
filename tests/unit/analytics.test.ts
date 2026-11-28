@@ -7,7 +7,11 @@ import {
   timeBuckets,
 } from '../../src/features/reports/domain/analytics'
 
-const e = (workDate: string, taskTypeId: string, durationMinutes: number) => ({
+const makeEntry = (
+  workDate: string,
+  taskTypeId: string,
+  durationMinutes: number,
+) => ({
   workDate,
   taskTypeId,
   durationMinutes,
@@ -17,15 +21,21 @@ describe('analytics', () => {
   it('Should bucket time per day with every day of the period', () => {
     const { unit, buckets } = timeBuckets(
       [
-        e('2026-11-16', 'a', 60),
-        e('2026-11-16', 'b', 30),
-        e('2026-11-18', 'a', 45),
+        makeEntry('2026-11-16', 'a', 60),
+        makeEntry('2026-11-16', 'b', 30),
+        makeEntry('2026-11-18', 'a', 45),
       ],
       '2026-11-16',
       '2026-11-18',
     )
     expect(unit).toBe('day')
-    expect(buckets.map((b) => [b.from, b.minutes, b.byType])).toEqual([
+    expect(
+      buckets.map((timeBucket) => [
+        timeBucket.from,
+        timeBucket.minutes,
+        timeBucket.byType,
+      ]),
+    ).toEqual([
       ['2026-11-16', 90, { a: 60, b: 30 }],
       ['2026-11-17', 0, {}],
       ['2026-11-18', 45, { a: 45 }],
@@ -35,9 +45,9 @@ describe('analytics', () => {
   it('Should switch to weeks starting on Monday for long periods', () => {
     const { unit, buckets } = timeBuckets(
       [
-        e('2026-09-02', 'a', 60),
-        e('2026-09-06', 'a', 30),
-        e('2026-11-16', 'a', 10),
+        makeEntry('2026-09-02', 'a', 60),
+        makeEntry('2026-09-06', 'a', 30),
+        makeEntry('2026-11-16', 'a', 10),
       ],
       '2026-09-01',
       '2026-11-17',
@@ -68,7 +78,12 @@ describe('analytics', () => {
       { key: 'b', title: 'B', minutes: 60, estimateMinutes: 180 },
       { key: 'c', title: 'C', minutes: 90, estimateMinutes: null },
     ]
-    expect(estimateMisses(rows).map((m) => [m.key, m.diff])).toEqual([
+    expect(
+      estimateMisses(rows).map((estimateMiss) => [
+        estimateMiss.key,
+        estimateMiss.diff,
+      ]),
+    ).toEqual([
       ['b', -120],
       ['a', 60],
     ])
@@ -81,7 +96,7 @@ describe('analytics', () => {
       { kind: 'code_review', sortOrder: 2 },
       { kind: 'custom', sortOrder: 3 },
     ])
-    expect(order.map((x) => x.kind)).toEqual([
+    expect(order.map((row) => row.kind)).toEqual([
       'task',
       'custom',
       'code_review',
@@ -90,8 +105,10 @@ describe('analytics', () => {
   })
 
   it('Should make round hour ticks', () => {
-    expect(hourTicks(7 * 60).map((m) => m / 60)).toEqual([0, 2, 4, 6, 8])
-    expect(hourTicks(30).map((m) => m / 60)).toEqual([0, 1])
+    expect(hourTicks(7 * 60).map((hourTick) => hourTick / 60)).toEqual([
+      0, 2, 4, 6, 8,
+    ])
+    expect(hourTicks(30).map((hourTick) => hourTick / 60)).toEqual([0, 1])
   })
 })
 

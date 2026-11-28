@@ -23,7 +23,7 @@ const stepRoutes: Record<SetupStep, string> = {
 
 /** Przegląd: lista kroków na start z podsumowaniem tego, co już ustawione. */
 export function SettingsOverview() {
-  const t = useMessages(settingsMessages)
+  const messages = useMessages(settingsMessages)
   const { locale } = useI18n()
   const format = useFormat()
   const marked = useSetupSteps()
@@ -35,9 +35,9 @@ export function SettingsOverview() {
 
   const dayNames = weekdayNames(locale, 'short')
   const lengthLabel = (days: number) =>
-    days in t.sprints.lengths
-      ? t.sprints.lengths[days as 7 | 14 | 21 | 28]
-      : format.plural(t.counts.days, days)
+    days in messages.sprints.lengths
+      ? messages.sprints.lengths[days as 7 | 14 | 21 | 28]
+      : format.plural(messages.counts.days, days)
 
   const steps: Array<{ id: SetupStep; done: boolean; summary: string | null }> =
     [
@@ -45,9 +45,11 @@ export function SettingsOverview() {
         id: 'workday',
         done: marked.includes('workday'),
         summary: settings
-          ? fmt(t.overview.steps.workday.done, {
+          ? fmt(messages.overview.steps.workday.done, {
               hours: format.minutes(settings.workdayTargetMinutes),
-              days: settings.workingDays.map((d) => dayNames[d]).join(', '),
+              days: settings.workingDays
+                .map((workingDay) => dayNames[workingDay])
+                .join(', '),
             })
           : null,
       },
@@ -55,7 +57,7 @@ export function SettingsOverview() {
         id: 'sprints',
         done: marked.includes('sprints') || Boolean(cadence),
         summary: cadence
-          ? fmt(t.overview.steps.sprints.done, {
+          ? fmt(messages.overview.steps.sprints.done, {
               length: lengthLabel(cadence.lengthDays),
               date: formatDate(locale, cadence.anchorDate),
             })
@@ -65,7 +67,7 @@ export function SettingsOverview() {
         id: 'storyPoints',
         done: marked.includes('storyPoints'),
         summary: scale
-          ? format.plural(t.counts.scaleValues, scale.length)
+          ? format.plural(messages.counts.scaleValues, scale.length)
           : null,
       },
       {
@@ -73,8 +75,8 @@ export function SettingsOverview() {
         done: marked.includes('workTypes'),
         summary: types
           ? format.plural(
-              t.counts.workTypes,
-              types.filter((x) => !x.archivedAt).length,
+              messages.counts.workTypes,
+              types.filter((type) => !type.archivedAt).length,
             )
           : null,
       },
@@ -82,23 +84,29 @@ export function SettingsOverview() {
         id: 'templates',
         done: marked.includes('templates') || (templates?.length ?? 0) > 0,
         summary: templates?.length
-          ? format.plural(t.counts.templates, templates.length)
+          ? format.plural(messages.counts.templates, templates.length)
           : null,
       },
     ]
-  const doneCount = steps.filter((s) => s.done).length
+  const doneCount = steps.filter((step) => step.done).length
 
   return (
     <div>
-      <SectionHeader title={t.overview.welcome} lead={t.overview.lead} />
+      <SectionHeader
+        title={messages.overview.welcome}
+        lead={messages.overview.lead}
+      />
 
       <div className="mb-6 max-w-md">
         <div className="mb-2 flex justify-between text-sm">
           <span id="setup-progress-label" className="font-medium">
-            {t.overview.progressLabel}
+            {messages.overview.progressLabel}
           </span>
           <span className="text-ink-soft">
-            {fmt(t.overview.progress, { done: doneCount, total: steps.length })}
+            {fmt(messages.overview.progress, {
+              done: doneCount,
+              total: steps.length,
+            })}
           </span>
         </div>
         <div
@@ -107,7 +115,7 @@ export function SettingsOverview() {
           aria-valuemin={0}
           aria-valuemax={steps.length}
           aria-valuenow={doneCount}
-          aria-valuetext={fmt(t.overview.progress, {
+          aria-valuetext={fmt(messages.overview.progress, {
             done: doneCount,
             total: steps.length,
           })}
@@ -122,7 +130,7 @@ export function SettingsOverview() {
 
       <ol className="space-y-3">
         {steps.map((step) => {
-          const copy = t.overview.steps[step.id]
+          const copy = messages.overview.steps[step.id]
           return (
             <li key={step.id}>
               <Link
@@ -145,7 +153,9 @@ export function SettingsOverview() {
                     {copy.title}
                     <span className="sr-only">
                       ,{' '}
-                      {step.done ? t.overview.doneLabel : t.overview.todoLabel}
+                      {step.done
+                        ? messages.overview.doneLabel
+                        : messages.overview.todoLabel}
                     </span>
                   </span>
                   <span className="block text-sm text-ink-soft">
@@ -153,7 +163,7 @@ export function SettingsOverview() {
                   </span>
                 </span>
                 <span className="hidden text-sm font-medium text-ink-soft group-hover:text-ink sm:block">
-                  {t.overview.open}
+                  {messages.overview.open}
                 </span>
                 <ChevronRight
                   aria-hidden

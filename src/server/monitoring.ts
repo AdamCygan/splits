@@ -84,7 +84,7 @@ export interface ErrorContext {
   level?: 'error' | 'warning'
 }
 
-let fetcher: typeof fetch = (...args) => fetch(...args)
+let fetcher: typeof fetch = (...callArguments) => fetch(...callArguments)
 let dsnOverride: string | null | undefined
 
 export interface MonitoringTestOptions {
@@ -99,7 +99,7 @@ export function setMonitoringForTests(options: MonitoringTestOptions) {
 }
 
 export function buildEvent(error: unknown, context: ErrorContext = {}) {
-  const err =
+  const caughtError =
     error instanceof Error ? error : new Error(String(error ?? 'Unknown error'))
   return {
     event_id: randomUUID().replace(/-/g, ''),
@@ -112,9 +112,9 @@ export function buildEvent(error: unknown, context: ErrorContext = {}) {
     exception: {
       values: [
         {
-          type: err.name,
-          value: err.message,
-          stacktrace: { frames: stackFrames(err.stack) },
+          type: caughtError.name,
+          value: caughtError.message,
+          stacktrace: { frames: stackFrames(caughtError.stack) },
         },
       ],
     },
@@ -152,7 +152,7 @@ export async function reportError(
     JSON.stringify(event),
   ].join('\n')
   try {
-    const res = await fetcher(target.endpoint, {
+    const response = await fetcher(target.endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-sentry-envelope',
@@ -161,8 +161,10 @@ export async function reportError(
       body,
       signal: AbortSignal.timeout(3000),
     })
-    if (!res.ok)
-      console.error(`[monitoring] Sentry odrzucił zgłoszenie: ${res.status}`)
+    if (!response.ok)
+      console.error(
+        `[monitoring] Sentry odrzucił zgłoszenie: ${response.status}`,
+      )
   } catch (sendError) {
     console.error('[monitoring] nie udało się wysłać zgłoszenia', sendError)
   }

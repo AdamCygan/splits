@@ -14,8 +14,8 @@ export const setClock = store.set
 export const useClockPref = store.use
 
 /** Czy pokazywać 12-godzinny zegar (AM/PM) dla danego języka. */
-export function uses12h(tag: string, pref: ClockPref = readClock()) {
-  if (pref !== 'auto') return pref === 'h12'
+export function uses12h(tag: string, preference: ClockPref = readClock()) {
+  if (preference !== 'auto') return preference === 'h12'
   return (
     new Intl.DateTimeFormat(tag, { hour: 'numeric' }).resolvedOptions()
       .hourCycle === 'h12'
@@ -38,11 +38,11 @@ export const clockTime = (tag: string, time: string) =>
 
 /** "HH:MM" (24h) do wyświetlenia w polu: "14:30" albo "2:30 PM". */
 export function displayTime(value: string, twelve: boolean) {
-  const m = /^(\d{2}):(\d{2})$/.exec(value)
-  if (!m) return value
-  const h = Number(m[1])
+  const match = /^(\d{2}):(\d{2})$/.exec(value)
+  if (!match) return value
+  const hours = Number(match[1])
   if (!twelve) return value
-  return `${h % 12 === 0 ? 12 : h % 12}:${m[2]} ${h < 12 ? 'AM' : 'PM'}`
+  return `${hours % 12 === 0 ? 12 : hours % 12}:${match[2]} ${hours < 12 ? 'AM' : 'PM'}`
 }
 
 /**
@@ -52,17 +52,17 @@ export function displayTime(value: string, twelve: boolean) {
 export function parseTime(raw: string): string | null {
   const text = raw.trim().toLowerCase().replace(/\s+/g, '')
   if (!text) return null
-  const m = /^(\d{1,2})(?:[:.h]?(\d{2}))?(a|am|p|pm)?$/.exec(text)
-  if (!m) return null
-  let h = Number(m[1])
-  const min = m[2] === undefined ? 0 : Number(m[2])
-  const suffix = m[3]
+  const match = /^(\d{1,2})(?:[:.h]?(\d{2}))?(a|am|p|pm)?$/.exec(text)
+  if (!match) return null
+  let hours = Number(match[1])
+  const min = match[2] === undefined ? 0 : Number(match[2])
+  const suffix = match[3]
   if (min > 59) return null
   if (suffix) {
-    if (h < 1 || h > 12) return null
-    if (suffix.startsWith('a')) h = h === 12 ? 0 : h
-    else h = h === 12 ? 12 : h + 12
+    if (hours < 1 || hours > 12) return null
+    if (suffix.startsWith('a')) hours = hours === 12 ? 0 : hours
+    else hours = hours === 12 ? 12 : hours + 12
   }
-  if (h > 23) return null
-  return `${pad(h)}:${pad(min)}`
+  if (hours > 23) return null
+  return `${pad(hours)}:${pad(min)}`
 }

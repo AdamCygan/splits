@@ -1,9 +1,9 @@
-import type * as t from '#/server/db/schema'
+import type * as schema from '#/server/db/schema'
 import type { FeedbackKind, FeedbackStatus } from '../domain/feedback'
 import type { AdminFeedback, Feedback } from './dto'
 
-type Row = typeof t.feedback.$inferSelect
-type UserRow = typeof t.users.$inferSelect
+type Row = typeof schema.feedback.$inferSelect
+type UserRow = typeof schema.users.$inferSelect
 
 export const toFeedback = (row: Row): Feedback => ({
   id: row.id,

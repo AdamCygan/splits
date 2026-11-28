@@ -2,7 +2,7 @@ import type { Dictionary } from '../context'
 import type { Plural } from '../format'
 
 /** Dni wolne: urlop, L4, święta (Dziś, Sprinty, Ustawienia). */
-const en = {
+const english = {
   kinds: {
     vacation: 'Vacation',
     sick: 'Sick leave',
@@ -78,9 +78,9 @@ const en = {
   },
 }
 
-export type DaysOffMessages = typeof en
+export type DaysOffMessages = typeof english
 
-const pl: DaysOffMessages = {
+const polish: DaysOffMessages = {
   kinds: {
     vacation: 'Urlop',
     sick: 'Zwolnienie lekarskie (L4)',
@@ -166,4 +166,7 @@ const pl: DaysOffMessages = {
   },
 }
 
-export const daysOffMessages: Dictionary<DaysOffMessages> = { en, pl }
+export const daysOffMessages: Dictionary<DaysOffMessages> = {
+  en: english,
+  pl: polish,
+}

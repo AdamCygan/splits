@@ -4,7 +4,7 @@ import type Stripe from 'stripe'
 
 import { z } from 'zod'
 
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 
 import type { Tx } from '#/server/db/client'
 
@@ -43,34 +43,36 @@ export const isActive = (status: string) =>
 
 /** Kopia subskrypcji ze Stripe w bazie + przeliczenie planu użytkownika. */
 export async function syncSubscription(
-  tx: Tx,
-  sub: Stripe.Subscription,
+  transaction: Tx,
+  subscription: Stripe.Subscription,
   knownUserId?: string | null,
 ) {
   const customerId =
-    typeof sub.customer === 'string' ? sub.customer : sub.customer.id
-  let userId = knownUserId ?? sub.metadata.userId ?? null
+    typeof subscription.customer === 'string'
+      ? subscription.customer
+      : subscription.customer.id
+  let userId = knownUserId ?? subscription.metadata.userId ?? null
   if (!userId) {
-    const [owner] = await tx
+    const [owner] = await transaction
       .select({ id: users.id })
       .from(users)
       .where(eq(users.stripeCustomerId, customerId))
     userId = owner?.id ?? null
   }
   if (!userId) return null
-  const [owner] = await tx
+  const [owner] = await transaction
     .select({ id: users.id })
     .from(users)
     .where(eq(users.id, userId))
   if (!owner) return null
 
-  const item = sub.items.data[0]
+  const item = subscription.items.data[0]
   const plan = item ? planForPrice(item.price) : null
   if (!item || !plan) return null
   const values = {
     userId,
     stripeCustomerId: customerId,
-    status: sub.status,
+    status: subscription.status,
     plan,
     priceId: item.price.id,
     interval: intervalOfPrice(item.price),
@@ -78,28 +80,29 @@ export async function syncSubscription(
     currentPeriodEnd: item.current_period_end
       ? new Date(item.current_period_end * 1000)
       : null,
-    cancelAtPeriodEnd: sub.cancel_at_period_end || sub.cancel_at !== null,
+    cancelAtPeriodEnd:
+      subscription.cancel_at_period_end || subscription.cancel_at !== null,
   }
-  await tx
+  await transaction
     .insert(subscriptions)
-    .values({ id: sub.id, ...values })
+    .values({ id: subscription.id, ...values })
     .onConflictDoUpdate({ target: subscriptions.id, set: values })
-  await tx
+  await transaction
     .update(users)
     .set({ stripeCustomerId: customerId })
     .where(and(eq(users.id, userId), isNull(users.stripeCustomerId)))
-  await recomputePlan(tx, userId)
+  await recomputePlan(transaction, userId)
   return userId
 }
 
 /** Plan = najlepsza aktywna subskrypcja; Lifetime (dawne zakupy) zostaje na zawsze. */
-export async function recomputePlan(tx: Tx, userId: string) {
-  const [user] = await tx
+export async function recomputePlan(transaction: Tx, userId: string) {
+  const [user] = await transaction
     .select({ plan: users.plan })
     .from(users)
     .where(eq(users.id, userId))
   if (!user || user.plan === 'lifetime') return
-  const active = await tx
+  const active = await transaction
     .select({ plan: subscriptions.plan })
     .from(subscriptions)
     .where(
@@ -108,13 +111,15 @@ export async function recomputePlan(tx: Tx, userId: string) {
         inArray(subscriptions.status, [...ACTIVE]),
       ),
     )
-  const plan = active.some((s) => s.plan === 'pro') ? 'pro' : 'free'
+  const plan = active.some((subscription) => subscription.plan === 'pro')
+    ? 'pro'
+    : 'free'
   if (plan !== user.plan)
-    await tx.update(users).set({ plan }).where(eq(users.id, userId))
+    await transaction.update(users).set({ plan }).where(eq(users.id, userId))
 }
 
 export async function latestSubscription(userId: string) {
-  const [row] = await db
+  const [row] = await database
     .select()
     .from(subscriptions)
     .where(eq(subscriptions.userId, userId))
@@ -135,7 +140,7 @@ export async function customerFor(user: typeof users.$inferSelect) {
     .catch(() => {
       throw new ApiError('billing.failed', 502)
     })
-  await db
+  await database
     .update(users)
     .set({ stripeCustomerId: customer.id })
     .where(eq(users.id, user.id))
@@ -159,15 +164,15 @@ export async function listInvoices(customerId: string | null) {
       console.error('[billing] invoices', error)
       throw new ApiError('billing.failed', 502)
     })
-  return list.data.map((i) => ({
-    id: i.id,
-    number: i.number ?? null,
-    date: new Date(i.created * 1000).toISOString(),
-    total: i.total,
-    currency: i.currency,
-    status: i.status ?? 'draft',
-    pdfUrl: i.invoice_pdf ?? null,
-    url: i.hosted_invoice_url ?? null,
+  return list.data.map((invoice) => ({
+    id: invoice.id,
+    number: invoice.number ?? null,
+    date: new Date(invoice.created * 1000).toISOString(),
+    total: invoice.total,
+    currency: invoice.currency,
+    status: invoice.status ?? 'draft',
+    pdfUrl: invoice.invoice_pdf ?? null,
+    url: invoice.hosted_invoice_url ?? null,
   }))
 }
 
@@ -190,7 +195,7 @@ export async function recordCharge(charge: Stripe.Charge) {
       ? charge.customer
       : (charge.customer?.id ?? null)
   const [owner] = customerId
-    ? await db
+    ? await database
         .select({ id: users.id })
         .from(users)
         .where(eq(users.stripeCustomerId, customerId))
@@ -203,7 +208,7 @@ export async function recordCharge(charge: Stripe.Charge) {
     currency: charge.currency,
     paidAt: new Date(charge.created * 1000),
   }
-  await db
+  await database
     .insert(payments)
     .values({ id: charge.id, ...values })
     .onConflictDoUpdate({
@@ -229,7 +234,7 @@ export async function endAfterRefund(charge: Stripe.Charge) {
   if (!charge.refunded || !charge.customer) return
   const customerId =
     typeof charge.customer === 'string' ? charge.customer : charge.customer.id
-  const rows = await db
+  const rows = await database
     .select({ id: subscriptions.id })
     .from(subscriptions)
     .where(
@@ -246,17 +251,21 @@ export async function endAfterRefund(charge: Stripe.Charge) {
         : await stripe().subscriptions.cancel(id, {
             cancellation_details: { comment: `Refund ${charge.id}` },
           })
-    await db.transaction((tx) => syncSubscription(tx, ended))
+    await database.transaction((transaction) =>
+      syncSubscription(transaction, ended),
+    )
   }
 }
 
 /** Przy usuwaniu konta: aktywne subskrypcje kończą się od razu (bez dalszych obciążeń). */
 export async function cancelSubscriptionsFor(userId: string) {
-  const rows = await db
+  const rows = await database
     .select({ id: subscriptions.id, status: subscriptions.status })
     .from(subscriptions)
     .where(eq(subscriptions.userId, userId))
-  for (const row of rows.filter((r) => r.status !== 'canceled'))
+  for (const row of rows.filter(
+    (subscription) => subscription.status !== 'canceled',
+  ))
     await stripe()
       .subscriptions.cancel(row.id)
       .catch((error: unknown) =>
@@ -268,18 +277,19 @@ export async function cancelSubscriptionsFor(userId: string) {
 export async function getBillingStatus(
   user: Awaited<ReturnType<typeof currentUser>>,
 ) {
-  const sub = await latestSubscription(user.id)
+  const subscription = await latestSubscription(user.id)
   return {
     enabled: billingEnabled(),
     plan: user.plan,
-    subscription: sub
+    subscription: subscription
       ? {
-          status: sub.status,
-          plan: sub.plan,
-          interval: sub.interval,
-          active: isActive(sub.status),
-          currentPeriodEnd: sub.currentPeriodEnd?.toISOString() ?? null,
-          cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
+          status: subscription.status,
+          plan: subscription.plan,
+          interval: subscription.interval,
+          active: isActive(subscription.status),
+          currentPeriodEnd:
+            subscription.currentPeriodEnd?.toISOString() ?? null,
+          cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
         }
       : null,
   }
@@ -303,11 +313,15 @@ export async function openCheckout(
   // Administrator ma Pro bez opłat, a Lifetime na zawsze: kupowanie nie ma sensu.
   if (user.plan === 'lifetime' || user.plan === plan || user.role === 'admin')
     throw new ApiError('billing.already_subscribed', 409)
-  const sub = await latestSubscription(user.id)
-  if (sub && isActive(sub.status) && sub.plan === plan)
+  const subscription = await latestSubscription(user.id)
+  if (
+    subscription &&
+    isActive(subscription.status) &&
+    subscription.plan === plan
+  )
     throw new ApiError('billing.already_subscribed', 409)
 
-  const [settings] = await db
+  const [settings] = await database
     .select({ locale: userSettings.locale })
     .from(userSettings)
     .where(eq(userSettings.userId, user.id))
@@ -359,8 +373,10 @@ export async function syncCheckout(
       ? session.subscription
       : session.subscription?.id
   if (subId) {
-    const sub = await stripe().subscriptions.retrieve(subId)
-    await db.transaction((tx) => syncSubscription(tx, sub, userId))
+    const subscription = await stripe().subscriptions.retrieve(subId)
+    await database.transaction((transaction) =>
+      syncSubscription(transaction, subscription, userId),
+    )
   }
   const user = await currentUser(userId)
   return { plan: user.plan, paid: session.payment_status === 'paid' }
@@ -389,7 +405,7 @@ export async function openPortal(
  * false = zdarzenie już było obsłużone.
  */
 export async function handleStripeEvent(event: Stripe.Event) {
-  const fresh = await db
+  const fresh = await database
     .insert(stripeEvents)
     .values({ id: event.id, type: event.type })
     .onConflictDoNothing()
@@ -404,9 +420,13 @@ export async function handleStripeEvent(event: Stripe.Event) {
           ? session.subscription
           : session.subscription?.id
       if (session.mode === 'subscription' && subId) {
-        const sub = await stripe().subscriptions.retrieve(subId)
-        await db.transaction((tx) =>
-          syncSubscription(tx, sub, session.client_reference_id),
+        const subscription = await stripe().subscriptions.retrieve(subId)
+        await database.transaction((transaction) =>
+          syncSubscription(
+            transaction,
+            subscription,
+            session.client_reference_id,
+          ),
         )
       }
     } else if (event.type === 'charge.succeeded') {
@@ -416,12 +436,14 @@ export async function handleStripeEvent(event: Stripe.Event) {
       await endAfterRefund(event.data.object)
     } else if (SUBSCRIPTION_EVENTS.has(event.type)) {
       const { id } = event.data.object as Stripe.Subscription
-      const sub = await stripe().subscriptions.retrieve(id)
-      await db.transaction((tx) => syncSubscription(tx, sub))
+      const subscription = await stripe().subscriptions.retrieve(id)
+      await database.transaction((transaction) =>
+        syncSubscription(transaction, subscription),
+      )
     }
   } catch (error) {
     // Zdarzenie nie zostało obsłużone: usuwamy znacznik, żeby ponowienie Stripe je przetworzyło.
-    await db.delete(stripeEvents).where(eq(stripeEvents.id, event.id))
+    await database.delete(stripeEvents).where(eq(stripeEvents.id, event.id))
     throw error
   }
   return true

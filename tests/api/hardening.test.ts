@@ -14,10 +14,10 @@ interface TaskType {
 }
 
 async function entryWithLink(link: string) {
-  const { c } = await registered()
-  const types = await c.get<Array<TaskType>>('/task-types')
-  const task = types.body.find((x) => x.kind === 'task')!
-  return c.post<Problem>('/time-entries', {
+  const { apiClient } = await registered()
+  const types = await apiClient.get<Array<TaskType>>('/task-types')
+  const task = types.body.find((taskType) => taskType.kind === 'task')!
+  return apiClient.post<Problem>('/time-entries', {
     taskTypeId: task.id,
     projectId: null,
     title: 'Linked task',
@@ -34,24 +34,24 @@ async function entryWithLink(link: string) {
 
 describe('API hardening', () => {
   it('Should send headers that stop the JSON from being run, framed or cached', async () => {
-    const res = await client().get('/meta')
-    expect(res.headers.get('content-security-policy')).toBe(
+    const response = await client().get('/meta')
+    expect(response.headers.get('content-security-policy')).toBe(
       "default-src 'none'; frame-ancestors 'none'",
     )
-    expect(res.headers.get('strict-transport-security')).toBe(
+    expect(response.headers.get('strict-transport-security')).toBe(
       'max-age=63072000; includeSubDomains',
     )
-    expect(res.headers.get('x-content-type-options')).toBe('nosniff')
-    expect(res.headers.get('cache-control')).toBe('no-store')
+    expect(response.headers.get('x-content-type-options')).toBe('nosniff')
+    expect(response.headers.get('cache-control')).toBe('no-store')
   })
 
   it('Should refuse a request body over the limit before parsing it', async () => {
-    const res = await client().post<Problem>('/auth/login', {
+    const response = await client().post<Problem>('/auth/login', {
       login: 'x',
       password: 'x'.repeat(MAX_BODY_BYTES),
     })
-    expect(res.status).toBe(413)
-    expect(res.body.code).toBe('validation.too_large')
+    expect(response.status).toBe(413)
+    expect(response.body.code).toBe('validation.too_large')
   })
 
   it('Should stop reading a streamed body without Content-Length at the limit', async () => {
@@ -78,9 +78,9 @@ describe('API hardening', () => {
   it.each([
     ['a foreign Origin', { Origin: 'https://evil.example.net' }],
     ['Sec-Fetch-Site: cross-site', { 'Sec-Fetch-Site': 'cross-site' }],
-  ])('Should refuse a session request with %s', async (_, headers) => {
-    const res = await client().post('/auth/refresh', undefined, headers)
-    expect(res.status).toBe(403)
+  ])('Should refuse a session request with %s', async (_unused, headers) => {
+    const response = await client().post('/auth/refresh', undefined, headers)
+    expect(response.status).toBe(403)
   })
 
   it.each([
@@ -88,13 +88,13 @@ describe('API hardening', () => {
     'data:text/html,<script>alert(1)</script>',
     'vbscript:msgbox(1)',
   ])('Should reject the task link %s', async (link) => {
-    const res = await entryWithLink(link)
-    expect(res.status).toBe(400)
-    expect(Object.keys(res.body.errors)).toEqual(['link'])
+    const response = await entryWithLink(link)
+    expect(response.status).toBe(400)
+    expect(Object.keys(response.body.errors)).toEqual(['link'])
   })
 
   it('Should keep an https task link', async () => {
-    const res = await entryWithLink('https://jira.example.com/browse/PH-1')
-    expect(res.status).toBe(201)
+    const response = await entryWithLink('https://jira.example.com/browse/PH-1')
+    expect(response.status).toBe(201)
   })
 })

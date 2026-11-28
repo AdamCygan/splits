@@ -16,45 +16,45 @@ const shares = [38, 17, 11, 9, 5]
  * widać stan końcowy. Czytniki dostają jeden opis.
  */
 export function SprintSplit() {
-  const t = useMessages(homeMessages).split
+  const messages = useMessages(homeMessages).split
   const types = useMessages(commonMessages).workTypes
   return (
     <div
       role="img"
-      aria-label={t.label}
+      aria-label={messages.label}
       className={`${card} select-none p-6 sm:p-8`}
     >
       <div aria-hidden>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <p className="type-heading text-2xl">{t.sprint}</p>
-          <p className="text-sm text-ink-soft">{t.total}</p>
+          <p className="type-heading text-2xl">{messages.sprint}</p>
+          <p className="text-sm text-ink-soft">{messages.total}</p>
         </div>
 
         <div className="relative mt-5">
           <div className="flex h-14 gap-1 overflow-hidden rounded-2xl">
-            {t.rows.map((row, i) => (
+            {messages.rows.map((row, index) => (
               <span
                 key={row.kind}
                 className="split-segment h-full"
                 style={{
-                  flex: shares[i],
+                  flex: shares[index],
                   background: workKindColors[row.kind as WorkKind].color,
-                  animationDelay: `${900 + i * 70}ms`,
+                  animationDelay: `${900 + index * 70}ms`,
                 }}
               />
             ))}
           </div>
           <p className="split-cover pointer-events-none absolute inset-0 flex items-center rounded-2xl bg-[#6b6f8a] px-5 font-semibold text-white">
-            {t.before}
+            {messages.before}
           </p>
         </div>
 
         <ul className="mt-6 space-y-2.5">
-          {t.rows.map((row, i) => (
+          {messages.rows.map((row, index) => (
             <li
               key={row.kind}
               className="split-row flex items-center gap-3"
-              style={{ animationDelay: `${1500 + i * 90}ms` }}
+              style={{ animationDelay: `${1500 + index * 90}ms` }}
             >
               <span
                 className="size-3 shrink-0 rounded-full"
@@ -75,8 +75,8 @@ export function SprintSplit() {
           className="split-row mt-6 flex items-baseline gap-3 border-t border-line pt-5"
           style={{ animationDelay: '2100ms' }}
         >
-          <span className="type-display text-5xl">{t.perSp}</span>
-          <span className="text-ink-soft">{t.perSpLabel}</span>
+          <span className="type-display text-5xl">{messages.perSp}</span>
+          <span className="text-ink-soft">{messages.perSpLabel}</span>
         </p>
       </div>
     </div>
@@ -85,7 +85,7 @@ export function SprintSplit() {
 
 /** Przerwane zadanie na osi czasu: dwa odcinki PAY-142 i hotfix pomiędzy nimi. */
 export function IntervalsVisual() {
-  const t = useMessages(homeMessages).intervals
+  const messages = useMessages(homeMessages).intervals
   const task = workKindColors.task.color
   const extra = workKindColors.additional_work.color
   // 6:40–10:00 = 200 minut; szerokości w procentach osi.
@@ -99,50 +99,50 @@ export function IntervalsVisual() {
   return (
     <div
       role="img"
-      aria-label={t.label}
+      aria-label={messages.label}
       className={`${card} select-none p-6 sm:p-8`}
     >
       <div aria-hidden>
         <div className="relative pt-7">
           <span className="absolute top-0 left-[20%] -translate-x-1/2 rounded-full bg-muted px-2 py-0.5 text-xs font-semibold">
-            {t.paused}
+            {messages.paused}
           </span>
           <span className="absolute top-0 left-[70%] -translate-x-1/2 rounded-full bg-muted px-2 py-0.5 text-xs font-semibold">
-            {t.resumed}
+            {messages.resumed}
           </span>
           <div className="flex h-12 overflow-clip rounded-xl bg-muted">
-            {blocks.map((b, i) => (
+            {blocks.map((block, index) => (
               <span
-                key={i}
+                key={index}
                 className="fill-on-view h-full border-r-2 border-surface last:border-r-0"
                 style={{
-                  width: `${b.width}%`,
-                  background: b.color,
-                  ['--fill-step' as string]: i,
+                  width: `${block.width}%`,
+                  background: block.color,
+                  ['--fill-step' as string]: index,
                 }}
               />
             ))}
           </div>
           <div className="relative mt-2 h-5 text-xs text-ink-soft tabular-nums">
-            {ticks.map((left, i) => (
+            {ticks.map((left, index) => (
               <span
                 key={left}
                 className="absolute"
                 style={{
                   left: `${left}%`,
                   transform:
-                    i === 0
+                    index === 0
                       ? 'none'
-                      : i === ticks.length - 1
+                      : index === ticks.length - 1
                         ? 'translateX(-100%)'
-                        : i === 2
+                        : index === 2
                           ? 'translateX(-100%)'
-                          : i === 3
+                          : index === 3
                             ? 'none'
                             : 'translateX(-50%)',
                 }}
               >
-                {t.times[i]}
+                {messages.times[index]}
               </span>
             ))}
           </div>
@@ -154,9 +154,9 @@ export function IntervalsVisual() {
               style={{ background: task }}
             />
             <span className="min-w-0 flex-1 truncate font-semibold">
-              {t.task}
+              {messages.task}
             </span>
-            <span className="text-sm text-ink-soft">{t.taskTotal}</span>
+            <span className="text-sm text-ink-soft">{messages.taskTotal}</span>
           </li>
           <li className="flex items-center gap-3">
             <span
@@ -164,9 +164,11 @@ export function IntervalsVisual() {
               style={{ background: extra }}
             />
             <span className="min-w-0 flex-1 truncate font-semibold">
-              {t.hotfix}
+              {messages.hotfix}
             </span>
-            <span className="text-sm text-ink-soft">{t.hotfixTotal}</span>
+            <span className="text-sm text-ink-soft">
+              {messages.hotfixTotal}
+            </span>
           </li>
         </ul>
       </div>
@@ -176,43 +178,45 @@ export function IntervalsVisual() {
 
 /** Raport per ticket z eksportem CSV: to, co dostaje klient albo review sprintu. */
 export function TimesheetVisual() {
-  const t = useMessages(homeMessages).timesheet
+  const messages = useMessages(homeMessages).timesheet
   return (
     <div
       role="img"
-      aria-label={t.label}
+      aria-label={messages.label}
       className={`${card} select-none p-6 sm:p-8`}
     >
       <div aria-hidden>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="type-heading text-2xl">{t.month}</p>
-            <p className="text-sm text-ink-soft">{t.by}</p>
+            <p className="type-heading text-2xl">{messages.month}</p>
+            <p className="text-sm text-ink-soft">{messages.by}</p>
           </div>
           <span className="inline-flex items-center gap-2 rounded-lg bg-[var(--ink-fixed)] px-3.5 py-2 text-sm font-semibold text-white">
             <Download className="size-4" />
-            {t.export}
+            {messages.export}
           </span>
         </div>
         <div className="mt-5 text-[0.9375rem]">
           <div className="grid grid-cols-[1fr_3rem_4.5rem] gap-3 pb-2 text-sm text-ink-soft">
-            <span>{t.ticket}</span>
-            <span className="text-right">{t.sp}</span>
-            <span className="text-right">{t.hours}</span>
+            <span>{messages.ticket}</span>
+            <span className="text-right">{messages.sp}</span>
+            <span className="text-right">{messages.hours}</span>
           </div>
-          {t.rows.map(([name, sp, hours]) => (
+          {messages.rows.map(([name, storyPoints, hours]) => (
             <div
               key={name}
               className="grid grid-cols-[1fr_3rem_4.5rem] gap-3 border-t border-line py-2.5"
             >
               <span className="truncate">{name}</span>
-              <span className="text-right tabular-nums">{sp}</span>
+              <span className="text-right tabular-nums">{storyPoints}</span>
               <span className="text-right tabular-nums">{hours}</span>
             </div>
           ))}
           <div className="grid grid-cols-[1fr_7.5rem] gap-3 border-t-2 border-ink pt-3 font-semibold">
-            <span>{t.total}</span>
-            <span className="text-right tabular-nums">{t.totalHours}</span>
+            <span>{messages.total}</span>
+            <span className="text-right tabular-nums">
+              {messages.totalHours}
+            </span>
           </div>
         </div>
       </div>

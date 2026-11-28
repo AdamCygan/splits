@@ -48,16 +48,16 @@ export function match<TError, TValue, TOut>(
 
 export function map<TError, TValue, TOut>(
   result: Result<TError, TValue>,
-  fn: (value: TValue) => TOut,
+  callback: (value: TValue) => TOut,
 ): Result<TError, TOut> {
-  return result.ok ? success(fn(result.value)) : result
+  return result.ok ? success(callback(result.value)) : result
 }
 
 export function mapError<TError, TOutError, TValue>(
   result: Result<TError, TValue>,
-  fn: (error: TError) => TOutError,
+  callback: (error: TError) => TOutError,
 ): Result<TOutError, TValue> {
-  return result.ok ? result : failure(fn(result.error))
+  return result.ok ? result : failure(callback(result.error))
 }
 
 export function unwrapOr<TError, TValue>(

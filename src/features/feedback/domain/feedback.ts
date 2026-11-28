@@ -52,11 +52,13 @@ export function browserLabel(userAgent: string) {
   const browser = ['Edg', 'OPR', 'Firefox', 'Chrome', 'Safari']
     .map((name) => new RegExp(`(${name})/(\\d+)`).exec(userAgent))
     .find(Boolean)
-  const os = /Windows|Mac OS X|Android|iPhone|iPad|Linux/
+  const operatingSystem = /Windows|Mac OS X|Android|iPhone|iPad|Linux/
     .exec(userAgent)?.[0]
     ?.replace('Mac OS X', 'macOS')
   const name = browser
     ? `${BROWSER_NAMES[browser[1]!] ?? browser[1]} ${browser[2]}`
     : null
-  return [name, os].filter(Boolean).join(', ') || userAgent.slice(0, 40)
+  return (
+    [name, operatingSystem].filter(Boolean).join(', ') || userAgent.slice(0, 40)
+  )
 }

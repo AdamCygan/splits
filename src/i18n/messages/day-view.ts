@@ -2,7 +2,7 @@ import type { Dictionary } from '../context'
 import type { Plural } from '../format'
 
 /** Podsumowanie jednego dnia (z wykresu w Raportach): sumy, oś dnia, zadania, notatki. */
-const en = {
+const english = {
   seoTitle: 'Day summary',
   back: 'Reports',
   previous: 'Previous day',
@@ -58,9 +58,9 @@ const en = {
   },
 }
 
-export type DayViewMessages = typeof en
+export type DayViewMessages = typeof english
 
-const pl: DayViewMessages = {
+const polish: DayViewMessages = {
   seoTitle: 'Podsumowanie dnia',
   back: 'Raporty',
   previous: 'Poprzedni dzień',
@@ -133,4 +133,7 @@ const pl: DayViewMessages = {
   },
 }
 
-export const dayViewMessages: Dictionary<DayViewMessages> = { en, pl }
+export const dayViewMessages: Dictionary<DayViewMessages> = {
+  en: english,
+  pl: polish,
+}

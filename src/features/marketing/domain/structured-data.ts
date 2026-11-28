@@ -46,7 +46,7 @@ function pricingOffers(): Array<Record<string, unknown>> {
  */
 export function landingJsonLd(locale: Locale): Array<Record<string, unknown>> {
   const common = commonMessages[locale]
-  const m = marketingMessages[locale]
+  const marketingMessage = marketingMessages[locale]
   const video = promoVideoFiles(locale)
 
   return [
@@ -84,8 +84,8 @@ export function landingJsonLd(locale: Locale): Array<Record<string, unknown>> {
         },
         {
           '@type': 'VideoObject',
-          name: m.video.name,
-          description: m.video.description,
+          name: marketingMessage.video.name,
+          description: marketingMessage.video.description,
           thumbnailUrl: [absoluteUrl(video.poster.webp)],
           contentUrl: absoluteUrl(video.src),
           uploadDate: promoVideoMeta.uploadDate,
@@ -94,11 +94,13 @@ export function landingJsonLd(locale: Locale): Array<Record<string, unknown>> {
         },
         {
           '@type': 'FAQPage',
-          mainEntity: m.faq.items.map(({ q, a }) => ({
-            '@type': 'Question',
-            name: q,
-            acceptedAnswer: { '@type': 'Answer', text: a },
-          })),
+          mainEntity: marketingMessage.faq.items.map(
+            ({ question, answer }) => ({
+              '@type': 'Question',
+              name: question,
+              acceptedAnswer: { '@type': 'Answer', text: answer },
+            }),
+          ),
         },
       ],
     },

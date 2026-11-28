@@ -33,11 +33,11 @@ import { WorkspaceMark } from './workspace-switcher'
 
 /** Ustawienia → Przestrzenie: lista, kolejność, kopiowanie, usuwanie i wybory „gdzie zastosować”. */
 export function WorkspacesSettings() {
-  const t = useMessages(workspacesMessages).settings
+  const messages = useMessages(workspacesMessages).settings
   const sections = useMessages(settingsMessages).sections
   return (
     <div className="space-y-6">
-      <SectionHeader title={sections.workspaces.title} lead={t.lead} />
+      <SectionHeader title={sections.workspaces.title} lead={messages.lead} />
       <WorkspaceList />
       <ApplyPreferences />
     </div>
@@ -45,7 +45,7 @@ export function WorkspacesSettings() {
 }
 
 function WorkspaceList() {
-  const t = useMessages(workspacesMessages)
+  const messages = useMessages(workspacesMessages)
   const app = useMessages(appMessages)
   const { items, current, canCreate, shortcutOf } = useWorkspaces()
   const actions = useWorkspaceActions()
@@ -55,7 +55,7 @@ function WorkspaceList() {
 
   return (
     <SettingsCard
-      title={t.settings.listTitle}
+      title={messages.settings.listTitle}
       actions={
         <Button
           onClick={openNewWorkspace}
@@ -63,15 +63,15 @@ function WorkspaceList() {
           aria-describedby={canCreate ? undefined : 'workspace-limit'}
         >
           <Plus aria-hidden className="size-4" />
-          {t.settings.create}
+          {messages.settings.create}
         </Button>
       }
     >
       {!canCreate && (
-        <PlanLimit id="workspace-limit">{t.settings.limit}</PlanLimit>
+        <PlanLimit id="workspace-limit">{messages.settings.limit}</PlanLimit>
       )}
       <ol className="divide-y divide-line">
-        {items.map((workspace, i) => {
+        {items.map((workspace, index) => {
           const isCurrent = workspace.id === current?.id
           const shortcut = shortcutOf(workspace.id)
           return (
@@ -83,11 +83,13 @@ function WorkspaceList() {
               <div className="min-w-0 flex-1">
                 <h3 className="truncate font-semibold">
                   {workspace.name}{' '}
-                  {isCurrent && <Badge tone="info">{t.settings.current}</Badge>}
+                  {isCurrent && (
+                    <Badge tone="info">{messages.settings.current}</Badge>
+                  )}
                 </h3>
                 {shortcut && items.length > 1 && (
                   <p className="text-sm text-ink-soft">
-                    {t.settings.shortcut} <Kbd>{shortcut}</Kbd>
+                    {messages.settings.shortcut} <Kbd>{shortcut}</Kbd>
                   </p>
                 )}
               </div>
@@ -98,7 +100,7 @@ function WorkspaceList() {
                     size="sm"
                     onClick={() => void actions.switchTo(workspace)}
                   >
-                    {t.settings.switchTo}
+                    {messages.settings.switchTo}
                     <span className="sr-only">: {workspace.name}</span>
                   </Button>
                 )}
@@ -107,18 +109,18 @@ function WorkspaceList() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      disabled={i === 0}
+                      disabled={index === 0}
                       onClick={() => actions.move(workspace.id, -1)}
-                      aria-label={`${t.settings.moveUp}: ${workspace.name}`}
+                      aria-label={`${messages.settings.moveUp}: ${workspace.name}`}
                     >
                       <ArrowUp aria-hidden className="size-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      disabled={i === items.length - 1}
+                      disabled={index === items.length - 1}
                       onClick={() => actions.move(workspace.id, 1)}
-                      aria-label={`${t.settings.moveDown}: ${workspace.name}`}
+                      aria-label={`${messages.settings.moveDown}: ${workspace.name}`}
                     >
                       <ArrowDown aria-hidden className="size-4" />
                     </Button>
@@ -128,9 +130,12 @@ function WorkspaceList() {
                       onClick={() => setCopying(workspace)}
                     >
                       <CopyPlus aria-hidden className="size-4" />
-                      {t.settings.copyButton}
+                      {messages.settings.copyButton}
                       <span className="sr-only">
-                        : {fmt(t.settings.copyLead, { name: workspace.name })}
+                        :{' '}
+                        {fmt(messages.settings.copyLead, {
+                          name: workspace.name,
+                        })}
                       </span>
                     </Button>
                   </>
@@ -183,7 +188,7 @@ interface DeleteWorkspaceProps {
 
 /** Usunięcie przestrzeni z całą zawartością: potwierdzenie wpisaniem nazwy. */
 function DeleteWorkspace({ workspace, onClose }: DeleteWorkspaceProps) {
-  const t = useMessages(workspacesMessages).settings
+  const messages = useMessages(workspacesMessages).settings
   const app = useMessages(appMessages)
   const { remove } = useWorkspaceActions()
   const [typed, setTyped] = useState('')
@@ -192,8 +197,8 @@ function DeleteWorkspace({ workspace, onClose }: DeleteWorkspaceProps) {
     <ConfirmDialog
       open
       onOpenChange={(open) => !open && onClose()}
-      title={fmt(t.deleteTitle, { name: workspace.name })}
-      description={t.deleteBody}
+      title={fmt(messages.deleteTitle, { name: workspace.name })}
+      description={messages.deleteBody}
       confirmLabel={app.actions.delete}
       cancelLabel={app.actions.cancel}
       destructive
@@ -203,14 +208,14 @@ function DeleteWorkspace({ workspace, onClose }: DeleteWorkspaceProps) {
         if (matches) remove.mutate(workspace, { onSuccess: onClose })
       }}
     >
-      <Field label={t.deleteConfirm} className="mt-4">
-        {(a) => (
+      <Field label={messages.deleteConfirm} className="mt-4">
+        {(fieldProps) => (
           <Input
-            {...a}
+            {...fieldProps}
             autoComplete="off"
             value={typed}
             placeholder={workspace.name}
-            onChange={(e) => setTyped(e.target.value)}
+            onChange={(event) => setTyped(event.target.value)}
           />
         )}
       </Field>
@@ -220,26 +225,29 @@ function DeleteWorkspace({ workspace, onClose }: DeleteWorkspaceProps) {
 
 /** Gdzie trafia każdy rodzaj zmian (pytaj / tylko bieżąca / wszystkie) i pytanie na start dnia. */
 function ApplyPreferences() {
-  const t = useMessages(workspacesMessages)
+  const messages = useMessages(workspacesMessages)
   const prefs = useApplyPreferences()
   return (
-    <SettingsCard title={t.settings.applyTitle} lead={t.settings.applyLead}>
+    <SettingsCard
+      title={messages.settings.applyTitle}
+      lead={messages.settings.applyLead}
+    >
       <div className="space-y-6">
         <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
           {prefs.rows.map((row) => (
             <div key={row.kind}>
-              <Field label={t.kindTitles[row.kind]}>
-                {(a) => (
+              <Field label={messages.kindTitles[row.kind]}>
+                {(fieldProps) => (
                   <Select
-                    {...a}
+                    {...fieldProps}
                     value={row.value}
-                    onChange={(e) =>
-                      prefs.set(row.kind, e.target.value as ApplyPreference)
+                    onChange={(event) =>
+                      prefs.set(row.kind, event.target.value as ApplyPreference)
                     }
                   >
-                    {APPLY_PREFERENCES.map((p) => (
-                      <option key={p} value={p}>
-                        {t.preferences[p]}
+                    {APPLY_PREFERENCES.map((applyPreference) => (
+                      <option key={applyPreference} value={applyPreference}>
+                        {messages.preferences[applyPreference]}
                       </option>
                     ))}
                   </Select>
@@ -249,8 +257,8 @@ function ApplyPreferences() {
           ))}
         </div>
         <Switch
-          label={t.settings.askDaily}
-          description={t.settings.askDailyHint}
+          label={messages.settings.askDaily}
+          description={messages.settings.askDailyHint}
           checked={prefs.askDaily}
           onCheckedChange={prefs.setAskDaily}
         />

@@ -13,36 +13,38 @@ import {
 } from '../data/repository.server'
 
 export const taskTypeRoutes = new Hono<AppEnv>()
-  .get('/', async (c) => c.json(await listTaskTypes(scopeOf(c))))
-  .post('/', async (c) => {
-    const input = cleanType(await body(c, taskTypeInput))
-    const scope = scopeOf(c)
+  .get('/', async (context) =>
+    context.json(await listTaskTypes(scopeOf(context))),
+  )
+  .post('/', async (context) => {
+    const input = cleanType(await body(context, taskTypeInput))
+    const scope = scopeOf(context)
     const created = await mirrored(
       scope,
-      applyOf(c),
+      applyOf(context),
       'workTypes',
       null,
       () => createTaskType(scope, input),
-      (r) => r.id,
+      (taskType) => taskType.id,
     )
-    return c.json(created, 201)
+    return context.json(created, 201)
   })
-  .put('/:id', async (c) => {
-    const input = cleanType(await body(c, taskTypeInput))
-    const scope = scopeOf(c)
-    const id = c.req.param('id')
-    return c.json(
-      await mirrored(scope, applyOf(c), 'workTypes', id, () =>
+  .put('/:id', async (context) => {
+    const input = cleanType(await body(context, taskTypeInput))
+    const scope = scopeOf(context)
+    const id = context.req.param('id')
+    return context.json(
+      await mirrored(scope, applyOf(context), 'workTypes', id, () =>
         updateTaskType(scope, id, input),
       ),
     )
   })
-  .post('/:id/:action{archive|restore}', async (c) => {
-    const archived = c.req.param('action') === 'archive'
-    const scope = scopeOf(c)
-    const id = c.req.param('id')
-    return c.json(
-      await mirrored(scope, applyOf(c), 'workTypes', id, () =>
+  .post('/:id/:action{archive|restore}', async (context) => {
+    const archived = context.req.param('action') === 'archive'
+    const scope = scopeOf(context)
+    const id = context.req.param('id')
+    return context.json(
+      await mirrored(scope, applyOf(context), 'workTypes', id, () =>
         setTaskTypeArchived(scope, id, archived),
       ),
     )

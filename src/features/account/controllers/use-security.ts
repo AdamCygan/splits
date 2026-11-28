@@ -20,10 +20,14 @@ export function useTwoFactorActions({
   onDone,
   onNewCodes,
 }: TwoFactorActionsOptions) {
-  const t = useMessages(settingsMessages).security
+  const messages = useMessages(settingsMessages).security
   const disable = useDataMutation(
     (identity: IdentityInput) => accountApi.twoFactorDisable(identity),
-    { invalidate: [keys.security], success: t.disabled, onSuccess: onDone },
+    {
+      invalidate: [keys.security],
+      success: messages.disabled,
+      onSuccess: onDone,
+    },
   )
   const regenerate = useDataMutation(
     (identity: IdentityInput) => accountApi.newRecoveryCodes(identity),
@@ -56,12 +60,12 @@ export function useTwoFactorSetup({
   hasPassword,
   onEnabled,
 }: TwoFactorSetupOptions) {
-  const t = useMessages(settingsMessages).security
+  const messages = useMessages(settingsMessages).security
   const [secret, setSecret] = useState<{
     secret: string
     otpauthUrl: string
   } | null>(null)
-  const [qr, setQr] = useState('')
+  const [qrCode, setQr] = useState('')
   const start = useDataMutation(() => accountApi.twoFactorSetup(), {
     invalidate: [],
     onSuccess: setSecret,
@@ -75,7 +79,7 @@ export function useTwoFactorSetup({
       }),
     {
       invalidate: [keys.security, keys.sessions],
-      success: t.enabled,
+      success: messages.enabled,
       onSuccess: (result) => onEnabled(result.recoveryCodes),
     },
   )
@@ -89,20 +93,20 @@ export function useTwoFactorSetup({
       QR.toDataURL(secret.otpauthUrl, { margin: 1, width: 400 }).then(setQr),
     )
   }, [secret])
-  return { secret, qr, enable }
+  return { secret, qrCode, enable }
 }
 
 /** Zalogowane urządzenia: lista sesji, wylogowanie jednej albo wszystkich poza bieżącą. */
 export function useDevices() {
-  const t = useMessages(settingsMessages).security
+  const messages = useMessages(settingsMessages).security
   const sessions = useQuery(sessionsQuery).data ?? []
   const revoke = useDataMutation((id: string) => accountApi.revokeSession(id), {
     invalidate: [keys.sessions],
-    success: t.signedOut,
+    success: messages.signedOut,
   })
   const others = useDataMutation(() => accountApi.revokeOtherSessions(), {
     invalidate: [keys.sessions],
-    success: t.othersSignedOut,
+    success: messages.othersSignedOut,
   })
   return { sessions, revoke, others }
 }

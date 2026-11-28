@@ -1,7 +1,7 @@
 import type { Dictionary } from '../context'
 
 /** Komunikaty dla stabilnych kodów błędów z API (ApiFailure.code). */
-const en = {
+const english = {
   'network.unreachable':
     'Can’t reach the server. Check your connection and try again.',
   'auth.invalid_credentials': 'That username or password isn’t right.',
@@ -82,9 +82,9 @@ const en = {
   'server.unexpected': 'Something went wrong on our side. Try again.',
 }
 
-export type ErrorMessages = Record<keyof typeof en, string>
+export type ErrorMessages = Record<keyof typeof english, string>
 
-const pl: ErrorMessages = {
+const polish: ErrorMessages = {
   'network.unreachable':
     'Brak połączenia z serwerem. Sprawdź internet i spróbuj ponownie.',
   'auth.invalid_credentials': 'Nieprawidłowy login lub hasło.',
@@ -169,8 +169,11 @@ const pl: ErrorMessages = {
     'Coś poszło nie tak po naszej stronie. Spróbuj ponownie.',
 }
 
-export const errorMessages: Dictionary<ErrorMessages> = { en, pl }
+export const errorMessages: Dictionary<ErrorMessages> = {
+  en: english,
+  pl: polish,
+}
 
 export type ErrorCode = keyof ErrorMessages
 
-export const isKnownError = (code: string): code is ErrorCode => code in en
+export const isKnownError = (code: string): code is ErrorCode => code in english

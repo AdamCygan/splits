@@ -17,7 +17,7 @@ export const Route = createFileRoute('/app/settings')({
 })
 
 function SettingsLayout() {
-  const t = useMessages(settingsMessages)
+  const messages = useMessages(settingsMessages)
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
@@ -45,11 +45,11 @@ function SettingsLayout() {
   return (
     <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-[15rem_minmax(0,1fr)]">
       <nav
-        aria-label={t.sectionsLabel}
+        aria-label={messages.sectionsLabel}
         className="min-w-0 lg:sticky lg:top-10 lg:self-start"
       >
         <p className="mb-3 hidden text-sm font-semibold text-ink-soft lg:block">
-          {t.title}
+          {messages.title}
         </p>
         {/* Telefon/tablet: poziomy pasek przewijany palcem */}
         <ul
@@ -65,9 +65,9 @@ function SettingsLayout() {
               >
                 <Icon aria-hidden className="size-4 shrink-0" />
                 <span className="flex flex-col">
-                  <span>{t.sections[key].title}</span>
+                  <span>{messages.sections[key].title}</span>
                   <span className="hidden text-xs font-normal text-ink-soft group-data-[status=active]:text-[var(--on-selected)]/75 lg:block">
-                    {t.sections[key].text}
+                    {messages.sections[key].text}
                   </span>
                 </span>
               </Link>
@@ -83,7 +83,7 @@ function SettingsLayout() {
                   id={`settings-group-${group}`}
                   className="mb-1.5 px-3 text-xs font-medium text-ink-faint"
                 >
-                  {t.groups[group]}
+                  {messages.groups[group]}
                 </p>
               )}
               <ul
@@ -93,7 +93,7 @@ function SettingsLayout() {
                 className="flex flex-col gap-0.5"
               >
                 {settingsSections
-                  .filter((x) => x.group === group)
+                  .filter((settingsSection) => settingsSection.group === group)
                   .map(({ to, key, icon: Icon, exact }) => (
                     <li key={to}>
                       <Link
@@ -103,9 +103,9 @@ function SettingsLayout() {
                       >
                         <Icon aria-hidden className="size-4 shrink-0" />
                         <span className="flex flex-col">
-                          <span>{t.sections[key].title}</span>
+                          <span>{messages.sections[key].title}</span>
                           <span className="hidden text-xs font-normal text-ink-soft group-data-[status=active]:text-[var(--on-selected)]/75 lg:block">
-                            {t.sections[key].text}
+                            {messages.sections[key].text}
                           </span>
                         </span>
                       </Link>

@@ -22,25 +22,25 @@ export const STATUS_TONES = {
 
 /** Ustawienia → Pomoc: zgłoszenie problemu albo pomysłu i odpowiedzi na wcześniejsze. */
 export function HelpSettings() {
-  const t = useMessages(feedbackMessages)
+  const messages = useMessages(feedbackMessages)
   const reports = useMyFeedback()
   return (
     <div>
-      <SectionHeader title={t.help.title} lead={t.help.lead} />
+      <SectionHeader title={messages.help.title} lead={messages.help.lead} />
       <div className="space-y-6">
         <SettingsCard
-          title={t.help.reportsTitle}
+          title={messages.help.reportsTitle}
           actions={
             <Button onClick={() => openFeedback('bug')}>
               <MessageSquarePlus aria-hidden className="size-4" />
-              {t.open}
+              {messages.open}
             </Button>
           }
         >
           {reports.isPending ? (
             <p className="text-ink-soft">…</p>
           ) : (reports.data ?? []).length === 0 ? (
-            <p className="text-ink-soft">{t.help.empty}</p>
+            <p className="text-ink-soft">{messages.help.empty}</p>
           ) : (
             <ul className="divide-y divide-line">
               {reports.data!.map((report) => (
@@ -49,9 +49,9 @@ export function HelpSettings() {
             </ul>
           )}
         </SettingsCard>
-        <SettingsCard title={t.help.contactTitle}>
+        <SettingsCard title={messages.help.contactTitle}>
           <p className="text-ink-soft">
-            {fmt(t.help.contactLead, { email: site.supportEmail })}
+            {fmt(messages.help.contactLead, { email: site.supportEmail })}
           </p>
         </SettingsCard>
       </div>
@@ -64,19 +64,21 @@ interface ReportItemProps {
 }
 
 function ReportItem({ report }: ReportItemProps) {
-  const t = useMessages(feedbackMessages)
+  const messages = useMessages(feedbackMessages)
   const format = useFormat()
   const Icon = KIND_ICONS[report.kind]
   return (
     <li className="py-4 first:pt-0 last:pb-0">
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <Icon aria-hidden className="size-4 text-ink-soft" />
-        <span className="font-medium">{t.dialog.kinds[report.kind]}</span>
+        <span className="font-medium">
+          {messages.dialog.kinds[report.kind]}
+        </span>
         <Badge tone={STATUS_TONES[report.status]}>
-          {t.statuses[report.status]}
+          {messages.statuses[report.status]}
         </Badge>
         <span className="text-ink-soft">
-          {fmt(t.help.sentOn, {
+          {fmt(messages.help.sentOn, {
             date: format.day(report.createdAt.slice(0, 10), { year: true }),
           })}
         </span>
@@ -84,7 +86,7 @@ function ReportItem({ report }: ReportItemProps) {
       <p className="mt-2 whitespace-pre-wrap break-words">{report.message}</p>
       {report.reply && (
         <div className="mt-3 rounded-lg border-l-4 border-[var(--accent)] bg-muted px-4 py-3">
-          <p className="text-sm font-medium">{t.help.reply}</p>
+          <p className="text-sm font-medium">{messages.help.reply}</p>
           <p className="mt-1 whitespace-pre-wrap break-words">{report.reply}</p>
         </div>
       )}

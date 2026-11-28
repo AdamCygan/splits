@@ -80,130 +80,133 @@ type Kind =
 
 const accountTexts: Record<
   Locale,
-  Record<Kind, { subject: string; body: (v: Record<string, string>) => string }>
+  Record<
+    Kind,
+    { subject: string; body: (variables: Record<string, string>) => string }
+  >
 > = {
   en: {
     verify: {
       subject: 'Confirm your email for Timeblame',
-      body: (v) =>
-        `Hi ${v.name},\n\nConfirm that this is your email address by opening this link within 24 hours:\n\n${v.link}\n\nIf you didn’t create a Timeblame account, ignore this email.\n\nTimeblame`,
+      body: (variables) =>
+        `Hi ${variables.name},\n\nConfirm that this is your email address by opening this link within 24 hours:\n\n${variables.link}\n\nIf you didn’t create a Timeblame account, ignore this email.\n\nTimeblame`,
     },
     emailChange: {
       subject: 'Confirm your new email for Timeblame',
-      body: (v) =>
-        `Hi ${v.name},\n\nYou asked to use this address for your Timeblame account. Open this link within 24 hours to confirm:\n\n${v.link}\n\nIf it wasn’t you, ignore this email and nothing changes.\n\nTimeblame`,
+      body: (variables) =>
+        `Hi ${variables.name},\n\nYou asked to use this address for your Timeblame account. Open this link within 24 hours to confirm:\n\n${variables.link}\n\nIf it wasn’t you, ignore this email and nothing changes.\n\nTimeblame`,
     },
     emailChangeNotice: {
       subject: 'Your Timeblame email is about to change',
-      body: (v) =>
-        `Hi ${v.name},\n\nSomeone asked to change the email of your Timeblame account to ${v.email}. It changes only after that address is confirmed.\n\nIf it wasn’t you, change your password now and turn on two-step login: ${v.link}\n\nTimeblame`,
+      body: (variables) =>
+        `Hi ${variables.name},\n\nSomeone asked to change the email of your Timeblame account to ${variables.email}. It changes only after that address is confirmed.\n\nIf it wasn’t you, change your password now and turn on two-step login: ${variables.link}\n\nTimeblame`,
     },
     emailChanged: {
       subject: 'Your Timeblame email was changed',
-      body: (v) =>
-        `Hi ${v.name},\n\nYour Timeblame account now uses ${v.email}. This address won’t get emails about the account anymore.\n\nIf it wasn’t you, reply to this email or write to ${v.support}.\n\nTimeblame`,
+      body: (variables) =>
+        `Hi ${variables.name},\n\nYour Timeblame account now uses ${variables.email}. This address won’t get emails about the account anymore.\n\nIf it wasn’t you, reply to this email or write to ${variables.support}.\n\nTimeblame`,
     },
     passwordChanged: {
       subject: 'Your Timeblame password was changed',
-      body: (v) =>
-        `Hi ${v.name},\n\nThe password of your Timeblame account was just changed and other devices were signed out.\n\nIf it wasn’t you, reset your password: ${v.link}\n\nTimeblame`,
+      body: (variables) =>
+        `Hi ${variables.name},\n\nThe password of your Timeblame account was just changed and other devices were signed out.\n\nIf it wasn’t you, reset your password: ${variables.link}\n\nTimeblame`,
     },
     twoFactorOn: {
       subject: 'Two-step login is on',
-      body: (v) =>
-        `Hi ${v.name},\n\nTwo-step login is now on for your Timeblame account. Keep your backup codes somewhere safe.\n\nIf it wasn’t you, reset your password: ${v.link}\n\nTimeblame`,
+      body: (variables) =>
+        `Hi ${variables.name},\n\nTwo-step login is now on for your Timeblame account. Keep your backup codes somewhere safe.\n\nIf it wasn’t you, reset your password: ${variables.link}\n\nTimeblame`,
     },
     twoFactorOff: {
       subject: 'Two-step login was turned off',
-      body: (v) =>
-        `Hi ${v.name},\n\nTwo-step login was turned off for your Timeblame account.\n\nIf it wasn’t you, reset your password and turn it back on: ${v.link}\n\nTimeblame`,
+      body: (variables) =>
+        `Hi ${variables.name},\n\nTwo-step login was turned off for your Timeblame account.\n\nIf it wasn’t you, reset your password and turn it back on: ${variables.link}\n\nTimeblame`,
     },
     accountDeleted: {
       subject: 'Your Timeblame account was deleted',
-      body: (v) =>
-        `Hi ${v.name},\n\nYour Timeblame account and all its data were deleted, and any subscription was canceled. Thanks for trying Timeblame.\n\nTimeblame`,
+      body: (variables) =>
+        `Hi ${variables.name},\n\nYour Timeblame account and all its data were deleted, and any subscription was canceled. Thanks for trying Timeblame.\n\nTimeblame`,
     },
     deleteCode: {
       subject: 'Your code to delete your Timeblame account',
-      body: (v) =>
-        `Hi ${v.name},\n\nYour code to delete your Timeblame account is:\n\n${v.code}\n\nIt works for ${v.minutes} minutes. Deleting removes all your time entries and settings for good.\n\nIf you didn’t ask for this, ignore this email: your account stays as it is.\n\nTimeblame`,
+      body: (variables) =>
+        `Hi ${variables.name},\n\nYour code to delete your Timeblame account is:\n\n${variables.code}\n\nIt works for ${variables.minutes} minutes. Deleting removes all your time entries and settings for good.\n\nIf you didn’t ask for this, ignore this email: your account stays as it is.\n\nTimeblame`,
     },
     feedbackReply: {
       subject: 'Reply to your Timeblame report',
-      body: (v) =>
-        `Hi ${v.name},\n\nYou wrote to us:\n\n> ${v.message}\n\nOur reply:\n\n${v.reply}\n\nYou’ll find all your reports and replies in Settings → Help: ${v.link}\n\nTimeblame`,
+      body: (variables) =>
+        `Hi ${variables.name},\n\nYou wrote to us:\n\n> ${variables.message}\n\nOur reply:\n\n${variables.reply}\n\nYou’ll find all your reports and replies in Settings → Help: ${variables.link}\n\nTimeblame`,
     },
     feedbackNew: {
       subject: 'New report in Timeblame: {kind}',
-      body: (v) =>
-        `${v.email} (${v.plan}) sent a report (${v.kind}) from ${v.page}:\n\n${v.message}\n\nOpen the inbox: ${v.link}`,
+      body: (variables) =>
+        `${variables.email} (${variables.plan}) sent a report (${variables.kind}) from ${variables.page}:\n\n${variables.message}\n\nOpen the inbox: ${variables.link}`,
     },
     reminder: {
       subject: 'Log today’s work in Timeblame',
-      body: (v) =>
-        `Hi ${v.name},\n\nSo far today you’ve logged ${v.logged} of ${v.target}. Add anything that’s missing while you still remember it:\n\n${v.link}\n\nYou can change or turn off this reminder in Settings → Workday.\n\nTimeblame`,
+      body: (variables) =>
+        `Hi ${variables.name},\n\nSo far today you’ve logged ${variables.logged} of ${variables.target}. Add anything that’s missing while you still remember it:\n\n${variables.link}\n\nYou can change or turn off this reminder in Settings → Workday.\n\nTimeblame`,
     },
   },
   pl: {
     verify: {
       subject: 'Potwierdź adres e-mail w Timeblame',
-      body: (v) =>
-        `Cześć ${v.name},\n\nPotwierdź, że to Twój adres, otwierając ten link w ciągu 24 godzin:\n\n${v.link}\n\nJeśli nie zakładałeś konta w Timeblame, zignoruj tę wiadomość.\n\nTimeblame`,
+      body: (variables) =>
+        `Cześć ${variables.name},\n\nPotwierdź, że to Twój adres, otwierając ten link w ciągu 24 godzin:\n\n${variables.link}\n\nJeśli nie zakładałeś konta w Timeblame, zignoruj tę wiadomość.\n\nTimeblame`,
     },
     emailChange: {
       subject: 'Potwierdź nowy adres e-mail w Timeblame',
-      body: (v) =>
-        `Cześć ${v.name},\n\nPoprosiłeś o używanie tego adresu w koncie Timeblame. Otwórz ten link w ciągu 24 godzin, żeby to potwierdzić:\n\n${v.link}\n\nJeśli to nie Ty, zignoruj tę wiadomość. Nic się nie zmieni.\n\nTimeblame`,
+      body: (variables) =>
+        `Cześć ${variables.name},\n\nPoprosiłeś o używanie tego adresu w koncie Timeblame. Otwórz ten link w ciągu 24 godzin, żeby to potwierdzić:\n\n${variables.link}\n\nJeśli to nie Ty, zignoruj tę wiadomość. Nic się nie zmieni.\n\nTimeblame`,
     },
     emailChangeNotice: {
       subject: 'Adres e-mail w Timeblame ma się zmienić',
-      body: (v) =>
-        `Cześć ${v.name},\n\nKtoś poprosił o zmianę adresu e-mail Twojego konta w Timeblame na ${v.email}. Zmiana nastąpi dopiero po potwierdzeniu tego adresu.\n\nJeśli to nie Ty, od razu zmień hasło i włącz logowanie dwuetapowe: ${v.link}\n\nTimeblame`,
+      body: (variables) =>
+        `Cześć ${variables.name},\n\nKtoś poprosił o zmianę adresu e-mail Twojego konta w Timeblame na ${variables.email}. Zmiana nastąpi dopiero po potwierdzeniu tego adresu.\n\nJeśli to nie Ty, od razu zmień hasło i włącz logowanie dwuetapowe: ${variables.link}\n\nTimeblame`,
     },
     emailChanged: {
       subject: 'Adres e-mail w Timeblame został zmieniony',
-      body: (v) =>
-        `Cześć ${v.name},\n\nTwoje konto w Timeblame używa teraz adresu ${v.email}. Na ten adres nie będą już przychodzić wiadomości o koncie.\n\nJeśli to nie Ty, odpowiedz na tę wiadomość albo napisz na ${v.support}.\n\nTimeblame`,
+      body: (variables) =>
+        `Cześć ${variables.name},\n\nTwoje konto w Timeblame używa teraz adresu ${variables.email}. Na ten adres nie będą już przychodzić wiadomości o koncie.\n\nJeśli to nie Ty, odpowiedz na tę wiadomość albo napisz na ${variables.support}.\n\nTimeblame`,
     },
     passwordChanged: {
       subject: 'Hasło w Timeblame zostało zmienione',
-      body: (v) =>
-        `Cześć ${v.name},\n\nHasło do Twojego konta w Timeblame zostało właśnie zmienione, a inne urządzenia wylogowane.\n\nJeśli to nie Ty, ustaw nowe hasło: ${v.link}\n\nTimeblame`,
+      body: (variables) =>
+        `Cześć ${variables.name},\n\nHasło do Twojego konta w Timeblame zostało właśnie zmienione, a inne urządzenia wylogowane.\n\nJeśli to nie Ty, ustaw nowe hasło: ${variables.link}\n\nTimeblame`,
     },
     twoFactorOn: {
       subject: 'Logowanie dwuetapowe jest włączone',
-      body: (v) =>
-        `Cześć ${v.name},\n\nLogowanie dwuetapowe jest włączone dla Twojego konta w Timeblame. Przechowuj kody zapasowe w bezpiecznym miejscu.\n\nJeśli to nie Ty, ustaw nowe hasło: ${v.link}\n\nTimeblame`,
+      body: (variables) =>
+        `Cześć ${variables.name},\n\nLogowanie dwuetapowe jest włączone dla Twojego konta w Timeblame. Przechowuj kody zapasowe w bezpiecznym miejscu.\n\nJeśli to nie Ty, ustaw nowe hasło: ${variables.link}\n\nTimeblame`,
     },
     twoFactorOff: {
       subject: 'Logowanie dwuetapowe zostało wyłączone',
-      body: (v) =>
-        `Cześć ${v.name},\n\nLogowanie dwuetapowe zostało wyłączone dla Twojego konta w Timeblame.\n\nJeśli to nie Ty, ustaw nowe hasło i włącz je ponownie: ${v.link}\n\nTimeblame`,
+      body: (variables) =>
+        `Cześć ${variables.name},\n\nLogowanie dwuetapowe zostało wyłączone dla Twojego konta w Timeblame.\n\nJeśli to nie Ty, ustaw nowe hasło i włącz je ponownie: ${variables.link}\n\nTimeblame`,
     },
     accountDeleted: {
       subject: 'Konto w Timeblame zostało usunięte',
-      body: (v) =>
-        `Cześć ${v.name},\n\nTwoje konto w Timeblame i wszystkie jego dane zostały usunięte, a subskrypcja anulowana. Dzięki, że wypróbowałeś Timeblame.\n\nTimeblame`,
+      body: (variables) =>
+        `Cześć ${variables.name},\n\nTwoje konto w Timeblame i wszystkie jego dane zostały usunięte, a subskrypcja anulowana. Dzięki, że wypróbowałeś Timeblame.\n\nTimeblame`,
     },
     deleteCode: {
       subject: 'Kod do usunięcia konta w Timeblame',
-      body: (v) =>
-        `Cześć ${v.name},\n\nTwój kod do usunięcia konta w Timeblame:\n\n${v.code}\n\nDziała przez ${v.minutes} minut. Usunięcie kasuje na zawsze wszystkie wpisy czasu i ustawienia.\n\nJeśli to nie Ty, zignoruj tę wiadomość: konto zostaje bez zmian.\n\nTimeblame`,
+      body: (variables) =>
+        `Cześć ${variables.name},\n\nTwój kod do usunięcia konta w Timeblame:\n\n${variables.code}\n\nDziała przez ${variables.minutes} minut. Usunięcie kasuje na zawsze wszystkie wpisy czasu i ustawienia.\n\nJeśli to nie Ty, zignoruj tę wiadomość: konto zostaje bez zmian.\n\nTimeblame`,
     },
     feedbackReply: {
       subject: 'Odpowiedź na Twoje zgłoszenie w Timeblame',
-      body: (v) =>
-        `Cześć ${v.name},\n\nNapisałeś do nas:\n\n> ${v.message}\n\nNasza odpowiedź:\n\n${v.reply}\n\nWszystkie zgłoszenia i odpowiedzi znajdziesz w Ustawienia → Pomoc: ${v.link}\n\nTimeblame`,
+      body: (variables) =>
+        `Cześć ${variables.name},\n\nNapisałeś do nas:\n\n> ${variables.message}\n\nNasza odpowiedź:\n\n${variables.reply}\n\nWszystkie zgłoszenia i odpowiedzi znajdziesz w Ustawienia → Pomoc: ${variables.link}\n\nTimeblame`,
     },
     feedbackNew: {
       subject: 'Nowe zgłoszenie w Timeblame: {kind}',
-      body: (v) =>
-        `${v.email} (${v.plan}) wysłał zgłoszenie (${v.kind}) ze strony ${v.page}:\n\n${v.message}\n\nSkrzynka zgłoszeń: ${v.link}`,
+      body: (variables) =>
+        `${variables.email} (${variables.plan}) wysłał zgłoszenie (${variables.kind}) ze strony ${variables.page}:\n\n${variables.message}\n\nSkrzynka zgłoszeń: ${variables.link}`,
     },
     reminder: {
       subject: 'Wpisz dzisiejszą pracę w Timeblame',
-      body: (v) =>
-        `Cześć ${v.name},\n\nDziś masz wpisane ${v.logged} z ${v.target}. Dopisz brakujące rzeczy, póki pamiętasz:\n\n${v.link}\n\nPrzypomnienie zmienisz albo wyłączysz w Ustawienia → Dzień pracy.\n\nTimeblame`,
+      body: (variables) =>
+        `Cześć ${variables.name},\n\nDziś masz wpisane ${variables.logged} z ${variables.target}. Dopisz brakujące rzeczy, póki pamiętasz:\n\n${variables.link}\n\nPrzypomnienie zmienisz albo wyłączysz w Ustawienia → Dzień pracy.\n\nTimeblame`,
     },
   },
 }
@@ -213,15 +216,15 @@ export function accountEmail(
   kind: Kind,
   locale: Locale,
   to: string,
-  vars: Record<string, string>,
+  variables: Record<string, string>,
 ): Email {
   const text = accountTexts[locale][kind]
   return {
     to,
     subject: text.subject.replace(
       /\{(\w+)\}/g,
-      (_, key: string) => vars[key] ?? '',
+      (_unused, key: string) => variables[key] ?? '',
     ),
-    text: text.body(vars),
+    text: text.body(variables),
   }
 }

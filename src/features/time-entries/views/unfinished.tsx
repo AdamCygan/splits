@@ -24,7 +24,7 @@ export interface UnfinishedTasksProps {
  * „Kontynuuj” startuje nową sesję (jak „Wznów”), „Zakończone” zdejmuje zadanie z listy.
  */
 export function UnfinishedTasks({ today }: UnfinishedTasksProps) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const tasks = useQuery(unfinishedQuery).data ?? []
   const resume = useResumeTask()
   const finish = useFinishTask()
@@ -38,9 +38,9 @@ export function UnfinishedTasks({ today }: UnfinishedTasksProps) {
     >
       <header className="border-b border-line px-5 py-4 sm:px-6">
         <h2 id="unfinished-tasks" className="type-heading text-xl">
-          {t.unfinished.title}
+          {messages.unfinished.title}
         </h2>
-        <p className="mt-1 text-sm text-ink-soft">{t.unfinished.lead}</p>
+        <p className="mt-1 text-sm text-ink-soft">{messages.unfinished.lead}</p>
       </header>
       <ul className="divide-y divide-line">
         {tasks.map((task) => (
@@ -75,16 +75,16 @@ function UnfinishedRow({
   onContinue,
   onFinish,
 }: UnfinishedRowProps) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const format = useFormat()
   const types = useQuery(taskTypesQuery).data ?? []
   const projects = useQuery(projectsQuery).data ?? []
   const { entry } = task
-  const type = types.find((x) => x.id === entry.taskTypeId)
-  const project = projects.find((p) => p.id === entry.projectId)
+  const type = types.find((workType) => workType.id === entry.taskTypeId)
+  const project = projects.find((candidate) => candidate.id === entry.projectId)
   const when =
     task.lastDate === addDays(today, -1)
-      ? t.day.yesterday
+      ? messages.day.yesterday
       : format.day(task.lastDate)
 
   return (
@@ -102,12 +102,15 @@ function UnfinishedRow({
           <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
             <span>{type?.name}</span>
             <span aria-hidden>·</span>
-            <span>{fmt(t.unfinished.lastWorked, { date: when })}</span>
+            <span>{fmt(messages.unfinished.lastWorked, { date: when })}</span>
             <span aria-hidden>·</span>
             <span className="tabular-nums">
-              {fmt(t.unfinished.worked, {
+              {fmt(messages.unfinished.worked, {
                 time: format.minutes(task.workedMinutes),
-                sessions: format.plural(t.unfinished.sessions, task.sessions),
+                sessions: format.plural(
+                  messages.unfinished.sessions,
+                  task.sessions,
+                ),
               })}
             </span>
             {project && (
@@ -121,20 +124,24 @@ function UnfinishedRow({
             size="sm"
             disabled={busy}
             onClick={onContinue}
-            aria-label={fmt(t.unfinished.continueNamed, { name: entry.title })}
+            aria-label={fmt(messages.unfinished.continueNamed, {
+              name: entry.title,
+            })}
           >
             <Play aria-hidden className="size-4" />
-            {t.unfinished.continue}
+            {messages.unfinished.continue}
           </Button>
           <Button
             size="sm"
             variant="outline"
             disabled={busy}
             onClick={onFinish}
-            aria-label={fmt(t.unfinished.finishNamed, { name: entry.title })}
+            aria-label={fmt(messages.unfinished.finishNamed, {
+              name: entry.title,
+            })}
           >
             <Check aria-hidden className="size-4" />
-            {t.unfinished.finish}
+            {messages.unfinished.finish}
           </Button>
         </div>
       </div>

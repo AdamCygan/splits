@@ -17,23 +17,27 @@ export interface LanguageSwitcherProps {
 export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
   const id = useId()
   const { locale, setLocale } = useI18n()
-  const t = useMessages(commonMessages).language
+  const messages = useMessages(commonMessages).language
 
   return (
     <div className={cn('inline-flex items-center gap-2 text-sm', className)}>
       <Languages aria-hidden className="size-4 text-ink-soft" />
       <label htmlFor={id} className="sr-only">
-        {t.label}
+        {messages.label}
       </label>
       <select
         id={id}
         value={locale}
-        onChange={(e) => void setLocale(e.target.value as Locale)}
+        onChange={(event) => void setLocale(event.target.value as Locale)}
         className="h-9 cursor-pointer rounded-md border border-line bg-surface pr-8 pl-2.5 text-ink"
       >
-        {locales.map((l) => (
-          <option key={l} value={l} lang={l}>
-            {localeNames[l]}
+        {locales.map((availableLocale) => (
+          <option
+            key={availableLocale}
+            value={availableLocale}
+            lang={availableLocale}
+          >
+            {localeNames[availableLocale]}
           </option>
         ))}
       </select>

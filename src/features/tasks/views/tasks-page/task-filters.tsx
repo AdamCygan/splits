@@ -16,20 +16,20 @@ import { cn } from '#/lib/utils'
 import type { TasksViewModel } from '../../controllers/use-tasks'
 
 export interface TaskFiltersProps {
-  vm: TasksViewModel
+  viewModel: TasksViewModel
 }
 
 /**
  * Wyszukiwanie, filtry (rodzaj, wycena, okres lub sprint) i widok (grupowanie, stan,
  * sortowanie). Na telefonie wszystko poza wyszukiwaniem zwija się pod „Filtry (n)”.
  */
-export function TaskFilters({ vm }: TaskFiltersProps) {
-  const t = useMessages(panelMessages).tasks
-  const hidden = !vm.filtersOpen && 'max-sm:hidden'
+export function TaskFilters({ viewModel }: TaskFiltersProps) {
+  const messages = useMessages(panelMessages).tasks
+  const hidden = !viewModel.filtersOpen && 'max-sm:hidden'
   return (
     <>
       <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))]">
-        <Field label={t.search}>
+        <Field label={messages.search}>
           {(control) => (
             <div className="relative">
               <Search
@@ -39,77 +39,79 @@ export function TaskFilters({ vm }: TaskFiltersProps) {
               <Input
                 {...control}
                 type="search"
-                value={vm.search}
-                placeholder={t.searchPlaceholder}
-                onChange={(e) => vm.setSearch(e.target.value)}
+                value={viewModel.search}
+                placeholder={messages.searchPlaceholder}
+                onChange={(event) => viewModel.setSearch(event.target.value)}
                 className="h-11 pl-10"
               />
             </div>
           )}
         </Field>
         <div id="task-filters" className={cn('contents', hidden)}>
-          <Field label={t.type}>
+          <Field label={messages.type}>
             {(control) => (
               <Select
                 {...control}
-                value={vm.filters.typeId}
-                onChange={(e) => vm.setFilter('typeId', e.target.value)}
+                value={viewModel.filters.typeId}
+                onChange={(event) =>
+                  viewModel.setFilter('typeId', event.target.value)
+                }
               >
-                <option value="">{t.allTypes}</option>
-                {vm.usedTypes.map((x) => (
-                  <option key={x.id} value={x.id}>
-                    {x.name}
+                <option value="">{messages.allTypes}</option>
+                {viewModel.usedTypes.map((usedType) => (
+                  <option key={usedType.id} value={usedType.id}>
+                    {usedType.name}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label={t.estimate}>
+          <Field label={messages.estimate}>
             {(control) => (
               <Select
                 {...control}
-                value={vm.filters.estimate}
-                onChange={(e) =>
-                  vm.setFilter(
+                value={viewModel.filters.estimate}
+                onChange={(event) =>
+                  viewModel.setFilter(
                     'estimate',
-                    e.target.value as typeof vm.filters.estimate,
+                    event.target.value as typeof viewModel.filters.estimate,
                   )
                 }
               >
                 {(['all', 'over', 'within', 'under'] as const).map((id) => (
                   <option key={id} value={id}>
-                    {t.estimates[id]}
+                    {messages.estimates[id]}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label={t.period}>
+          <Field label={messages.period}>
             {(control) => (
               <Select
                 {...control}
-                value={vm.choice}
-                onChange={(e) =>
-                  vm.setChoice(e.target.value as TaskPeriodChoice)
+                value={viewModel.choice}
+                onChange={(event) =>
+                  viewModel.setChoice(event.target.value as TaskPeriodChoice)
                 }
               >
-                <optgroup label={t.periodGroup}>
-                  {(vm.isFree
+                <optgroup label={messages.periodGroup}>
+                  {(viewModel.isFree
                     ? (['d30'] as Array<TaskPeriodId>)
                     : (Object.keys(TASK_PERIODS) as Array<TaskPeriodId>)
                   ).map((id) => (
                     <option key={id} value={id}>
-                      {t.periods[id]}
+                      {messages.periods[id]}
                     </option>
                   ))}
                 </optgroup>
-                {vm.sprintOptions.length > 0 && (
-                  <optgroup label={t.sprintGroup}>
-                    {vm.sprintOptions.map((s) => (
-                      <option key={s.id} value={`sprint:${s.id}`}>
-                        {s.endsOn >= vm.today
-                          ? fmt(t.currentSprint, { name: s.name })
-                          : s.name}
+                {viewModel.sprintOptions.length > 0 && (
+                  <optgroup label={messages.sprintGroup}>
+                    {viewModel.sprintOptions.map((sprint) => (
+                      <option key={sprint.id} value={`sprint:${sprint.id}`}>
+                        {sprint.endsOn >= viewModel.today
+                          ? fmt(messages.currentSprint, { name: sprint.name })
+                          : sprint.name}
                       </option>
                     ))}
                   </optgroup>
@@ -123,19 +125,19 @@ export function TaskFilters({ vm }: TaskFiltersProps) {
       <Button
         variant="outline"
         className="mb-4 w-full sm:hidden"
-        aria-expanded={vm.filtersOpen}
+        aria-expanded={viewModel.filtersOpen}
         aria-controls="task-filters task-view"
-        onClick={vm.toggleFilters}
+        onClick={viewModel.toggleFilters}
       >
         <SlidersHorizontal aria-hidden />
-        {vm.activeFilters > 0
-          ? fmt(t.filtersCount, { n: vm.activeFilters })
-          : t.filters}
+        {viewModel.activeFilters > 0
+          ? fmt(messages.filtersCount, { n: viewModel.activeFilters })
+          : messages.filters}
         <ChevronDown
           aria-hidden
           className={cn(
             'ml-auto transition-transform',
-            vm.filtersOpen && 'rotate-180',
+            viewModel.filtersOpen && 'rotate-180',
           )}
         />
       </Button>
@@ -145,39 +147,41 @@ export function TaskFilters({ vm }: TaskFiltersProps) {
         className={cn('mb-5 flex flex-wrap items-end gap-x-6 gap-y-3', hidden)}
       >
         <Segmented
-          label={t.view.groupBy}
+          label={messages.view.groupBy}
           size="sm"
-          value={vm.grouping}
-          onChange={vm.setGrouping}
+          value={viewModel.grouping}
+          onChange={viewModel.setGrouping}
           options={(['kind', 'day', 'none'] as const).map((value) => ({
             value,
-            label: t.view.groups[value],
+            label: messages.view.groups[value],
           }))}
         />
         <Segmented
-          label={t.view.status}
+          label={messages.view.status}
           size="sm"
-          value={vm.filters.status}
-          onChange={(v) => vm.setFilter('status', v)}
+          value={viewModel.filters.status}
+          onChange={(status) => viewModel.setFilter('status', status)}
           options={(['all', 'open', 'done'] as const).map((value) => ({
             value,
-            label: t.view.statuses[value],
+            label: messages.view.statuses[value],
           }))}
         />
         <Field
-          label={t.view.sort}
+          label={messages.view.sort}
           className="w-full sm:ml-auto sm:w-auto sm:min-w-44"
         >
           {(control) => (
             <Select
               {...control}
-              value={vm.sort}
-              onChange={(e) => vm.setSort(e.target.value as TaskSort)}
+              value={viewModel.sort}
+              onChange={(event) =>
+                viewModel.setSort(event.target.value as TaskSort)
+              }
             >
               {(['last', 'minutes', 'storyPoints', 'title'] as const).map(
                 (id) => (
                   <option key={id} value={id}>
-                    {t.view.sorts[id]}
+                    {messages.view.sorts[id]}
                   </option>
                 ),
               )}

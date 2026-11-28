@@ -12,11 +12,11 @@ import type { TaskType, TaskTypeInput } from '../data/dto'
 
 /** Archiwizacja rodzajów pracy i limit własnych rodzajów w planie Free. */
 export function useWorkTypes() {
-  const t = useMessages(settingsMessages).workTypes
+  const messages = useMessages(settingsMessages).workTypes
   const limited = !hasProAccess(useCurrentUser())
   const archive = useApplyArchive('workTypes', taskTypesApi.setArchived, {
     invalidate: keys.taskTypes,
-    messages: t,
+    messages,
   })
   return {
     archive,
@@ -34,7 +34,7 @@ export interface SaveWorkTypeOptions {
 
 /** Zapis rodzaju pracy (nowy albo zmiana); krok konfiguracji „rodzaje pracy” zaliczony. */
 export function useSaveWorkType({ type, onSaved }: SaveWorkTypeOptions) {
-  const t = useMessages(settingsMessages).workTypes
+  const messages = useMessages(settingsMessages).workTypes
   const app = useMessages(appMessages)
   return useApplyMutation(
     'workTypes',
@@ -44,7 +44,7 @@ export function useSaveWorkType({ type, onSaved }: SaveWorkTypeOptions) {
         : taskTypesApi.create(input, apply),
     {
       invalidate: [keys.taskTypes],
-      success: type ? app.status.saved : t.created,
+      success: type ? app.status.saved : messages.created,
       onSuccess: () => {
         markSetupStep('workTypes')
         onSaved()

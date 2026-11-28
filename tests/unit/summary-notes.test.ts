@@ -3,9 +3,9 @@ import type { TimeEntry } from '../../src/features/time-entries/data/dto'
 import { taskStats } from '../../src/features/tasks/domain/summary'
 import { summaryValues } from '../../src/features/time-entries/domain/summary'
 
-let n = 0
-const e = (over: Partial<TimeEntry>): TimeEntry => ({
-  id: `e${++n}`,
+let count = 0
+const makeTimeEntry = (over: Partial<TimeEntry>): TimeEntry => ({
+  id: `e${++count}`,
   finishedAt: null,
   taskTypeId: 'task',
   projectId: null,
@@ -32,16 +32,22 @@ const e = (over: Partial<TimeEntry>): TimeEntry => ({
 describe('summary notes', () => {
   it('Should show the day and the hours of the session each note comes from', () => {
     const stats = taskStats([
-      e({
+      makeTimeEntry({
         workDate: '2026-11-24',
         startTime: '13:00',
         endTime: '14:30',
         durationMinutes: 90,
         note: 'Wired the retry\ninto checkout',
       }),
-      e({ workDate: '2026-11-23', durationMinutes: 45, note: 'Spike' }),
+      makeTimeEntry({
+        workDate: '2026-11-23',
+        durationMinutes: 45,
+        note: 'Spike',
+      }),
     ])
-    const { notes } = summaryValues('en', stats, e({}), { name: 'Task' })
+    const { notes } = summaryValues('en', stats, makeTimeEntry({}), {
+      name: 'Task',
+    })
     expect(notes.split('\n')).toEqual([
       expect.stringMatching(/^- Mon.*23.*, 45m: Spike$/),
       expect.stringMatching(

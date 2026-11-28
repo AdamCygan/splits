@@ -42,27 +42,27 @@ export interface TaskDialogProps {
  * sesjach naraz oraz lista sesji z edycją czasu, usuwaniem i przejściem do dnia.
  */
 export function TaskDialog({ task, onClose }: TaskDialogProps) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   const format = useFormat()
   // Po zmianie tytułu albo linku zadanie ma nowy „adres”: śledzimy go dalej.
   const [ref, setRef] = useState<TaskRef>(task)
   const type = (useQuery(taskTypesQuery).data ?? []).find(
-    (x) => x.id === ref.taskTypeId,
+    (taskType) => taskType.id === ref.taskTypeId,
   )
   const sessions = useQuery(taskSessionsQuery(ref))
   const list = sessions.data ?? []
-  const total = list.reduce((sum, e) => sum + e.durationMinutes, 0)
+  const total = list.reduce((sum, entry) => sum + entry.durationMinutes, 0)
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         size="lg"
-        title={t.task.title}
+        title={messages.task.title}
         description={
           list.length
-            ? `${ref.title}. ${fmt(t.task.total, {
-                sessions: format.plural(t.task.sessions, list.length),
+            ? `${ref.title}. ${fmt(messages.task.total, {
+                sessions: format.plural(messages.task.sessions, list.length),
                 time: format.minutes(total),
               })}`
             : ref.title
@@ -72,7 +72,7 @@ export function TaskDialog({ task, onClose }: TaskDialogProps) {
         {sessions.isPending ? (
           <div aria-hidden className="h-48 animate-pulse rounded-lg bg-muted" />
         ) : list.length === 0 ? (
-          <p className="text-ink-soft">{t.task.empty}</p>
+          <p className="text-ink-soft">{messages.task.empty}</p>
         ) : (
           <div className="space-y-8">
             <TaskDetails
@@ -104,7 +104,7 @@ export interface TaskDetailsProps {
 }
 
 export function TaskDetails({ entries, type, onSaved }: TaskDetailsProps) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const format = useFormat()
   const latest = entries.at(-1)!
   const projects = selectable(
@@ -112,14 +112,17 @@ export function TaskDetails({ entries, type, onSaved }: TaskDetailsProps) {
     latest.projectId,
   )
   const scale = useQuery(scaleQuery).data ?? []
-  const sp = maxPoints(entries)
+  const storyPoints = maxPoints(entries)
   const estimate = maxEstimate(entries)
-  const actual = entries.reduce((sum, e) => sum + e.durationMinutes, 0)
+  const actual = entries.reduce(
+    (sum, timeEntry) => sum + timeEntry.durationMinutes,
+    0,
+  )
   const [draft, setDraft] = useState({
     title: latest.title,
     link: latest.link ?? '',
     projectId: latest.projectId ?? '',
-    storyPoints: sp === null ? '' : String(sp),
+    storyPoints: storyPoints === null ? '' : String(storyPoints),
     estimate: estimate === null ? '' : String(estimate),
   })
   const [submitted, setSubmitted] = useState(false)
@@ -141,19 +144,19 @@ export function TaskDetails({ entries, type, onSaved }: TaskDetailsProps) {
   const linkMode = type?.linkRequirement ?? 'optional'
   const errors = {
     title: !draft.title.trim()
-      ? t.issues.title.required
+      ? messages.issues.title.required
       : draft.title.trim().length > 200
-        ? t.issues.title.too_long
+        ? messages.issues.title.too_long
         : null,
     link:
       linkMode === 'required' && !draft.link.trim()
-        ? t.issues.link.required
+        ? messages.issues.link.required
         : draft.link.trim() && !isUrl(draft.link)
-          ? t.issues.link.invalid_url
+          ? messages.issues.link.invalid_url
           : null,
     storyPoints:
       spMode === 'required' && draft.storyPoints === ''
-        ? t.issues.storyPoints.required
+        ? messages.issues.storyPoints.required
         : null,
     estimate:
       draft.estimate.trim() &&
@@ -161,7 +164,7 @@ export function TaskDetails({ entries, type, onSaved }: TaskDetailsProps) {
         (parseDuration(draft.estimate) ?? 0) >= 1 &&
         (parseDuration(draft.estimate) ?? 0) <= ENTRY_LIMITS.maxEstimate
       )
-        ? t.issues.estimate.invalid
+        ? messages.issues.estimate.invalid
         : null,
   }
   const estimateMinutes = draft.estimate.trim()
@@ -170,11 +173,14 @@ export function TaskDetails({ entries, type, onSaved }: TaskDetailsProps) {
   const show = (field: keyof typeof errors) =>
     submitted ? (errors[field] ?? mutationFieldError(save.error, field)) : null
   const points = [
-    ...new Set([...scale.map((s) => s.points), ...(sp === null ? [] : [sp])]),
-  ].sort((a, b) => a - b)
+    ...new Set([
+      ...scale.map((step) => step.points),
+      ...(storyPoints === null ? [] : [storyPoints]),
+    ]),
+  ].sort((left, right) => left - right)
 
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
+  const submit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     setSubmitted(true)
     if (Object.values(errors).some(Boolean)) return
     save.mutate({
@@ -192,75 +198,82 @@ export function TaskDetails({ entries, type, onSaved }: TaskDetailsProps) {
   return (
     <section aria-labelledby="task-details">
       <h3 id="task-details" className="type-heading text-xl">
-        {t.task.details}
+        {messages.task.details}
       </h3>
       <p className="mt-1 text-sm text-ink-soft">
-        {format.plural(t.task.applyAll, entries.length)}
+        {format.plural(messages.task.applyAll, entries.length)}
       </p>
       <form noValidate onSubmit={submit} className="mt-4 space-y-5">
         <Field
-          label={type?.titleLabel || t.task.titleField}
+          label={type?.titleLabel || messages.task.titleField}
           error={show('title')}
         >
-          {(a) => (
+          {(fieldProps) => (
             <Input
-              {...a}
+              {...fieldProps}
               maxLength={200}
               value={draft.title}
-              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+              onChange={(event) =>
+                setDraft({ ...draft, title: event.target.value })
+              }
             />
           )}
         </Field>
         {linkMode !== 'hidden' && (
-          <Field label={type?.linkLabel || t.form.link} error={show('link')}>
-            {(a) => (
+          <Field
+            label={type?.linkLabel || messages.form.link}
+            error={show('link')}
+          >
+            {(fieldProps) => (
               <Input
-                {...a}
+                {...fieldProps}
                 type="url"
                 inputMode="url"
                 placeholder="https://"
                 spellCheck={false}
                 value={draft.link}
-                onChange={(e) => setDraft({ ...draft, link: e.target.value })}
+                onChange={(event) =>
+                  setDraft({ ...draft, link: event.target.value })
+                }
               />
             )}
           </Field>
         )}
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label={t.form.project}>
-            {(a) => (
+          <Field label={messages.form.project}>
+            {(fieldProps) => (
               <Select
-                {...a}
+                {...fieldProps}
                 value={draft.projectId}
-                onChange={(e) =>
-                  setDraft({ ...draft, projectId: e.target.value })
+                onChange={(event) =>
+                  setDraft({ ...draft, projectId: event.target.value })
                 }
               >
-                <option value="">{t.form.noProject}</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
+                <option value="">{messages.form.noProject}</option>
+                {projects.map((archivable) => (
+                  <option key={archivable.id} value={archivable.id}>
+                    {archivable.name}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
           {spMode !== 'hidden' && (
-            <Field label={t.task.sp} error={show('storyPoints')}>
-              {(a) => (
+            <Field label={messages.task.sp} error={show('storyPoints')}>
+              {(fieldProps) => (
                 <Select
-                  {...a}
+                  {...fieldProps}
                   value={draft.storyPoints}
-                  onChange={(e) =>
-                    setDraft({ ...draft, storyPoints: e.target.value })
+                  onChange={(event) =>
+                    setDraft({ ...draft, storyPoints: event.target.value })
                   }
                 >
                   {spMode !== 'required' && (
-                    <option value="">{t.form.spNone}</option>
+                    <option value="">{messages.form.spNone}</option>
                   )}
-                  {points.map((p) => (
-                    <option key={p} value={p}>
-                      {format.sp(p)}
+                  {points.map((point) => (
+                    <option key={point} value={point}>
+                      {format.sp(point)}
                     </option>
                   ))}
                 </Select>
@@ -269,26 +282,26 @@ export function TaskDetails({ entries, type, onSaved }: TaskDetailsProps) {
           )}
           {type?.kind !== 'meeting' && (
             <Field
-              label={t.form.estimate}
+              label={messages.form.estimate}
               hint={
                 estimateMinutes
-                  ? fmt(t.task.estimateVs, {
+                  ? fmt(messages.task.estimateVs, {
                       actual: format.minutes(actual),
                       estimate: format.minutes(estimateMinutes),
                     })
-                  : t.form.estimateHint
+                  : messages.form.estimateHint
               }
               error={show('estimate')}
             >
-              {(a) => (
+              {(fieldProps) => (
                 <Input
-                  {...a}
+                  {...fieldProps}
                   inputMode="text"
                   autoComplete="off"
-                  placeholder={t.form.estimatePlaceholder}
+                  placeholder={messages.form.estimatePlaceholder}
                   value={draft.estimate}
-                  onChange={(e) =>
-                    setDraft({ ...draft, estimate: e.target.value })
+                  onChange={(event) =>
+                    setDraft({ ...draft, estimate: event.target.value })
                   }
                 />
               )}
@@ -300,7 +313,7 @@ export function TaskDetails({ entries, type, onSaved }: TaskDetailsProps) {
           disabled={save.isPending}
           aria-busy={save.isPending}
         >
-          {save.isPending ? t.form.saving : t.task.save}
+          {save.isPending ? messages.form.saving : messages.task.save}
         </Button>
       </form>
     </section>
@@ -312,7 +325,7 @@ export interface SessionsProps {
 }
 
 export function Sessions({ entries }: SessionsProps) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   const format = useFormat()
   const [editing, setEditing] = useState<TimeEntry | null>(null)
@@ -325,9 +338,9 @@ export function Sessions({ entries }: SessionsProps) {
   return (
     <section aria-labelledby="task-sessions">
       <h3 id="task-sessions" className="type-heading text-xl">
-        {t.task.time}
+        {messages.task.time}
       </h3>
-      <p className="mt-1 text-sm text-ink-soft">{t.task.timeHint}</p>
+      <p className="mt-1 text-sm text-ink-soft">{messages.task.timeHint}</p>
       <ol className="mt-4 divide-y divide-line rounded-xl border border-line">
         {[...entries].reverse().map((entry) => {
           const interval =
@@ -353,14 +366,14 @@ export function Sessions({ entries }: SessionsProps) {
                   </span>
                   {entry.extensionMinutes !== null && (
                     <Badge tone="muted">
-                      {fmt(t.extension.badge, {
+                      {fmt(messages.extension.badge, {
                         time: format.minutes(entry.extensionMinutes),
                       })}
                     </Badge>
                   )}
                   {entry.overtimeMinutes !== null && (
                     <Badge tone="muted">
-                      {fmt(t.form.overtime.badge, {
+                      {fmt(messages.form.overtime.badge, {
                         time: format.minutes(entry.overtimeMinutes),
                       })}
                     </Badge>
@@ -376,29 +389,29 @@ export function Sessions({ entries }: SessionsProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  aria-label={fmt(t.task.editSession, { date: day })}
+                  aria-label={fmt(messages.task.editSession, { date: day })}
                   onClick={() => setEditing(entry)}
                 >
                   <Pencil aria-hidden className="size-4" />
-                  {t.task.edit}
+                  {messages.task.edit}
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  aria-label={fmt(t.task.removeSession, { date: day })}
+                  aria-label={fmt(messages.task.removeSession, { date: day })}
                   onClick={() => setDeleting(entry)}
                 >
                   <Trash2 aria-hidden className="size-4" />
-                  {t.task.remove}
+                  {messages.task.remove}
                 </Button>
                 <Link
                   to="/app"
                   search={{ date: entry.workDate }}
-                  aria-label={fmt(t.task.openDayOf, { date: day })}
+                  aria-label={fmt(messages.task.openDayOf, { date: day })}
                   className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium hover:bg-muted"
                 >
                   <CalendarDays aria-hidden className="size-4" />
-                  {t.task.openDay}
+                  {messages.task.openDay}
                 </Link>
               </div>
             </li>
@@ -410,7 +423,7 @@ export function Sessions({ entries }: SessionsProps) {
         <Dialog open onOpenChange={(open) => !open && setEditing(null)}>
           <DialogContent
             size="lg"
-            title={fmt(t.task.editSession, { date: dayLabel(editing) })}
+            title={fmt(messages.task.editSession, { date: dayLabel(editing) })}
             description={editing.title}
             closeLabel={app.actions.close}
             footer={
@@ -437,11 +450,11 @@ export function Sessions({ entries }: SessionsProps) {
       <ConfirmDialog
         open={deleting !== null}
         onOpenChange={(open) => !open && setDeleting(null)}
-        title={fmt(t.task.deleteTitle, {
+        title={fmt(messages.task.deleteTitle, {
           date: deleting ? dayLabel(deleting) : '',
         })}
-        description={t.task.deleteText}
-        confirmLabel={t.task.remove}
+        description={messages.task.deleteText}
+        confirmLabel={messages.task.remove}
         cancelLabel={app.actions.cancel}
         destructive
         busy={remove.isPending}

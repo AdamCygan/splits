@@ -289,7 +289,7 @@ export function seedWorkspace(
   withSamples: boolean,
   timezone: string = 'UTC',
 ): Workspace {
-  const n = names[locale]
+  const localizedNames = names[locale]
   const today = todayIn(timezone)
 
   const type = (
@@ -299,10 +299,10 @@ export function seedWorkspace(
   ): TaskType => ({
     id: newId(),
     kind,
-    name: n.types[kind as keyof typeof n.types],
+    name: localizedNames.types[kind as keyof typeof localizedNames.types],
     color: '#3D3BF3',
     isSystem: true,
-    titleLabel: n.title,
+    titleLabel: localizedNames.title,
     linkRequirement: 'hidden',
     linkLabel: 'Link',
     // Notatki („co robiłem”) są dostępne w każdym typie; można je ukryć w ustawieniach.
@@ -320,14 +320,14 @@ export function seedWorkspace(
     type('task', 0, {
       color: '#3D3BF3',
       linkRequirement: 'optional',
-      linkLabel: n.taskLink,
+      linkLabel: localizedNames.taskLink,
       descriptionRequirement: 'optional',
       defaultTimeInput: 'range',
     }),
     type('code_review', 1, {
       color: '#E8A33D',
       linkRequirement: 'required',
-      linkLabel: n.mrLink,
+      linkLabel: localizedNames.mrLink,
     }),
     type('pair_programming', 2, { color: '#0F9F86' }),
     type('additional_work', 3, { color: '#DB4A7C' }),
@@ -345,22 +345,24 @@ export function seedWorkspace(
     'in_progress',
     'done',
   ]
-  const statuses: Array<TaskStatus> = n.statuses.map((name, i) => ({
-    id: newId(),
-    name,
-    category: categories[i]!,
-    color: statusColors[i]!,
-    isSystem: true,
-    isDefault: i === 0,
-    sortOrder: i,
-    archivedAt: null,
-  }))
+  const statuses: Array<TaskStatus> = localizedNames.statuses.map(
+    (name, index) => ({
+      id: newId(),
+      name,
+      category: categories[index]!,
+      color: statusColors[index]!,
+      isSystem: true,
+      isDefault: index === 0,
+      sortOrder: index,
+      archivedAt: null,
+    }),
+  )
 
   // Kadencja 2-tygodniowa: poprzedni sprint, bieżący i kolejny od razu widoczne.
   const cadence: SprintCadence = {
     lengthDays: 14,
     anchorDate: addDays(startOfWeek(today, 1), -21),
-    namePattern: n.pattern,
+    namePattern: localizedNames.pattern,
     autoCreate: true,
   }
 
@@ -380,14 +382,14 @@ export function seedWorkspace(
     ? [
         {
           id: newId(),
-          name: n.projects[0]!,
+          name: localizedNames.projects[0]!,
           key: 'PAY',
           color: '#3D3BF3',
           archivedAt: null,
         },
         {
           id: newId(),
-          name: n.projects[1]!,
+          name: localizedNames.projects[1]!,
           key: 'MOB',
           color: '#0F9F86',
           archivedAt: null,
@@ -396,10 +398,10 @@ export function seedWorkspace(
     : []
 
   const tags: Array<Tag> = withSamples
-    ? n.tags.map((name, i) => ({
+    ? localizedNames.tags.map((name, index) => ({
         id: newId(),
         name,
-        color: ['#2C8FD6', '#8B5CF6', '#E5603B'][i]!,
+        color: ['#2C8FD6', '#8B5CF6', '#E5603B'][index]!,
       }))
     : []
 
@@ -412,8 +414,8 @@ export function seedWorkspace(
           taskTypeId: meeting.id,
           projectId: null,
           askProject: false,
-          label: n.templates[0]![0]!,
-          title: n.templates[0]![1]!,
+          label: localizedNames.templates[0]![0]!,
+          title: localizedNames.templates[0]![1]!,
           storyPoints: null,
           defaultDurationMinutes: 15,
           hotkey: 1,
@@ -433,8 +435,8 @@ export function seedWorkspace(
           projectId: null,
           // Code review robi się w każdym repo: projekt wybierany przy użyciu.
           askProject: projects.length > 1,
-          label: n.templates[1]![0]!,
-          title: n.templates[1]![1]!,
+          label: localizedNames.templates[1]![0]!,
+          title: localizedNames.templates[1]![1]!,
           storyPoints: 0.5,
           defaultDurationMinutes: 25,
           hotkey: 2,
@@ -446,8 +448,8 @@ export function seedWorkspace(
           taskTypeId: meeting.id,
           projectId: null,
           askProject: false,
-          label: n.templates[2]![0]!,
-          title: n.templates[2]![1]!,
+          label: localizedNames.templates[2]![0]!,
+          title: localizedNames.templates[2]![1]!,
           storyPoints: null,
           defaultDurationMinutes: 60,
           hotkey: 3,
@@ -459,7 +461,10 @@ export function seedWorkspace(
 
   return {
     settings,
-    spScale: scalePresets.fibonacci.map((s) => ({ id: newId(), ...s })),
+    spScale: scalePresets.fibonacci.map((scaleStepDraft) => ({
+      id: newId(),
+      ...scaleStepDraft,
+    })),
     taskTypes,
     statuses,
     cadence,
@@ -469,11 +474,11 @@ export function seedWorkspace(
     templates,
     entries: withSamples
       ? sampleEntries(
-          n.history,
-          n.entries,
-          n.past,
-          n.overtime,
-          n.ranOver,
+          localizedNames.history,
+          localizedNames.entries,
+          localizedNames.past,
+          localizedNames.overtime,
+          localizedNames.ranOver,
           taskTypes,
           projects,
           todayIn(settings.timezone),
@@ -508,17 +513,17 @@ function sampleEntries(
     [3, 0.5, null, null, 40],
   ]
   // Dwa poprzednie dni tego samego zadania: podsumowanie zadania ma z czego liczyć.
-  const earlier: Array<TimeEntry> = history.map((note, i) => ({
+  const earlier: Array<TimeEntry> = history.map((note, index) => ({
     id: newId(),
     taskTypeId: types[0]!.id,
     projectId: projects[0]?.id ?? null,
     title: texts[0]![0],
     link: texts[0]![1],
     storyPoints: 3,
-    workDate: addDays(workDate, i - history.length),
-    startTime: i === 0 ? '10:00' : '13:00',
-    endTime: i === 0 ? '11:35' : '15:10',
-    durationMinutes: i === 0 ? 95 : 130,
+    workDate: addDays(workDate, index - history.length),
+    startTime: index === 0 ? '10:00' : '13:00',
+    endTime: index === 0 ? '11:35' : '15:10',
+    durationMinutes: index === 0 ? 95 : 130,
     note,
     overtimeMinutes: null,
     overtimeNote: null,
@@ -531,26 +536,26 @@ function sampleEntries(
     paused: false,
     startedAt: null,
     createdAt: new Date(
-      Date.now() - (history.length - i) * 86_400_000,
+      Date.now() - (history.length - index) * 86_400_000,
     ).toISOString(),
   }))
   const today = plan
-    .map(([kind, storyPoints, startTime, endTime, durationMinutes], i) => ({
+    .map(([kind, storyPoints, startTime, endTime, durationMinutes], index) => ({
       id: newId(),
       taskTypeId: types[kind]!.id,
-      projectId: i === 0 ? (projects[0]?.id ?? null) : null,
-      title: texts[i]![0],
-      link: texts[i]![1],
+      projectId: index === 0 ? (projects[0]?.id ?? null) : null,
+      title: texts[index]![0],
+      link: texts[index]![1],
       storyPoints,
       workDate,
       startTime,
       endTime,
       durationMinutes,
-      note: texts[i]![2],
+      note: texts[index]![2],
       // Wieczorny hotfix w przykładowych danych: pokazuje nadgodziny z opisem.
       overtimeMinutes: kind === 3 ? durationMinutes : null,
       overtimeNote: kind === 3 ? overtimeNote : null,
-      estimateMinutes: i === 0 ? 300 : null,
+      estimateMinutes: index === 0 ? 300 : null,
       extensionMinutes: null,
       extensionNote: null,
       finishedAt: null,
@@ -558,13 +563,13 @@ function sampleEntries(
       paused: false,
       startedAt: null,
       createdAt: new Date(
-        Date.now() - (plan.length - i) * 60_000,
+        Date.now() - (plan.length - index) * 60_000,
       ).toISOString(),
     }))
     .reverse()
-  const workdaysBack = (n: number) => {
+  const workdaysBack = (count: number) => {
     let date = workDate
-    for (let left = n; left > 0;) {
+    for (let left = count; left > 0;) {
       date = addDays(date, -1)
       const day = parseDate(date).getUTCDay()
       if (day !== 0 && day !== 6) left -= 1
@@ -572,7 +577,7 @@ function sampleEntries(
     return date
   }
   const sprintWork: Array<TimeEntry> = past.map(
-    ([kind, storyPoints, minutes, ago, title, link, note], i) => ({
+    ([kind, storyPoints, minutes, ago, title, link, note], index) => ({
       id: newId(),
       taskTypeId: types[kind]!.id,
       projectId: link?.includes('MOB-')
@@ -602,7 +607,7 @@ function sampleEntries(
       paused: false,
       startedAt: null,
       createdAt: new Date(
-        Date.now() - (ago * 86_400_000 + (past.length - i) * 60_000),
+        Date.now() - (ago * 86_400_000 + (past.length - index) * 60_000),
       ).toISOString(),
     }),
   )

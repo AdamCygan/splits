@@ -24,14 +24,16 @@ export function EditEntryDialog({
   duplicate = false,
   onClose,
 }: EditEntryDialogProps) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         size="lg"
-        title={duplicate ? t.form.duplicateTitle : t.form.editTitle}
-        description={duplicate ? t.form.duplicateLead : entry.title}
+        title={
+          duplicate ? messages.form.duplicateTitle : messages.form.editTitle
+        }
+        description={duplicate ? messages.form.duplicateLead : entry.title}
         closeLabel={app.actions.close}
         footer={
           <>
@@ -39,7 +41,7 @@ export function EditEntryDialog({
               {app.actions.cancel}
             </Button>
             <Button type="submit" form="edit-entry-form">
-              {duplicate ? t.form.duplicateSave : app.actions.save}
+              {duplicate ? messages.form.duplicateSave : app.actions.save}
             </Button>
           </>
         }

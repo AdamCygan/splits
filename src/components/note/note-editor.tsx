@@ -36,7 +36,7 @@ interface Action {
   icon: LucideIcon
   label: string
   keys?: string
-  run: (s: TextState) => TextState
+  run: (textState: TextState) => TextState
 }
 
 /**
@@ -55,45 +55,54 @@ export function NoteEditor({
   onValueChange: (next: string) => void
   headingLevel?: 1 | 2 | 3 | 4 | 5 | 6
 }) {
-  const t = useMessages(entriesMessages).noteEditor
+  const messages = useMessages(entriesMessages).noteEditor
   const ref = useRef<HTMLTextAreaElement>(null)
   const pending = useRef<{ start: number; end: number } | null>(null)
   const [preview, setPreview] = useState(false)
-  const mod = isApplePlatform() ? '⌘' : 'Ctrl+'
+  const module = isApplePlatform() ? '⌘' : 'Ctrl+'
 
   // Zaznaczenie po zmianie, gdy tekst poszedł przez stan Reacta (bez insertText).
   useLayoutEffect(() => {
-    const sel = pending.current
-    const el = ref.current
-    if (!sel || !el || el.value !== value) return
+    const selection = pending.current
+    const element = ref.current
+    if (!selection || !element || element.value !== value) return
     pending.current = null
-    el.setSelectionRange(sel.start, sel.end)
+    element.setSelectionRange(selection.start, selection.end)
   }, [value])
 
   function apply(next: TextState) {
-    const el = ref.current
-    if (!el) return
-    const old = el.value
-    let p = 0
-    while (p < old.length && p < next.value.length && old[p] === next.value[p])
-      p++
-    let q = 0
+    const element = ref.current
+    if (!element) return
+    const old = element.value
+    let commonPrefix = 0
     while (
-      q < old.length - p &&
-      q < next.value.length - p &&
-      old[old.length - 1 - q] === next.value[next.value.length - 1 - q]
+      commonPrefix < old.length &&
+      commonPrefix < next.value.length &&
+      old[commonPrefix] === next.value[commonPrefix]
     )
-      q++
-    const insert = next.value.slice(p, next.value.length - q)
-    el.focus()
-    el.setSelectionRange(p, old.length - q)
+      commonPrefix++
+    let commonSuffix = 0
+    while (
+      commonSuffix < old.length - commonPrefix &&
+      commonSuffix < next.value.length - commonPrefix &&
+      old[old.length - 1 - commonSuffix] ===
+        next.value[next.value.length - 1 - commonSuffix]
+    )
+      commonSuffix++
+    const insert = next.value.slice(
+      commonPrefix,
+      next.value.length - commonSuffix,
+    )
+    element.focus()
+    element.setSelectionRange(commonPrefix, old.length - commonSuffix)
     // insertText trzyma historię cofania przeglądarki; gdy jej nie ma, ustawiamy wartość sami.
     const ok =
       insert === ''
-        ? p === old.length - q || document.execCommand('delete')
+        ? commonPrefix === old.length - commonSuffix ||
+          document.execCommand('delete')
         : document.execCommand('insertText', false, insert)
-    if (ok && el.value === next.value) {
-      el.setSelectionRange(next.start, next.end)
+    if (ok && element.value === next.value) {
+      element.setSelectionRange(next.start, next.end)
     } else {
       pending.current = { start: next.start, end: next.end }
       onValueChange(next.value)
@@ -101,13 +110,13 @@ export function NoteEditor({
   }
 
   function run(action: Action) {
-    const el = ref.current
-    if (!el) return
+    const element = ref.current
+    if (!element) return
     apply(
       action.run({
-        value: el.value,
-        start: el.selectionStart,
-        end: el.selectionEnd,
+        value: element.value,
+        start: element.selectionStart,
+        end: element.selectionEnd,
       }),
     )
   }
@@ -116,106 +125,117 @@ export function NoteEditor({
     {
       id: 'heading',
       icon: Heading,
-      label: t.heading,
-      run: (s) => toggleLinePrefix(s, '## '),
+      label: messages.heading,
+      run: (textState) => toggleLinePrefix(textState, '## '),
     },
     {
       id: 'bold',
       icon: Bold,
-      label: t.bold,
+      label: messages.bold,
       keys: 'B',
-      run: (s) => toggleWrap(s, '**', t.boldText),
+      run: (textState) => toggleWrap(textState, '**', messages.boldText),
     },
     {
       id: 'italic',
       icon: Italic,
-      label: t.italic,
+      label: messages.italic,
       keys: 'I',
-      run: (s) => toggleWrap(s, '_', t.italicText),
+      run: (textState) => toggleWrap(textState, '_', messages.italicText),
     },
     {
       id: 'bullets',
       icon: List,
-      label: t.bullets,
-      run: (s) => toggleLinePrefix(s, '- '),
+      label: messages.bullets,
+      run: (textState) => toggleLinePrefix(textState, '- '),
     },
     {
       id: 'numbers',
       icon: ListOrdered,
-      label: t.numbers,
-      run: (s) => toggleLinePrefix(s, '1. '),
+      label: messages.numbers,
+      run: (textState) => toggleLinePrefix(textState, '1. '),
     },
     {
       id: 'checklist',
       icon: ListChecks,
-      label: t.checklist,
-      run: (s) => toggleLinePrefix(s, '- [ ] '),
+      label: messages.checklist,
+      run: (textState) => toggleLinePrefix(textState, '- [ ] '),
     },
     {
       id: 'indent',
       icon: IndentIncrease,
-      label: t.indent,
-      run: (s) => indentList(s, 1) ?? s,
+      label: messages.indent,
+      run: (textState) => indentList(textState, 1) ?? textState,
     },
     {
       id: 'outdent',
       icon: IndentDecrease,
-      label: t.outdent,
-      run: (s) => indentList(s, -1) ?? s,
+      label: messages.outdent,
+      run: (textState) => indentList(textState, -1) ?? textState,
     },
     {
       id: 'code',
       icon: Code,
-      label: t.code,
+      label: messages.code,
       keys: 'E',
-      run: (s) => toggleWrap(s, '`', t.codeText),
+      run: (textState) => toggleWrap(textState, '`', messages.codeText),
     },
     {
       id: 'codeBlock',
       icon: SquareCode,
-      label: t.codeBlock,
-      run: (s) => insertCodeBlock(s),
+      label: messages.codeBlock,
+      run: (textState) => insertCodeBlock(textState),
     },
   ]
 
-  function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    textarea.onKeyDown?.(e)
-    if (e.defaultPrevented || e.nativeEvent.isComposing) return
-    const el = e.currentTarget
+  function onKeyDown(keyboardEvent: KeyboardEvent<HTMLTextAreaElement>) {
+    textarea.onKeyDown?.(keyboardEvent)
+    if (keyboardEvent.defaultPrevented || keyboardEvent.nativeEvent.isComposing)
+      return
+    const element = keyboardEvent.currentTarget
     const state = {
-      value: el.value,
-      start: el.selectionStart,
-      end: el.selectionEnd,
+      value: element.value,
+      start: element.selectionStart,
+      end: element.selectionEnd,
     }
     // Tab w liście zmienia poziom pozycji; poza listą przenosi fokus jak zwykle.
-    if (e.key === 'Tab' && !e.altKey && !e.ctrlKey && !e.metaKey) {
-      const next = indentList(state, e.shiftKey ? -1 : 1)
+    if (
+      keyboardEvent.key === 'Tab' &&
+      !keyboardEvent.altKey &&
+      !keyboardEvent.ctrlKey &&
+      !keyboardEvent.metaKey
+    ) {
+      const next = indentList(state, keyboardEvent.shiftKey ? -1 : 1)
       if (next) {
-        e.preventDefault()
+        keyboardEvent.preventDefault()
         apply(next)
       }
       return
     }
     if (
-      e.key === 'Enter' &&
-      !e.shiftKey &&
-      !e.altKey &&
-      !e.ctrlKey &&
-      !e.metaKey
+      keyboardEvent.key === 'Enter' &&
+      !keyboardEvent.shiftKey &&
+      !keyboardEvent.altKey &&
+      !keyboardEvent.ctrlKey &&
+      !keyboardEvent.metaKey
     ) {
       const next = continueList(state)
       if (next) {
-        e.preventDefault()
+        keyboardEvent.preventDefault()
         apply(next)
       }
       return
     }
-    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) {
+    if (
+      (keyboardEvent.ctrlKey || keyboardEvent.metaKey) &&
+      !keyboardEvent.altKey &&
+      !keyboardEvent.shiftKey
+    ) {
       const action = actions.find(
-        (a) => a.keys?.toLowerCase() === e.key.toLowerCase(),
+        (editorAction) =>
+          editorAction.keys?.toLowerCase() === keyboardEvent.key.toLowerCase(),
       )
       if (action) {
-        e.preventDefault()
+        keyboardEvent.preventDefault()
         run(action)
       }
     }
@@ -224,19 +244,19 @@ export function NoteEditor({
   // Pasek narzędzi: Tab wchodzi raz, strzałki chodzą po przyciskach (wzorzec ARIA toolbar).
   const [focusIndex, setFocusIndex] = useState(0)
   const buttons = useRef<Array<HTMLButtonElement | null>>([])
-  function onToolbarKey(e: KeyboardEvent<HTMLDivElement>) {
+  function onToolbarKey(keyboardEvent: KeyboardEvent<HTMLDivElement>) {
     const step =
-      e.key === 'ArrowRight'
+      keyboardEvent.key === 'ArrowRight'
         ? 1
-        : e.key === 'ArrowLeft'
+        : keyboardEvent.key === 'ArrowLeft'
           ? -1
-          : e.key === 'Home'
+          : keyboardEvent.key === 'Home'
             ? -99
-            : e.key === 'End'
+            : keyboardEvent.key === 'End'
               ? 99
               : 0
     if (!step) return
-    e.preventDefault()
+    keyboardEvent.preventDefault()
     const count = actions.length + 1
     const next =
       Math.abs(step) === 99
@@ -260,24 +280,24 @@ export function NoteEditor({
     >
       <div
         role="toolbar"
-        aria-label={t.toolbar}
+        aria-label={messages.toolbar}
         aria-controls={
           textarea.id && (preview ? `${textarea.id}-preview` : textarea.id)
         }
         onKeyDown={onToolbarKey}
         className="flex flex-wrap items-center gap-0.5 border-b border-line bg-muted/40 px-1.5 py-1"
       >
-        {actions.map((action, i) => {
+        {actions.map((action, index) => {
           const Icon = action.icon
-          const shortcut = action.keys ? `${mod}${action.keys}` : null
+          const shortcut = action.keys ? `${module}${action.keys}` : null
           return (
             <button
               key={action.id}
-              ref={(el) => {
-                buttons.current[i] = el
+              ref={(element) => {
+                buttons.current[index] = element
               }}
               type="button"
-              tabIndex={focusIndex === i ? 0 : -1}
+              tabIndex={focusIndex === index ? 0 : -1}
               disabled={preview}
               aria-label={action.label}
               aria-keyshortcuts={
@@ -286,9 +306,9 @@ export function NoteEditor({
                   : undefined
               }
               title={shortcut ? `${action.label} (${shortcut})` : action.label}
-              onFocus={() => setFocusIndex(i)}
+              onFocus={() => setFocusIndex(index)}
               // Przycisk nie zabiera fokusu z pola, więc zaznaczenie zostaje na miejscu.
-              onMouseDown={(e) => e.preventDefault()}
+              onMouseDown={(event) => event.preventDefault()}
               onClick={() => run(action)}
               className={toolButton}
             >
@@ -297,14 +317,14 @@ export function NoteEditor({
           )
         })}
         <button
-          ref={(el) => {
-            buttons.current[actions.length] = el
+          ref={(element) => {
+            buttons.current[actions.length] = element
           }}
           type="button"
           tabIndex={focusIndex === actions.length ? 0 : -1}
           aria-pressed={preview}
           onFocus={() => setFocusIndex(actions.length)}
-          onClick={() => setPreview((p) => !p)}
+          onClick={() => setPreview((currentPreview) => !currentPreview)}
           className={cn(
             toolButton,
             'ml-auto w-auto gap-1.5 px-2.5 text-sm font-medium',
@@ -316,7 +336,7 @@ export function NoteEditor({
           ) : (
             <Eye aria-hidden className="size-4" />
           )}
-          {t.preview}
+          {messages.preview}
         </button>
       </div>
       {preview ? (
@@ -324,7 +344,7 @@ export function NoteEditor({
           className="min-h-36 px-3.5 py-2.5"
           id={textarea.id && `${textarea.id}-preview`}
           aria-live="polite"
-          aria-label={t.previewLabel}
+          aria-label={messages.previewLabel}
           role="region"
         >
           {value.trim() ? (
@@ -334,7 +354,7 @@ export function NoteEditor({
               onChange={onValueChange}
             />
           ) : (
-            <p className="text-sm text-ink-soft">{t.empty}</p>
+            <p className="text-sm text-ink-soft">{messages.empty}</p>
           )}
         </div>
       ) : (
@@ -346,15 +366,15 @@ export function NoteEditor({
             aria-hidden
             className={cn(EDITOR_TEXT, 'pointer-events-none text-ink')}
           >
-            {markdownLines(value).map((line, i) => (
-              <EditorLine key={i} line={line} />
+            {markdownLines(value).map((line, index) => (
+              <EditorLine key={index} line={line} />
             ))}
           </div>
           <textarea
             {...textarea}
             ref={ref}
             value={value}
-            onChange={(e) => onValueChange(e.target.value)}
+            onChange={(event) => onValueChange(event.target.value)}
             onKeyDown={onKeyDown}
             className={cn(
               EDITOR_TEXT,
@@ -394,7 +414,7 @@ interface EditorLineProps {
 
 /** Jedna linia warstwy podświetlenia; pusta linia dostaje znak zerowej szerokości (wysokość). */
 function EditorLine({ line }: EditorLineProps) {
-  const empty = line.parts.every((p) => p.text === '')
+  const empty = line.parts.every((part) => part.text === '')
   return (
     <span
       className={cn(
@@ -402,13 +422,13 @@ function EditorLine({ line }: EditorLineProps) {
         line.kind !== 'text' && '-mx-3.5 bg-ink/[0.06] px-3.5',
       )}
     >
-      {line.parts.map((p, i) =>
-        p.kind ? (
-          <span key={i} className={PART_CLASS[p.kind]}>
-            {p.text}
+      {line.parts.map((part, index) =>
+        part.kind ? (
+          <span key={index} className={PART_CLASS[part.kind]}>
+            {part.text}
           </span>
         ) : (
-          p.text
+          part.text
         ),
       )}
       {empty && '\u200b'}

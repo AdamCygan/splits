@@ -27,8 +27,10 @@ const text = (value: unknown) =>
     : undefined
 
 const positive = (value: unknown, max: number) => {
-  const n = Number(value)
-  return Number.isInteger(n) && n >= 1 && n <= max ? n : undefined
+  const count = Number(value)
+  return Number.isInteger(count) && count >= 1 && count <= max
+    ? count
+    : undefined
 }
 
 /**
@@ -68,7 +70,9 @@ export function parseActionSearch(
 /** Obiekt bez pól undefined (czytelny adres i stabilny klucz zapytania). */
 export function withoutEmpty<TValue extends object>(value: TValue): TValue {
   return Object.fromEntries(
-    Object.entries(value).filter(([, v]) => v !== undefined && v !== ''),
+    Object.entries(value).filter(
+      ([, entryValue]) => entryValue !== undefined && entryValue !== '',
+    ),
   ) as TValue
 }
 

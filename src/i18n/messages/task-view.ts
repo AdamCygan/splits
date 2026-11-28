@@ -2,7 +2,7 @@ import type { Dictionary } from '../context'
 import type { Plural } from '../format'
 
 /** Strona jednego zadania: czas, sesje, dni, przerwania, notatki. */
-const en = {
+const english = {
   seoTitle: 'Task',
   back: 'Tasks',
   open: 'Open task: {name}',
@@ -60,9 +60,9 @@ const en = {
   },
 }
 
-export type TaskViewMessages = typeof en
+export type TaskViewMessages = typeof english
 
-const pl: TaskViewMessages = {
+const polish: TaskViewMessages = {
   seoTitle: 'Zadanie',
   back: 'Zadania',
   open: 'Otwórz zadanie: {name}',
@@ -132,4 +132,7 @@ const pl: TaskViewMessages = {
   },
 }
 
-export const taskViewMessages: Dictionary<TaskViewMessages> = { en, pl }
+export const taskViewMessages: Dictionary<TaskViewMessages> = {
+  en: english,
+  pl: polish,
+}

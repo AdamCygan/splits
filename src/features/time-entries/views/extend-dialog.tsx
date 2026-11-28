@@ -25,7 +25,7 @@ export interface ExtendDialogProps {
 
 /** „Przedłużyło się”: spotkanie trwało dłużej niż plan; dopisujemy ile i dlaczego. */
 export function ExtendDialog({ entry, onClose }: ExtendDialogProps) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   const format = useFormat()
   const planned = entry.durationMinutes - (entry.extensionMinutes ?? 0)
@@ -38,20 +38,20 @@ export function ExtendDialog({ entry, onClose }: ExtendDialogProps) {
   const minutes = parseDuration(amount)
   const max = ENTRY_LIMITS.maxMinutes - planned
   const amountError = !amount.trim()
-    ? t.issues.extension.required
+    ? messages.issues.extension.required
     : minutes === null || minutes < 1 || minutes > max
-      ? t.issues.extension.invalid
+      ? messages.issues.extension.invalid
       : null
   const reasonError = !reason.trim()
-    ? t.issues.extensionNote.required
+    ? messages.issues.extensionNote.required
     : reason.length > ENTRY_LIMITS.extensionNote
-      ? t.issues.extensionNote.too_long
+      ? messages.issues.extensionNote.too_long
       : null
 
   const save = useSaveExtension({ entryId: entry.id, onSaved: onClose })
 
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
+  const submit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     setSubmitted(true)
     if (amountError || reasonError || minutes === null) return
     save.mutate(withExtension(entry, minutes, reason.trim()))
@@ -61,8 +61,8 @@ export function ExtendDialog({ entry, onClose }: ExtendDialogProps) {
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         size="sm"
-        title={fmt(t.extension.title, { name: entry.title })}
-        description={fmt(t.extension.lead, {
+        title={fmt(messages.extension.title, { name: entry.title })}
+        description={fmt(messages.extension.lead, {
           planned: format.minutes(planned),
         })}
         closeLabel={app.actions.close}
@@ -75,7 +75,7 @@ export function ExtendDialog({ entry, onClose }: ExtendDialogProps) {
                 disabled={save.isPending}
                 onClick={() => save.mutate(withExtension(entry, null, null))}
               >
-                {t.extension.remove}
+                {messages.extension.remove}
               </Button>
             )}
             <Button variant="outline" onClick={onClose}>
@@ -87,7 +87,7 @@ export function ExtendDialog({ entry, onClose }: ExtendDialogProps) {
               disabled={save.isPending}
               aria-busy={save.isPending}
             >
-              {save.isPending ? t.form.saving : t.extension.save}
+              {save.isPending ? messages.form.saving : messages.extension.save}
             </Button>
           </>
         }
@@ -99,37 +99,39 @@ export function ExtendDialog({ entry, onClose }: ExtendDialogProps) {
           className="space-y-5"
         >
           <Field
-            label={t.extension.amount}
+            label={messages.extension.amount}
             hint={
               minutes && !amountError
-                ? `${fmt(t.extension.total, {
+                ? `${fmt(messages.extension.total, {
                     time: format.minutes(planned + minutes),
-                  })} ${t.extension.amountHint}`
-                : t.extension.amountHint
+                  })} ${messages.extension.amountHint}`
+                : messages.extension.amountHint
             }
             error={submitted ? amountError : null}
           >
-            {(a) => (
+            {(fieldProps) => (
               <div className="space-y-2">
                 <Input
-                  {...a}
+                  {...fieldProps}
                   autoFocus
                   inputMode="text"
                   autoComplete="off"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={(event) => setAmount(event.target.value)}
                 />
                 <div className="flex flex-wrap gap-1.5">
-                  {QUICK.map((m) => (
+                  {QUICK.map((presetMinutes) => (
                     <Button
-                      key={m}
+                      key={presetMinutes}
                       type="button"
-                      variant={minutes === m ? 'default' : 'outline'}
+                      variant={
+                        minutes === presetMinutes ? 'default' : 'outline'
+                      }
                       size="sm"
-                      aria-pressed={minutes === m}
-                      onClick={() => setAmount(String(m))}
+                      aria-pressed={minutes === presetMinutes}
+                      onClick={() => setAmount(String(presetMinutes))}
                     >
-                      +{format.minutes(m)}
+                      +{format.minutes(presetMinutes)}
                     </Button>
                   ))}
                 </div>
@@ -137,17 +139,17 @@ export function ExtendDialog({ entry, onClose }: ExtendDialogProps) {
             )}
           </Field>
           <Field
-            label={t.extension.reason}
+            label={messages.extension.reason}
             error={submitted ? reasonError : null}
           >
-            {(a) => (
+            {(fieldProps) => (
               <Textarea
-                {...a}
+                {...fieldProps}
                 rows={3}
                 maxLength={ENTRY_LIMITS.extensionNote}
-                placeholder={t.extension.reasonPlaceholder}
+                placeholder={messages.extension.reasonPlaceholder}
                 value={reason}
-                onChange={(e) => setReason(e.target.value)}
+                onChange={(event) => setReason(event.target.value)}
               />
             )}
           </Field>

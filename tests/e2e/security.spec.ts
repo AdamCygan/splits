@@ -96,9 +96,9 @@ test.describe('security headers', () => {
   test('Should publish security.txt with a contact and an expiry', async ({
     request,
   }) => {
-    const res = await request.get('/.well-known/security.txt')
-    expect(res.status()).toBe(200)
-    const text = await res.text()
+    const response = await request.get('/.well-known/security.txt')
+    expect(response.status()).toBe(200)
+    const text = await response.text()
     expect(text).toMatch(/^Contact: mailto:.+@.+$/m)
     expect(text).toMatch(/^Expires: \d{4}-\d{2}-\d{2}T/m)
   })

@@ -7,28 +7,32 @@ import { cn } from '#/lib/utils'
 import type { TaskViewModel } from '../../controllers/use-task'
 
 export interface TaskTimelineProps {
-  vm: TaskViewModel
+  viewModel: TaskViewModel
 }
 
 /**
  * Oś dnia: sesje zadania w kolorze rodzaju, inna praca na szaro, luki widać jako puste
  * miejsca. Zakres osi: od najwcześniejszego do najpóźniejszego wpisu z godzinami tego dnia.
  */
-export function TaskTimeline({ vm }: TaskTimelineProps) {
-  const t = useMessages(taskViewMessages).timeline
+export function TaskTimeline({ viewModel }: TaskTimelineProps) {
+  const messages = useMessages(taskViewMessages).timeline
   const format = useFormat()
-  if (!vm.insights) return null
+  if (!viewModel.insights) return null
   return (
-    <Panel title={t.title} lead={t.lead}>
+    <Panel title={messages.title} lead={messages.lead}>
       <ol className="space-y-4">
-        {vm.insights.days.map((day) => {
-          const line = taskDayTimeline(day.date, vm.sessions, vm.sameDays)
+        {viewModel.insights.days.map((day) => {
+          const line = taskDayTimeline(
+            day.date,
+            viewModel.sessions,
+            viewModel.sameDays,
+          )
           return (
             <li key={day.date}>
               <p className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
                 <span className="font-medium">{format.day(day.date)}</span>
                 <span className="text-ink-soft tabular-nums">
-                  {format.plural(t.sessions, day.sessions)},{' '}
+                  {format.plural(messages.sessions, day.sessions)},{' '}
                   <span className="font-semibold text-ink">
                     {format.minutes(day.minutes)}
                   </span>
@@ -37,32 +41,34 @@ export function TaskTimeline({ vm }: TaskTimelineProps) {
               {line.segments.length > 0 && (
                 <>
                   <div className="relative mt-1.5 h-7 overflow-hidden rounded-md bg-muted">
-                    {line.segments.map((x) => {
-                      const e = x.entry
-                      const label = x.own
-                        ? fmt(t.session, {
-                            name: e.title,
-                            from: format.time(x.start),
-                            to: format.time(x.end),
-                            time: format.minutes(e.durationMinutes),
+                    {line.segments.map((taskDaySegment) => {
+                      const entry = taskDaySegment.entry
+                      const label = taskDaySegment.own
+                        ? fmt(messages.session, {
+                            name: entry.title,
+                            from: format.time(taskDaySegment.start),
+                            to: format.time(taskDaySegment.end),
+                            time: format.minutes(entry.durationMinutes),
                           })
-                        : fmt(t.other, {
-                            name: `${vm.typeOf(e.taskTypeId)?.name ?? ''} ${e.title}`.trim(),
-                            time: format.minutes(e.durationMinutes),
+                        : fmt(messages.other, {
+                            name: `${viewModel.typeOf(entry.taskTypeId)?.name ?? ''} ${entry.title}`.trim(),
+                            time: format.minutes(entry.durationMinutes),
                           })
-                      const { left, width } = line.place(x)
+                      const { left, width } = line.place(taskDaySegment)
                       return (
                         <span
-                          key={e.id}
+                          key={entry.id}
                           title={label}
                           className={cn(
                             'absolute inset-y-0 border-x border-surface',
-                            x.own ? 'z-10' : 'bg-ink-soft/35',
+                            taskDaySegment.own ? 'z-10' : 'bg-ink-soft/35',
                           )}
                           style={{
                             left: `${left}%`,
                             width: `${width}%`,
-                            background: x.own ? vm.color : undefined,
+                            background: taskDaySegment.own
+                              ? viewModel.color
+                              : undefined,
                           }}
                         >
                           <span className="sr-only">{label}</span>
@@ -81,7 +87,7 @@ export function TaskTimeline({ vm }: TaskTimelineProps) {
               )}
               {line.untimedMinutes > 0 && (
                 <p className="mt-1 text-xs text-ink-soft">
-                  {fmt(t.untimed, {
+                  {fmt(messages.untimed, {
                     time: format.minutes(line.untimedMinutes),
                   })}
                 </p>

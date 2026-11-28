@@ -25,11 +25,11 @@ export function useSaveWorkday() {
 
 /** Zapis szablonu podsumowania zadania (null = domyślny szablon dla języka). */
 export function useSaveSummaryTemplate(settings: UserSettings) {
-  const t = useMessages(settingsMessages).summaries
+  const messages = useMessages(settingsMessages).summaries
   return useApplyMutation(
     'workday',
     (template: string | null, apply) =>
       settingsApi.update({ ...settings, summaryTemplate: template }, apply),
-    { invalidate: [keys.settings], success: t.saved },
+    { invalidate: [keys.settings], success: messages.saved },
   )
 }

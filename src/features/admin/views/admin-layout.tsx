@@ -14,7 +14,7 @@ import { adminStatsQuery } from '../data/queries'
  * 2FA dla adminów (ADMIN_REQUIRE_2FA), zamiast treści wyjaśnienie, co zrobić.
  */
 export function AdminLayout() {
-  const t = useMessages(adminMessages)
+  const messages = useMessages(adminMessages)
   const feedback = useMessages(feedbackMessages)
   const access = useQuery(adminStatsQuery)
   const openReports = useQuery(adminFeedbackOpenQuery).data?.new ?? 0
@@ -30,13 +30,13 @@ export function AdminLayout() {
     'rounded-lg px-3 py-2 text-sm font-medium text-ink-soft hover:bg-muted hover:text-ink aria-[current=page]:bg-ink aria-[current=page]:text-surface'
   return (
     <div className="mx-auto max-w-6xl">
-      <nav aria-label={t.tabs.label} className="mb-5 flex gap-1">
+      <nav aria-label={messages.tabs.label} className="mb-5 flex gap-1">
         <Link
           to="/app/admin"
           activeOptions={{ exact: true, includeSearch: false }}
           className={tab}
         >
-          {t.tabs.users}
+          {messages.tabs.users}
         </Link>
         <Link to="/app/admin/feedback" className={tab}>
           {feedback.admin.nav}
@@ -54,7 +54,7 @@ export function AdminLayout() {
           aria-current={onLog ? 'page' : undefined}
           className={tab}
         >
-          {t.tabs.log}
+          {messages.tabs.log}
         </Link>
       </nav>
       <Outlet />

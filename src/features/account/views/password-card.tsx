@@ -12,57 +12,69 @@ export interface PasswordCardProps {
 
 /** Zmiana hasła albo ustawienie pierwszego (konto z Google). */
 export function PasswordCard({ hasPassword }: PasswordCardProps) {
-  const t = useMessages(settingsMessages).account
-  const vm = usePasswordViewModel(hasPassword)
+  const messages = useMessages(settingsMessages).account
+  const viewModel = usePasswordViewModel(hasPassword)
   return (
-    <form noValidate onSubmit={vm.submit}>
+    <form noValidate onSubmit={viewModel.submit}>
       <SettingsCard
-        title={hasPassword ? t.passwordTitle : t.setPasswordTitle}
-        lead={hasPassword ? t.passwordLead : t.setPasswordLead}
+        title={hasPassword ? messages.passwordTitle : messages.setPasswordTitle}
+        lead={hasPassword ? messages.passwordLead : messages.setPasswordLead}
       >
         <div className="grid max-w-md gap-5">
           {hasPassword && (
-            <Field label={t.currentPassword} error={vm.errors.current}>
-              {(a) => (
+            <Field
+              label={messages.currentPassword}
+              error={viewModel.errors.current}
+            >
+              {(fieldProps) => (
                 <Input
-                  {...a}
+                  {...fieldProps}
                   type="password"
                   autoComplete="current-password"
-                  value={vm.draft.current}
-                  onChange={(e) => vm.update({ current: e.target.value })}
+                  value={viewModel.draft.current}
+                  onChange={(event) =>
+                    viewModel.update({ current: event.target.value })
+                  }
                 />
               )}
             </Field>
           )}
-          <Field label={t.newPassword} error={vm.errors.next}>
-            {(a) => (
+          <Field label={messages.newPassword} error={viewModel.errors.next}>
+            {(fieldProps) => (
               <Input
-                {...a}
+                {...fieldProps}
                 type="password"
                 autoComplete="new-password"
-                value={vm.draft.next}
-                onChange={(e) => vm.update({ next: e.target.value })}
+                value={viewModel.draft.next}
+                onChange={(event) =>
+                  viewModel.update({ next: event.target.value })
+                }
               />
             )}
           </Field>
-          <Field label={t.confirmPassword} error={vm.errors.confirm}>
-            {(a) => (
+          <Field
+            label={messages.confirmPassword}
+            error={viewModel.errors.confirm}
+          >
+            {(fieldProps) => (
               <Input
-                {...a}
+                {...fieldProps}
                 type="password"
                 autoComplete="new-password"
-                value={vm.draft.confirm}
-                onChange={(e) => vm.update({ confirm: e.target.value })}
+                value={viewModel.draft.confirm}
+                onChange={(event) =>
+                  viewModel.update({ confirm: event.target.value })
+                }
               />
             )}
           </Field>
           <Button
             type="submit"
             className="w-fit"
-            disabled={vm.saving}
-            aria-busy={vm.saving}
+            disabled={viewModel.saving}
+            aria-busy={viewModel.saving}
           >
-            {t.changePassword}
+            {messages.changePassword}
           </Button>
         </div>
       </SettingsCard>

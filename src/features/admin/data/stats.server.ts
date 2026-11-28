@@ -2,7 +2,7 @@ import { and, count, countDistinct, eq, gte, inArray, sql } from 'drizzle-orm'
 
 import { PAYMENT_PROBLEM_STATUSES } from '#/features/admin/domain/admin'
 
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 
 import { payments, subscriptions, timeEntries, users } from '#/server/db/schema'
 
@@ -13,8 +13,8 @@ export async function getStats() {
   const since = (days: number) => new Date(Date.now() - days * DAY)
   const real = eq(users.isDemo, false)
   const activeSince = (days: number) =>
-    db
-      .select({ n: countDistinct(timeEntries.userId) })
+    database
+      .select({ count: countDistinct(timeEntries.userId) })
       .from(timeEntries)
       .innerJoin(users, eq(users.id, timeEntries.userId))
       .where(and(real, gte(timeEntries.createdAt, since(days))))
@@ -24,13 +24,13 @@ export async function getStats() {
     demo,
     [active7],
     [active30],
-    [subs],
+    [subscriptionStats],
     [problems],
     revenue,
     signups,
     [billing],
   ] = await Promise.all([
-    db
+    database
       .select({
         users: count(),
         new7: sql<number>`count(*) filter (where ${users.createdAt} >= ${since(7)})::int`,
@@ -42,18 +42,18 @@ export async function getStats() {
       })
       .from(users)
       .where(real),
-    db.$count(users, eq(users.isDemo, true)),
+    database.$count(users, eq(users.isDemo, true)),
     activeSince(7),
     activeSince(30),
-    db
+    database
       .select({ active: count() })
       .from(subscriptions)
       .where(inArray(subscriptions.status, ACTIVE_SUBSCRIPTION)),
-    db
-      .select({ n: countDistinct(subscriptions.userId) })
+    database
+      .select({ count: countDistinct(subscriptions.userId) })
       .from(subscriptions)
       .where(inArray(subscriptions.status, [...PAYMENT_PROBLEM_STATUSES])),
-    db
+    database
       .select({
         currency: payments.currency,
         last30: sql<number>`coalesce(sum(${net}) filter (where ${payments.paidAt} >= ${since(30)}), 0)::int`,
@@ -63,7 +63,7 @@ export async function getStats() {
       .from(payments)
       .groupBy(payments.currency)
       .orderBy(payments.currency),
-    db
+    database
       .select({
         day: sql<string>`to_char(date_trunc('day', ${users.createdAt}), 'YYYY-MM-DD')`,
         count: count(),
@@ -73,7 +73,7 @@ export async function getStats() {
       .groupBy(sql`1`)
       .orderBy(sql`1`),
     // Pro płacone teraz (aktywne i w okresie próbnym), z podziałem na okres i rezygnacje.
-    db
+    database
       .select({
         monthly: sql<number>`count(*) filter (where ${subscriptions.interval} = 'month')::int`,
         yearly: sql<number>`count(*) filter (where ${subscriptions.interval} is distinct from 'month')::int`,
@@ -85,10 +85,10 @@ export async function getStats() {
   return {
     ...totals!,
     demo,
-    active7: active7?.n ?? 0,
-    active30: active30?.n ?? 0,
-    activeSubscriptions: subs?.active ?? 0,
-    paymentProblems: problems?.n ?? 0,
+    active7: active7?.count ?? 0,
+    active30: active30?.count ?? 0,
+    activeSubscriptions: subscriptionStats?.active ?? 0,
+    paymentProblems: problems?.count ?? 0,
     revenue,
     signups,
     subscriptions: {

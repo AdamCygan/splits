@@ -7,10 +7,10 @@ import { spScaleApi } from '../data/api'
 
 /** Zapis całej skali story pointów (limity czasu dla każdej wartości). */
 export function useSaveScale() {
-  const t = useMessages(settingsMessages).storyPoints
+  const messages = useMessages(settingsMessages).storyPoints
   return useApplyMutation('storyPoints', spScaleApi.replace, {
     invalidate: [keys.scale],
-    success: t.saved,
+    success: messages.saved,
     onSuccess: () => markSetupStep('storyPoints'),
   })
 }

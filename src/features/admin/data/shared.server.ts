@@ -1,5 +1,5 @@
 import type { AdminActionKind } from '#/features/admin/domain/admin'
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 import type { Tx } from '#/server/db/client'
 import { adminActions, refreshTokens, users } from '#/server/db/schema'
 import { notFound } from '#/server/http/errors'
@@ -16,13 +16,13 @@ export const DAY = 86_400_000
 
 /** Wpis w dzienniku zmian; `target` = null przy akcjach na wielu kontach. */
 export function log(
-  tx: Tx,
+  transaction: Tx,
   admin: UserRow,
   target: Pick<UserRow, 'id' | 'email'> | null,
   action: AdminActionKind,
   detail: string | null = null,
 ) {
-  return tx.insert(adminActions).values({
+  return transaction.insert(adminActions).values({
     adminId: admin.id,
     adminEmail: admin.email,
     targetUserId: target?.id ?? null,
@@ -34,13 +34,13 @@ export function log(
 
 export async function findUser(id: string) {
   if (!z.uuid().safeParse(id).success) throw notFound()
-  const [user] = await db.select().from(users).where(eq(users.id, id))
+  const [user] = await database.select().from(users).where(eq(users.id, id))
   if (!user) throw notFound()
   return user
 }
 
-export const revokeAllSessions = (tx: Tx, userId: string) =>
-  tx
+export const revokeAllSessions = (transaction: Tx, userId: string) =>
+  transaction
     .update(refreshTokens)
     .set({ revokedAt: new Date() })
     .where(

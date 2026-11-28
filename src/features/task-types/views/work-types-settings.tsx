@@ -42,7 +42,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 
 export function WorkTypeSettings() {
-  const t = useMessages(settingsMessages).workTypes
+  const messages = useMessages(settingsMessages).workTypes
   const app = useMessages(appMessages)
   const format = useFormat()
   const limits = useMessages(billingMessages).limits
@@ -53,17 +53,19 @@ export function WorkTypeSettings() {
 
   return (
     <div>
-      <SectionHeader title={t.title} lead={t.lead} />
+      <SectionHeader title={messages.title} lead={messages.lead} />
       <QueryView query={taskTypesQuery} skeletonRows={5}>
         {(types) => {
           const { active, archived } = splitArchived(types)
-          const customCount = active.filter((x) => !x.isSystem).length
+          const customCount = active.filter(
+            (archivable) => !archivable.isSystem,
+          ).length
           const atLimit = workTypes.atLimit(customCount)
 
           return (
             <div className="space-y-6">
               <SettingsCard
-                title={t.title}
+                title={messages.title}
                 actions={
                   <Button
                     onClick={() => setEditing('new')}
@@ -71,7 +73,7 @@ export function WorkTypeSettings() {
                     aria-describedby={atLimit ? 'type-limit' : undefined}
                   >
                     <Plus aria-hidden className="size-4" />
-                    {t.add}
+                    {messages.add}
                   </Button>
                 }
               >
@@ -89,23 +91,28 @@ export function WorkTypeSettings() {
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-semibold">{type.name}</h3>
                           <Badge tone={type.isSystem ? 'muted' : 'info'}>
-                            {type.isSystem ? t.builtIn : t.custom}
+                            {type.isSystem ? messages.builtIn : messages.custom}
                           </Badge>
                           {!type.countsAsFocusWork && (
-                            <Badge tone="muted">{t.notFocus}</Badge>
+                            <Badge tone="muted">{messages.notFocus}</Badge>
                           )}
                         </div>
                         <p className="text-sm text-ink-soft">
-                          {t.summary.link[type.linkRequirement]},{' '}
-                          {t.summary.time[type.defaultTimeInput]},{' '}
+                          {messages.summary.link[type.linkRequirement]},{' '}
+                          {messages.summary.time[type.defaultTimeInput]},{' '}
                           {type.storyPointsRequirement === 'hidden'
-                            ? t.summary.spHidden
-                            : fmt(t.summary.sp[type.storyPointsRequirement], {
-                                sp:
-                                  type.defaultStoryPoints === null
-                                    ? t.summary.spNoDefault
-                                    : format.sp(type.defaultStoryPoints),
-                              })}
+                            ? messages.summary.spHidden
+                            : fmt(
+                                messages.summary.sp[
+                                  type.storyPointsRequirement
+                                ],
+                                {
+                                  sp:
+                                    type.defaultStoryPoints === null
+                                      ? messages.summary.spNoDefault
+                                      : format.sp(type.defaultStoryPoints),
+                                },
+                              )}
                         </p>
                       </div>
                       <div className="flex gap-1">
@@ -137,7 +144,7 @@ export function WorkTypeSettings() {
                 {archived.length > 0 && (
                   <details className="mt-4">
                     <summary className="w-fit cursor-pointer rounded-md text-sm font-medium">
-                      {fmt(t.archivedTitle, { count: archived.length })}
+                      {fmt(messages.archivedTitle, { count: archived.length })}
                     </summary>
                     <ul className="mt-2 divide-y divide-line">
                       {archived.map((type) => (
@@ -183,13 +190,13 @@ interface WorkTypeDialogProps {
 }
 
 function WorkTypeDialog({ type, onClose }: WorkTypeDialogProps) {
-  const t = useMessages(settingsMessages).workTypes
+  const messages = useMessages(settingsMessages).workTypes
   const app = useMessages(appMessages)
   const format = useFormat()
   const palette = usePalette()
   const scale = useQuery(scaleQuery).data ?? []
   const [draft, setDraft] = useState<TaskTypeInput>(() =>
-    type ? { ...type } : blankType(t.previewTitle),
+    type ? { ...type } : blankType(messages.previewTitle),
   )
   const [submitted, setSubmitted] = useState(false)
 
@@ -199,29 +206,29 @@ function WorkTypeDialog({ type, onClose }: WorkTypeDialogProps) {
     name:
       draft.name.trim() && draft.name.length <= LIMITS.taskTypeName
         ? mutationFieldError(save.error, 'name')
-        : t.nameError,
+        : messages.nameError,
     titleLabel:
       draft.titleLabel.trim() && draft.titleLabel.length <= LIMITS.linkLabel
         ? null
-        : t.labelError,
+        : messages.labelError,
     linkLabel:
       draft.linkRequirement === 'hidden' ||
       (draft.linkLabel.trim() && draft.linkLabel.length <= LIMITS.linkLabel)
         ? null
-        : t.labelError,
+        : messages.labelError,
   }
   const invalid =
     !draft.name.trim() ||
     draft.name.length > LIMITS.taskTypeName ||
     errors.titleLabel !== null ||
     errors.linkLabel !== null
-  const show = (e: string | null) => (submitted ? e : null)
+  const show = (error: string | null) => (submitted ? error : null)
   const requirementOptions = (['hidden', 'optional', 'required'] as const).map(
-    (value) => ({ value, label: t.requirement[value] }),
+    (value) => ({ value, label: messages.requirement[value] }),
   )
   const spOptions =
     draft.defaultStoryPoints === null ||
-    scale.some((s) => s.points === draft.defaultStoryPoints)
+    scale.some((step) => step.points === draft.defaultStoryPoints)
       ? scale
       : [
           ...scale,
@@ -240,8 +247,8 @@ function WorkTypeDialog({ type, onClose }: WorkTypeDialogProps) {
             : draft.defaultStoryPoints,
     })
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault()
+  const onSubmit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     setSubmitted(true)
     if (!invalid)
       save.mutate({
@@ -258,10 +265,10 @@ function WorkTypeDialog({ type, onClose }: WorkTypeDialogProps) {
         size="lg"
         title={
           type
-            ? fmt(t.dialog.editTitle, { name: type.name })
-            : t.dialog.addTitle
+            ? fmt(messages.dialog.editTitle, { name: type.name })
+            : messages.dialog.addTitle
         }
-        description={t.dialog.description}
+        description={messages.dialog.description}
         closeLabel={app.actions.close}
         footer={
           <>
@@ -278,7 +285,7 @@ function WorkTypeDialog({ type, onClose }: WorkTypeDialogProps) {
                 ? app.actions.saving
                 : type
                   ? app.actions.save
-                  : t.add}
+                  : messages.add}
             </Button>
           </>
         }
@@ -290,41 +297,43 @@ function WorkTypeDialog({ type, onClose }: WorkTypeDialogProps) {
             onSubmit={onSubmit}
             className="space-y-6"
           >
-            <Field label={t.fields.name} error={show(errors.name)}>
-              {(a) => (
+            <Field label={messages.fields.name} error={show(errors.name)}>
+              {(fieldProps) => (
                 <Input
-                  {...a}
+                  {...fieldProps}
                   autoFocus
                   maxLength={LIMITS.taskTypeName}
                   value={draft.name}
-                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                  onChange={(event) =>
+                    setDraft({ ...draft, name: event.target.value })
+                  }
                 />
               )}
             </Field>
             <ColorPicker
-              legend={t.fields.color}
+              legend={messages.fields.color}
               value={draft.color}
               onChange={(color) => setDraft({ ...draft, color })}
               swatches={withCurrent(palette, draft.color)}
             />
             <Field
-              label={t.fields.titleLabel}
-              hint={t.fields.titleLabelHint}
+              label={messages.fields.titleLabel}
+              hint={messages.fields.titleLabelHint}
               error={show(errors.titleLabel)}
             >
-              {(a) => (
+              {(fieldProps) => (
                 <Input
-                  {...a}
+                  {...fieldProps}
                   maxLength={LIMITS.linkLabel}
                   value={draft.titleLabel}
-                  onChange={(e) =>
-                    setDraft({ ...draft, titleLabel: e.target.value })
+                  onChange={(event) =>
+                    setDraft({ ...draft, titleLabel: event.target.value })
                   }
                 />
               )}
             </Field>
             <Segmented<FieldRequirement>
-              label={t.fields.link}
+              label={messages.fields.link}
               value={draft.linkRequirement}
               onChange={(linkRequirement) =>
                 setDraft({ ...draft, linkRequirement })
@@ -334,24 +343,24 @@ function WorkTypeDialog({ type, onClose }: WorkTypeDialogProps) {
             />
             {draft.linkRequirement !== 'hidden' && (
               <Field
-                label={t.fields.linkLabel}
-                hint={t.fields.linkLabelHint}
+                label={messages.fields.linkLabel}
+                hint={messages.fields.linkLabelHint}
                 error={show(errors.linkLabel)}
               >
-                {(a) => (
+                {(fieldProps) => (
                   <Input
-                    {...a}
+                    {...fieldProps}
                     maxLength={LIMITS.linkLabel}
                     value={draft.linkLabel}
-                    onChange={(e) =>
-                      setDraft({ ...draft, linkLabel: e.target.value })
+                    onChange={(event) =>
+                      setDraft({ ...draft, linkLabel: event.target.value })
                     }
                   />
                 )}
               </Field>
             )}
             <Segmented<FieldRequirement>
-              label={t.fields.description}
+              label={messages.fields.description}
               value={draft.descriptionRequirement}
               onChange={(descriptionRequirement) =>
                 setDraft({ ...draft, descriptionRequirement })
@@ -360,51 +369,56 @@ function WorkTypeDialog({ type, onClose }: WorkTypeDialogProps) {
               size="sm"
             />
             <Segmented<TimeInputMode>
-              label={t.fields.timeInput}
+              label={messages.fields.timeInput}
               value={draft.defaultTimeInput}
               onChange={(defaultTimeInput) =>
                 setDraft({ ...draft, defaultTimeInput })
               }
               options={(['range', 'duration'] as const).map((value) => ({
                 value,
-                label: t.timeInput[value],
+                label: messages.timeInput[value],
               }))}
               size="sm"
             />
             <div>
               <Segmented<FieldRequirement>
-                label={t.fields.sp}
+                label={messages.fields.sp}
                 value={draft.storyPointsRequirement}
                 onChange={setSpRequirement}
                 options={(['hidden', 'optional', 'required'] as const).map(
-                  (value) => ({ value, label: t.spRequirement[value] }),
+                  (value) => ({ value, label: messages.spRequirement[value] }),
                 )}
                 size="sm"
               />
               <p className="mt-1.5 text-sm text-ink-soft">
-                {t.spRequirementHint[draft.storyPointsRequirement]}
+                {messages.spRequirementHint[draft.storyPointsRequirement]}
               </p>
             </div>
             {draft.storyPointsRequirement !== 'hidden' && (
-              <Field label={t.fields.defaultSp} hint={t.fields.defaultSpHint}>
-                {(a) => (
+              <Field
+                label={messages.fields.defaultSp}
+                hint={messages.fields.defaultSpHint}
+              >
+                {(fieldProps) => (
                   <Select
-                    {...a}
+                    {...fieldProps}
                     value={draft.defaultStoryPoints ?? ''}
-                    onChange={(e) =>
+                    onChange={(event) =>
                       setDraft({
                         ...draft,
                         defaultStoryPoints:
-                          e.target.value === '' ? null : Number(e.target.value),
+                          event.target.value === ''
+                            ? null
+                            : Number(event.target.value),
                       })
                     }
                   >
                     {draft.storyPointsRequirement === 'optional' && (
-                      <option value="">{t.noSpOption}</option>
+                      <option value="">{messages.noSpOption}</option>
                     )}
-                    {spOptions.map((s) => (
-                      <option key={s.points} value={s.points}>
-                        {format.sp(s.points)}
+                    {spOptions.map((spOption) => (
+                      <option key={spOption.points} value={spOption.points}>
+                        {format.sp(spOption.points)}
                       </option>
                     ))}
                   </Select>
@@ -412,8 +426,8 @@ function WorkTypeDialog({ type, onClose }: WorkTypeDialogProps) {
               </Field>
             )}
             <Switch
-              label={t.fields.focus}
-              description={t.fields.focusHint}
+              label={messages.fields.focus}
+              description={messages.fields.focusHint}
               checked={draft.countsAsFocusWork}
               onCheckedChange={(countsAsFocusWork) =>
                 setDraft({ ...draft, countsAsFocusWork })
@@ -421,7 +435,10 @@ function WorkTypeDialog({ type, onClose }: WorkTypeDialogProps) {
             />
           </form>
 
-          <EntryPreview draft={draft} scale={scale.map((s) => s.points)} />
+          <EntryPreview
+            draft={draft}
+            scale={scale.map((step) => step.points)}
+          />
         </div>
       </DialogContent>
     </Dialog>
@@ -435,7 +452,7 @@ interface EntryPreviewProps {
 
 /** Podgląd formularza wpisu na żywo — widać od razu, co zobaczy użytkownik przy logowaniu czasu. */
 function EntryPreview({ draft, scale }: EntryPreviewProps) {
-  const t = useMessages(settingsMessages).workTypes
+  const messages = useMessages(settingsMessages).workTypes
   const app = useMessages(appMessages)
   const label = (text: string, requirement: FieldRequirement) => (
     <p className="mb-1 text-xs font-medium">
@@ -452,16 +469,16 @@ function EntryPreview({ draft, scale }: EntryPreviewProps) {
 
   return (
     <aside
-      aria-label={t.preview}
+      aria-label={messages.preview}
       className="self-start rounded-xl border border-line bg-paper p-4 md:sticky md:top-0"
     >
       <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
         <ColorDot color={draft.color} />
-        {draft.name || t.preview}
+        {draft.name || messages.preview}
       </p>
       <div className="space-y-3" aria-hidden>
         <div>
-          {label(draft.titleLabel || t.previewTitle, 'required')}
+          {label(draft.titleLabel || messages.previewTitle, 'required')}
           {box}
         </div>
         {draft.linkRequirement !== 'hidden' && (
@@ -473,17 +490,17 @@ function EntryPreview({ draft, scale }: EntryPreviewProps) {
         {draft.defaultTimeInput === 'range' ? (
           <div className="grid grid-cols-2 gap-2">
             <div>
-              {label(t.previewStart, 'required')}
+              {label(messages.previewStart, 'required')}
               {box}
             </div>
             <div>
-              {label(t.previewEnd, 'required')}
+              {label(messages.previewEnd, 'required')}
               {box}
             </div>
           </div>
         ) : (
           <div>
-            {label(t.previewDuration, 'required')}
+            {label(messages.previewDuration, 'required')}
             {box}
           </div>
         )}
@@ -500,20 +517,20 @@ function EntryPreview({ draft, scale }: EntryPreviewProps) {
                       : 'border-line text-ink-soft',
                   )}
                 >
-                  {t.noSpOption}
+                  {messages.noSpOption}
                 </span>
               )}
-              {scale.map((p) => (
+              {scale.map((points) => (
                 <span
-                  key={p}
+                  key={points}
                   className={cn(
                     'rounded border px-1.5 py-0.5 text-xs',
-                    p === draft.defaultStoryPoints
+                    points === draft.defaultStoryPoints
                       ? 'border-[var(--selected)] bg-[var(--selected)] text-[var(--on-selected)]'
                       : 'border-line text-ink-soft',
                   )}
                 >
-                  {p}
+                  {points}
                 </span>
               ))}
             </div>
@@ -521,14 +538,14 @@ function EntryPreview({ draft, scale }: EntryPreviewProps) {
         )}
         {draft.descriptionRequirement !== 'hidden' && (
           <div>
-            {label(t.previewDescription, draft.descriptionRequirement)}
+            {label(messages.previewDescription, draft.descriptionRequirement)}
             <div className="h-14 rounded-md border border-input bg-surface" />
           </div>
         )}
         <div className="flex justify-end">
           <span className="inline-flex items-center gap-1.5 rounded-md bg-[var(--selected)] px-2.5 py-1.5 text-xs font-medium text-[var(--on-selected)]">
             <Check className="size-3" />
-            {t.previewSave}
+            {messages.previewSave}
           </span>
         </div>
       </div>

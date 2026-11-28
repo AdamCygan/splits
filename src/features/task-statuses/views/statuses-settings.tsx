@@ -38,10 +38,10 @@ const categoryTone = {
 } as const
 
 export function StatusSettings() {
-  const t = useMessages(settingsMessages).statuses
+  const messages = useMessages(settingsMessages).statuses
   return (
     <div>
-      <SectionHeader title={t.title} lead={t.lead} />
+      <SectionHeader title={messages.title} lead={messages.lead} />
       <QueryView query={statusesQuery} skeletonRows={4}>
         {(statuses) => <StatusList statuses={statuses} />}
       </QueryView>
@@ -54,7 +54,7 @@ interface StatusListProps {
 }
 
 function StatusList({ statuses }: StatusListProps) {
-  const t = useMessages(settingsMessages).statuses
+  const messages = useMessages(settingsMessages).statuses
   const app = useMessages(appMessages)
   const [editing, setEditing] = useState<TaskStatus | 'new' | null>(null)
   const [announcer, announce] = useAnnouncer()
@@ -65,9 +65,12 @@ function StatusList({ statuses }: StatusListProps) {
 
   const onMove = (from: number, to: number) => {
     const next = move(active, from, to)
-    reorder.mutate([...next.map((s) => s.id), ...archived.map((s) => s.id)])
+    reorder.mutate([
+      ...next.map((taskStatus) => taskStatus.id),
+      ...archived.map((taskStatus) => taskStatus.id),
+    ])
     announce(
-      fmt(t.moved, {
+      fmt(messages.moved, {
         name: active[from]!.name,
         position: to + 1,
         total: active.length,
@@ -77,8 +80,8 @@ function StatusList({ statuses }: StatusListProps) {
 
   return (
     <SettingsCard
-      title={t.title}
-      lead={t.defaultHint}
+      title={messages.title}
+      lead={messages.defaultHint}
       actions={
         <Button
           onClick={() => setEditing('new')}
@@ -86,7 +89,7 @@ function StatusList({ statuses }: StatusListProps) {
           aria-describedby={atLimit ? 'status-limit' : undefined}
         >
           <Plus aria-hidden className="size-4" />
-          {t.add}
+          {messages.add}
         </Button>
       }
     >
@@ -115,7 +118,7 @@ function StatusList({ statuses }: StatusListProps) {
               <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                 <h3 className="font-semibold">
                   <span className="sr-only">
-                    {fmt(t.position, {
+                    {fmt(messages.position, {
                       position: index + 1,
                       total: active.length,
                     })}
@@ -124,15 +127,17 @@ function StatusList({ statuses }: StatusListProps) {
                   {status.name}
                 </h3>
                 <Badge tone={categoryTone[status.category]}>
-                  {t.category[status.category]}
+                  {messages.category[status.category]}
                 </Badge>
                 {status.isDefault && (
                   <Badge tone="warning">
                     <Star aria-hidden className="size-3" fill="currentColor" />
-                    {t.default}
+                    {messages.default}
                   </Badge>
                 )}
-                {status.isSystem && <Badge tone="muted">{t.builtIn}</Badge>}
+                {status.isSystem && (
+                  <Badge tone="muted">{messages.builtIn}</Badge>
+                )}
               </div>
             </div>
             <div className="col-start-2 -ml-3 flex flex-wrap gap-1 sm:col-start-3 sm:row-start-1 sm:ml-0">
@@ -146,7 +151,7 @@ function StatusList({ statuses }: StatusListProps) {
                   }
                 >
                   <Star aria-hidden className="size-4" />
-                  {t.makeDefault}
+                  {messages.makeDefault}
                   <span className="sr-only">: {status.name}</span>
                 </Button>
               )}
@@ -178,7 +183,7 @@ function StatusList({ statuses }: StatusListProps) {
       {archived.length > 0 && (
         <details className="mt-4">
           <summary className="w-fit cursor-pointer rounded-md text-sm font-medium">
-            {fmt(t.archivedTitle, { count: archived.length })}
+            {fmt(messages.archivedTitle, { count: archived.length })}
           </summary>
           <ul className="mt-2 divide-y divide-line">
             {archived.map((status) => (
@@ -218,7 +223,7 @@ interface StatusDialogProps {
 }
 
 function StatusDialog({ status, onClose }: StatusDialogProps) {
-  const t = useMessages(settingsMessages).statuses
+  const messages = useMessages(settingsMessages).statuses
   const app = useMessages(appMessages)
   const palette = usePalette()
   const [draft, setDraft] = useState<TaskStatusInput>(() =>
@@ -234,10 +239,10 @@ function StatusDialog({ status, onClose }: StatusDialogProps) {
     draft.name.trim().length > 0 && draft.name.length <= LIMITS.statusName
   const nameError = nameOk
     ? mutationFieldError(save.error, 'name')
-    : t.nameError
+    : messages.nameError
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault()
+  const onSubmit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     setSubmitted(true)
     if (nameOk) save.mutate({ ...draft, name: draft.name.trim() })
   }
@@ -247,10 +252,10 @@ function StatusDialog({ status, onClose }: StatusDialogProps) {
       <DialogContent
         title={
           status
-            ? fmt(t.dialog.editTitle, { name: status.name })
-            : t.dialog.addTitle
+            ? fmt(messages.dialog.editTitle, { name: status.name })
+            : messages.dialog.addTitle
         }
-        description={t.dialog.description}
+        description={messages.dialog.description}
         closeLabel={app.actions.close}
         footer={
           <>
@@ -267,7 +272,7 @@ function StatusDialog({ status, onClose }: StatusDialogProps) {
                 ? app.actions.saving
                 : status
                   ? app.actions.save
-                  : t.add}
+                  : messages.add}
             </Button>
           </>
         }
@@ -278,20 +283,25 @@ function StatusDialog({ status, onClose }: StatusDialogProps) {
           onSubmit={onSubmit}
           className="space-y-6"
         >
-          <Field label={t.fields.name} error={submitted ? nameError : null}>
-            {(a) => (
+          <Field
+            label={messages.fields.name}
+            error={submitted ? nameError : null}
+          >
+            {(fieldProps) => (
               <Input
-                {...a}
+                {...fieldProps}
                 autoFocus
                 maxLength={LIMITS.statusName}
                 value={draft.name}
-                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                onChange={(event) =>
+                  setDraft({ ...draft, name: event.target.value })
+                }
               />
             )}
           </Field>
           <fieldset>
             <legend className="mb-2 text-sm font-medium">
-              {t.fields.group}
+              {messages.fields.group}
             </legend>
             <div className="space-y-2">
               {(['todo', 'in_progress', 'done'] as Array<StatusCategory>).map(
@@ -309,10 +319,10 @@ function StatusDialog({ status, onClose }: StatusDialogProps) {
                     />
                     <span>
                       <span className="block font-medium">
-                        {t.category[category]}
+                        {messages.category[category]}
                       </span>
                       <span className="block text-sm text-ink-soft">
-                        {t.categoryHint[category]}
+                        {messages.categoryHint[category]}
                       </span>
                     </span>
                   </label>
@@ -321,7 +331,7 @@ function StatusDialog({ status, onClose }: StatusDialogProps) {
             </div>
           </fieldset>
           <ColorPicker
-            legend={t.fields.color}
+            legend={messages.fields.color}
             value={draft.color}
             onChange={(color) => setDraft({ ...draft, color })}
             swatches={withCurrent(palette, draft.color)}

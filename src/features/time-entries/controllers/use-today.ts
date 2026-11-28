@@ -41,7 +41,7 @@ export function useTodayViewModel({
   request,
   onRequestDone,
 }: TodayProps) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const { tag } = useI18n()
   const settings = useQuery(settingsQuery).data
   const user = useCurrentUser()
@@ -60,7 +60,10 @@ export function useTodayViewModel({
   // Zadanie z wyszukiwarki albo z palety do wpisania w formularz.
   const [prefill, setPrefill] = useState<EntryPrefill | null>(null)
   const nextPrefill = (patch: Omit<EntryPrefill, 'key'>) =>
-    setPrefill((p) => ({ ...patch, key: (p?.key ?? 0) + 1 }))
+    setPrefill((currentPrefill) => ({
+      ...patch,
+      key: (currentPrefill?.key ?? 0) + 1,
+    }))
   const requestedLog = request?.log
   const requestedMode = request?.mode
   useEffect(() => {
@@ -80,16 +83,16 @@ export function useTodayViewModel({
       timeZone: 'UTC',
     }).format(day)
   const heading = isToday
-    ? t.pageTitle
+    ? messages.pageTitle
     : workDate === addDays(today, -1)
-      ? t.day.yesterday
+      ? messages.day.yesterday
       : new Intl.DateTimeFormat(tag, {
           weekday: 'long',
           timeZone: 'UTC',
         }).format(day)
 
   return {
-    t,
+    t: messages,
     today,
     workDate,
     isToday,

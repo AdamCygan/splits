@@ -8,10 +8,10 @@ import { seo } from '#/lib/seo'
 
 export const Route = createFileRoute('/_marketing/pricing')({
   head: () => {
-    const t = marketingMessages[getLocale()].pricing
+    const messages = marketingMessages[getLocale()].pricing
     return seo({
-      title: t.pageSeoTitle,
-      description: t.pageSeoDescription,
+      title: messages.pageSeoTitle,
+      description: messages.pageSeoDescription,
       path: '/pricing',
     })
   },
@@ -19,15 +19,15 @@ export const Route = createFileRoute('/_marketing/pricing')({
 })
 
 function PricingPage() {
-  const t = useMessages(marketingMessages)
+  const messages = useMessages(marketingMessages)
   return (
     <>
       <section className="mx-auto max-w-6xl px-4 pt-16 pb-20 sm:px-6">
         <h1 className="type-display text-center text-[clamp(2.75rem,7vw,5rem)]">
-          {t.pricing.pageTitle}
+          {messages.pricing.pageTitle}
         </h1>
         <p className="mx-auto mt-4 mb-10 max-w-[56ch] text-center text-lg text-ink-soft">
-          {t.pricing.lead}
+          {messages.pricing.lead}
         </p>
         <PricingSection headingLevel={2} />
       </section>
@@ -37,7 +37,7 @@ function PricingPage() {
             id="faq-title"
             className="type-heading text-[clamp(2rem,4.5vw,3.25rem)]"
           >
-            {t.faq.title}
+            {messages.faq.title}
           </h2>
           <Faq />
         </div>

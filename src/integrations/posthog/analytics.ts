@@ -1,5 +1,5 @@
 import type { PostHog } from 'posthog-js'
-import { env } from '#/lib/env'
+import { environment } from '#/lib/env'
 
 /**
  * Analityka produktowa (PostHog), ładowana leniwie:
@@ -11,23 +11,24 @@ import { env } from '#/lib/env'
  */
 let client: PostHog | null = null
 let started = false
-const queue: Array<(ph: PostHog) => void> = []
+const queue: Array<(posthog: PostHog) => void> = []
 
 export function initAnalytics() {
-  if (started || typeof window === 'undefined' || !env.VITE_POSTHOG_KEY) return
+  if (started || typeof window === 'undefined' || !environment.VITE_POSTHOG_KEY)
+    return
   started = true
 
   const load = async () => {
     const { default: posthog } = await import('posthog-js')
-    posthog.init(env.VITE_POSTHOG_KEY!, {
-      api_host: env.VITE_POSTHOG_HOST ?? 'https://eu.i.posthog.com',
+    posthog.init(environment.VITE_POSTHOG_KEY!, {
+      api_host: environment.VITE_POSTHOG_HOST ?? 'https://eu.i.posthog.com',
       person_profiles: 'identified_only',
       capture_pageview: 'history_change',
       defaults: '2025-11-30',
     })
     if (posthog.has_opted_out_capturing()) posthog.opt_in_capturing()
     client = posthog
-    queue.splice(0).forEach((fn) => fn(posthog))
+    queue.splice(0).forEach((callback) => callback(posthog))
   }
 
   if ('requestIdleCallback' in window) {
@@ -37,18 +38,18 @@ export function initAnalytics() {
   }
 }
 
-function withClient(fn: (ph: PostHog) => void) {
-  if (client) fn(client)
-  else if (started) queue.push(fn)
+function withClient(callback: (posthog: PostHog) => void) {
+  if (client) callback(client)
+  else if (started) queue.push(callback)
 }
 
 /** Zdarzenie produktowe, np. track('signup_completed', { plan: 'free' }). */
 export function track(event: string, properties?: Record<string, unknown>) {
-  withClient((ph) => ph.capture(event, properties))
+  withClient((posthog) => posthog.capture(event, properties))
 }
 
 export function identify(userId: string, properties?: Record<string, unknown>) {
-  withClient((ph) => ph.identify(userId, properties))
+  withClient((posthog) => posthog.identify(userId, properties))
 }
 
 /** Wycofanie zgody: przestajemy zbierać i usuwamy cookies/localStorage PostHoga. */
@@ -76,5 +77,5 @@ export function disableAnalytics() {
 }
 
 export function resetAnalytics() {
-  withClient((ph) => ph.reset())
+  withClient((posthog) => posthog.reset())
 }

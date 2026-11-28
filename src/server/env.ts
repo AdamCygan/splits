@@ -8,11 +8,11 @@ import { existsSync } from 'node:fs'
 if (process.env.NODE_ENV !== 'production' && existsSync('.env'))
   process.loadEnvFile('.env')
 
-const env = process.env
-const isProduction = env.NODE_ENV === 'production'
+const environment = process.env
+const isProduction = environment.NODE_ENV === 'production'
 
 function required(name: string, devFallback: string): string {
-  const value = env[name]
+  const value = environment[name]
   if (value) return value
   if (isProduction) throw new Error(`Brak zmiennej środowiskowej ${name}.`)
   return devFallback
@@ -34,47 +34,49 @@ export const serverEnv = {
   isProduction,
   databaseUrl,
   /** Migracje przez bezpośrednie połączenie, gdy DATABASE_URL idzie przez pooler (np. PgBouncer). */
-  migrationUrl: env.DATABASE_URL_UNPOOLED ?? databaseUrl,
-  databasePoolSize: Number(env.DATABASE_POOL_SIZE ?? 10),
-  migrateOnStart: env.MIGRATE_ON_START !== 'false',
-  migrationsDir: env.MIGRATIONS_DIR ?? 'drizzle',
+  migrationUrl: environment.DATABASE_URL_UNPOOLED ?? databaseUrl,
+  databasePoolSize: Number(environment.DATABASE_POOL_SIZE ?? 10),
+  migrateOnStart: environment.MIGRATE_ON_START !== 'false',
+  migrationsDir: environment.MIGRATIONS_DIR ?? 'drizzle',
   jwtSecret,
   /** Publiczny adres aplikacji (linki w e-mailach, powrót z Google). */
-  appUrl: (env.APP_URL ?? env.VITE_APP_URL ?? 'http://localhost:3000').replace(
-    /\/$/,
-    '',
-  ),
+  appUrl: (
+    environment.APP_URL ??
+    environment.VITE_APP_URL ??
+    'http://localhost:3000'
+  ).replace(/\/$/, ''),
   google:
-    env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+    environment.GOOGLE_CLIENT_ID && environment.GOOGLE_CLIENT_SECRET
       ? {
-          clientId: env.GOOGLE_CLIENT_ID,
-          clientSecret: env.GOOGLE_CLIENT_SECRET,
+          clientId: environment.GOOGLE_CLIENT_ID,
+          clientSecret: environment.GOOGLE_CLIENT_SECRET,
         }
       : null,
-  resendApiKey: env.RESEND_API_KEY ?? null,
+  resendApiKey: environment.RESEND_API_KEY ?? null,
   /** Płatności Stripe; bez STRIPE_SECRET_KEY przyciski zakupu są wyłączone. */
-  stripe: env.STRIPE_SECRET_KEY
+  stripe: environment.STRIPE_SECRET_KEY
     ? {
-        secretKey: env.STRIPE_SECRET_KEY,
-        webhookSecret: env.STRIPE_WEBHOOK_SECRET ?? null,
+        secretKey: environment.STRIPE_SECRET_KEY,
+        webhookSecret: environment.STRIPE_WEBHOOK_SECRET ?? null,
         /** Stripe Tax: VAT liczony z adresu klienta (wymaga konfiguracji w panelu Stripe). */
-        automaticTax: env.STRIPE_AUTOMATIC_TAX === 'true',
+        automaticTax: environment.STRIPE_AUTOMATIC_TAX === 'true',
         /** Opcjonalnie id cen Pro zamiast wyszukiwania po lookup key. */
-        priceProMonthly: env.STRIPE_PRICE_PRO_MONTHLY || null,
-        priceProYearly: env.STRIPE_PRICE_PRO_YEARLY || null,
+        priceProMonthly: environment.STRIPE_PRICE_PRO_MONTHLY || null,
+        priceProYearly: environment.STRIPE_PRICE_PRO_YEARLY || null,
       }
     : null,
   /** Sentry (np. https://klucz@o1.ingest.de.sentry.io/123); bez niego błędy są tylko w logach. */
-  sentryDsn: env.SENTRY_DSN ?? null,
+  sentryDsn: environment.SENTRY_DSN ?? null,
   /** Wersja aplikacji w zgłoszeniach błędów (Railway ustawia RAILWAY_GIT_COMMIT_SHA przy każdym deployu). */
-  release: env.APP_RELEASE ?? env.RAILWAY_GIT_COMMIT_SHA ?? null,
-  emailFrom: env.EMAIL_FROM ?? 'Timeblame <no-reply@timeblame.com>',
+  release:
+    environment.APP_RELEASE ?? environment.RAILWAY_GIT_COMMIT_SHA ?? null,
+  emailFrom: environment.EMAIL_FROM ?? 'Timeblame <no-reply@timeblame.com>',
   /**
    * Właściciele aplikacji (ADMIN_EMAILS, po przecinku): konto z takim potwierdzonym adresem
    * dostaje rolę admina przy logowaniu, a inni administratorzy nie mogą go zablokować ani usunąć.
    */
   adminEmails: new Set(
-    (env.ADMIN_EMAILS ?? '')
+    (environment.ADMIN_EMAILS ?? '')
       .split(',')
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),
@@ -83,17 +85,20 @@ export const serverEnv = {
    * Panel admina tylko z logowaniem dwuetapowym (ADMIN_REQUIRE_2FA=true). Włącz, gdy
    * administratorzy mają już 2FA: bez niego API admina odpowiada 403 admin.two_factor_required.
    */
-  adminRequire2fa: env.ADMIN_REQUIRE_2FA === 'true',
+  adminRequire2fa: environment.ADMIN_REQUIRE_2FA === 'true',
   /**
    * Nagłówek z adresem IP klienta ustawiany przez proxy hostingu (limity prób, lista sesji).
    * Railway nadpisuje X-Real-IP (inny hosting: np. Cloudflare CF-Connecting-IP). Czytamy tylko ten jeden nagłówek:
    * inne klient może podać sam i obejść limity prób.
    */
-  clientIpHeader: (env.CLIENT_IP_HEADER ?? 'x-real-ip').trim().toLowerCase(),
+  clientIpHeader: (environment.CLIENT_IP_HEADER ?? 'x-real-ip')
+    .trim()
+    .toLowerCase(),
   /** Limity prób logowania/rejestracji w pamięci; RATE_LIMITS=off tylko w testach. */
-  rateLimits: env.RATE_LIMITS !== 'off' || isProduction,
+  rateLimits: environment.RATE_LIMITS !== 'off' || isProduction,
   /** Tylko testy e2e: endpoint z danymi przykładowymi. Nigdy w produkcji. */
   testRoutes:
-    env.ENABLE_TEST_ROUTES === '1' &&
-    (!isProduction || /^http:\/\/localhost[:/]/.test(env.APP_URL ?? '')),
+    environment.ENABLE_TEST_ROUTES === '1' &&
+    (!isProduction ||
+      /^http:\/\/localhost[:/]/.test(environment.APP_URL ?? '')),
 } as const

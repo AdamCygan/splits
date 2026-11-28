@@ -12,10 +12,10 @@ export interface Plural {
 /** Podstawia {nazwa} w tekście: fmt('Hi {name}', { name: 'Adam' }). */
 export function fmt(
   template: string,
-  vars: Record<string, string | number> = {},
+  variables: Record<string, string | number> = {},
 ): string {
   return template.replace(/\{(\w+)\}/g, (match, key: string) =>
-    key in vars ? String(vars[key]) : match,
+    key in variables ? String(variables[key]) : match,
   )
 }
 
@@ -25,7 +25,7 @@ export function plural(
   locale: Locale,
   forms: Plural,
   count: number,
-  vars: Record<string, string | number> = {},
+  variables: Record<string, string | number> = {},
 ) {
   let rules = pluralRules.get(locale)
   if (!rules) {
@@ -38,7 +38,7 @@ export function plural(
     (category === 'few' && forms.few) ||
     (category === 'many' && forms.many) ||
     forms.other
-  return fmt(template, { n: formatNumber(locale, count), ...vars })
+  return fmt(template, { n: formatNumber(locale, count), ...variables })
 }
 
 export function formatNumber(
@@ -54,14 +54,14 @@ export function formatNumber(
 /** Czas trwania: EN "2h 10m", PL "2 h 10 min". */
 export function formatMinutes(locale: Locale, total: number): string {
   const rounded = Math.round(total)
-  const h = Math.floor(rounded / 60)
-  const m = rounded % 60
+  const hours = Math.floor(rounded / 60)
+  const minutes = rounded % 60
   if (locale === 'pl') {
-    if (h === 0) return `${m} min`
-    return m === 0 ? `${h} h` : `${h} h ${m} min`
+    if (hours === 0) return `${minutes} min`
+    return minutes === 0 ? `${hours} h` : `${hours} h ${minutes} min`
   }
-  if (h === 0) return `${m}m`
-  return m === 0 ? `${h}h` : `${h}h ${m}m`
+  if (hours === 0) return `${minutes}m`
+  return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`
 }
 
 export function formatSp(locale: Locale, points: number) {
@@ -102,8 +102,8 @@ export function weekdayNames(locale: Locale, style: 'long' | 'short' = 'long') {
     timeZone: 'UTC',
   })
   // 2023-01-01 to niedziela
-  return Array.from({ length: 7 }, (_, i) =>
-    formatter.format(new Date(Date.UTC(2023, 0, 1 + i))),
+  return Array.from({ length: 7 }, (_unused, index) =>
+    formatter.format(new Date(Date.UTC(2023, 0, 1 + index))),
   )
 }
 

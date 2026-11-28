@@ -8,28 +8,30 @@ import { dayViewMessages } from '#/i18n/messages/day-view'
 import type { DayViewModel } from '../../controllers/use-day'
 
 export interface DayTasksProps {
-  vm: DayViewModel
+  viewModel: DayViewModel
 }
 
 /** Zadania dnia od najdłuższego: czas, sesje z godzinami, SP i notatki z tego dnia. */
-export function DayTasks({ vm }: DayTasksProps) {
-  const t = useMessages(dayViewMessages).tasks
+export function DayTasks({ viewModel }: DayTasksProps) {
+  const messages = useMessages(dayViewMessages).tasks
   const format = useFormat()
-  const when = (s: Pick<TimeEntry, 'startTime' | 'endTime'>) =>
-    s.startTime && s.endTime ? format.timeRange(s.startTime, s.endTime) : null
+  const when = (timeEntry: Pick<TimeEntry, 'startTime' | 'endTime'>) =>
+    timeEntry.startTime && timeEntry.endTime
+      ? format.timeRange(timeEntry.startTime, timeEntry.endTime)
+      : null
   return (
-    <Panel title={t.title} lead={t.lead}>
+    <Panel title={messages.title} lead={messages.lead}>
       <ul className="divide-y divide-line">
-        {vm.summary.tasks.map((row) => {
-          const type = vm.typeOf(row.taskTypeId)
-          const project = vm.projectOf(row.projectId)
-          const sessions = vm.sessionsOf(row.key)
+        {viewModel.summary.tasks.map((row) => {
+          const type = viewModel.typeOf(row.taskTypeId)
+          const project = viewModel.projectOf(row.projectId)
+          const sessions = viewModel.sessionsOf(row.key)
           return (
             <li key={row.key} className="py-4 first:pt-0 last:pb-0">
               <div className="flex items-start gap-3">
                 <ColorDot
                   className="mt-1.5"
-                  color={vm.colorOf(row.taskTypeId)}
+                  color={viewModel.colorOf(row.taskTypeId)}
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-3">
@@ -50,42 +52,50 @@ export function DayTasks({ vm }: DayTasksProps) {
                     )}
                     <span aria-hidden>·</span>
                     <span className="tabular-nums">
-                      {format.plural(t.sessions, row.sessions)}:{' '}
-                      {sessions.map((s) => when(s) ?? t.untimed).join(', ')}
+                      {format.plural(messages.sessions, row.sessions)}:{' '}
+                      {sessions
+                        .map((timeEntry) => when(timeEntry) ?? messages.untimed)
+                        .join(', ')}
                     </span>
                     {project && (
                       <Badge tone="muted">{project.key ?? project.name}</Badge>
                     )}
                   </p>
-                  {sessions.map((s) => (
-                    <div key={s.id} className="contents">
-                      {s.note && (
+                  {sessions.map((timeEntry) => (
+                    <div key={timeEntry.id} className="contents">
+                      {timeEntry.note && (
                         <div className="mt-2 rounded-lg bg-muted/60 px-3 py-2">
                           {/* Godziny sesji, w której powstała notatka. */}
                           <p className="mb-1 text-xs text-ink-soft tabular-nums">
                             {format.session(
-                              s.startTime,
-                              s.endTime,
-                              s.durationMinutes,
+                              timeEntry.startTime,
+                              timeEntry.endTime,
+                              timeEntry.durationMinutes,
                             )}
                           </p>
                           <CheckableNote
-                            text={s.note}
+                            text={timeEntry.note}
                             headingLevel={4}
-                            onSave={(note) => vm.saveNote(s.id, note)}
+                            onSave={(note) =>
+                              viewModel.saveNote(timeEntry.id, note)
+                            }
                           />
                         </div>
                       )}
-                      {s.overtimeNote && (
+                      {timeEntry.overtimeNote && (
                         <p className="mt-2 text-sm">
-                          <span className="font-medium">{t.overtime}: </span>
-                          {s.overtimeNote}
+                          <span className="font-medium">
+                            {messages.overtime}:{' '}
+                          </span>
+                          {timeEntry.overtimeNote}
                         </p>
                       )}
-                      {s.extensionNote && (
+                      {timeEntry.extensionNote && (
                         <p className="mt-2 text-sm">
-                          <span className="font-medium">{t.extension}: </span>
-                          {s.extensionNote}
+                          <span className="font-medium">
+                            {messages.extension}:{' '}
+                          </span>
+                          {timeEntry.extensionNote}
                         </p>
                       )}
                     </div>

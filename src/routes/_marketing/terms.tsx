@@ -7,10 +7,10 @@ import { site } from '#/config/site'
 
 export const Route = createFileRoute('/_marketing/terms')({
   head: () => {
-    const doc = legalDocs.terms[getLocale()]
+    const legalDocument = legalDocs.terms[getLocale()]
     return seo({
-      title: `${doc.title} | ${site.name}`,
-      description: fillLegal(doc.summary, ''),
+      title: `${legalDocument.title} | ${site.name}`,
+      description: fillLegal(legalDocument.summary, ''),
       path: '/terms',
     })
   },

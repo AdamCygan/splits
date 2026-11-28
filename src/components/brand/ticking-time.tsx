@@ -10,10 +10,12 @@ export interface TickingTimeProps {
  * dostaje pole o stałej szerokości: tykający timer nie "skacze".
  */
 export function TickingTime({ seconds, className }: TickingTimeProps) {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = seconds % 60
-  const text = [h, m, s].map((n) => String(n).padStart(2, '0')).join(':')
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secondsPart = seconds % 60
+  const text = [hours, minutes, secondsPart]
+    .map((count) => String(count).padStart(2, '0'))
+    .join(':')
 
   return (
     <span
@@ -21,14 +23,14 @@ export function TickingTime({ seconds, className }: TickingTimeProps) {
       aria-label={text}
       role="timer"
     >
-      {text.split('').map((char, i) =>
+      {text.split('').map((char, index) =>
         char === ':' ? (
-          <span key={i} aria-hidden className="px-[0.04em] opacity-50">
+          <span key={index} aria-hidden className="px-[0.04em] opacity-50">
             :
           </span>
         ) : (
           <span
-            key={i}
+            key={index}
             aria-hidden
             className="inline-block w-[0.62em] text-center"
           >

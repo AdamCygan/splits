@@ -8,8 +8,8 @@ export function splitArchived<TItem extends Archivable>(
   items: ReadonlyArray<TItem>,
 ) {
   return {
-    active: items.filter((x) => !x.archivedAt),
-    archived: items.filter((x) => x.archivedAt),
+    active: items.filter((archivable) => !archivable.archivedAt),
+    archived: items.filter((archivable) => archivable.archivedAt),
   }
 }
 
@@ -20,4 +20,7 @@ export function splitArchived<TItem extends Archivable>(
 export const selectable = <TItem extends Archivable>(
   items: ReadonlyArray<TItem>,
   currentId?: string | null,
-) => items.filter((x) => !x.archivedAt || x.id === currentId)
+) =>
+  items.filter(
+    (archivable) => !archivable.archivedAt || archivable.id === currentId,
+  )

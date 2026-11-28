@@ -5,9 +5,9 @@ export function downloadFile(
   type: string,
 ) {
   const url = URL.createObjectURL(new Blob(parts, { type }))
-  const a = document.createElement('a')
-  a.href = url
-  a.download = name
-  a.click()
+  const element = document.createElement('a')
+  element.href = url
+  element.download = name
+  element.click()
   URL.revokeObjectURL(url)
 }

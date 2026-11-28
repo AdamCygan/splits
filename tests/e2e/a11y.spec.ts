@@ -45,7 +45,9 @@ const appPages = [
 const themedAppPages = (['light', 'dark'] as const).flatMap((theme) =>
   appPages.map((path) => ({ path, theme })),
 )
-const settingsPages = appPages.filter((p) => p.startsWith('/app/settings'))
+const settingsPages = appPages.filter((appPage) =>
+  appPage.startsWith('/app/settings'),
+)
 
 /** O ile piksli strona daje się przewinąć w bok (0 = mieści się w szerokości). */
 async function sidewaysScroll(page: Page) {
@@ -68,7 +70,8 @@ async function violations(page: Page) {
     ])
     .analyze()
   return result.violations.map(
-    (v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`,
+    (violation) =>
+      `${violation.id}: ${violation.nodes.map((node) => node.target.join(' ')).join(', ')}`,
   )
 }
 
@@ -94,7 +97,10 @@ test.describe('accessibility sweep', () => {
     'Should pass WCAG 2.2 AA and best practices on $path in the $theme theme',
     async ({ path, theme }, page) => {
       await signInWithSamples(page)
-      await page.evaluate((t) => localStorage.setItem('ph-theme', t), theme)
+      await page.evaluate(
+        (messages) => localStorage.setItem('ph-theme', messages),
+        theme,
+      )
       await page.goto(path)
       await settle(page)
       expect(await violations(page)).toEqual([])
@@ -158,8 +164,8 @@ test.describe('high-contrast mode', () => {
     await page.keyboard.press('Tab')
     await page.keyboard.press('Tab')
     const outline = await page.evaluate(() => {
-      const el = document.activeElement
-      return el ? getComputedStyle(el).outlineStyle : 'none'
+      const element = document.activeElement
+      return element ? getComputedStyle(element).outlineStyle : 'none'
     })
     expect(outline).not.toBe('none')
     // Wybrana opcja (rodzaj pracy w formularzu) i bieżąca strona w menu mają tło systemowe.
@@ -194,21 +200,25 @@ test.describe('focus is not hidden under sticky bars', () => {
     const stops = await inSequence(numbered(45), async () => {
       await page.keyboard.press('Tab')
       return page.evaluate(() => {
-        const el = document.activeElement
-        if (!(el instanceof HTMLElement) || el === document.body) return null
+        const element = document.activeElement
+        if (!(element instanceof HTMLElement) || element === document.body)
+          return null
         // Ukryte pole (np. checkbox w etykiecie) sprawdzamy po widocznej etykiecie.
         const label =
-          el.closest('label') ??
-          (el.id ? document.querySelector(`label[for="${el.id}"]`) : null)
+          element.closest('label') ??
+          (element.id
+            ? document.querySelector(`label[for="${element.id}"]`)
+            : null)
         const target =
-          el.classList.contains('sr-only') && label instanceof HTMLElement
+          element.classList.contains('sr-only') && label instanceof HTMLElement
             ? label
-            : el
-        const b = target.getBoundingClientRect()
-        if (b.width === 0 || b.height === 0) return null
-        const x = b.left + b.width / 2
-        const y = b.top + b.height / 2
-        const top = document.elementFromPoint(x, y)
+            : element
+        const boundingClientRect = target.getBoundingClientRect()
+        if (boundingClientRect.width === 0 || boundingClientRect.height === 0)
+          return null
+        const centerX = boundingClientRect.left + boundingClientRect.width / 2
+        const centerY = boundingClientRect.top + boundingClientRect.height / 2
+        const top = document.elementFromPoint(centerX, centerY)
         const covered =
           !!top && !target.contains(top) && !top.contains(target)
             ? !!top.closest(
@@ -216,7 +226,7 @@ test.describe('focus is not hidden under sticky bars', () => {
               )
             : false
         return covered
-          ? `${el.tagName} "${(el.getAttribute('aria-label') ?? el.textContent).trim().slice(0, 40)}" under ${top?.closest('header, nav, [role="region"]')?.getAttribute('aria-label') ?? top?.tagName}`
+          ? `${element.tagName} "${(element.getAttribute('aria-label') ?? element.textContent).trim().slice(0, 40)}" under ${top?.closest('header, nav, [role="region"]')?.getAttribute('aria-label') ?? top?.tagName}`
           : null
       })
     })

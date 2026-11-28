@@ -22,7 +22,7 @@ interface ConsentState {
   closeSettings: () => void
 }
 
-const Ctx = createContext<ConsentState | null>(null)
+const Context = createContext<ConsentState | null>(null)
 
 export interface ConsentProviderProps {
   initial: Consent | null
@@ -59,11 +59,11 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
     }),
     [consent, settingsOpen, save],
   )
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
+  return <Context.Provider value={value}>{children}</Context.Provider>
 }
 
 export function useConsent() {
-  const ctx = useContext(Ctx)
-  if (!ctx) throw new Error('useConsent poza ConsentProvider')
-  return ctx
+  const context = useContext(Context)
+  if (!context) throw new Error('useConsent poza ConsentProvider')
+  return context
 }

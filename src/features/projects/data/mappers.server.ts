@@ -1,11 +1,13 @@
 import type { Project } from '#/features/projects/data/dto'
-import type * as t from '#/server/db/schema'
-import { iso } from '#/server/http/json'
+import type * as schema from '#/server/db/schema'
+import { isoDate } from '#/server/http/json'
 
-export const toProject = (x: typeof t.projects.$inferSelect): Project => ({
-  id: x.id,
-  name: x.name,
-  key: x.key,
-  color: x.color,
-  archivedAt: iso(x.archivedAt),
+export const toProject = (
+  projectRow: typeof schema.projects.$inferSelect,
+): Project => ({
+  id: projectRow.id,
+  name: projectRow.name,
+  key: projectRow.key,
+  color: projectRow.color,
+  archivedAt: isoDate(projectRow.archivedAt),
 })

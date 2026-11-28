@@ -8,27 +8,34 @@ const optionClass =
   'grid h-10 cursor-pointer place-items-center rounded-lg border border-line text-sm hover:border-ink/40 has-checked:border-transparent has-checked:bg-[var(--selected)] has-checked:text-[var(--on-selected)] has-focus-visible:ring-[3px] has-focus-visible:ring-ring/40'
 
 export interface StoryPointsFieldProps {
-  vm: EntryFormViewModel
+  viewModel: EntryFormViewModel
 }
 
 /** Story pointy ze skali; typ pracy decyduje, czy są wymagane, opcjonalne, czy ukryte. */
-export function StoryPointsField({ vm }: StoryPointsFieldProps) {
-  const { t, format, uid, type, chosenSp, suggestedSp } = vm
+export function StoryPointsField({ viewModel }: StoryPointsFieldProps) {
+  const {
+    messages,
+    format,
+    userId,
+    type,
+    chosenSp,
+    suggestedSp,
+  } = viewModel
   const requirement = type?.storyPointsRequirement
   if (!requirement || requirement === 'hidden') return null
   const optional = requirement === 'optional'
-  const fieldId = vm.fieldId('storyPoints')
+  const fieldId = viewModel.fieldId('storyPoints')
   return (
     <fieldset
       className="sm:col-span-2"
       aria-describedby={
-        vm.issueText('storyPoints') ? `${fieldId}-error` : undefined
+        viewModel.issueText('storyPoints') ? `${fieldId}-error` : undefined
       }
     >
       <legend className="mb-2 text-sm font-medium">
-        {t.form.spLegend}{' '}
+        {messages.form.spLegend}{' '}
         <span className="font-normal text-ink-soft">
-          {optional ? t.form.optional : t.form.required}
+          {optional ? messages.form.optional : messages.form.required}
         </span>
       </legend>
       <div className="flex flex-wrap items-center gap-1.5">
@@ -37,28 +44,30 @@ export function StoryPointsField({ vm }: StoryPointsFieldProps) {
             <input
               id={fieldId}
               type="radio"
-              name={`${uid}-sp`}
+              name={`${userId}-sp`}
               className="sr-only"
-              checked={vm.draft.storyPoints === ''}
-              onChange={() => vm.update({ storyPoints: '' })}
+              checked={viewModel.draft.storyPoints === ''}
+              onChange={() => viewModel.update({ storyPoints: '' })}
             />
-            {t.form.spNone}
+            {messages.form.spNone}
           </label>
         )}
-        {vm.spOptions.map((s, i) => (
+        {viewModel.spOptions.map((spScaleStep, index) => (
           <label
-            key={s.points}
+            key={spScaleStep.points}
             className={`${optionClass} min-w-11 px-2.5 font-semibold tabular-nums`}
           >
             <input
-              id={i === 0 && !optional ? fieldId : undefined}
+              id={index === 0 && !optional ? fieldId : undefined}
               type="radio"
-              name={`${uid}-sp`}
+              name={`${userId}-sp`}
               className="sr-only"
-              checked={chosenSp === s.points}
-              onChange={() => vm.update({ storyPoints: String(s.points) })}
+              checked={chosenSp === spScaleStep.points}
+              onChange={() =>
+                viewModel.update({ storyPoints: String(spScaleStep.points) })
+              }
             />
-            {format.number(s.points)}
+            {format.number(spScaleStep.points)}
             <span className="sr-only"> SP</span>
           </label>
         ))}
@@ -67,14 +76,16 @@ export function StoryPointsField({ vm }: StoryPointsFieldProps) {
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => vm.update({ storyPoints: String(suggestedSp) })}
+            onClick={() =>
+              viewModel.update({ storyPoints: String(suggestedSp) })
+            }
           >
             <Wand2 aria-hidden className="size-4" />
-            {fmt(t.form.spSuggest, { sp: format.sp(suggestedSp) })}
+            {fmt(messages.form.spSuggest, { sp: format.sp(suggestedSp) })}
           </Button>
         )}
       </div>
-      <FieldError vm={vm} field="storyPoints" />
+      <FieldError viewModel={viewModel} field="storyPoints" />
     </fieldset>
   )
 }

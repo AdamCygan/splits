@@ -20,50 +20,52 @@ import {
 } from '../data/repository.server'
 
 export const sprintRoutes = new Hono<AppEnv>()
-  .get('/cadence', async (c) => c.json(await getCadenceFor(scopeOf(c))))
-  .put('/cadence', async (c) => {
-    const input = await body(c, cadenceInput)
-    return c.json(
-      await inTargets(scopeOf(c), applyOf(c), (scope) =>
+  .get('/cadence', async (context) =>
+    context.json(await getCadenceFor(scopeOf(context))),
+  )
+  .put('/cadence', async (context) => {
+    const input = await body(context, cadenceInput)
+    return context.json(
+      await inTargets(scopeOf(context), applyOf(context), (scope) =>
         saveCadence(scope, input),
       ),
     )
   })
-  .delete('/cadence', async (c) => {
-    await inTargets(scopeOf(c), applyOf(c), removeCadence)
-    return c.json(null)
+  .delete('/cadence', async (context) => {
+    await inTargets(scopeOf(context), applyOf(context), removeCadence)
+    return context.json(null)
   })
-  .get('/', async (c) => c.json(await getSprints(scopeOf(c))))
-  .post('/', async (c) => {
-    const input = await body(c, sprintInput)
-    const scope = scopeOf(c)
+  .get('/', async (context) => context.json(await getSprints(scopeOf(context))))
+  .post('/', async (context) => {
+    const input = await body(context, sprintInput)
+    const scope = scopeOf(context)
     const created = await mirrored(
       scope,
-      applyOf(c),
+      applyOf(context),
       'sprints',
       null,
       () => createSprint(scope, input),
-      (r) => r.id,
+      (sprint) => sprint.id,
     )
-    return c.json(created, 201)
+    return context.json(created, 201)
   })
-  .put('/:id', async (c) => {
-    const input = await body(c, sprintInput)
-    const scope = scopeOf(c)
-    const id = c.req.param('id')
-    return c.json(
-      await mirrored(scope, applyOf(c), 'sprints', id, () =>
+  .put('/:id', async (context) => {
+    const input = await body(context, sprintInput)
+    const scope = scopeOf(context)
+    const id = context.req.param('id')
+    return context.json(
+      await mirrored(scope, applyOf(context), 'sprints', id, () =>
         updateSprint(scope, id, input),
       ),
     )
   })
-  .delete('/:id', async (c) => {
+  .delete('/:id', async (context) => {
     await removedEverywhere(
-      scopeOf(c),
-      applyOf(c),
+      scopeOf(context),
+      applyOf(context),
       'sprints',
-      c.req.param('id'),
+      context.req.param('id'),
       removeSprint,
     )
-    return c.body(null, 204)
+    return context.body(null, 204)
   })

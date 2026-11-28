@@ -19,9 +19,9 @@ import {
   ADMIN_USER_SORTS,
   PAYMENT_PROBLEM_STATUSES,
 } from '#/features/admin/domain/admin'
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 import { subscriptions, timeEntries, users } from '#/server/db/schema'
-import { iso } from '#/server/http/json'
+import { isoDate } from '#/server/http/json'
 import { isOwner } from '#/features/auth/data/repository.server'
 import { ACTIVE_SUBSCRIPTION, DAY } from './shared.server'
 import type { UserRow } from './shared.server'
@@ -44,7 +44,7 @@ export type UserFilter = z.infer<typeof userFilterInput>
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, '\\$&')
 
 /** Liczniki wpisów na konto: ile, ostatni dzień pracy i ostatnie dodanie wpisu (aktywność). */
-const entryStats = db
+const entryStats = database
   .select({
     userId: timeEntries.userId,
     entries: count().as('entries'),
@@ -72,7 +72,7 @@ function whereOf(filter: UserFilter): SQL | undefined {
     filter.payment === 'problem'
       ? inArray(
           users.id,
-          db
+          database
             .select({ id: subscriptions.userId })
             .from(subscriptions)
             .where(
@@ -125,7 +125,7 @@ export async function findUsers(
   page: { size: number; number: number } | null,
 ) {
   const where = whereOf(filter)
-  const base = db
+  const base = database
     .select({
       user: users,
       entries: entryStats.entries,
@@ -137,8 +137,8 @@ export async function findUsers(
     .where(where)
     .orderBy(...orderOf(filter))
   const [[total], rows] = await Promise.all([
-    db
-      .select({ n: count() })
+    database
+      .select({ count: count() })
       .from(users)
       .leftJoin(entryStats, eq(entryStats.userId, users.id))
       .where(where),
@@ -147,7 +147,7 @@ export async function findUsers(
       : base.limit(10_000),
   ])
   return {
-    total: total?.n ?? 0,
+    total: total?.count ?? 0,
     items: await describe(rows.map(({ user, ...stats }) => ({ user, stats }))),
   }
 }
@@ -163,43 +163,45 @@ interface StatsRow {
 
 /** Wiersze listy: konto + liczniki wpisów i najnowsza subskrypcja (jedno zapytanie na stronę). */
 export async function describe(rows: ReadonlyArray<StatsRow>) {
-  const ids = rows.map((r) => r.user.id)
-  const subs = ids.length
-    ? await db
+  const ids = rows.map((statsRow) => statsRow.user.id)
+  const subscriptionRows = ids.length
+    ? await database
         .select()
         .from(subscriptions)
         .where(inArray(subscriptions.userId, ids))
         .orderBy(desc(subscriptions.updatedAt))
     : []
-  return rows.map(({ user: u, stats }) => {
-    const sub = subs.find((s) => s.userId === u.id)
+  return rows.map(({ user, stats }) => {
+    const subscription = subscriptionRows.find(
+      (userSubscription) => userSubscription.userId === user.id,
+    )
     return {
-      id: u.id,
-      username: u.username,
-      email: u.email,
-      displayName: u.displayName,
-      role: u.role,
-      plan: u.plan,
-      isDemo: u.isDemo,
-      hasPassword: u.passwordHash !== null,
-      emailVerified: u.emailVerifiedAt !== null,
-      twoFactor: u.totpEnabledAt !== null,
-      isOwner: isOwner(u),
-      disabledAt: iso(u.disabledAt),
-      createdAt: u.createdAt.toISOString(),
-      lastLoginAt: iso(u.lastLoginAt),
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      displayName: user.displayName,
+      role: user.role,
+      plan: user.plan,
+      isDemo: user.isDemo,
+      hasPassword: user.passwordHash !== null,
+      emailVerified: user.emailVerifiedAt !== null,
+      twoFactor: user.totpEnabledAt !== null,
+      isOwner: isOwner(user),
+      disabledAt: isoDate(user.disabledAt),
+      createdAt: user.createdAt.toISOString(),
+      lastLoginAt: isoDate(user.lastLoginAt),
       lastActiveAt: stats?.lastActiveAt
         ? new Date(stats.lastActiveAt).toISOString()
         : null,
       entries: Number(stats?.entries ?? 0),
       lastEntryOn: stats?.lastEntryOn ?? null,
-      subscription: sub
+      subscription: subscription
         ? {
-            status: sub.status,
-            plan: sub.plan,
-            active: ACTIVE_SUBSCRIPTION.includes(sub.status),
-            currentPeriodEnd: iso(sub.currentPeriodEnd),
-            cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
+            status: subscription.status,
+            plan: subscription.plan,
+            active: ACTIVE_SUBSCRIPTION.includes(subscription.status),
+            currentPeriodEnd: isoDate(subscription.currentPeriodEnd),
+            cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
           }
         : null,
     }
@@ -208,7 +210,7 @@ export async function describe(rows: ReadonlyArray<StatsRow>) {
 
 /** Jedno konto w tym samym kształcie co wiersz listy. */
 export async function describeOne(user: UserRow) {
-  const [stats] = await db
+  const [stats] = await database
     .select({
       entries: count(),
       lastEntryOn: max(timeEntries.workDate),

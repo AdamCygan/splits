@@ -11,9 +11,9 @@ import {
   totalsOf,
 } from '../../src/features/reports/domain/report'
 
-let n = 0
+let count = 0
 const entry = (patch: Partial<TimeEntry>): TimeEntry => ({
-  id: String(++n),
+  id: String(++count),
   finishedAt: null,
   taskTypeId: 'task',
   projectId: null,
@@ -33,7 +33,7 @@ const entry = (patch: Partial<TimeEntry>): TimeEntry => ({
   running: false,
   paused: false,
   startedAt: null,
-  createdAt: `2026-11-02T10:00:0${n}.000Z`,
+  createdAt: `2026-11-02T10:00:0${count}.000Z`,
   ...patch,
 })
 
@@ -74,7 +74,7 @@ describe('report', () => {
   it('Should group sessions of a task and count its SP once', () => {
     const rows = groupTasks(entries, types)
     expect(rows).toHaveLength(4)
-    const pay = rows.find((r) => r.taskKey === 'PAY-142')!
+    const pay = rows.find((taskRow) => taskRow.taskKey === 'PAY-142')!
     expect(pay).toMatchObject({
       minutes: 225,
       sessions: 2,
@@ -83,8 +83,12 @@ describe('report', () => {
       first: '2026-11-02',
       last: '2026-11-03',
     })
-    expect(rows.find((r) => r.title === 'Planning')!.storyPoints).toBeNull()
-    expect(rows.find((r) => r.title === 'CR !481')!.storyPoints).toBeNull()
+    expect(
+      rows.find((taskRow) => taskRow.title === 'Planning')!.storyPoints,
+    ).toBeNull()
+    expect(
+      rows.find((taskRow) => taskRow.title === 'CR !481')!.storyPoints,
+    ).toBeNull()
   })
 
   it('Should total time and SP, with time per SP from tasks that have SP', () => {
@@ -105,7 +109,12 @@ describe('report', () => {
   it('Should split by kind of work in the order of work types', () => {
     const rows = byType(groupTasks(entries, types), ['task', 'cr', 'meeting'])
     expect(
-      rows.map((r) => [r.taskTypeId, r.minutes, r.storyPoints, r.withoutSp]),
+      rows.map((typeRow) => [
+        typeRow.taskTypeId,
+        typeRow.minutes,
+        typeRow.storyPoints,
+        typeRow.withoutSp,
+      ]),
     ).toEqual([
       ['task', 225, 5, 0],
       ['cr', 45, 0.5, 1],
@@ -115,7 +124,12 @@ describe('report', () => {
 
   it('Should sort tasks without SP below the ones with SP', () => {
     const rows = sortRows(groupTasks(entries, types), 'storyPoints', 'desc')
-    expect(rows.map((r) => r.storyPoints)).toEqual([5, 0.5, null, null])
+    expect(rows.map((taskRow) => taskRow.storyPoints)).toEqual([
+      5,
+      0.5,
+      null,
+      null,
+    ])
   })
 
   it('Should pick SP for a work type', () => {
@@ -183,10 +197,10 @@ describe('task summary intervals', () => {
   it('Should list time ranges per day for {intervals}', async () => {
     const { sampleValues } =
       await import('../../src/features/time-entries/domain/summary')
-    const en = sampleValues('en').intervals
-    expect(en).toContain('9:15 AM–11:25 AM (2h 10m)')
-    expect(en).toContain('6:40 AM–7:20 AM (40m)')
-    expect(en.split('\n')).toHaveLength(3)
+    const english = sampleValues('en').intervals
+    expect(english).toContain('9:15 AM–11:25 AM (2h 10m)')
+    expect(english).toContain('6:40 AM–7:20 AM (40m)')
+    expect(english.split('\n')).toHaveLength(3)
     expect(sampleValues('pl').intervals).toContain('6:40–7:20 (40 min)')
   })
 })

@@ -6,7 +6,7 @@ import type { LegalDoc } from './types'
  * o świadczeniu usług drogą elektroniczną) z postanowieniami konsumenckimi
  * (ustawa z 30 maja 2014 r. o prawach konsumenta, w tym rozdział 5b o usługach cyfrowych).
  */
-const pl: LegalDoc = {
+const polish: LegalDoc = {
   title: 'Regulamin',
   summary:
     'Zasady korzystania z {name}: konto, plany Free i Pro (płatny miesięcznie albo rocznie), płatności, odstąpienie od umowy, reklamacje i odpowiedzialność.',
@@ -223,7 +223,7 @@ const pl: LegalDoc = {
   ],
 }
 
-const en: LegalDoc = {
+const english: LegalDoc = {
   title: 'Terms of Service',
   summary:
     'The rules for using {name}: your account, the Free and Pro (billed monthly or yearly) plans, payments, withdrawal, complaints and liability.',
@@ -440,4 +440,4 @@ const en: LegalDoc = {
   ],
 }
 
-export const termsDoc: Dictionary<LegalDoc> = { en, pl }
+export const termsDoc: Dictionary<LegalDoc> = { en: english, pl: polish }

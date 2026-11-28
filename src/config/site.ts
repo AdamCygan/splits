@@ -1,4 +1,4 @@
-import { env } from '#/lib/env'
+import { environment } from '#/lib/env'
 
 /**
  * Stałe dane produktu. Teksty zależne od języka (tytuł, opis) są w i18n/messages/common.ts.
@@ -9,7 +9,7 @@ import { env } from '#/lib/env'
  */
 export const site = {
   name: 'Timeblame',
-  url: env.VITE_APP_URL,
+  url: environment.VITE_APP_URL,
   ogImage: '/og.png',
   ogImagePl: '/og-pl.png',
   themeColor: '#14162b',

@@ -34,18 +34,18 @@ export function useTaskProgress(entry: TimeEntry | undefined) {
   }).data
   if (!entry || !sessions) return null
   const all = [...sessions, ...(entry.running ? [entry] : [])]
-  const sp = maxPoints(all)
+  const storyPoints = maxPoints(all)
   const estimate = maxEstimate(all)
-  const budget = taskBudget(sp, estimate, scale)
-  if (sp === null || budget === null) return null
+  const budget = taskBudget(storyPoints, estimate, scale)
+  if (storyPoints === null || budget === null) return null
   const worked =
-    sessions.reduce((sum, e) => sum + e.durationMinutes, 0) +
+    sessions.reduce((sum, session) => sum + session.durationMinutes, 0) +
     runningMinutes(entry)
   return {
-    sp,
+    sp: storyPoints,
     budget,
     worked,
-    earned: earnedPoints(sp, worked, budget),
+    earned: earnedPoints(storyPoints, worked, budget),
     over: Math.max(0, worked - budget),
     fromEstimate: estimate !== null,
   }

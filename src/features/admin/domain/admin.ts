@@ -112,21 +112,25 @@ export const ADMIN_CSV_HEAD = [
 export function adminUsersCsv(rows: ReadonlyArray<AdminCsvUser>) {
   return toCsv([
     ADMIN_CSV_HEAD,
-    ...rows.map((u) => [
-      u.id,
-      u.username,
-      u.email,
-      u.displayName,
-      u.role,
-      u.plan,
-      u.isDemo ? 'demo' : u.disabledAt ? 'blocked' : 'active',
-      u.emailVerified,
-      u.twoFactor,
-      u.subscription?.status ?? null,
-      u.createdAt,
-      u.lastLoginAt,
-      u.lastActiveAt,
-      u.entries,
+    ...rows.map((adminCsvUser) => [
+      adminCsvUser.id,
+      adminCsvUser.username,
+      adminCsvUser.email,
+      adminCsvUser.displayName,
+      adminCsvUser.role,
+      adminCsvUser.plan,
+      adminCsvUser.isDemo
+        ? 'demo'
+        : adminCsvUser.disabledAt
+          ? 'blocked'
+          : 'active',
+      adminCsvUser.emailVerified,
+      adminCsvUser.twoFactor,
+      adminCsvUser.subscription?.status ?? null,
+      adminCsvUser.createdAt,
+      adminCsvUser.lastLoginAt,
+      adminCsvUser.lastActiveAt,
+      adminCsvUser.entries,
     ]),
   ])
 }

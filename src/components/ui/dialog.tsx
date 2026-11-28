@@ -162,8 +162,8 @@ export function ConfirmDialog({
               variant={destructive ? 'destructive' : 'default'}
               disabled={busy || disabled}
               aria-busy={busy}
-              onClick={(e) => {
-                e.preventDefault()
+              onClick={(event) => {
+                event.preventDefault()
                 onConfirm()
               }}
             >

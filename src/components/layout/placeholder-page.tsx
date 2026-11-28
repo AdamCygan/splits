@@ -18,20 +18,20 @@ export function PlaceholderPage({
   description,
   children,
 }: PlaceholderPageProps) {
-  const t = useMessages(appMessages).placeholders
+  const messages = useMessages(appMessages).placeholders
   return (
     <section className="max-w-3xl space-y-6">
       <div>
-        <Badge tone="info">{t.soon}</Badge>
+        <Badge tone="info">{messages.soon}</Badge>
         <h1 className="type-display mt-3 text-4xl sm:text-5xl">{title}</h1>
         <p className="mt-3 max-w-prose text-ink-soft">{description}</p>
       </div>
       <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-surface p-5">
-        <p className="min-w-0 flex-1 text-ink-soft">{t.setupText}</p>
+        <p className="min-w-0 flex-1 text-ink-soft">{messages.setupText}</p>
         <Button asChild>
           <Link to="/app/settings">
             <Settings aria-hidden className="size-4" />
-            {t.setupCta}
+            {messages.setupCta}
           </Link>
         </Button>
       </div>

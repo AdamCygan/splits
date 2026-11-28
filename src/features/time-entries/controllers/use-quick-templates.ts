@@ -45,16 +45,16 @@ export function useQuickTemplatesViewModel({
   requested,
   onRequestDone,
 }: QuickTemplatesViewModelOptions) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const format = useFormat()
   const templates = useQuery(templatesQuery).data ?? []
   const types = useQuery(taskTypesQuery).data ?? []
   const projects = (useQuery(projectsQuery).data ?? []).filter(
-    (p) => !p.archivedAt,
+    (project) => !project.archivedAt,
   )
   const timeZone = useQuery(settingsQuery).data?.timezone
   const [picking, setPicking] = useState<Picking | null>(null)
-  const typeOf = (id: string) => types.find((x) => x.id === id)
+  const typeOf = (id: string) => types.find((type) => type.id === id)
 
   const apply = useDataMutation(
     async ({ template, at, ...choice }: TemplateChoice & Picking) => {
@@ -71,8 +71,8 @@ export function useQuickTemplatesViewModel({
       invalidate: [entryKeys.all],
       success: (entry) =>
         entry.running
-          ? `${t.form.timerStarted}: ${entry.title}`
-          : fmt(t.templates.logged, {
+          ? `${messages.form.timerStarted}: ${entry.title}`
+          : fmt(messages.templates.logged, {
               name: entry.title,
               time: format.minutes(entry.durationMinutes),
             }),
@@ -94,21 +94,29 @@ export function useQuickTemplatesViewModel({
   // Wybór z palety: raz, gdy szablony i typy są już wczytane.
   useEffect(() => {
     if (!requested || templates.length === 0 || types.length === 0) return
-    const template = templates.find((x) => x.id === requested)
+    const template = templates.find(
+      (quickTemplate) => quickTemplate.id === requested,
+    )
     onRequestDone?.()
     if (template) use(template)
   }, [requested, templates.length, types.length])
 
   // Alt+1…9: szablon z tym skrótem.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!e.altKey || e.ctrlKey || e.metaKey || !/^Digit[1-9]$/.test(e.code))
+    const onKey = (keyboardEvent: KeyboardEvent) => {
+      if (
+        !keyboardEvent.altKey ||
+        keyboardEvent.ctrlKey ||
+        keyboardEvent.metaKey ||
+        !/^Digit[1-9]$/.test(keyboardEvent.code)
+      )
         return
       const template = templates.find(
-        (x) => x.hotkey === Number(e.code.slice(5)),
+        (quickTemplate) =>
+          quickTemplate.hotkey === Number(keyboardEvent.code.slice(5)),
       )
       if (!template) return
-      e.preventDefault()
+      keyboardEvent.preventDefault()
       use(template)
     }
     window.addEventListener('keydown', onKey)
@@ -116,7 +124,7 @@ export function useQuickTemplatesViewModel({
   })
 
   return {
-    t,
+    t: messages,
     format,
     templates,
     projects,
@@ -127,7 +135,8 @@ export function useQuickTemplatesViewModel({
     picking,
     use,
     logAll: (meetings: ReadonlyArray<ScheduledMeeting>) => {
-      for (const m of meetings) use(m.template, m)
+      for (const scheduledMeeting of meetings)
+        use(scheduledMeeting.template, scheduledMeeting)
     },
     submitPicked: (choice: TemplateChoice) =>
       picking && apply.mutate({ ...picking, ...choice }),

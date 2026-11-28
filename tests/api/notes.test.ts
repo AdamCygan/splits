@@ -9,8 +9,8 @@ interface Entry {
 }
 
 async function setup() {
-  const { c } = await registered()
-  const types = await c.get<
+  const { apiClient } = await registered()
+  const types = await apiClient.get<
     Array<{
       id: string
       kind: string
@@ -18,9 +18,9 @@ async function setup() {
       descriptionRequirement: string
     }>
   >('/task-types')
-  const task = types.body.find((x) => x.kind === 'task')!
+  const task = types.body.find((taskType) => taskType.kind === 'task')!
   const add = (note: string | null) =>
-    c.post<Entry>('/time-entries', {
+    apiClient.post<Entry>('/time-entries', {
       taskTypeId: task.id,
       projectId: null,
       title: 'Notes task',
@@ -33,7 +33,7 @@ async function setup() {
       note,
       running: false,
     })
-  return { c, task, add }
+  return { apiClient, task, add }
 }
 
 describe('markdown notes', () => {
@@ -42,25 +42,28 @@ describe('markdown notes', () => {
     const note =
       '## Done\n- [x] **tests**\n- [ ] _review_\n\n```ts\nconst a = 1\n```\n' +
       'x'.repeat(15_000)
-    const res = await add(note)
-    expect(res.status).toBe(201)
-    expect(res.body.note).toBe(note)
+    const response = await add(note)
+    expect(response.status).toBe(201)
+    expect(response.body.note).toBe(note)
   })
 
   it('Should still reject notes over the limit', async () => {
     const { add } = await setup()
-    const res = await add('x'.repeat(20_001))
-    expect(res.status).toBe(400)
+    const response = await add('x'.repeat(20_001))
+    expect(response.status).toBe(400)
   })
 
   it('Should update only the note (ticking a checkbox on the list)', async () => {
-    const { c, add } = await setup()
+    const { apiClient, add } = await setup()
     const created = await add('- [ ] tests\n- [ ] review')
-    const res = await c.patch<Entry>(`/time-entries/${created.body.id}/note`, {
-      note: '- [x] tests\n- [ ] review',
-    })
-    expect(res.status).toBe(200)
-    expect(res.body).toMatchObject({
+    const response = await apiClient.patch<Entry>(
+      `/time-entries/${created.body.id}/note`,
+      {
+        note: '- [x] tests\n- [ ] review',
+      },
+    )
+    expect(response.status).toBe(200)
+    expect(response.body).toMatchObject({
       id: created.body.id,
       title: 'Notes task',
       note: '- [x] tests\n- [ ] review',
@@ -71,9 +74,12 @@ describe('markdown notes', () => {
     const { add } = await setup()
     const created = await add('- [ ] mine')
     const other = await registered()
-    const res = await other.c.patch(`/time-entries/${created.body.id}/note`, {
-      note: '- [x] mine',
-    })
-    expect(res.status).toBe(404)
+    const response = await other.apiClient.patch(
+      `/time-entries/${created.body.id}/note`,
+      {
+        note: '- [x] mine',
+      },
+    )
+    expect(response.status).toBe(404)
   })
 })

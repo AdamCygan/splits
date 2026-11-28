@@ -43,7 +43,7 @@ import { useSaveTemplate, useTemplates } from '../controllers/use-templates'
 const ANY = '__any'
 
 export function TemplateSettings() {
-  const t = useMessages(settingsMessages).templates
+  const messages = useMessages(settingsMessages).templates
   const app = useMessages(appMessages)
   const format = useFormat()
   const types = useQuery(taskTypesQuery).data ?? []
@@ -59,8 +59,8 @@ export function TemplateSettings() {
   const describeSchedule = (schedule: QuickTemplate['schedule']) =>
     scheduleRuns(schedule, weekStartsOn)
       .map(
-        (r) =>
-          `${shortDays[r.from]}${r.to !== r.from ? `–${shortDays[r.to]}` : ''} ${format.time(r.time)}`,
+        (scheduleRun) =>
+          `${shortDays[scheduleRun.from]}${scheduleRun.to !== scheduleRun.from ? `–${shortDays[scheduleRun.to]}` : ''} ${format.time(scheduleRun.time)}`,
       )
       .join(', ')
 
@@ -68,10 +68,10 @@ export function TemplateSettings() {
 
   return (
     <div>
-      <SectionHeader title={t.title} lead={t.lead} />
+      <SectionHeader title={messages.title} lead={messages.lead} />
       {announcer}
       <SettingsCard
-        title={t.title}
+        title={messages.title}
         actions={
           <Button
             onClick={() => setEditing('new')}
@@ -79,7 +79,7 @@ export function TemplateSettings() {
             aria-describedby={atLimit ? 'template-limit' : undefined}
           >
             <Plus aria-hidden className="size-4" />
-            {t.add}
+            {messages.add}
           </Button>
         }
       >
@@ -89,13 +89,15 @@ export function TemplateSettings() {
         <QueryView query={templatesQuery}>
           {(templates) =>
             templates.length === 0 ? (
-              <p className="text-ink-soft">{t.empty}</p>
+              <p className="text-ink-soft">{messages.empty}</p>
             ) : (
               <ol className="divide-y divide-line">
                 {templates.map((template, index) => {
-                  const type = types.find((x) => x.id === template.taskTypeId)
+                  const type = types.find(
+                    (workType) => workType.id === template.taskTypeId,
+                  )
                   const project = projects.find(
-                    (p) => p.id === template.projectId,
+                    (candidate) => candidate.id === template.projectId,
                   )
                   const duration = template.defaultDurationMinutes
                     ? format.minutes(template.defaultDurationMinutes)
@@ -111,10 +113,12 @@ export function TemplateSettings() {
                         itemName={template.label}
                         onMove={(from, to) => {
                           reorder.mutate(
-                            move(templates, from, to).map((x) => x.id),
+                            move(templates, from, to).map(
+                              (listedTemplate) => listedTemplate.id,
+                            ),
                           )
                           announce(
-                            fmt(t.moved, {
+                            fmt(messages.moved, {
                               name: template.label,
                               position: to + 1,
                               total: templates.length,
@@ -126,11 +130,11 @@ export function TemplateSettings() {
                         <span className="w-16 shrink-0">
                           {template.hotkey ? (
                             <Kbd variant="key">
-                              {fmt(t.shortcut, { n: template.hotkey })}
+                              {fmt(messages.shortcut, { n: template.hotkey })}
                             </Kbd>
                           ) : (
                             <span className="text-xs text-ink-soft">
-                              {t.noShortcut}
+                              {messages.noShortcut}
                             </span>
                           )}
                         </span>
@@ -140,7 +144,7 @@ export function TemplateSettings() {
                         <div className="min-w-0 flex-1">
                           <h3 className="font-semibold">{template.label}</h3>
                           <p className="truncate text-sm text-ink-soft">
-                            {fmt(t.summary, {
+                            {fmt(messages.summary, {
                               type: type?.name ?? '—',
                               duration,
                             })}
@@ -148,7 +152,7 @@ export function TemplateSettings() {
                               <>, {format.sp(template.storyPoints)}</>
                             )}
                             {template.askProject ? (
-                              <>, {t.anyProject}</>
+                              <>, {messages.anyProject}</>
                             ) : (
                               project && <>, {project.name}</>
                             )}
@@ -156,7 +160,7 @@ export function TemplateSettings() {
                           </p>
                           {template.schedule.length > 0 && (
                             <p className="text-sm text-ink-soft">
-                              {fmt(t.schedule.summary, {
+                              {fmt(messages.schedule.summary, {
                                 when: describeSchedule(template.schedule),
                               })}
                             </p>
@@ -201,8 +205,8 @@ export function TemplateSettings() {
       <ConfirmDialog
         open={deleting !== null}
         onOpenChange={(open) => !open && setDeleting(null)}
-        title={fmt(t.deleteTitle, { name: deleting?.label ?? '' })}
-        description={t.deleteText}
+        title={fmt(messages.deleteTitle, { name: deleting?.label ?? '' })}
+        description={messages.deleteText}
         confirmLabel={app.actions.delete}
         cancelLabel={app.actions.cancel}
         destructive
@@ -219,7 +223,7 @@ interface TemplateDialogProps {
 }
 
 function TemplateDialog({ template, onClose }: TemplateDialogProps) {
-  const t = useMessages(settingsMessages).templates
+  const messages = useMessages(settingsMessages).templates
   const app = useMessages(appMessages)
   const format = useFormat()
   const types = selectable(
@@ -232,7 +236,7 @@ function TemplateDialog({ template, onClose }: TemplateDialogProps) {
   )
   const scale = useQuery(scaleQuery).data ?? []
   const others = (useQuery(templatesQuery).data ?? []).filter(
-    (x) => x.id !== template?.id,
+    (otherTemplate) => otherTemplate.id !== template?.id,
   )
 
   const [draft, setDraft] = useState({
@@ -257,22 +261,24 @@ function TemplateDialog({ template, onClose }: TemplateDialogProps) {
     label:
       draft.label.trim() && draft.label.length <= LIMITS.templateLabel
         ? null
-        : t.labelError,
+        : messages.labelError,
     title:
       draft.title.trim() && draft.title.length <= LIMITS.templateTitle
         ? null
-        : t.titleError,
+        : messages.titleError,
     duration:
       duration === null ||
       (Number.isInteger(duration) &&
         duration >= LIMITS.templateDuration.min &&
         duration <= LIMITS.templateDuration.max)
         ? null
-        : t.durationError,
+        : messages.durationError,
   }
-  const scheduleIssues = scheduleErrors(schedule, t.schedule)
+  const scheduleIssues = scheduleErrors(schedule, messages.schedule)
   const durationMissing =
-    schedule.enabled && duration === null ? t.schedule.durationNeeded : null
+    schedule.enabled && duration === null
+      ? messages.schedule.durationNeeded
+      : null
   const invalid =
     Object.values(errors).some(Boolean) ||
     !draft.taskTypeId ||
@@ -280,11 +286,13 @@ function TemplateDialog({ template, onClose }: TemplateDialogProps) {
     !!scheduleIssues.days ||
     !!scheduleIssues.time ||
     Object.keys(scheduleIssues.dayTimes).length > 0
-  const selectedType = types.find((x) => x.id === draft.taskTypeId)
-  const show = (e: string | null) => (submitted ? e : null)
+  const selectedType = types.find(
+    (archivable) => archivable.id === draft.taskTypeId,
+  )
+  const show = (error: string | null) => (submitted ? error : null)
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault()
+  const onSubmit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     setSubmitted(true)
     if (invalid) return
     save.mutate({
@@ -309,10 +317,10 @@ function TemplateDialog({ template, onClose }: TemplateDialogProps) {
       <DialogContent
         title={
           template
-            ? fmt(t.dialog.editTitle, { name: template.label })
-            : t.dialog.addTitle
+            ? fmt(messages.dialog.editTitle, { name: template.label })
+            : messages.dialog.addTitle
         }
-        description={t.dialog.description}
+        description={messages.dialog.description}
         closeLabel={app.actions.close}
         footer={
           <>
@@ -329,7 +337,7 @@ function TemplateDialog({ template, onClose }: TemplateDialogProps) {
                 ? app.actions.saving
                 : template
                   ? app.actions.save
-                  : t.add}
+                  : messages.add}
             </Button>
           </>
         }
@@ -342,29 +350,29 @@ function TemplateDialog({ template, onClose }: TemplateDialogProps) {
         >
           <div className="grid gap-5 sm:grid-cols-2">
             <Field
-              label={t.fields.label}
-              hint={t.fields.labelHint}
+              label={messages.fields.label}
+              hint={messages.fields.labelHint}
               error={show(errors.label)}
             >
-              {(a) => (
+              {(fieldProps) => (
                 <Input
-                  {...a}
+                  {...fieldProps}
                   autoFocus
                   maxLength={LIMITS.templateLabel}
                   value={draft.label}
-                  onChange={(e) =>
-                    setDraft({ ...draft, label: e.target.value })
+                  onChange={(event) =>
+                    setDraft({ ...draft, label: event.target.value })
                   }
                 />
               )}
             </Field>
-            <Field label={t.fields.type}>
-              {(a) => (
+            <Field label={messages.fields.type}>
+              {(fieldProps) => (
                 <Select
-                  {...a}
+                  {...fieldProps}
                   value={draft.taskTypeId}
-                  onChange={(e) =>
-                    setDraft({ ...draft, taskTypeId: e.target.value })
+                  onChange={(event) =>
+                    setDraft({ ...draft, taskTypeId: event.target.value })
                   }
                 >
                   {types.map((type) => (
@@ -376,58 +384,60 @@ function TemplateDialog({ template, onClose }: TemplateDialogProps) {
               )}
             </Field>
           </div>
-          <Field label={t.fields.title} error={show(errors.title)}>
-            {(a) => (
+          <Field label={messages.fields.title} error={show(errors.title)}>
+            {(fieldProps) => (
               <Input
-                {...a}
+                {...fieldProps}
                 maxLength={LIMITS.templateTitle}
                 value={draft.title}
-                onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+                onChange={(event) =>
+                  setDraft({ ...draft, title: event.target.value })
+                }
               />
             )}
           </Field>
           <div className="grid gap-5 sm:grid-cols-2">
             <Field
-              label={t.fields.duration}
-              hint={t.fields.durationHint}
+              label={messages.fields.duration}
+              hint={messages.fields.durationHint}
               error={show(errors.duration ?? durationMissing)}
             >
-              {(a) => (
+              {(fieldProps) => (
                 <Input
-                  {...a}
+                  {...fieldProps}
                   type="number"
                   inputMode="numeric"
                   min={1}
                   max={720}
                   step={5}
                   value={draft.duration}
-                  onChange={(e) =>
-                    setDraft({ ...draft, duration: e.target.value })
+                  onChange={(event) =>
+                    setDraft({ ...draft, duration: event.target.value })
                   }
                 />
               )}
             </Field>
             {selectedType?.storyPointsRequirement !== 'hidden' && (
-              <Field label={t.fields.sp}>
-                {(a) => (
+              <Field label={messages.fields.sp}>
+                {(fieldProps) => (
                   <Select
-                    {...a}
+                    {...fieldProps}
                     value={draft.storyPoints}
-                    onChange={(e) =>
-                      setDraft({ ...draft, storyPoints: e.target.value })
+                    onChange={(event) =>
+                      setDraft({ ...draft, storyPoints: event.target.value })
                     }
                   >
                     <option value="">
-                      {fmt(t.fields.spDefault, {
+                      {fmt(messages.fields.spDefault, {
                         sp:
                           selectedType?.defaultStoryPoints != null
                             ? format.sp(selectedType.defaultStoryPoints)
-                            : t.fields.spNone,
+                            : messages.fields.spNone,
                       })}
                     </option>
-                    {scale.map((s) => (
-                      <option key={s.points} value={s.points}>
-                        {format.sp(s.points)}
+                    {scale.map((step) => (
+                      <option key={step.points} value={step.points}>
+                        {format.sp(step.points)}
                       </option>
                     ))}
                   </Select>
@@ -435,56 +445,69 @@ function TemplateDialog({ template, onClose }: TemplateDialogProps) {
               </Field>
             )}
             <Field
-              label={t.fields.project}
+              label={messages.fields.project}
               hint={
-                draft.projectId === ANY ? t.fields.anyProjectHint : undefined
+                draft.projectId === ANY
+                  ? messages.fields.anyProjectHint
+                  : undefined
               }
             >
-              {(a) => (
+              {(fieldProps) => (
                 <Select
-                  {...a}
+                  {...fieldProps}
                   value={draft.projectId}
-                  onChange={(e) =>
-                    setDraft({ ...draft, projectId: e.target.value })
+                  onChange={(event) =>
+                    setDraft({ ...draft, projectId: event.target.value })
                   }
                 >
-                  <option value="">{t.fields.noProject}</option>
+                  <option value="">{messages.fields.noProject}</option>
                   {(projects.length > 1 || draft.projectId === ANY) && (
-                    <option value={ANY}>{t.fields.anyProject}</option>
+                    <option value={ANY}>{messages.fields.anyProject}</option>
                   )}
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
+                  {projects.map((archivable) => (
+                    <option key={archivable.id} value={archivable.id}>
+                      {archivable.name}
                     </option>
                   ))}
                 </Select>
               )}
             </Field>
             <Field
-              label={t.fields.hotkey}
+              label={messages.fields.hotkey}
               error={
                 submitted ? mutationFieldError(save.error, 'hotkey') : null
               }
             >
-              {(a) => (
+              {(fieldProps) => (
                 <Select
-                  {...a}
+                  {...fieldProps}
                   value={draft.hotkey}
-                  onChange={(e) =>
-                    setDraft({ ...draft, hotkey: e.target.value })
+                  onChange={(event) =>
+                    setDraft({ ...draft, hotkey: event.target.value })
                   }
                 >
-                  <option value="">{t.noShortcut}</option>
-                  {Array.from({ length: 9 }, (_, i) => i + 1).map((n) => {
-                    const taken = others.find((x) => x.hotkey === n)
-                    return (
-                      <option key={n} value={n} disabled={Boolean(taken)}>
-                        {taken
-                          ? fmt(t.usedBy, { n, label: taken.label })
-                          : fmt(t.shortcut, { n })}
-                      </option>
-                    )
-                  })}
+                  <option value="">{messages.noShortcut}</option>
+                  {Array.from({ length: 9 }, (_unused, index) => index + 1).map(
+                    (part) => {
+                      const taken = others.find(
+                        (other) => other.hotkey === part,
+                      )
+                      return (
+                        <option
+                          key={part}
+                          value={part}
+                          disabled={Boolean(taken)}
+                        >
+                          {taken
+                            ? fmt(messages.usedBy, {
+                                n: part,
+                                label: taken.label,
+                              })
+                            : fmt(messages.shortcut, { n: part })}
+                        </option>
+                      )
+                    },
+                  )}
                 </Select>
               )}
             </Field>

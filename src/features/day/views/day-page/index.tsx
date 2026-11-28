@@ -21,11 +21,11 @@ export interface DayPageProps {
  * w Raportach: sumy, oś dnia, podział na rodzaje pracy i zadania z notatkami.
  */
 export function DayPage({ date }: DayPageProps) {
-  const t = useMessages(dayViewMessages)
+  const messages = useMessages(dayViewMessages)
   const format = useFormat()
   const { locale } = useI18n()
-  const vm = useDayViewModel(date)
-  const { span } = vm.summary
+  const viewModel = useDayViewModel(date)
+  const { span } = viewModel.summary
   return (
     <div className="mx-auto max-w-6xl">
       <nav className="flex flex-wrap items-center justify-between gap-3">
@@ -34,24 +34,24 @@ export function DayPage({ date }: DayPageProps) {
           className="inline-flex items-center gap-1 text-sm font-medium text-ink-soft hover:text-ink"
         >
           <ChevronLeft aria-hidden className="size-4" />
-          {t.back}
+          {messages.back}
         </Link>
         <div className="flex gap-2">
           <Link
             to="/app/day"
-            search={{ date: vm.previous }}
+            search={{ date: viewModel.previous }}
             className={buttonVariants({ variant: 'outline', size: 'sm' })}
           >
             <ChevronLeft aria-hidden className="size-4" />
-            {t.previous}
+            {messages.previous}
           </Link>
-          {vm.next && (
+          {viewModel.next && (
             <Link
               to="/app/day"
-              search={{ date: vm.next }}
+              search={{ date: viewModel.next }}
               className={buttonVariants({ variant: 'outline', size: 'sm' })}
             >
-              {t.next}
+              {messages.next}
               <ChevronRight aria-hidden className="size-4" />
             </Link>
           )}
@@ -68,15 +68,17 @@ export function DayPage({ date }: DayPageProps) {
               year: 'numeric',
             })}
           </h1>
-          {(span || vm.dayOff) && (
+          {(span || viewModel.dayOff) && (
             <p className="mt-2 flex flex-wrap items-center gap-2 text-ink-soft tabular-nums">
               {span &&
-                fmt(t.stats.dayFrom, {
+                fmt(messages.stats.dayFrom, {
                   from: format.time(span.start),
                   to: format.time(span.end),
                 })}
-              {vm.dayOff && (
-                <Badge tone="muted">{t.dayOff[vm.dayOff.kind]}</Badge>
+              {viewModel.dayOff && (
+                <Badge tone="muted">
+                  {messages.dayOff[viewModel.dayOff.kind]}
+                </Badge>
               )}
             </p>
           )}
@@ -87,30 +89,30 @@ export function DayPage({ date }: DayPageProps) {
           className={buttonVariants({ variant: 'outline' })}
         >
           <Pencil aria-hidden className="size-4" />
-          {t.edit}
+          {messages.edit}
         </Link>
       </header>
 
-      {vm.pending ? (
+      {viewModel.pending ? (
         <div aria-hidden className="h-64 animate-pulse rounded-2xl bg-muted" />
-      ) : vm.empty ? (
+      ) : viewModel.empty ? (
         <div className="rounded-2xl border border-line bg-surface px-5 py-10 text-center">
-          <p className="text-ink-soft">{t.empty}</p>
+          <p className="text-ink-soft">{messages.empty}</p>
           <Link
             to="/app"
             search={{ date }}
             className={cn(buttonVariants({ variant: 'outline' }), 'mt-4')}
           >
-            {t.emptyCta}
+            {messages.emptyCta}
           </Link>
         </div>
       ) : (
         <>
-          <DayStats vm={vm} />
-          <DayTimeline vm={vm} />
+          <DayStats viewModel={viewModel} />
+          <DayTimeline viewModel={viewModel} />
           <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-            <DayTasks vm={vm} />
-            <TypeShare vm={vm} />
+            <DayTasks viewModel={viewModel} />
+            <TypeShare viewModel={viewModel} />
           </div>
         </>
       )}

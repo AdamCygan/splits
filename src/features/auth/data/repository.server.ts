@@ -46,7 +46,7 @@ import { USERNAME_RE } from '#/features/task-types/domain/rules'
 
 import type { Locale } from '#/i18n/config'
 
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 
 import type { Tx } from '#/server/db/client'
 
@@ -99,9 +99,12 @@ export const isOwner = (
  * adresem (Google albo hasło ustawione z linku z e-maila): rejestracja nie sprawdza adresu,
  * więc bez tego obcy mógłby założyć konto na e-mail właściciela i przejąć panel.
  */
-export async function promoteOwner(tx: Tx, user: typeof users.$inferSelect) {
+export async function promoteOwner(
+  transaction: Tx,
+  user: typeof users.$inferSelect,
+) {
   if (user.role === 'admin' || !isOwner(user)) return user
-  const [promoted] = await tx
+  const [promoted] = await transaction
     .update(users)
     .set({ role: 'admin' })
     .where(eq(users.id, user.id))
@@ -117,12 +120,12 @@ export interface OpenedSession {
 
 /** Nowa sesja: refresh token w bazie i krótki access token (konto właściciela dostaje rolę admina). */
 export async function openSession(
-  tx: Tx,
+  transaction: Tx,
   account: typeof users.$inferSelect,
   meta: ClientMeta,
 ): Promise<OpenedSession> {
-  const user = await promoteOwner(tx, account)
-  const refreshToken = await issueRefreshToken(tx, user.id, meta)
+  const user = await promoteOwner(transaction, account)
+  const refreshToken = await issueRefreshToken(transaction, user.id, meta)
   const access = await signAccessToken(user.id)
   return {
     session: {
@@ -134,9 +137,9 @@ export async function openSession(
   }
 }
 
-export async function findUserByLogin(tx: Tx, login: string) {
+export async function findUserByLogin(transaction: Tx, login: string) {
   const key = lower(login)
-  const [user] = await tx
+  const [user] = await transaction
     .select()
     .from(users)
     .where(
@@ -148,13 +151,17 @@ export async function findUserByLogin(tx: Tx, login: string) {
   return user
 }
 
-export async function assertAvailable(tx: Tx, username: string, email: string) {
-  const [byName] = await tx
+export async function assertAvailable(
+  transaction: Tx,
+  username: string,
+  email: string,
+) {
+  const [byName] = await transaction
     .select({ id: users.id })
     .from(users)
     .where(eq(sql`lower(${users.username})`, lower(username)))
   if (byName) throw conflict('auth.username_taken', 'username')
-  const [byEmail] = await tx
+  const [byEmail] = await transaction
     .select({ id: users.id })
     .from(users)
     .where(eq(sql`lower(${users.email})`, lower(email)))
@@ -175,8 +182,8 @@ export interface NewAccount {
 }
 
 /** Tworzy konto z danymi startowymi; używane przez rejestrację, Google i testy e2e. */
-export async function createAccount(tx: Tx, input: NewAccount) {
-  const [user] = await tx
+export async function createAccount(transaction: Tx, input: NewAccount) {
+  const [user] = await transaction
     .insert(users)
     .values({
       username: input.username,
@@ -190,7 +197,7 @@ export async function createAccount(tx: Tx, input: NewAccount) {
     })
     .returning()
   await createAccountData(
-    tx,
+    transaction,
     user!.id,
     input.locale,
     input.timezone,
@@ -199,7 +206,7 @@ export async function createAccount(tx: Tx, input: NewAccount) {
   return user!
 }
 
-export async function uniqueUsername(tx: Tx, email: string) {
+export async function uniqueUsername(transaction: Tx, email: string) {
   const base =
     email
       .split('@')[0]!
@@ -207,11 +214,11 @@ export async function uniqueUsername(tx: Tx, email: string) {
       .replace(/^[^A-Za-z0-9]+/, '')
       .slice(0, 24) || 'user'
   const stem = base.length >= 3 ? base : `${base}user`
-  for (let i = 0; i < 20; i++) {
+  for (let index = 0; index < 20; index++) {
     const candidate =
-      i === 0 ? stem : `${stem}${Math.floor(Math.random() * 9000) + 1000}`
+      index === 0 ? stem : `${stem}${Math.floor(Math.random() * 9000) + 1000}`
     if (!USERNAME_RE.test(candidate)) continue
-    const [taken] = await tx
+    const [taken] = await transaction
       .select({ id: users.id })
       .from(users)
       .where(eq(sql`lower(${users.username})`, candidate.toLowerCase()))
@@ -242,13 +249,13 @@ export interface GoogleOutcome {
 export async function signInWithGoogle(
   claims: GoogleClaims & { email: string },
   locale: Locale,
-  tz: string,
+  timeZone: string,
   meta: ClientMeta,
 ) {
   const email = claims.email
   const outcome: GoogleOutcome = { blocked: false }
-  await db.transaction(async (tx) => {
-    const [link] = await tx
+  await database.transaction(async (transaction) => {
+    const [link] = await transaction
       .select({ userId: externalLogins.userId })
       .from(externalLogins)
       .where(
@@ -258,12 +265,17 @@ export async function signInWithGoogle(
         ),
       )
     let user = link
-      ? (await tx.select().from(users).where(eq(users.id, link.userId)))[0]
+      ? (
+          await transaction
+            .select()
+            .from(users)
+            .where(eq(users.id, link.userId))
+        )[0]
       : undefined
     if (!user) {
       // Konto z tym samym (zweryfikowanym przez Google) adresem dostaje powiązanie z Google.
       user = (
-        await tx
+        await transaction
           .select()
           .from(users)
           .where(eq(sql`lower(${users.email})`, lower(email)))
@@ -271,8 +283,8 @@ export async function signInWithGoogle(
       // Konto z niepotwierdzonym adresem mógł założyć ktoś obcy, znając tylko e-mail:
       // właściciel adresu (Google to potwierdził) przejmuje je bez cudzego hasła, 2FA i sesji.
       if (user && !user.emailVerifiedAt) {
-        await revokeAllSessions(tx, user.id)
-        ;[user] = await tx
+        await revokeAllSessions(transaction, user.id)
+        ;[user] = await transaction
           .update(users)
           .set({
             passwordHash: null,
@@ -284,16 +296,16 @@ export async function signInWithGoogle(
           .where(eq(users.id, user.id))
           .returning()
       }
-      user ??= await createAccount(tx, {
-        username: await uniqueUsername(tx, email),
+      user ??= await createAccount(transaction, {
+        username: await uniqueUsername(transaction, email),
         email,
         displayName: claims.name?.trim() || email.split('@')[0]!,
         passwordHash: null,
         locale,
-        timezone: timezoneSchema.safeParse(tz).success ? tz : 'UTC',
+        timezone: timezoneSchema.safeParse(timeZone).success ? timeZone : 'UTC',
         emailVerified: true,
       })
-      await tx
+      await transaction
         .insert(externalLogins)
         .values({
           provider: 'google',
@@ -311,7 +323,7 @@ export async function signInWithGoogle(
       outcome.mfaToken = await signMfaToken(user.id)
       return
     }
-    const [fresh] = await tx
+    const [fresh] = await transaction
       .update(users)
       .set({
         lastLoginAt: new Date(),
@@ -319,7 +331,7 @@ export async function signInWithGoogle(
       })
       .where(eq(users.id, user.id))
       .returning()
-    outcome.opened = await openSession(tx, fresh!, meta)
+    outcome.opened = await openSession(transaction, fresh!, meta)
   })
   return outcome
 }
@@ -329,15 +341,15 @@ export async function refreshSession(
   token: string,
   meta: ClientMeta,
 ): Promise<OpenedSession | null> {
-  return db.transaction(async (tx) => {
-    const rotated = await rotateRefreshToken(tx, token, meta)
+  return database.transaction(async (transaction) => {
+    const rotated = await rotateRefreshToken(transaction, token, meta)
     if (!rotated.ok) return null
-    const [found] = await tx
+    const [found] = await transaction
       .select()
       .from(users)
       .where(eq(users.id, rotated.userId))
     if (!found || found.disabledAt) return null
-    const user = await promoteOwner(tx, found)
+    const user = await promoteOwner(transaction, found)
     const access = await signAccessToken(user.id)
     return {
       session: {
@@ -355,9 +367,9 @@ export async function registerAccount(
   input: z.infer<typeof registerInput>,
 ) {
   const passwordHash = await hashPassword(input.password)
-  const session = await db.transaction(async (tx) => {
-    await assertAvailable(tx, input.username, input.email)
-    const user = await createAccount(tx, {
+  const session = await database.transaction(async (transaction) => {
+    await assertAvailable(transaction, input.username, input.email)
+    const user = await createAccount(transaction, {
       username: input.username,
       email: input.email,
       displayName: input.username,
@@ -366,8 +378,8 @@ export async function registerAccount(
       timezone: input.timezone ?? 'UTC',
     })
     // Link potwierdzający adres: bez tego reset hasła i e-maile mogłyby trafiać do obcych.
-    await sendEmailConfirmation(tx, user, null)
-    return openSession(tx, user, meta)
+    await sendEmailConfirmation(transaction, user, null)
+    return openSession(transaction, user, meta)
   })
   return session
 }
@@ -382,14 +394,14 @@ export async function createDemoAccount(
   input: z.infer<typeof demoInput>,
 ) {
   const live = async () =>
-    (await db.$count(users, eq(users.isDemo, true))) < DEMO_MAX_ACCOUNTS
+    (await database.$count(users, eq(users.isDemo, true))) < DEMO_MAX_ACCOUNTS
   if (!(await live())) {
     await runMaintenance()
     if (!(await live())) throw new ApiError('demo.unavailable', 503)
   }
   const id = randomUUID().replace(/-/g, '').slice(0, 10)
-  const session = await db.transaction(async (tx) => {
-    const user = await createAccount(tx, {
+  const session = await database.transaction(async (transaction) => {
+    const user = await createAccount(transaction, {
       username: `demo-${id}`,
       email: `demo-${id}@demo.invalid`,
       displayName: input.locale === 'pl' ? 'Konto demo' : 'Demo account',
@@ -399,7 +411,7 @@ export async function createDemoAccount(
       withSamples: true,
       demo: true,
     })
-    return openSession(tx, user, meta)
+    return openSession(transaction, user, meta)
   })
   return session
 }
@@ -408,7 +420,7 @@ export async function loginWithPassword(
   meta: ReturnType<typeof requestMeta>,
   input: z.infer<typeof loginInput>,
 ) {
-  const user = await findUserByLogin(db, input.login)
+  const user = await findUserByLogin(database, input.login)
   if (!user?.passwordHash) {
     await burnPasswordCheck(input.password)
     throw new ApiError('auth.invalid_credentials', 401)
@@ -417,7 +429,7 @@ export async function loginWithPassword(
     throw new ApiError('auth.too_many_attempts', 429)
   if (!(await verifyPassword(input.password, user.passwordHash))) {
     const failed = user.failedLoginCount + 1
-    await db
+    await database
       .update(users)
       .set(
         failed >= MAX_FAILED_LOGINS
@@ -435,7 +447,7 @@ export async function loginWithPassword(
   if (user.disabledAt) throw new ApiError('auth.account_disabled', 403)
   // 2FA: hasło się zgadza, ale sesja dopiero po kodzie z aplikacji (bilet ważny 5 min).
   if (user.totpEnabledAt) {
-    await db
+    await database
       .update(users)
       .set({ failedLoginCount: 0, lockoutUntil: null })
       .where(eq(users.id, user.id))
@@ -444,8 +456,8 @@ export async function loginWithPassword(
       mfaToken: await signMfaToken(user.id),
     }
   }
-  const session = await db.transaction(async (tx) => {
-    const [fresh] = await tx
+  const session = await database.transaction(async (transaction) => {
+    const [fresh] = await transaction
       .update(users)
       .set({
         failedLoginCount: 0,
@@ -454,7 +466,7 @@ export async function loginWithPassword(
       })
       .where(eq(users.id, user.id))
       .returning()
-    return openSession(tx, fresh!, meta)
+    return openSession(transaction, fresh!, meta)
   })
   return session
 }
@@ -467,18 +479,21 @@ export async function loginWithSecondFactor(
   const userId = await verifyMfaToken(input.mfaToken)
   if (!userId) throw new ApiError('auth.mfa_expired', 401)
   rateLimit(`mfa:${userId}`, 8, 15 * 60_000)
-  const session = await db.transaction(async (tx) => {
-    const [user] = await tx.select().from(users).where(eq(users.id, userId))
+  const session = await database.transaction(async (transaction) => {
+    const [user] = await transaction
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
     if (!user?.totpEnabledAt) throw new ApiError('auth.mfa_expired', 401)
     if (user.disabledAt) throw new ApiError('auth.account_disabled', 403)
-    if (!(await useSecondFactor(tx, user, input.code)))
+    if (!(await useSecondFactor(transaction, user, input.code)))
       throw new ApiError('auth.invalid_code', 400, 'code')
-    const [fresh] = await tx
+    const [fresh] = await transaction
       .update(users)
       .set({ lastLoginAt: new Date() })
       .where(eq(users.id, user.id))
       .returning()
-    return openSession(tx, fresh!, meta)
+    return openSession(transaction, fresh!, meta)
   })
   resetRateLimit(`mfa:${userId}`)
   return session
@@ -486,8 +501,8 @@ export async function loginWithSecondFactor(
 
 /** Link z e-maila: potwierdzenie adresu po rejestracji albo nowego adresu po zmianie. */
 export async function confirmEmail(token: z.infer<typeof tokenInput>['token']) {
-  const result = await db.transaction(async (tx) => {
-    const [row] = await tx
+  const result = await database.transaction(async (transaction) => {
+    const [row] = await transaction
       .update(authTokens)
       .set({ usedAt: new Date() })
       .where(
@@ -500,18 +515,21 @@ export async function confirmEmail(token: z.infer<typeof tokenInput>['token']) {
       )
       .returning()
     if (!row) return null
-    const [user] = await tx.select().from(users).where(eq(users.id, row.userId))
+    const [user] = await transaction
+      .select()
+      .from(users)
+      .where(eq(users.id, row.userId))
     if (!user) return null
     if (row.purpose === 'email_verification') {
       // Link do starego adresu po zmianie e-maila nie potwierdza nowego.
-      await tx
+      await transaction
         .update(users)
         .set({ emailVerifiedAt: user.emailVerifiedAt ?? new Date() })
         .where(eq(users.id, user.id))
       return { kind: 'verified' as const, user, oldEmail: null }
     }
     const newEmail = row.newEmail!
-    const [taken] = await tx
+    const [taken] = await transaction
       .select({ id: users.id })
       .from(users)
       .where(
@@ -521,7 +539,7 @@ export async function confirmEmail(token: z.infer<typeof tokenInput>['token']) {
         ),
       )
     if (taken) throw conflict('auth.email_taken', 'email')
-    await tx
+    await transaction
       .update(users)
       .set({ email: newEmail, emailVerifiedAt: new Date() })
       .where(eq(users.id, user.id))
@@ -530,7 +548,7 @@ export async function confirmEmail(token: z.infer<typeof tokenInput>['token']) {
   if (!result) throw new ApiError('auth.email_link_invalid', 400, 'token')
   if (result.oldEmail) {
     const email = (
-      await db.select().from(users).where(eq(users.id, result.user.id))
+      await database.select().from(users).where(eq(users.id, result.user.id))
     )[0]!.email
     await notify(result.user, 'emailChanged', { email }, result.oldEmail)
   }
@@ -541,11 +559,11 @@ export async function requestPasswordReset(
   email: z.infer<typeof emailInput>['email'],
   locale: 'en' | 'pl',
 ) {
-  const user = await findUserByLogin(db, email)
+  const user = await findUserByLogin(database, email)
   // Zawsze 204: odpowiedź nie zdradza, czy konto z tym adresem istnieje.
   if (user && lower(user.email) === lower(email)) {
     const token = randomToken()
-    await db.insert(authTokens).values({
+    await database.insert(authTokens).values({
       userId: user.id,
       purpose: 'password_reset',
       tokenHash: sha256(token),
@@ -565,8 +583,8 @@ export async function requestPasswordReset(
 
 export async function resetPassword(input: z.infer<typeof resetInput>) {
   const passwordHash = await hashPassword(input.password)
-  const done = await db.transaction(async (tx) => {
-    const [row] = await tx
+  const done = await database.transaction(async (transaction) => {
+    const [row] = await transaction
       .update(authTokens)
       .set({ usedAt: new Date() })
       .where(
@@ -579,7 +597,7 @@ export async function resetPassword(input: z.infer<typeof resetInput>) {
       )
       .returning()
     if (!row) return false
-    const [owner] = await tx
+    const [owner] = await transaction
       .update(users)
       .set({
         passwordHash,
@@ -592,7 +610,7 @@ export async function resetPassword(input: z.infer<typeof resetInput>) {
       .where(eq(users.id, row.userId))
       .returning()
     // Nowe hasło = wylogowanie ze wszystkich urządzeń.
-    await tx
+    await transaction
       .update(refreshTokens)
       .set({ revokedAt: new Date() })
       .where(
@@ -610,5 +628,5 @@ export async function resetPassword(input: z.infer<typeof resetInput>) {
 
 /** Wylogowanie: odwołanie refresh tokenu tego urządzenia. */
 export async function endSession(token: string) {
-  await revokeToken(db, token)
+  await revokeToken(database, token)
 }

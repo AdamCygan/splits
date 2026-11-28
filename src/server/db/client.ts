@@ -17,8 +17,8 @@ const pool = new pg.Pool({
   idleTimeoutMillis: 30_000,
 })
 
-export const db = drizzle(pool, { schema, casing: 'snake_case' })
-export type Db = typeof db
+export const database = drizzle(pool, { schema, casing: 'snake_case' })
+export type Db = typeof database
 /** Transakcja albo zwykłe połączenie: funkcje domenowe przyjmują jedno i drugie. */
 export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0] | Db
 

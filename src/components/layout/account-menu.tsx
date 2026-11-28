@@ -87,7 +87,7 @@ export function AccountMenu({
   feedbackLabel,
   compact = false,
 }: AccountMenuProps) {
-  const t = useMessages(appMessages)
+  const messages = useMessages(appMessages)
   const common = useMessages(commonMessages)
   const { locale, setLocale } = useI18n()
   const theme = useTheme()
@@ -97,7 +97,7 @@ export function AccountMenu({
   const trigger: ReactNode = compact ? (
     <button
       type="button"
-      aria-label={t.menu.open}
+      aria-label={messages.menu.open}
       className="grid size-11 place-items-center rounded-full"
     >
       <Avatar name={user.displayName} />
@@ -108,7 +108,7 @@ export function AccountMenu({
       className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-muted data-[state=open]:bg-muted"
     >
       {/* Nazwa = widoczny tekst poprzedzony „Menu konta” (WCAG 2.5.3). */}
-      <span className="sr-only">{t.menu.open}: </span>
+      <span className="sr-only">{messages.menu.open}: </span>
       <Avatar name={user.displayName} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium">
@@ -142,13 +142,13 @@ export function AccountMenu({
         <DropdownMenuItem asChild>
           <Link to="/app/settings/account">
             <UserRound aria-hidden />
-            {t.menu.settings}
+            {messages.menu.settings}
           </Link>
         </DropdownMenuItem>
         {onOpenCommands && (
           <DropdownMenuItem onSelect={onOpenCommands}>
             <Search aria-hidden />
-            <span className="flex-1">{t.menu.commands}</span>
+            <span className="flex-1">{messages.menu.commands}</span>
             <kbd className="rounded border border-line px-1.5 text-[0.6875rem] text-ink-soft">
               {shortcutLabel()}
             </kbd>
@@ -161,38 +161,46 @@ export function AccountMenu({
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuLabel>{t.menu.theme}</DropdownMenuLabel>
+        <DropdownMenuLabel>{messages.menu.theme}</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={theme}
-          onValueChange={(v) => setTheme(v as Theme)}
+          onValueChange={(selectedValue) => setTheme(selectedValue as Theme)}
         >
-          {themes.map((th) => (
-            <DropdownMenuRadioItem key={th} value={th}>
-              {t.menu.themes[th]}
+          {themes.map((tableHeader) => (
+            <DropdownMenuRadioItem key={tableHeader} value={tableHeader}>
+              {messages.menu.themes[tableHeader]}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel>{t.menu.clock}</DropdownMenuLabel>
+        <DropdownMenuLabel>{messages.menu.clock}</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={clock}
-          onValueChange={(v) => setClock(v as ClockPref)}
+          onValueChange={(selectedValue) =>
+            setClock(selectedValue as ClockPref)
+          }
         >
-          {clockPrefs.map((c) => (
-            <DropdownMenuRadioItem key={c} value={c}>
-              {t.menu.clocks[c]}
+          {clockPrefs.map((clockPref) => (
+            <DropdownMenuRadioItem key={clockPref} value={clockPref}>
+              {messages.menu.clocks[clockPref]}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel>{t.menu.language}</DropdownMenuLabel>
+        <DropdownMenuLabel>{messages.menu.language}</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={locale}
-          onValueChange={(v) => void setLocale(v as Locale)}
+          onValueChange={(selectedValue) =>
+            void setLocale(selectedValue as Locale)
+          }
         >
-          {locales.map((l) => (
-            <DropdownMenuRadioItem key={l} value={l} lang={l}>
-              {localeNames[l]}
+          {locales.map((availableLocale) => (
+            <DropdownMenuRadioItem
+              key={availableLocale}
+              value={availableLocale}
+              lang={availableLocale}
+            >
+              {localeNames[availableLocale]}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
@@ -214,7 +222,7 @@ export function AccountMenu({
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onSignOut}>
           <LogOut aria-hidden />
-          {t.nav.logout}
+          {messages.nav.logout}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -1,7 +1,7 @@
 import { and, eq, isNotNull, isNull, ne, or, sql } from 'drizzle-orm'
 import { todayIn, nowTimeIn, weekday } from '#/shared/domain/dates'
 import { formatMinutes } from '#/i18n/format'
-import { db } from './db/client'
+import { database } from './db/client'
 import {
   daysOff,
   timeEntries,
@@ -16,8 +16,8 @@ import { serverEnv } from './env'
 const LATE_LIMIT_MINUTES = 180
 
 const minutesOf = (time: string) => {
-  const [h, m] = time.split(':').map(Number)
-  return h! * 60 + m!
+  const [hours, minutes] = time.split(':').map(Number)
+  return hours! * 60 + minutes!
 }
 
 /**
@@ -28,7 +28,7 @@ const minutesOf = (time: string) => {
  * a wpisany czas to suma ze wszystkich przestrzeni.
  */
 export async function runReminders(now = new Date()) {
-  const rows = await db
+  const rows = await database
     .select({
       user: users,
       settings: userSettings,
@@ -50,7 +50,7 @@ export async function runReminders(now = new Date()) {
     const zone = settings.timezone
     const today = todayIn(zone, now)
     if (settings.reminderSentOn === today) continue
-    const days = await db
+    const days = await database
       .select({
         workspaceId: workspaceSettings.workspaceId,
         workingDays: workspaceSettings.workingDays,
@@ -58,13 +58,15 @@ export async function runReminders(now = new Date()) {
       })
       .from(workspaceSettings)
       .where(eq(workspaceSettings.userId, user.id))
-    const working = days.filter((d) => d.workingDays.includes(weekday(today)))
+    const working = days.filter((day) =>
+      day.workingDays.includes(weekday(today)),
+    )
     if (working.length === 0) continue
     const late =
       minutesOf(nowTimeIn(zone, now)) - minutesOf(settings.dailyReminderAt!)
     if (late < 0 || late > LATE_LIMIT_MINUTES) continue
     // Od tej chwili ten dzień jest załatwiony, niezależnie od tego, czy e-mail jest potrzebny.
-    const [claimed] = await db
+    const [claimed] = await database
       .update(userSettings)
       .set({ reminderSentOn: today })
       .where(
@@ -77,17 +79,17 @@ export async function runReminders(now = new Date()) {
     if (!claimed) continue
     const off = new Set(
       (
-        await db
+        await database
           .select({ workspaceId: daysOff.workspaceId })
           .from(daysOff)
           .where(and(eq(daysOff.userId, user.id), eq(daysOff.date, today)))
-      ).map((d) => d.workspaceId),
+      ).map((dueUser) => dueUser.workspaceId),
     )
     const target = working
-      .filter((d) => !off.has(d.workspaceId))
-      .reduce((sum, d) => sum + d.target, 0)
+      .filter((dueUser) => !off.has(dueUser.workspaceId))
+      .reduce((sum, dueUser) => sum + dueUser.target, 0)
     if (target === 0) continue
-    const [{ logged } = { logged: 0 }] = await db
+    const [{ logged } = { logged: 0 }] = await database
       .select({
         logged: sql<number>`coalesce(sum(${timeEntries.durationMinutes}), 0)::int`,
       })

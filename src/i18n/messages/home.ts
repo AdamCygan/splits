@@ -1,7 +1,7 @@
 import type { Dictionary } from '../context'
 
 /** Teksty strony głównej (hero, kroki, końcowe wezwanie). Cennik, film i FAQ są w marketing.ts. */
-const en = {
+const english = {
   nav: { demo: 'Live demo', start: 'Start free' },
   hero: {
     title: 'Where did the sprint go?',
@@ -103,9 +103,9 @@ const en = {
   },
 }
 
-export type HomeMessages = typeof en
+export type HomeMessages = typeof english
 
-const pl: HomeMessages = {
+const polish: HomeMessages = {
   nav: { demo: 'Demo na żywo', start: 'Zacznij za darmo' },
   hero: {
     title: 'Gdzie się podział ten sprint?',
@@ -207,4 +207,7 @@ const pl: HomeMessages = {
   },
 }
 
-export const homeMessages: Dictionary<HomeMessages> = { en, pl }
+export const homeMessages: Dictionary<HomeMessages> = {
+  en: english,
+  pl: polish,
+}

@@ -13,14 +13,14 @@ import { isDisplayName } from '../domain/account-forms'
 
 /** ViewModel profilu: wyświetlana nazwa z paskiem zapisu (login i e-mail tylko do odczytu). */
 export function useProfileViewModel(user: User) {
-  const t = useMessages(settingsMessages).account
+  const messages = useMessages(settingsMessages).account
   const [displayName, setDisplayName] = useState(user.displayName)
   const [submitted, setSubmitted] = useState(false)
   const save = useDataMutation(
     (input: ProfileInput) => accountApi.updateProfile(input),
     {
       invalidate: [keys.me],
-      success: t.profileSaved,
+      success: messages.profileSaved,
       onSuccess: (updated) => {
         setCurrentUser(updated)
         setSubmitted(false)
@@ -39,11 +39,11 @@ export function useProfileViewModel(user: User) {
     nameError: submitted
       ? valid
         ? mutationFieldError(save.error, 'displayName')
-        : t.nameError
+        : messages.nameError
       : null,
     setDisplayName,
-    submit: (e: FormEvent) => {
-      e.preventDefault()
+    submit: (formEvent: FormEvent) => {
+      formEvent.preventDefault()
       setSubmitted(true)
       if (valid) save.mutate({ displayName: displayName.trim() })
     },

@@ -1,5 +1,5 @@
 import { and, eq, lt, or } from 'drizzle-orm'
-import { db } from './db/client'
+import { database } from './db/client'
 import { authTokens, refreshTokens, stripeEvents, users } from './db/schema'
 import { reportError } from './monitoring'
 import { runReminders } from './reminders'
@@ -17,7 +17,7 @@ const DAY = 24 * HOUR
  *  - znaczniki webhooków Stripe starsze niż 90 dni (Stripe ponawia zdarzenia najwyżej przez 3 dni).
  */
 export async function runMaintenance(now = Date.now()) {
-  const demo = await db
+  const demo = await database
     .delete(users)
     .where(
       and(
@@ -26,7 +26,7 @@ export async function runMaintenance(now = Date.now()) {
       ),
     )
     .returning({ id: users.id })
-  const sessions = await db
+  const sessions = await database
     .delete(refreshTokens)
     .where(
       or(
@@ -35,11 +35,11 @@ export async function runMaintenance(now = Date.now()) {
       ),
     )
     .returning({ id: refreshTokens.id })
-  const tokens = await db
+  const tokens = await database
     .delete(authTokens)
     .where(lt(authTokens.expiresAt, new Date(now - DAY)))
     .returning({ id: authTokens.id })
-  const events = await db
+  const events = await database
     .delete(stripeEvents)
     .where(lt(stripeEvents.processedAt, new Date(now - 90 * DAY)))
     .returning({ id: stripeEvents.id })

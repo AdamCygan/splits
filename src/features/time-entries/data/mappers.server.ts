@@ -1,27 +1,29 @@
 import type { TimeEntry } from '#/features/time-entries/data/dto'
-import type * as t from '#/server/db/schema'
-import { iso } from '#/server/http/json'
+import type * as schema from '#/server/db/schema'
+import { isoDate } from '#/server/http/json'
 
-export const toEntry = (x: typeof t.timeEntries.$inferSelect): TimeEntry => ({
-  id: x.id,
-  taskTypeId: x.taskTypeId,
-  projectId: x.projectId,
-  title: x.title,
-  link: x.link,
-  storyPoints: x.storyPoints,
-  workDate: x.workDate,
-  startTime: x.startTime,
-  endTime: x.endTime,
-  durationMinutes: x.durationMinutes,
-  note: x.note,
-  overtimeMinutes: x.overtimeMinutes,
-  overtimeNote: x.overtimeNote,
-  estimateMinutes: x.estimateMinutes,
-  extensionMinutes: x.extensionMinutes,
-  extensionNote: x.extensionNote,
-  finishedAt: x.finishedAt?.toISOString() ?? null,
-  running: x.running,
-  paused: x.paused,
-  startedAt: iso(x.startedAt),
-  createdAt: x.createdAt.toISOString(),
+export const toEntry = (
+  timeEntryRow: typeof schema.timeEntries.$inferSelect,
+): TimeEntry => ({
+  id: timeEntryRow.id,
+  taskTypeId: timeEntryRow.taskTypeId,
+  projectId: timeEntryRow.projectId,
+  title: timeEntryRow.title,
+  link: timeEntryRow.link,
+  storyPoints: timeEntryRow.storyPoints,
+  workDate: timeEntryRow.workDate,
+  startTime: timeEntryRow.startTime,
+  endTime: timeEntryRow.endTime,
+  durationMinutes: timeEntryRow.durationMinutes,
+  note: timeEntryRow.note,
+  overtimeMinutes: timeEntryRow.overtimeMinutes,
+  overtimeNote: timeEntryRow.overtimeNote,
+  estimateMinutes: timeEntryRow.estimateMinutes,
+  extensionMinutes: timeEntryRow.extensionMinutes,
+  extensionNote: timeEntryRow.extensionNote,
+  finishedAt: timeEntryRow.finishedAt?.toISOString() ?? null,
+  running: timeEntryRow.running,
+  paused: timeEntryRow.paused,
+  startedAt: isoDate(timeEntryRow.startedAt),
+  createdAt: timeEntryRow.createdAt.toISOString(),
 })

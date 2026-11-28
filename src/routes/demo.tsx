@@ -25,7 +25,7 @@ export const Route = createFileRoute('/demo')({
 })
 
 function DemoPage() {
-  const t = useMessages(panelMessages).demo
+  const messages = useMessages(panelMessages).demo
   const { locale } = useI18n()
   const navigate = useNavigate()
   const errorText = useErrorText()
@@ -56,24 +56,24 @@ function DemoPage() {
         <Logo className="mx-auto text-white" />
         {failure ? (
           <div role="alert" className="mt-10">
-            <h1 className="type-heading text-3xl">{t.failedTitle}</h1>
+            <h1 className="type-heading text-3xl">{messages.failedTitle}</h1>
             <p className="mt-3 text-white/75">{errorText(failure)}</p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button
                 className="bg-white text-[var(--ink-fixed)] hover:bg-white/90"
                 onClick={() => {
                   setFailure(null)
-                  setAttempt((n) => n + 1)
+                  setAttempt((currentAttempt) => currentAttempt + 1)
                 }}
               >
-                {t.retry}
+                {messages.retry}
               </Button>
               <Button
                 asChild
                 variant="outline"
                 className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white"
               >
-                <Link to="/register">{t.register}</Link>
+                <Link to="/register">{messages.register}</Link>
               </Button>
             </div>
           </div>
@@ -89,8 +89,8 @@ function DemoPage() {
               <span className="w-[11%] bg-wt-meeting" />
               <span className="w-[20%] bg-wt-extra" />
             </div>
-            <h1 className="type-heading mt-8 text-3xl">{t.starting}</h1>
-            <p className="mt-3 text-white/75">{t.startingHint}</p>
+            <h1 className="type-heading mt-8 text-3xl">{messages.starting}</h1>
+            <p className="mt-3 text-white/75">{messages.startingHint}</p>
           </div>
         )}
       </div>

@@ -11,13 +11,13 @@ import { FieldError, FieldLabel, fieldA11y } from './fields'
 import type { EntryFormViewModel } from '../../controllers/use-entry-form'
 
 export interface DetailFieldsProps {
-  vm: EntryFormViewModel
+  viewModel: EntryFormViewModel
   focusNotes?: boolean
 }
 
 /** Projekt, estymata zadania (nie dla spotkań) i notatki. */
-export function DetailFields({ vm, focusNotes }: DetailFieldsProps) {
-  const { t, format, type, draft } = vm
+export function DetailFields({ viewModel, focusNotes }: DetailFieldsProps) {
+  const { messages, format, type, draft } = viewModel
   if (!type) return null
   const estimateMinutes = draft.estimate.trim()
     ? parseDuration(draft.estimate)
@@ -26,21 +26,25 @@ export function DetailFields({ vm, focusNotes }: DetailFieldsProps) {
   const nearLimit = noteLength > ENTRY_LIMITS.note * 0.9
   return (
     <>
-      {vm.projects.length > 0 && (
+      {viewModel.projects.length > 0 && (
         <div>
-          <FieldLabel htmlFor={vm.fieldId('project')}>
-            {t.form.project}
+          <FieldLabel htmlFor={viewModel.fieldId('project')}>
+            {messages.form.project}
           </FieldLabel>
           <Select
-            id={vm.fieldId('project')}
+            id={viewModel.fieldId('project')}
             className="mt-2"
             value={draft.projectId}
-            onChange={(e) => vm.update({ projectId: e.target.value })}
+            onChange={(event) =>
+              viewModel.update({ projectId: event.target.value })
+            }
           >
-            <option value="">{t.form.noProject}</option>
-            {vm.projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.key ? `${p.name} (${p.key})` : p.name}
+            <option value="">{messages.form.noProject}</option>
+            {viewModel.projects.map((archivable) => (
+              <option key={archivable.id} value={archivable.id}>
+                {archivable.key
+                  ? `${archivable.name} (${archivable.key})`
+                  : archivable.name}
               </option>
             ))}
           </Select>
@@ -50,27 +54,36 @@ export function DetailFields({ vm, focusNotes }: DetailFieldsProps) {
       {/* Estymata całego zadania: raport porówna ją z prawdziwym czasem */}
       {type.kind !== 'meeting' && (
         <div>
-          <FieldLabel htmlFor={vm.fieldId('estimate')} note={t.form.optional}>
-            {t.form.estimate}
+          <FieldLabel
+            htmlFor={viewModel.fieldId('estimate')}
+            note={messages.form.optional}
+          >
+            {messages.form.estimate}
           </FieldLabel>
           <Input
-            {...fieldA11y(vm, 'estimate', !vm.issueText('estimate'))}
+            {...fieldA11y(
+              viewModel,
+              'estimate',
+              !viewModel.issueText('estimate'),
+            )}
             className="mt-2"
             inputMode="text"
             autoComplete="off"
-            placeholder={t.form.estimatePlaceholder}
+            placeholder={messages.form.estimatePlaceholder}
             value={draft.estimate}
-            onChange={(e) => vm.update({ estimate: e.target.value })}
+            onChange={(event) =>
+              viewModel.update({ estimate: event.target.value })
+            }
           />
-          {vm.issueText('estimate') ? (
-            <FieldError vm={vm} field="estimate" />
+          {viewModel.issueText('estimate') ? (
+            <FieldError viewModel={viewModel} field="estimate" />
           ) : (
             <p
-              id={`${vm.fieldId('estimate')}-hint`}
+              id={`${viewModel.fieldId('estimate')}-hint`}
               className="mt-1.5 text-sm text-ink-soft"
             >
               {estimateMinutes ? `= ${format.minutes(estimateMinutes)}. ` : ''}
-              {t.form.estimateHint}
+              {messages.form.estimateHint}
             </p>
           )}
         </div>
@@ -81,14 +94,14 @@ export function DetailFields({ vm, focusNotes }: DetailFieldsProps) {
         <div className="sm:col-span-2">
           <div className="flex items-baseline justify-between gap-3">
             <FieldLabel
-              htmlFor={vm.fieldId('note')}
+              htmlFor={viewModel.fieldId('note')}
               note={
                 type.descriptionRequirement === 'required'
-                  ? t.form.required
-                  : t.form.optional
+                  ? messages.form.required
+                  : messages.form.optional
               }
             >
-              {t.form.notes}
+              {messages.form.notes}
             </FieldLabel>
             <span
               className={cn(
@@ -101,31 +114,31 @@ export function DetailFields({ vm, focusNotes }: DetailFieldsProps) {
             </span>
           </div>
           <NoteEditor
-            {...fieldA11y(vm, 'note', true)}
+            {...fieldA11y(viewModel, 'note', true)}
             rows={5}
             autoFocus={focusNotes}
             maxLength={ENTRY_LIMITS.note}
-            placeholder={t.form.notesPlaceholder}
+            placeholder={messages.form.notesPlaceholder}
             className="mt-2"
             value={draft.note}
-            onValueChange={(note) => vm.update({ note })}
+            onValueChange={(note) => viewModel.update({ note })}
           />
           <p
-            id={`${vm.fieldId('note')}-hint`}
+            id={`${viewModel.fieldId('note')}-hint`}
             className="mt-1.5 text-sm text-ink-soft"
           >
-            {t.form.notesHint}
+            {messages.form.notesHint}
             {nearLimit && (
               <span className="sr-only">
                 {' '}
-                {fmt(t.form.notesCount, {
+                {fmt(messages.form.notesCount, {
                   count: noteLength,
                   max: ENTRY_LIMITS.note,
                 })}
               </span>
             )}
           </p>
-          <FieldError vm={vm} field="note" />
+          <FieldError viewModel={viewModel} field="note" />
         </div>
       )}
     </>

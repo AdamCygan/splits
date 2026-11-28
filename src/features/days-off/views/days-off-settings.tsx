@@ -20,7 +20,7 @@ import type { DayOffDraft } from './day-off-dialog'
 
 /** Ustawienia → Dni wolne: urlopy, L4 i święta z poprzedniego, bieżącego i następnego roku. */
 export function DaysOffSettings() {
-  const t = useMessages(daysOffMessages)
+  const messages = useMessages(daysOffMessages)
   const app = useMessages(appMessages)
   const format = useFormat()
   const { locale } = useI18n()
@@ -32,98 +32,102 @@ export function DaysOffSettings() {
     days.data ?? [],
     settings?.workingDays ?? [1, 2, 3, 4, 5],
   )
-  const upcoming = ranges.filter((r) => r.to >= today)
-  const past = ranges.filter((r) => r.to < today).reverse()
+  const upcoming = ranges.filter((dayOffRange) => dayOffRange.to >= today)
+  const past = ranges.filter((dayOffRange) => dayOffRange.to < today).reverse()
   const [dialog, setDialog] = useState<{
     initial: DayOffDraft
     replacing?: DayOffRange
   } | null>(null)
   const [removing, setRemoving] = useState<DayOffRange | null>(null)
 
-  const thisYear = (days.data ?? []).filter((d) =>
-    d.date.startsWith(String(year)),
+  const thisYear = (days.data ?? []).filter((dayOff) =>
+    dayOff.date.startsWith(String(year)),
   )
-  const summary = DAY_OFF_KINDS.map((k) => ({
-    kind: k,
-    count: thisYear.filter((d) => d.kind === k).length,
+  const summary = DAY_OFF_KINDS.map((dayOffKind) => ({
+    kind: dayOffKind,
+    count: thisYear.filter((dayOff) => dayOff.kind === dayOffKind).length,
   }))
-    .filter((x) => x.count > 0)
+    .filter((dayOffKind) => dayOffKind.count > 0)
     .map(
-      (x) => `${t.kinds[x.kind]}: ${format.plural(t.settings.days, x.count)}`,
+      (dayOffKind) =>
+        `${messages.kinds[dayOffKind.kind]}: ${format.plural(messages.settings.days, dayOffKind.count)}`,
     )
     .join(', ')
 
   const remove = useRemoveDaysOff({
-    success: t.settings.removed,
+    success: messages.settings.removed,
     onRemoved: () => setRemoving(null),
   })
 
-  const dates = (r: DayOffRange) =>
-    r.from === r.to
-      ? formatDate(locale, r.from, {
+  const dates = (dayOffRange: DayOffRange) =>
+    dayOffRange.from === dayOffRange.to
+      ? formatDate(locale, dayOffRange.from, {
           weekday: 'short',
           day: 'numeric',
           month: 'long',
           year: 'numeric',
         })
-      : formatDateRange(locale, r.from, r.to)
+      : formatDateRange(locale, dayOffRange.from, dayOffRange.to)
 
   const list = (items: Array<DayOffRange>) => (
     <ul className="divide-y divide-line">
-      {items.map((r) => {
-        const Icon = DAY_OFF_ICONS[r.kind]
+      {items.map((dayOffRange) => {
+        const Icon = DAY_OFF_ICONS[dayOffRange.kind]
         return (
           <li
-            key={`${r.from}-${r.to}`}
+            key={`${dayOffRange.from}-${dayOffRange.to}`}
             className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3"
           >
             <span
               aria-hidden
               className="grid size-9 shrink-0 place-items-center rounded-lg text-white"
-              style={{ background: DAY_OFF_COLORS[r.kind] }}
+              style={{ background: DAY_OFF_COLORS[dayOffRange.kind] }}
             >
               <Icon className="size-4" />
             </span>
             <div className="min-w-0 flex-1">
               <p className="font-medium">
-                {t.kinds[r.kind]}
-                {r.note && (
-                  <span className="font-normal text-ink-soft">: {r.note}</span>
+                {messages.kinds[dayOffRange.kind]}
+                {dayOffRange.note && (
+                  <span className="font-normal text-ink-soft">
+                    : {dayOffRange.note}
+                  </span>
                 )}
               </p>
               <p className="text-sm text-ink-soft">
-                {dates(r)}, {format.plural(t.settings.days, r.days)}
+                {dates(dayOffRange)},{' '}
+                {format.plural(messages.settings.days, dayOffRange.days)}
               </p>
             </div>
             <div className="flex gap-1">
               <Button
                 variant="ghost"
                 size="sm"
-                aria-label={`${t.banner.change}: ${t.kinds[r.kind]}, ${dates(r)}`}
+                aria-label={`${messages.banner.change}: ${messages.kinds[dayOffRange.kind]}, ${dates(dayOffRange)}`}
                 onClick={() =>
                   setDialog({
                     initial: {
-                      from: r.from,
-                      to: r.to,
-                      kind: r.kind,
-                      note: r.note,
+                      from: dayOffRange.from,
+                      to: dayOffRange.to,
+                      kind: dayOffRange.kind,
+                      note: dayOffRange.note,
                     },
-                    replacing: r,
+                    replacing: dayOffRange,
                   })
                 }
               >
-                {t.banner.change}
+                {messages.banner.change}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                aria-label={fmt(t.settings.removeLabel, {
-                  kind: t.kinds[r.kind],
-                  dates: dates(r),
+                aria-label={fmt(messages.settings.removeLabel, {
+                  kind: messages.kinds[dayOffRange.kind],
+                  dates: dates(dayOffRange),
                 })}
-                onClick={() => setRemoving(r)}
+                onClick={() => setRemoving(dayOffRange)}
               >
-                {t.settings.remove}
+                {messages.settings.remove}
               </Button>
             </div>
           </li>
@@ -134,10 +138,15 @@ export function DaysOffSettings() {
 
   return (
     <div>
-      <SectionHeader title={t.settings.title} lead={t.settings.lead} />
+      <SectionHeader
+        title={messages.settings.title}
+        lead={messages.settings.lead}
+      />
       <SettingsCard
-        title={t.settings.upcoming}
-        lead={summary ? fmt(t.settings.thisYear, { summary }) : undefined}
+        title={messages.settings.upcoming}
+        lead={
+          summary ? fmt(messages.settings.thisYear, { summary }) : undefined
+        }
         actions={
           <Button
             onClick={() =>
@@ -152,23 +161,23 @@ export function DaysOffSettings() {
             }
           >
             <Plus aria-hidden />
-            {t.settings.add}
+            {messages.settings.add}
           </Button>
         }
       >
         {days.isPending ? (
           <div aria-hidden className="h-24 animate-pulse rounded-lg bg-muted" />
         ) : ranges.length === 0 ? (
-          <p className="text-ink-soft">{t.settings.empty}</p>
+          <p className="text-ink-soft">{messages.settings.empty}</p>
         ) : upcoming.length === 0 ? (
-          <p className="text-ink-soft">{t.settings.emptyUpcoming}</p>
+          <p className="text-ink-soft">{messages.settings.emptyUpcoming}</p>
         ) : (
           list(upcoming)
         )}
       </SettingsCard>
 
       {past.length > 0 && (
-        <SettingsCard title={t.settings.past} className="mt-6">
+        <SettingsCard title={messages.settings.past} className="mt-6">
           {list(past)}
         </SettingsCard>
       )}
@@ -185,14 +194,14 @@ export function DaysOffSettings() {
         onOpenChange={(open) => !open && setRemoving(null)}
         title={
           removing
-            ? fmt(t.settings.removeLabel, {
-                kind: t.kinds[removing.kind],
+            ? fmt(messages.settings.removeLabel, {
+                kind: messages.kinds[removing.kind],
                 dates: dates(removing),
               })
             : ''
         }
-        description={t.settings.removeText}
-        confirmLabel={t.settings.remove}
+        description={messages.settings.removeText}
+        confirmLabel={messages.settings.remove}
         cancelLabel={app.actions.cancel}
         destructive
         busy={remove.isPending}

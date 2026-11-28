@@ -21,12 +21,13 @@ const KIND_ORDER = [
 export function stackOrder<T extends Pick<TaskType, 'kind' | 'sortOrder'>>(
   types: ReadonlyArray<T>,
 ): Array<T> {
-  const rank = (k: string) => {
-    const i = KIND_ORDER.indexOf(k as (typeof KIND_ORDER)[number])
-    return i === -1 ? KIND_ORDER.indexOf('custom') : i
+  const rank = (key: string) => {
+    const index = KIND_ORDER.indexOf(key as (typeof KIND_ORDER)[number])
+    return index === -1 ? KIND_ORDER.indexOf('custom') : index
   }
   return [...types].sort(
-    (a, b) => rank(a.kind) - rank(b.kind) || a.sortOrder - b.sortOrder,
+    (left, right) =>
+      rank(left.kind) - rank(right.kind) || left.sortOrder - right.sortOrder,
   )
 }
 
@@ -56,17 +57,26 @@ export function timeBuckets(
   const unit = days > 31 ? 'week' : 'day'
   const buckets: Array<TimeBucket> = []
   const start = unit === 'week' ? mondayOf(from) : from
-  for (let d = start; d <= to; d = addDays(d, unit === 'week' ? 7 : 1)) {
-    const end = unit === 'week' ? addDays(d, 6) : d
-    buckets.push({ from: d, to: end > to ? to : end, minutes: 0, byType: {} })
+  for (
+    let index = start;
+    index <= to;
+    index = addDays(index, unit === 'week' ? 7 : 1)
+  ) {
+    const end = unit === 'week' ? addDays(index, 6) : index
+    buckets.push({
+      from: index,
+      to: end > to ? to : end,
+      minutes: 0,
+      byType: {},
+    })
   }
-  for (const e of entries) {
-    const key = unit === 'week' ? mondayOf(e.workDate) : e.workDate
-    const bucket = buckets.find((b) => b.from === key)
+  for (const part of entries) {
+    const key = unit === 'week' ? mondayOf(part.workDate) : part.workDate
+    const bucket = buckets.find((timeBucket) => timeBucket.from === key)
     if (!bucket) continue
-    bucket.minutes += e.durationMinutes
-    bucket.byType[e.taskTypeId] =
-      (bucket.byType[e.taskTypeId] ?? 0) + e.durationMinutes
+    bucket.minutes += part.durationMinutes
+    bucket.byType[part.taskTypeId] =
+      (bucket.byType[part.taskTypeId] ?? 0) + part.durationMinutes
   }
   return { unit, buckets }
 }
@@ -84,17 +94,24 @@ export function hourHeatmap(
   lastHour: number
 } {
   const cells = Array.from({ length: 7 }, () => Array<number>(24).fill(0))
-  for (const e of entries) {
-    if (!e.startTime || !e.endTime) continue
-    const day = (weekday(e.workDate) + 6) % 7
-    const start = toMinutes(e.startTime)
-    const end = toMinutes(e.endTime)
-    for (let h = Math.floor(start / 60); h * 60 < end && h < 24; h++) {
-      const overlap = Math.min(end, (h + 1) * 60) - Math.max(start, h * 60)
-      if (overlap > 0) cells[day]![h]! += overlap
+  for (const part of entries) {
+    if (!part.startTime || !part.endTime) continue
+    const day = (weekday(part.workDate) + 6) % 7
+    const start = toMinutes(part.startTime)
+    const end = toMinutes(part.endTime)
+    for (
+      let index = Math.floor(start / 60);
+      index * 60 < end && index < 24;
+      index++
+    ) {
+      const overlap =
+        Math.min(end, (index + 1) * 60) - Math.max(start, index * 60)
+      if (overlap > 0) cells[day]![index]! += overlap
     }
   }
-  const used = cells.flatMap((row) => row.flatMap((m, h) => (m > 0 ? [h] : [])))
+  const used = cells.flatMap((row) =>
+    row.flatMap((minutes, hour) => (minutes > 0 ? [hour] : [])),
+  )
   return {
     cells,
     max: Math.max(0, ...cells.flat()),
@@ -120,20 +137,20 @@ export function estimateMisses(
   limit = 8,
 ): Array<EstimateMiss> {
   return rows
-    .flatMap((r) =>
-      r.estimateMinutes === null
+    .flatMap((row) =>
+      row.estimateMinutes === null
         ? []
         : [
             {
-              key: r.key,
-              title: r.title,
-              estimate: r.estimateMinutes,
-              minutes: r.minutes,
-              diff: r.minutes - r.estimateMinutes,
+              key: row.key,
+              title: row.title,
+              estimate: row.estimateMinutes,
+              minutes: row.minutes,
+              diff: row.minutes - row.estimateMinutes,
             },
           ],
     )
-    .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff))
+    .sort((left, right) => Math.abs(right.diff) - Math.abs(left.diff))
     .slice(0, limit)
 }
 
@@ -141,8 +158,12 @@ export function estimateMisses(
 export function hourTicks(maxMinutes: number): Array<number> {
   const hours = Math.max(1, maxMinutes / 60)
   const step =
-    [1, 2, 4, 5, 8, 10, 20, 25, 40, 50, 100].find((s) => hours / s <= 4) ??
-    Math.ceil(hours / 4)
+    [1, 2, 4, 5, 8, 10, 20, 25, 40, 50, 100].find(
+      (seconds) => hours / seconds <= 4,
+    ) ?? Math.ceil(hours / 4)
   const top = Math.ceil(hours / step) * step
-  return Array.from({ length: top / step + 1 }, (_, i) => i * step * 60)
+  return Array.from(
+    { length: top / step + 1 },
+    (_unused, index) => index * step * 60,
+  )
 }

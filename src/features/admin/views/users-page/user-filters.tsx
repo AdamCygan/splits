@@ -10,26 +10,26 @@ import { PLANS } from '../../domain/filters'
 import type { UsersPageViewModel } from '../../controllers/use-users-page'
 
 export interface UserFiltersProps {
-  vm: UsersPageViewModel
+  viewModel: UsersPageViewModel
 }
 
 /** Wyszukiwanie i filtry listy kont (wszystkie w adresie strony) oraz eksport CSV. */
-export function UserFilters({ vm }: UserFiltersProps) {
-  const t = useMessages(adminMessages).filters
+export function UserFilters({ viewModel }: UserFiltersProps) {
+  const messages = useMessages(adminMessages).filters
   const plans = useMessages(adminMessages).plans
   const format = useFormat()
-  const { filter } = vm
+  const { filter } = viewModel
   const select = <TKey extends keyof AdminUserFilter>(
     key: TKey,
     value: string,
   ) =>
-    vm.setFilter({
+    viewModel.setFilter({
       [key]: value === '' ? undefined : value,
     })
   return (
-    <section aria-label={t.label} className="mb-4 space-y-3">
+    <section aria-label={messages.label} className="mb-4 space-y-3">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))]">
-        <Field label={t.search}>
+        <Field label={messages.search}>
           {(control) => (
             <div className="relative">
               <Search
@@ -39,118 +39,122 @@ export function UserFilters({ vm }: UserFiltersProps) {
               <Input
                 {...control}
                 type="search"
-                value={vm.search}
-                placeholder={t.searchPlaceholder}
-                onChange={(e) => vm.setSearch(e.target.value)}
+                value={viewModel.search}
+                placeholder={messages.searchPlaceholder}
+                onChange={(event) => viewModel.setSearch(event.target.value)}
                 className="h-11 pl-10"
               />
             </div>
           )}
         </Field>
-        <Field label={t.plan}>
+        <Field label={messages.plan}>
           {(control) => (
             <Select
               {...control}
               value={filter.plan ?? ''}
-              onChange={(e) => select('plan', e.target.value)}
+              onChange={(event) => select('plan', event.target.value)}
             >
-              <option value="">{t.allPlans}</option>
-              {PLANS.map((p) => (
-                <option key={p} value={p}>
-                  {plans[p]}
+              <option value="">{messages.allPlans}</option>
+              {PLANS.map((plan) => (
+                <option key={plan} value={plan}>
+                  {plans[plan]}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label={t.status}>
+        <Field label={messages.status}>
           {(control) => (
             <Select
               {...control}
               value={filter.status ?? ''}
-              onChange={(e) => select('status', e.target.value)}
+              onChange={(event) => select('status', event.target.value)}
             >
-              <option value="">{t.allStatuses}</option>
-              <option value="active">{t.active}</option>
-              <option value="blocked">{t.blocked}</option>
-              <option value="demo">{t.demo}</option>
+              <option value="">{messages.allStatuses}</option>
+              <option value="active">{messages.active}</option>
+              <option value="blocked">{messages.blocked}</option>
+              <option value="demo">{messages.demo}</option>
             </Select>
           )}
         </Field>
-        <Field label={t.payment}>
+        <Field label={messages.payment}>
           {(control) => (
             <Select
               {...control}
               value={filter.payment ?? ''}
-              onChange={(e) => select('payment', e.target.value)}
+              onChange={(event) => select('payment', event.target.value)}
             >
-              <option value="">{t.anyPayment}</option>
-              <option value="problem">{t.paymentProblem}</option>
+              <option value="">{messages.anyPayment}</option>
+              <option value="problem">{messages.paymentProblem}</option>
             </Select>
           )}
         </Field>
-        <Field label={t.email}>
+        <Field label={messages.email}>
           {(control) => (
             <Select
               {...control}
               value={filter.email ?? ''}
-              onChange={(e) => select('email', e.target.value)}
+              onChange={(event) => select('email', event.target.value)}
             >
-              <option value="">{t.anyEmail}</option>
-              <option value="unverified">{t.unverified}</option>
+              <option value="">{messages.anyEmail}</option>
+              <option value="unverified">{messages.unverified}</option>
             </Select>
           )}
         </Field>
-        <Field label={t.twoFactor}>
+        <Field label={messages.twoFactor}>
           {(control) => (
             <Select
               {...control}
               value={filter.twoFactor ?? ''}
-              onChange={(e) => select('twoFactor', e.target.value)}
+              onChange={(event) => select('twoFactor', event.target.value)}
             >
-              <option value="">{t.anyTwoFactor}</option>
-              <option value="on">{t.twoFactorOn}</option>
-              <option value="off">{t.twoFactorOff}</option>
+              <option value="">{messages.anyTwoFactor}</option>
+              <option value="on">{messages.twoFactorOn}</option>
+              <option value="off">{messages.twoFactorOff}</option>
             </Select>
           )}
         </Field>
-        <Field label={t.inactive}>
+        <Field label={messages.inactive}>
           {(control) => (
             <Select
               {...control}
               value={filter.inactiveDays ? String(filter.inactiveDays) : ''}
-              onChange={(e) =>
-                vm.setFilter({
-                  inactiveDays: e.target.value
-                    ? Number(e.target.value)
+              onChange={(event) =>
+                viewModel.setFilter({
+                  inactiveDays: event.target.value
+                    ? Number(event.target.value)
                     : undefined,
                 })
               }
             >
-              <option value="">{t.anyActivity}</option>
+              <option value="">{messages.anyActivity}</option>
               {INACTIVE_DAY_OPTIONS.map((days) => (
                 <option key={days} value={days}>
-                  {format.plural(t.inactiveDays, days)}
+                  {format.plural(messages.inactiveDays, days)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
         <div className="flex items-end gap-2">
-          {vm.activeFilters > 0 && (
-            <Button variant="ghost" className="h-11" onClick={vm.clearFilters}>
-              {t.clear}
+          {viewModel.activeFilters > 0 && (
+            <Button
+              variant="ghost"
+              className="h-11"
+              onClick={viewModel.clearFilters}
+            >
+              {messages.clear}
             </Button>
           )}
           <Button
             variant="outline"
             className="ml-auto h-11"
-            disabled={vm.exporting}
-            aria-busy={vm.exporting}
-            onClick={() => void vm.exportCsv()}
+            disabled={viewModel.exporting}
+            aria-busy={viewModel.exporting}
+            onClick={() => void viewModel.exportCsv()}
           >
             <Download aria-hidden className="size-4" />
-            {vm.exporting ? t.exporting : t.export}
+            {viewModel.exporting ? messages.exporting : messages.export}
           </Button>
         </div>
       </div>

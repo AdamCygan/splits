@@ -10,7 +10,7 @@ import {
   yearlyFreeMonths,
 } from '../../src/features/billing/domain/plans'
 
-const ymd = (date: Date) =>
+const isoDate = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 
 describe('pricing', () => {
@@ -48,7 +48,7 @@ describe('pricing', () => {
     ['pro', { plan: 'pro', role: 'user' }, true],
     ['lifetime', { plan: 'lifetime', role: 'user' }, true],
     ['admin', { plan: 'free', role: 'admin' }, true],
-  ])('Should decide Pro access for a %s account', (_, user, expected) => {
+  ])('Should decide Pro access for a %s account', (_unused, user, expected) => {
     expect(hasProAccess(user)).toBe(expected)
   })
 })
@@ -60,8 +60,8 @@ describe('renewal date', () => {
     ['on the last day of a shorter month', 'month', '2027-01-31', '2027-02-28'],
     ['a year later', 'year', '2026-11-27', '2027-11-27'],
     ['on 28 February after a leap day', 'year', '2028-02-29', '2029-02-28'],
-  ])('Should renew %s', (_, interval, from, expected) => {
-    expect(ymd(renewalDate(interval, new Date(`${from}T12:00:00`)))).toBe(
+  ])('Should renew %s', (_unused, interval, from, expected) => {
+    expect(isoDate(renewalDate(interval, new Date(`${from}T12:00:00`)))).toBe(
       expected,
     )
   })

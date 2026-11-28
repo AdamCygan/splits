@@ -29,6 +29,7 @@ export const sprintInput = z.object({
     .max(20)
     .default([])
     .refine(
-      (list) => new Set(list.map((g) => g.taskTypeId)).size === list.length,
+      (list) =>
+        new Set(list.map((goal) => goal.taskTypeId)).size === list.length,
     ),
 })

@@ -28,7 +28,7 @@ const SEARCH_DELAY = 300
  * i eksport CSV (z serwera całość z filtrami, CSV składany w przeglądarce).
  */
 export function useUsersPageViewModel({ filter, onFilter }: UsersPageOptions) {
-  const t = useMessages(adminMessages)
+  const messages = useMessages(adminMessages)
   const format = useFormat()
   const errorText = useErrorText()
   const me = useCurrentUser()
@@ -41,9 +41,9 @@ export function useUsersPageViewModel({ filter, onFilter }: UsersPageOptions) {
   const update = (patch: Partial<AdminUserFilter>) =>
     onFilter(withoutEmpty({ ...filter, ...patch, page: patch.page }))
 
-  const q = search.trim() || undefined
+  const query = search.trim() || undefined
   useDebouncedFilter(
-    q === filter.q ? null : () => update({ q }),
+    query === filter.q ? null : () => update({ q: query }),
     SEARCH_DELAY,
     [search, filter.q],
   )
@@ -87,7 +87,9 @@ export function useUsersPageViewModel({ filter, onFilter }: UsersPageOptions) {
         ['﻿', adminUsersCsv(result.value)],
         'text/csv;charset=utf-8',
       )
-      toast.success(format.plural(t.filters.exported, result.value.length))
+      toast.success(
+        format.plural(messages.filters.exported, result.value.length),
+      )
     },
   }
 }

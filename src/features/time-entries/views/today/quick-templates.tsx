@@ -6,26 +6,26 @@ import { useQuickTemplatesViewModel } from '../../controllers/use-quick-template
 export function QuickTemplates(
   props: Parameters<typeof useQuickTemplatesViewModel>[0],
 ) {
-  const vm = useQuickTemplatesViewModel(props)
-  const { t, format } = vm
-  if (vm.templates.length === 0) return null
+  const viewModel = useQuickTemplatesViewModel(props)
+  const { t: messages, format } = viewModel
+  if (viewModel.templates.length === 0) return null
   return (
     <>
-      <ScheduledToday vm={vm} />
+      <ScheduledToday viewModel={viewModel} />
       <section aria-labelledby="quick-templates" className="mb-6">
         <h2
           id="quick-templates"
           className="mb-2 text-sm font-medium text-ink-soft"
         >
-          {t.templates.title}
+          {messages.templates.title}
         </h2>
         <ul className="flex flex-wrap gap-2">
-          {vm.templates.map((template) => (
+          {viewModel.templates.map((template) => (
             <li key={template.id}>
               <button
                 type="button"
-                disabled={vm.busy}
-                onClick={() => vm.use(template)}
+                disabled={viewModel.busy}
+                onClick={() => viewModel.use(template)}
                 aria-haspopup={template.askProject ? 'dialog' : undefined}
                 aria-keyshortcuts={
                   template.hotkey ? `Alt+${template.hotkey}` : undefined
@@ -35,18 +35,22 @@ export function QuickTemplates(
                 <span
                   aria-hidden
                   className="size-2.5 rounded-full"
-                  style={{ background: vm.typeOf(template.taskTypeId)?.color }}
+                  style={{
+                    background: viewModel.typeOf(template.taskTypeId)?.color,
+                  }}
                 />
                 {template.label}
                 {template.askProject && (
-                  <span className="sr-only">({t.templates.anyProject})</span>
+                  <span className="sr-only">
+                    ({messages.templates.anyProject})
+                  </span>
                 )}
                 <span className="text-ink-soft">
                   {template.defaultDurationMinutes
                     ? format.minutes(template.defaultDurationMinutes)
-                    : vm.isToday
-                      ? t.form.timeModes.timer
-                      : t.templates.duration}
+                    : viewModel.isToday
+                      ? messages.form.timeModes.timer
+                      : messages.templates.duration}
                 </span>
                 {template.hotkey && (
                   <kbd className="rounded-md border border-b-2 border-line px-1.5 py-0.5 font-sans text-xs text-ink-soft">
@@ -57,15 +61,15 @@ export function QuickTemplates(
             </li>
           ))}
         </ul>
-        {vm.picking && (
+        {viewModel.picking && (
           <UseTemplateDialog
-            template={vm.picking.template}
-            type={vm.typeOf(vm.picking.template.taskTypeId)}
-            projects={vm.projects}
-            isToday={vm.isToday}
-            pending={vm.busy}
-            onSubmit={vm.submitPicked}
-            onClose={vm.closePicker}
+            template={viewModel.picking.template}
+            type={viewModel.typeOf(viewModel.picking.template.taskTypeId)}
+            projects={viewModel.projects}
+            isToday={viewModel.isToday}
+            pending={viewModel.busy}
+            onSubmit={viewModel.submitPicked}
+            onClose={viewModel.closePicker}
           />
         )}
       </section>

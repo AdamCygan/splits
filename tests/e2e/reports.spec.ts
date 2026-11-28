@@ -154,13 +154,15 @@ test.describe('story points per kind of work', () => {
   }) => {
     await page.goto('/app')
     const form = page.getByRole('region', { name: 'Log time' })
-    const sp = form.getByRole('group', { name: /^Story points/ })
-    await expect(sp).toContainText('(required)')
+    const storyPoints = form.getByRole('group', { name: /^Story points/ })
+    await expect(storyPoints).toContainText('(required)')
     await form.getByText('Code review', { exact: true }).click()
-    await expect(sp).toContainText('(optional)')
-    await expect(sp.getByRole('radio', { name: 'No SP' })).toBeChecked()
+    await expect(storyPoints).toContainText('(optional)')
+    await expect(
+      storyPoints.getByRole('radio', { name: 'No SP' }),
+    ).toBeChecked()
     await form.getByText('Meeting', { exact: true }).click()
-    await expect(sp).toBeHidden()
+    await expect(storyPoints).toBeHidden()
   })
 
   test('Should make SP required for code reviews in settings', async ({

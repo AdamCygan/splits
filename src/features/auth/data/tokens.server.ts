@@ -58,13 +58,13 @@ export interface ClientMeta {
 }
 
 export async function issueRefreshToken(
-  tx: Tx,
+  transaction: Tx,
   userId: string,
   meta: ClientMeta,
   familyId: string = randomUUID(),
 ) {
   const token = randomToken()
-  await tx.insert(refreshTokens).values({
+  await transaction.insert(refreshTokens).values({
     userId,
     familyId,
     tokenHash: sha256(token),
@@ -83,11 +83,11 @@ export type RotateResult =
  * Użycie już unieważnionego tokenu = ktoś go skopiował, więc unieważniamy całą rodzinę.
  */
 export async function rotateRefreshToken(
-  tx: Tx,
+  transaction: Tx,
   token: string,
   meta: ClientMeta,
 ): Promise<RotateResult> {
-  const [row] = await tx
+  const [row] = await transaction
     .select()
     .from(refreshTokens)
     .where(eq(refreshTokens.tokenHash, sha256(token)))
@@ -96,7 +96,7 @@ export async function rotateRefreshToken(
   if (row.revokedAt) {
     // Tolerancja tylko dla zwykłej rotacji: następca w tej rodzinie wciąż jest aktywny.
     // Po wylogowaniu albo resecie hasła cała rodzina jest unieważniona, więc nic nie przejdzie.
-    const [successor] = await tx
+    const [successor] = await transaction
       .select({ id: refreshTokens.id })
       .from(refreshTokens)
       .where(
@@ -111,23 +111,33 @@ export async function rotateRefreshToken(
       successor &&
       Date.now() - row.revokedAt.getTime() <= REFRESH_REUSE_GRACE_MS
     ) {
-      const next = await issueRefreshToken(tx, row.userId, meta, row.familyId)
+      const next = await issueRefreshToken(
+        transaction,
+        row.userId,
+        meta,
+        row.familyId,
+      )
       return { ok: true, userId: row.userId, token: next }
     }
-    await revokeFamily(tx, row.familyId)
+    await revokeFamily(transaction, row.familyId)
     return { ok: false }
   }
   if (row.expiresAt.getTime() < Date.now()) return { ok: false }
-  await tx
+  await transaction
     .update(refreshTokens)
     .set({ revokedAt: new Date() })
     .where(eq(refreshTokens.id, row.id))
-  const next = await issueRefreshToken(tx, row.userId, meta, row.familyId)
+  const next = await issueRefreshToken(
+    transaction,
+    row.userId,
+    meta,
+    row.familyId,
+  )
   return { ok: true, userId: row.userId, token: next }
 }
 
-export async function revokeFamily(tx: Tx, familyId: string) {
-  await tx
+export async function revokeFamily(transaction: Tx, familyId: string) {
+  await transaction
     .update(refreshTokens)
     .set({ revokedAt: new Date() })
     .where(
@@ -138,29 +148,29 @@ export async function revokeFamily(tx: Tx, familyId: string) {
     )
 }
 
-export async function revokeToken(tx: Tx, token: string) {
-  const [row] = await tx
+export async function revokeToken(transaction: Tx, token: string) {
+  const [row] = await transaction
     .select({ familyId: refreshTokens.familyId })
     .from(refreshTokens)
     .where(eq(refreshTokens.tokenHash, sha256(token)))
-  if (row) await revokeFamily(tx, row.familyId)
+  if (row) await revokeFamily(transaction, row.familyId)
 }
 
 /** Po zmianie hasła: wylogowanie ze wszystkich innych urządzeń (zostaje bieżąca sesja). */
 export async function revokeOtherSessions(
-  tx: Tx,
+  transaction: Tx,
   userId: string,
   currentToken: string | undefined,
 ) {
   let keepFamily: string | null = null
   if (currentToken) {
-    const [row] = await tx
+    const [row] = await transaction
       .select({ familyId: refreshTokens.familyId })
       .from(refreshTokens)
       .where(eq(refreshTokens.tokenHash, sha256(currentToken)))
     keepFamily = row?.familyId ?? null
   }
-  await tx
+  await transaction
     .update(refreshTokens)
     .set({ revokedAt: new Date() })
     .where(
@@ -203,8 +213,8 @@ export async function verifyMfaToken(token: string): Promise<string | null> {
 }
 
 /** Unieważnia wszystkie sesje użytkownika (wszystkie rodziny refresh tokenów). */
-export async function revokeAllSessions(tx: Tx, userId: string) {
-  await tx
+export async function revokeAllSessions(transaction: Tx, userId: string) {
+  await transaction
     .update(refreshTokens)
     .set({ revokedAt: new Date() })
     .where(

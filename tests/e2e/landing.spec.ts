@@ -41,11 +41,11 @@ test('Should move focus to the main content with the skip link', async ({
  * przy przewijaniu, więc pozycję liczymy na nowo przy każdym wywołaniu.
  */
 async function fillScales(page: Page, selector: string) {
-  return page.evaluate(async (sel) => {
-    const bars = [...document.querySelectorAll<HTMLElement>(sel)]
+  return page.evaluate(async (selection) => {
+    const bars = [...document.querySelectorAll<HTMLElement>(selection)]
     bars[0]!.scrollIntoView({ block: 'start', behavior: 'instant' })
-    await new Promise((r) =>
-      requestAnimationFrame(() => requestAnimationFrame(r)),
+    await new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve)),
     )
     return bars.map((bar) => new DOMMatrix(getComputedStyle(bar).transform).a)
   }, selector)

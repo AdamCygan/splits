@@ -11,18 +11,26 @@ import {
 } from '../data/repository.server'
 
 export const projectRoutes = new Hono<AppEnv>()
-  .get('/', async (c) => c.json(await listProjects(scopeOf(c))))
-  .post('/', async (c) => {
-    const input = await body(c, projectInput)
-    return c.json(await createProject(scopeOf(c), input), 201)
+  .get('/', async (context) =>
+    context.json(await listProjects(scopeOf(context))),
+  )
+  .post('/', async (context) => {
+    const input = await body(context, projectInput)
+    return context.json(await createProject(scopeOf(context), input), 201)
   })
-  .put('/:id', async (c) => {
-    const input = await body(c, projectInput)
-    return c.json(await updateProject(scopeOf(c), c.req.param('id'), input))
+  .put('/:id', async (context) => {
+    const input = await body(context, projectInput)
+    return context.json(
+      await updateProject(scopeOf(context), context.req.param('id'), input),
+    )
   })
-  .post('/:id/:action{archive|restore}', async (c) => {
-    const archived = c.req.param('action') === 'archive'
-    return c.json(
-      await setProjectArchived(scopeOf(c), c.req.param('id'), archived),
+  .post('/:id/:action{archive|restore}', async (context) => {
+    const archived = context.req.param('action') === 'archive'
+    return context.json(
+      await setProjectArchived(
+        scopeOf(context),
+        context.req.param('id'),
+        archived,
+      ),
     )
   })

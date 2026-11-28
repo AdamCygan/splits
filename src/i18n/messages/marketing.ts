@@ -1,7 +1,7 @@
 import type { Dictionary } from '../context'
 import type { Plural } from '../format'
 
-const en = {
+const english = {
   hero: {
     title: 'Code reviews ate your sprint. Now you can prove it.',
     lead: 'Timeblame is the time tracker built for developers. Start a timer in one click, log a review with a right-click, jot down what you actually did, and finish every sprint with story points and hours for each kind of work.',
@@ -189,44 +189,54 @@ const en = {
     title: 'Questions',
     items: [
       {
-        q: 'Is the Free plan really free?',
-        a: 'Yes, with no time limit and no credit card. It’s a taste of the app: the timer, entries, sprints and story points, with the last 7 days of history, one project and two quick templates. Pro removes every limit and adds full history, CSV export and daily reminders.',
+        question: 'Is the Free plan really free?',
+        answer:
+          'Yes, with no time limit and no credit card. It’s a taste of the app: the timer, entries, sprints and story points, with the last 7 days of history, one project and two quick templates. Pro removes every limit and adds full history, CSV export and daily reminders.',
       },
       {
-        q: 'Does Timeblame replace Jira or GitLab?',
-        a: 'No. Your tasks stay in your tracker. In Timeblame you paste a ticket or merge request link and log how long you spent on it.',
+        question: 'Does Timeblame replace Jira or GitLab?',
+        answer:
+          'No. Your tasks stay in your tracker. In Timeblame you paste a ticket or merge request link and log how long you spent on it.',
       },
       {
-        q: 'My team counts story points differently. Can I change that?',
-        a: 'Yes. You set the scale yourself: each story point value has its own time limit, for example 2 SP up to 2 hours and 3 SP up to 4 hours. Code reviews and meetings can have story points too.',
+        question: 'My team counts story points differently. Can I change that?',
+        answer:
+          'Yes. You set the scale yourself: each story point value has its own time limit, for example 2 SP up to 2 hours and 3 SP up to 4 hours. Code reviews and meetings can have story points too.',
       },
       {
-        q: 'Is it a tool for the whole team?',
-        a: 'Timeblame is personal. Everyone has their own account and their own stats. Nobody watches your day.',
+        question: 'Is it a tool for the whole team?',
+        answer:
+          'Timeblame is personal. Everyone has their own account and their own stats. Nobody watches your day.',
       },
       {
-        q: 'Can I use it to bill clients for my hours?',
-        a: 'Yes. You see time per task, day and month, and on the Pro plan you can export it to CSV and attach it to an invoice.',
+        question: 'Can I use it to bill clients for my hours?',
+        answer:
+          'Yes. You see time per task, day and month, and on the Pro plan you can export it to CSV and attach it to an invoice.',
       },
       {
-        q: 'Can I start a timer and fill in the details later?',
-        a: 'Yes. Start a timer with just a title, or set the time you actually started. Stop it from any page when you’re done, then add notes whenever you like.',
+        question: 'Can I start a timer and fill in the details later?',
+        answer:
+          'Yes. Start a timer with just a title, or set the time you actually started. Stop it from any page when you’re done, then add notes whenever you like.',
       },
       {
-        q: 'What are task summaries?',
-        a: 'Write a template once, for example “Total time on {task}: {total}. Why: {notes}”. Timeblame fills it in from every entry on that task, ready to paste into Jira, a pull request or your stand-up.',
+        question: 'What are task summaries?',
+        answer:
+          'Write a template once, for example “Total time on {task}: {total}. Why: {notes}”. Timeblame fills it in from every entry on that task, ready to paste into Jira, a pull request or your stand-up.',
       },
       {
-        q: 'Does it work on my phone?',
-        a: 'Yes. Timeblame runs in the browser on desktop and mobile. There’s nothing to install.',
+        question: 'Does it work on my phone?',
+        answer:
+          'Yes. Timeblame runs in the browser on desktop and mobile. There’s nothing to install.',
       },
       {
-        q: 'Monthly or yearly: what’s the difference?',
-        a: 'Only how you pay. Pro is the same either way: $6 a month, or $60 a year, which gives you 2 months free. You can switch between them in settings, get a full refund within 14 days and turn off renewal anytime.',
+        question: 'Monthly or yearly: what’s the difference?',
+        answer:
+          'Only how you pay. Pro is the same either way: $6 a month, or $60 a year, which gives you 2 months free. You can switch between them in settings, get a full refund within 14 days and turn off renewal anytime.',
       },
       {
-        q: 'Can I export or delete my data?',
-        a: 'Yes. CSV export is part of Pro, and deleting your account removes all your entries, tasks and settings.',
+        question: 'Can I export or delete my data?',
+        answer:
+          'Yes. CSV export is part of Pro, and deleting your account removes all your entries, tasks and settings.',
       },
     ],
   },
@@ -318,9 +328,9 @@ const en = {
   },
 }
 
-export type MarketingMessages = typeof en
+export type MarketingMessages = typeof english
 
-const pl: MarketingMessages = {
+const polish: MarketingMessages = {
   hero: {
     title: 'Code review zjadło Ci sprint. Teraz to udowodnisz.',
     lead: 'Timeblame to time tracker zrobiony dla programistów. Timer jednym kliknięciem, wpis z code review prawym przyciskiem, notatka o tym, co naprawdę zrobiłeś, a na koniec sprintu story pointy i godziny dla każdego rodzaju pracy.',
@@ -507,44 +517,54 @@ const pl: MarketingMessages = {
     title: 'Pytania',
     items: [
       {
-        q: 'Czy plan Free jest naprawdę darmowy?',
-        a: 'Tak, bez limitu czasu i bez karty. To przedsmak aplikacji: timer, wpisy, sprinty i story pointy, z historią z ostatnich 7 dni, jednym projektem i dwoma szybkimi szablonami. Pro zdejmuje wszystkie limity i dodaje pełną historię, eksport CSV i codzienne przypomnienia.',
+        question: 'Czy plan Free jest naprawdę darmowy?',
+        answer:
+          'Tak, bez limitu czasu i bez karty. To przedsmak aplikacji: timer, wpisy, sprinty i story pointy, z historią z ostatnich 7 dni, jednym projektem i dwoma szybkimi szablonami. Pro zdejmuje wszystkie limity i dodaje pełną historię, eksport CSV i codzienne przypomnienia.',
       },
       {
-        q: 'Czy Timeblame zastępuje Jirę albo GitLaba?',
-        a: 'Nie. Zadania nadal żyją w Twoim trackerze. W Timeblame wklejasz link do ticketu lub merge requesta i notujesz, ile czasu na nim spędziłeś.',
+        question: 'Czy Timeblame zastępuje Jirę albo GitLaba?',
+        answer:
+          'Nie. Zadania nadal żyją w Twoim trackerze. W Timeblame wklejasz link do ticketu lub merge requesta i notujesz, ile czasu na nim spędziłeś.',
       },
       {
-        q: 'Mój zespół liczy story pointy inaczej. Da się to ustawić?',
-        a: 'Tak. Skalę ustawiasz sam: każda wartość SP ma swój limit czasu, np. 2 SP do 2 godzin, 3 SP do 4 godzin. Code Review i spotkania też mogą mieć story pointy.',
+        question: 'Mój zespół liczy story pointy inaczej. Da się to ustawić?',
+        answer:
+          'Tak. Skalę ustawiasz sam: każda wartość SP ma swój limit czasu, np. 2 SP do 2 godzin, 3 SP do 4 godzin. Code Review i spotkania też mogą mieć story pointy.',
       },
       {
-        q: 'Czy to narzędzie dla całego zespołu?',
-        a: 'Timeblame jest osobisty: każdy prowadzi własne konto i własne statystyki. Nikt nie podgląda Twojego dnia.',
+        question: 'Czy to narzędzie dla całego zespołu?',
+        answer:
+          'Timeblame jest osobisty: każdy prowadzi własne konto i własne statystyki. Nikt nie podgląda Twojego dnia.',
       },
       {
-        q: 'Nadaje się do rozliczania godzin z klientem?',
-        a: 'Tak. Widzisz czas per zadanie, dzień i miesiąc, a w planie Pro eksportujesz go do CSV i dołączasz do faktury.',
+        question: 'Nadaje się do rozliczania godzin z klientem?',
+        answer:
+          'Tak. Widzisz czas per zadanie, dzień i miesiąc, a w planie Pro eksportujesz go do CSV i dołączasz do faktury.',
       },
       {
-        q: 'Mogę uruchomić timer i uzupełnić szczegóły później?',
-        a: 'Tak. Startujesz timer z samym tytułem albo z godziną, o której faktycznie zacząłeś. Zatrzymujesz go z dowolnej strony, a notatki dopisujesz, kiedy chcesz.',
+        question: 'Mogę uruchomić timer i uzupełnić szczegóły później?',
+        answer:
+          'Tak. Startujesz timer z samym tytułem albo z godziną, o której faktycznie zacząłeś. Zatrzymujesz go z dowolnej strony, a notatki dopisujesz, kiedy chcesz.',
       },
       {
-        q: 'Czym są podsumowania zadań?',
-        a: 'Piszesz szablon raz, np. „Łączny czas na {task}: {total}. Dlaczego: {notes}”. Timeblame wypełnia go ze wszystkich wpisów zadania, gotowy do wklejenia w Jirę, pull request albo na daily.',
+        question: 'Czym są podsumowania zadań?',
+        answer:
+          'Piszesz szablon raz, np. „Łączny czas na {task}: {total}. Dlaczego: {notes}”. Timeblame wypełnia go ze wszystkich wpisów zadania, gotowy do wklejenia w Jirę, pull request albo na daily.',
       },
       {
-        q: 'Działa na telefonie?',
-        a: 'Tak. Timeblame działa w przeglądarce na komputerze i telefonie, bez instalowania aplikacji.',
+        question: 'Działa na telefonie?',
+        answer:
+          'Tak. Timeblame działa w przeglądarce na komputerze i telefonie, bez instalowania aplikacji.',
       },
       {
-        q: 'Miesięcznie czy rocznie: czym to się różni?',
-        a: 'Tylko sposobem płatności. Pro jest takie samo: 6 $ miesięcznie albo 60 $ rocznie, czyli 2 miesiące gratis. Między wariantami przełączysz się w ustawieniach, masz pełny zwrot w ciągu 14 dni, a odnowienie wyłączysz w każdej chwili.',
+        question: 'Miesięcznie czy rocznie: czym to się różni?',
+        answer:
+          'Tylko sposobem płatności. Pro jest takie samo: 6 $ miesięcznie albo 60 $ rocznie, czyli 2 miesiące gratis. Między wariantami przełączysz się w ustawieniach, masz pełny zwrot w ciągu 14 dni, a odnowienie wyłączysz w każdej chwili.',
       },
       {
-        q: 'Czy mogę wyeksportować albo usunąć swoje dane?',
-        a: 'Tak. Eksport do CSV jest w planie Pro, a usunięcie konta kasuje wszystkie Twoje wpisy, zadania i ustawienia.',
+        question: 'Czy mogę wyeksportować albo usunąć swoje dane?',
+        answer:
+          'Tak. Eksport do CSV jest w planie Pro, a usunięcie konta kasuje wszystkie Twoje wpisy, zadania i ustawienia.',
       },
     ],
   },
@@ -635,4 +655,7 @@ const pl: MarketingMessages = {
   },
 }
 
-export const marketingMessages: Dictionary<MarketingMessages> = { en, pl }
+export const marketingMessages: Dictionary<MarketingMessages> = {
+  en: english,
+  pl: polish,
+}

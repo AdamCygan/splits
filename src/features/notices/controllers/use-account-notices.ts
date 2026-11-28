@@ -14,11 +14,11 @@ import { accountNotices } from '../domain/notices'
  * przejście do Stripe po aktualizację karty).
  */
 export function useAccountNoticesViewModel(user: User) {
-  const t = useMessages(panelMessages).notices
+  const messages = useMessages(panelMessages).notices
   const billing = useQuery({ ...billingQuery, enabled: !user.isDemo }).data
   const resend = useDataMutation(() => accountApi.resendVerification(), {
     invalidate: [],
-    success: fmt(t.resent, { email: user.email }),
+    success: fmt(messages.resent, { email: user.email }),
   })
   const portal = useBillingPortal()
 

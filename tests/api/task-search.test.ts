@@ -12,15 +12,15 @@ interface Result {
 
 describe('task search', () => {
   it('Should find tasks by title or link, finished ones too, and only your own', async () => {
-    const { c } = await registered('en', { pro: true })
+    const { apiClient } = await registered('en', { pro: true })
     const types =
-      await c.get<
+      await apiClient.get<
         Array<{ id: string; kind: string; storyPointsRequirement: string }>
       >('/task-types')
-    const task = types.body.find((x) => x.kind === 'task')!
+    const task = types.body.find((taskType) => taskType.kind === 'task')!
     const today = todayIn('Europe/Warsaw')
     const log = (title: string, link: string | null, daysAgo: number) =>
-      c.post<{ id: string }>('/time-entries', {
+      apiClient.post<{ id: string }>('/time-entries', {
         taskTypeId: task.id,
         projectId: null,
         title,
@@ -36,12 +36,14 @@ describe('task search', () => {
     await log('Refund ledger', null, 20)
     await log('Refund ledger', null, 18)
     await log('Checkout copy', 'https://acme.atlassian.net/browse/PAY-777', 3)
-    await c.post('/time-entries/task/finish', {
+    await apiClient.post('/time-entries/task/finish', {
       ref: { taskTypeId: task.id, title: 'Refund ledger', link: null },
       finished: true,
     })
 
-    const byTitle = await c.get<Array<Result>>('/time-entries/search?q=refund')
+    const byTitle = await apiClient.get<Array<Result>>(
+      '/time-entries/search?q=refund',
+    )
     expect(byTitle.status).toBe(200)
     expect(byTitle.body).toHaveLength(1)
     expect(byTitle.body[0]).toMatchObject({
@@ -51,28 +53,36 @@ describe('task search', () => {
       finished: true,
       running: false,
     })
-    const byLink = await c.get<Array<Result>>('/time-entries/search?q=PAY-777')
-    expect(byLink.body.map((r) => r.entry.title)).toEqual(['Checkout copy'])
+    const byLink = await apiClient.get<Array<Result>>(
+      '/time-entries/search?q=PAY-777',
+    )
+    expect(byLink.body.map((result) => result.entry.title)).toEqual([
+      'Checkout copy',
+    ])
     expect(
-      (await c.get<Array<Result>>('/time-entries/search?q=r')).body,
+      (await apiClient.get<Array<Result>>('/time-entries/search?q=r')).body,
     ).toEqual([])
 
     const other = await registered()
     expect(
-      (await other.c.get<Array<Result>>('/time-entries/search?q=refund')).body,
+      (
+        await other.apiClient.get<Array<Result>>(
+          '/time-entries/search?q=refund',
+        )
+      ).body,
     ).toEqual([])
   })
 
   it('Should search notes and every word, ranking title matches first', async () => {
-    const { c } = await registered('en', { pro: true })
+    const { apiClient } = await registered('en', { pro: true })
     const types =
-      await c.get<
+      await apiClient.get<
         Array<{ id: string; kind: string; storyPointsRequirement: string }>
       >('/task-types')
-    const task = types.body.find((x) => x.kind === 'task')!
+    const task = types.body.find((taskType) => taskType.kind === 'task')!
     const today = todayIn('Europe/Warsaw')
     const log = (title: string, note: string | null, daysAgo: number) =>
-      c.post<{ id: string }>('/time-entries', {
+      apiClient.post<{ id: string }>('/time-entries', {
         taskTypeId: task.id,
         projectId: null,
         title,
@@ -95,27 +105,32 @@ describe('task search', () => {
     await log('Ledger export', 'Nothing about it', 1)
 
     type Ranked = Result & { snippet: string | null }
-    const res = await c.get<Array<Ranked>>(
+    const response = await apiClient.get<Array<Ranked>>(
       '/time-entries/search/all?q=webhook retry',
     )
-    expect(res.status).toBe(200)
+    expect(response.status).toBe(200)
     // Tytuł zawierający oba słowa? „Webhook retry queue” ma oba, więc jest pierwszy,
     // mimo że to stara historia; „Payment gateway” trafia przez notatkę z fragmentem.
-    expect(res.body.map((r) => r.entry.title)).toEqual([
+    expect(response.body.map((result) => result.entry.title)).toEqual([
       'Webhook retry queue',
       'Payment gateway',
     ])
-    expect(res.body[1]).toMatchObject({ sessions: 2, workedMinutes: 60 })
-    expect(res.body[1]?.snippet).toBe('Retry policy for webhook 5xx responses')
-    expect(res.body[0]?.snippet).toBeNull()
+    expect(response.body[1]).toMatchObject({ sessions: 2, workedMinutes: 60 })
+    expect(response.body[1]?.snippet).toBe(
+      'Retry policy for webhook 5xx responses',
+    )
+    expect(response.body[0]?.snippet).toBeNull()
 
     expect(
-      (await c.get<Array<Ranked>>('/time-entries/search/all?q=x')).body,
+      (await apiClient.get<Array<Ranked>>('/time-entries/search/all?q=x')).body,
     ).toEqual([])
     const other = await registered()
     expect(
-      (await other.c.get<Array<Ranked>>('/time-entries/search/all?q=webhook'))
-        .body,
+      (
+        await other.apiClient.get<Array<Ranked>>(
+          '/time-entries/search/all?q=webhook',
+        )
+      ).body,
     ).toEqual([])
   })
 })

@@ -33,7 +33,7 @@ export function activeSessions(
   const result: Array<ActiveSession> = []
   for (const [id, list] of families) {
     const sorted = [...list].sort(
-      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+      (left, right) => left.createdAt.getTime() - right.createdAt.getTime(),
     )
     const latest = sorted.at(-1)!
     if (latest.revokedAt || latest.expiresAt <= now) continue
@@ -47,8 +47,8 @@ export function activeSessions(
     })
   }
   return result.sort(
-    (a, b) =>
-      Number(b.current) - Number(a.current) ||
-      b.lastActiveAt.localeCompare(a.lastActiveAt),
+    (left, right) =>
+      Number(right.current) - Number(left.current) ||
+      right.lastActiveAt.localeCompare(left.lastActiveAt),
   )
 }

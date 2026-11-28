@@ -46,8 +46,8 @@ export function useTaskViewModel({ task, onRename }: TaskPageProps) {
   const [summarizing, setSummarizing] = useState(false)
 
   const latest = list.at(-1)
-  const type = types.find((x) => x.id === task.taskTypeId)
-  const finishedAt = list.find((e) => e.finishedAt)?.finishedAt ?? null
+  const type = types.find((workType) => workType.id === task.taskTypeId)
+  const finishedAt = list.find((entry) => entry.finishedAt)?.finishedAt ?? null
   const insights = taskInsights(list, sameDays)
   const estimate = maxEstimate(list)
 
@@ -61,7 +61,7 @@ export function useTaskViewModel({ task, onRename }: TaskPageProps) {
     types,
     type,
     color: type?.color ?? 'var(--wt-custom)',
-    project: projects.find((p) => p.id === latest?.projectId),
+    project: projects.find((project) => project.id === latest?.projectId),
     sp: maxPoints(list),
     estimate,
     /** Czas ponad estymatę (ujemny = poniżej, 0 = bez estymaty). */
@@ -71,7 +71,7 @@ export function useTaskViewModel({ task, onRename }: TaskPageProps) {
     finishing: finish.isPending,
     resuming: resume.isPending,
     summarizing,
-    typeOf: (id: string) => types.find((x) => x.id === id),
+    typeOf: (id: string) => types.find((workType) => workType.id === id),
     // akcje
     toggleFinished: () =>
       finish.mutate({ ref: task, finished: finishedAt === null }),

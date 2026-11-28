@@ -26,7 +26,9 @@ export function sprintStats(
   types: ReadonlyArray<Pick<TaskType, 'id' | 'storyPointsRequirement'>>,
 ): SprintStats {
   const own = entries.filter(
-    (e) => e.workDate >= sprint.startsOn && e.workDate <= sprint.endsOn,
+    (timeEntry) =>
+      timeEntry.workDate >= sprint.startsOn &&
+      timeEntry.workDate <= sprint.endsOn,
   )
   const rows = groupTasks(own, types)
   const totals = totalsOf(rows)
@@ -39,7 +41,7 @@ export function sprintStats(
     minutesPerSp: totals.minutesPerSp,
     types: byType(
       rows,
-      types.map((t) => t.id),
+      types.map((type) => type.id),
     ),
   }
 }
@@ -52,13 +54,15 @@ export function averageMinutesPerSp(
   stats: ReadonlyArray<Pick<SprintStats, 'minutesPerSp' | 'storyPoints'>>,
 ): number | null {
   const withSp = stats.filter(
-    (s) => s.minutesPerSp !== null && s.storyPoints > 0,
+    (stat) => stat.minutesPerSp !== null && stat.storyPoints > 0,
   )
-  const points = withSp.reduce((sum, s) => sum + s.storyPoints, 0)
+  const points = withSp.reduce((sum, sprint) => sum + sprint.storyPoints, 0)
   if (points === 0) return null
   return Math.round(
-    withSp.reduce((sum, s) => sum + s.minutesPerSp! * s.storyPoints, 0) /
-      points,
+    withSp.reduce(
+      (sum, sprint) => sum + sprint.minutesPerSp! * sprint.storyPoints,
+      0,
+    ) / points,
   )
 }
 
@@ -140,18 +144,21 @@ export function timeGoalProgress(
   day: number,
   total: number,
 ): Array<GoalProgress> {
-  return goals.map((g) => {
+  return goals.map((sprintTimeGoal) => {
     const minutes =
-      types.find((r) => r.taskTypeId === g.taskTypeId)?.minutes ?? 0
-    const expected = Math.round((g.minutes * day) / Math.max(1, total))
+      types.find((type) => type.taskTypeId === sprintTimeGoal.taskTypeId)
+        ?.minutes ?? 0
+    const expected = Math.round(
+      (sprintTimeGoal.minutes * day) / Math.max(1, total),
+    )
     return {
-      taskTypeId: g.taskTypeId,
-      goal: g.minutes,
+      taskTypeId: sprintTimeGoal.taskTypeId,
+      goal: sprintTimeGoal.minutes,
       minutes,
-      left: Math.max(0, g.minutes - minutes),
+      left: Math.max(0, sprintTimeGoal.minutes - minutes),
       expected,
       status:
-        minutes >= g.minutes
+        minutes >= sprintTimeGoal.minutes
           ? 'done'
           : minutes >= expected * 0.9
             ? 'onTrack'

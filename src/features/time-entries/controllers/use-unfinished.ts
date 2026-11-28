@@ -6,10 +6,10 @@ import { fmt } from '#/i18n/format'
 import { entriesMessages } from '#/i18n/messages/entries'
 import { useDataMutation } from '#/shared/data/mutations'
 
-export const refOf = (e: TimeEntry): TaskRef => ({
-  title: e.title,
-  link: e.link,
-  taskTypeId: e.taskTypeId,
+export const refOf = (timeEntry: TimeEntry): TaskRef => ({
+  title: timeEntry.title,
+  link: timeEntry.link,
+  taskTypeId: timeEntry.taskTypeId,
 })
 
 export interface FinishTaskInput {
@@ -19,14 +19,16 @@ export interface FinishTaskInput {
 
 /** Zakończone / z powrotem w toku: wszystkie sesje zadania naraz. */
 export function useFinishTask() {
-  const t = useMessages(entriesMessages).unfinished
+  const messages = useMessages(entriesMessages).unfinished
   return useDataMutation(
     ({ ref, finished }: FinishTaskInput) =>
       entriesApi.finishTask(ref, finished),
     {
       invalidate: [entryKeys.all],
-      success: (_, { ref, finished }) =>
-        fmt(finished ? t.finished : t.reopened, { name: ref.title }),
+      success: (_unused, { ref, finished }) =>
+        fmt(finished ? messages.finished : messages.reopened, {
+          name: ref.title,
+        }),
     },
   )
 }

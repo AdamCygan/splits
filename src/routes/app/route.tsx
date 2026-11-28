@@ -72,18 +72,18 @@ export const Route = createFileRoute('/app')({
 })
 
 function AppPending() {
-  const t = useMessages(commonMessages)
+  const messages = useMessages(commonMessages)
   return (
     <div
       role="status"
       className="grid min-h-dvh place-items-center text-ink-soft"
     >
-      {t.loading}
+      {messages.loading}
     </div>
   )
 }
 
-const nav = [
+const navigation = [
   { to: '/app', key: 'today', icon: Clock, exact: true },
   { to: '/app/tasks', key: 'tasks', icon: ListTodo, exact: false },
   { to: '/app/sprints', key: 'sprints', icon: CalendarRange, exact: false },
@@ -116,7 +116,7 @@ interface DemoBannerProps {
 
 /** Pasek konta demo: jasno mówi, że dane są przykładowe, i prowadzi do rejestracji. */
 function DemoBanner({ onRegister }: DemoBannerProps) {
-  const t = useMessages(panelMessages).demo
+  const messages = useMessages(panelMessages).demo
   // Kolor marki zamiast granatu: baner demo nie może wyglądać jak pasek timera pod nim.
   return (
     <div
@@ -125,15 +125,15 @@ function DemoBanner({ onRegister }: DemoBannerProps) {
     >
       <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2 py-0.5 text-xs font-semibold">
         <FlaskConical aria-hidden className="size-3.5" />
-        {t.badge}
+        {messages.badge}
       </span>
-      <span>{t.banner}</span>
+      <span>{messages.banner}</span>
       <button
         type="button"
         onClick={onRegister}
         className="rounded-md bg-white px-3 py-1 font-semibold text-[var(--brand-strong)] hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       >
-        {t.bannerCta}
+        {messages.bannerCta}
       </button>
     </div>
   )
@@ -142,8 +142,10 @@ function DemoBanner({ onRegister }: DemoBannerProps) {
 function AppShell() {
   const user = useCurrentUser()
   const navigate = useNavigate()
-  const pathname = useLocation({ select: (l) => l.pathname })
-  const t = useMessages(appMessages)
+  const pathname = useLocation({
+    select: (routerLocation) => routerLocation.pathname,
+  })
+  const messages = useMessages(appMessages)
   const common = useMessages(commonMessages)
   const admin = useMessages(adminMessages)
   const feedback = useMessages(feedbackMessages)
@@ -220,13 +222,18 @@ function AppShell() {
             className="mb-4 flex h-10 items-center gap-2.5 rounded-lg border border-line px-3 text-sm text-ink-soft hover:border-ink/30 hover:text-ink"
           >
             <Search aria-hidden className="size-4" />
-            <span className="flex-1 text-left">{t.menu.commandsShort}</span>
+            <span className="flex-1 text-left">
+              {messages.menu.commandsShort}
+            </span>
             <kbd className="rounded border border-line px-1.5 text-[0.6875rem]">
               {shortcutLabel()}
             </kbd>
           </button>
-          <nav aria-label={t.nav.label} className="flex flex-col gap-0.5">
-            {nav.map(({ to, key, icon: Icon, exact }) => (
+          <nav
+            aria-label={messages.nav.label}
+            className="flex flex-col gap-0.5"
+          >
+            {navigation.map(({ to, key, icon: Icon, exact }) => (
               <Link
                 key={to}
                 to={to}
@@ -234,7 +241,7 @@ function AppShell() {
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[0.9375rem] font-medium text-ink-soft transition-colors duration-150 hover:bg-muted hover:text-ink data-[status=active]:bg-[var(--selected)] data-[status=active]:text-[var(--on-selected)]"
               >
                 <Icon aria-hidden className="size-[1.125rem]" />
-                {t.nav[key]}
+                {messages.nav[key]}
               </Link>
             ))}
             {user?.role === 'admin' && (
@@ -325,11 +332,11 @@ function AppShell() {
 
         {/* Dolny pasek zakładek (telefon): duże cele dotyku, ikona + podpis */}
         <nav
-          aria-label={t.nav.label}
+          aria-label={messages.nav.label}
           className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
         >
           <ul className="grid grid-cols-5">
-            {nav.map(({ to, key, icon: Icon, exact }) => (
+            {navigation.map(({ to, key, icon: Icon, exact }) => (
               <li key={to}>
                 <Link
                   to={to}
@@ -347,7 +354,7 @@ function AppShell() {
                       >
                         <Icon aria-hidden className="size-[1.125rem]" />
                       </span>
-                      {t.nav[key]}
+                      {messages.nav[key]}
                     </>
                   )}
                 </Link>

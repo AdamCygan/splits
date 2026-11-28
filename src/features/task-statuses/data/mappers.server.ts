@@ -1,16 +1,16 @@
 import type { TaskStatus } from '#/features/task-statuses/data/dto'
-import type * as t from '#/server/db/schema'
-import { iso } from '#/server/http/json'
+import type * as schema from '#/server/db/schema'
+import { isoDate } from '#/server/http/json'
 
 export const toStatus = (
-  x: typeof t.taskStatuses.$inferSelect,
+  taskStatusRow: typeof schema.taskStatuses.$inferSelect,
 ): TaskStatus => ({
-  id: x.id,
-  name: x.name,
-  category: x.category,
-  color: x.color,
-  isSystem: x.isSystem,
-  isDefault: x.isDefault,
-  sortOrder: x.sortOrder,
-  archivedAt: iso(x.archivedAt),
+  id: taskStatusRow.id,
+  name: taskStatusRow.name,
+  category: taskStatusRow.category,
+  color: taskStatusRow.color,
+  isSystem: taskStatusRow.isSystem,
+  isDefault: taskStatusRow.isDefault,
+  sortOrder: taskStatusRow.sortOrder,
+  archivedAt: isoDate(taskStatusRow.archivedAt),
 })

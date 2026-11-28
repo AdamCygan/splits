@@ -42,7 +42,7 @@ export function UseTemplateDialog({
   onSubmit,
   onClose,
 }: UseTemplateDialogProps) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   const needs = templateNeeds(template, type, projects, isToday)
   const onlyProject =
@@ -67,28 +67,28 @@ export function UseTemplateDialog({
   const linkError = !needs.link
     ? null
     : !link.trim()
-      ? t.issues.link.required
+      ? messages.issues.link.required
       : !isUrl(link)
-        ? t.issues.link.invalid_url
+        ? messages.issues.link.invalid_url
         : link.length > 2048
-          ? t.issues.link.too_long
+          ? messages.issues.link.too_long
           : null
   const noteError = !needs.note
     ? null
     : !note.trim()
-      ? t.issues.note.required
+      ? messages.issues.note.required
       : note.length > 2000
-        ? t.issues.note.too_long
+        ? messages.issues.note.too_long
         : null
 
   const minutes = needs.duration ? parseDuration(duration) : null
   const durationError =
     needs.duration && (minutes === null || minutes < 1 || minutes > 24 * 60)
-      ? t.issues.time.duration_range
+      ? messages.issues.time.duration_range
       : null
 
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
+  const submit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     setSubmitted(true)
     if (linkError || noteError || durationError) return
     onSubmit({
@@ -105,24 +105,24 @@ export function UseTemplateDialog({
         size="sm"
         title={fmt(
           onlyProject
-            ? t.templates.pickTitle
+            ? messages.templates.pickTitle
             : onlyDuration
-              ? t.templates.pastTitle
-              : t.templates.detailsTitle,
+              ? messages.templates.pastTitle
+              : messages.templates.detailsTitle,
           { name: template.label },
         )}
         description={
           onlyProject
-            ? t.templates.pickText
+            ? messages.templates.pickText
             : onlyDuration
-              ? t.templates.pastText
-              : t.templates.detailsText
+              ? messages.templates.pastText
+              : messages.templates.detailsText
         }
         closeLabel={app.actions.close}
-        onOpenAutoFocus={(e) => {
+        onOpenAutoFocus={(event) => {
           // Fokus od razu na pierwszym wyborze: Enter zapisuje albo przechodzi dalej.
-          e.preventDefault()
-          ;(e.currentTarget as HTMLElement)
+          event.preventDefault()
+          ;(event.currentTarget as HTMLElement)
             .querySelector<HTMLElement>('[data-first]')
             ?.focus()
         }}
@@ -139,10 +139,10 @@ export function UseTemplateDialog({
                 aria-busy={pending}
               >
                 {pending
-                  ? t.form.saving
+                  ? messages.form.saving
                   : template.defaultDurationMinutes === null && isToday
-                    ? t.form.startTimer
-                    : t.form.save}
+                    ? messages.form.startTimer
+                    : messages.form.save}
               </Button>
             </>
           )
@@ -177,7 +177,7 @@ export function UseTemplateDialog({
                     }}
                   />
                   <span className="min-w-0 flex-1 truncate">
-                    {project?.name ?? t.form.noProject}
+                    {project?.name ?? messages.form.noProject}
                   </span>
                   {project?.key && (
                     <span className="text-xs text-ink-soft">{project.key}</span>
@@ -194,66 +194,69 @@ export function UseTemplateDialog({
             className="space-y-5"
           >
             {needs.project && (
-              <Field label={t.form.project}>
-                {(a) => (
+              <Field label={messages.form.project}>
+                {(fieldProps) => (
                   <Select
-                    {...a}
+                    {...fieldProps}
                     data-first=""
                     value={projectId}
-                    onChange={(e) => setProjectId(e.target.value)}
+                    onChange={(event) => setProjectId(event.target.value)}
                   >
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
+                    {projects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.name}
                       </option>
                     ))}
-                    <option value="">{t.form.noProject}</option>
+                    <option value="">{messages.form.noProject}</option>
                   </Select>
                 )}
               </Field>
             )}
             {needs.duration && (
               <Field
-                label={t.templates.duration}
-                hint={t.templates.durationHint}
+                label={messages.templates.duration}
+                hint={messages.templates.durationHint}
                 error={submitted ? durationError : null}
               >
-                {(a) => (
+                {(fieldProps) => (
                   <Input
-                    {...a}
+                    {...fieldProps}
                     data-first={first === 'duration' ? '' : undefined}
                     inputMode="text"
                     autoComplete="off"
                     value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
+                    onChange={(event) => setDuration(event.target.value)}
                   />
                 )}
               </Field>
             )}
             {needs.link && (
               <Field
-                label={type?.linkLabel || t.form.link}
+                label={type?.linkLabel || messages.form.link}
                 error={submitted ? linkError : null}
               >
-                {(a) => (
+                {(fieldProps) => (
                   <Input
-                    {...a}
+                    {...fieldProps}
                     data-first={first === 'link' ? '' : undefined}
                     type="url"
                     inputMode="url"
                     placeholder="https://"
                     spellCheck={false}
                     value={link}
-                    onChange={(e) => setLink(e.target.value)}
+                    onChange={(event) => setLink(event.target.value)}
                   />
                 )}
               </Field>
             )}
             {needs.note && (
-              <Field label={t.form.notes} error={submitted ? noteError : null}>
-                {(a) => (
+              <Field
+                label={messages.form.notes}
+                error={submitted ? noteError : null}
+              >
+                {(fieldProps) => (
                   <NoteEditor
-                    {...a}
+                    {...fieldProps}
                     data-first={first === 'note' ? '' : undefined}
                     rows={3}
                     value={note}

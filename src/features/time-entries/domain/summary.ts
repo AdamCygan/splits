@@ -34,15 +34,15 @@ export function summaryValues(
   entry: Pick<TimeEntry, 'title' | 'link'>,
   type: Pick<TaskType, 'name'> | undefined,
 ): SummaryValues {
-  const t = entriesMessages[locale].taskSummary
+  const messages = entriesMessages[locale].taskSummary
   return {
     task: entry.title,
     total: formatMinutes(locale, stats.totalMinutes),
-    sessions: plural(locale, t.sessions, stats.sessions),
-    days: plural(locale, t.days, stats.days.length),
+    sessions: plural(locale, messages.sessions, stats.sessions),
+    days: plural(locale, messages.days, stats.days.length),
     sp:
       stats.storyPoints === null
-        ? t.noSp
+        ? messages.noSp
         : `${formatNumber(locale, stats.storyPoints)} SP`,
     type: type?.name ?? '',
     key: taskKeyOf(entry) ?? '',
@@ -61,28 +61,28 @@ export function summaryValues(
               }: ${note.replace(/\n+/g, ' ').trim()}`,
           )
           .join('\n')
-      : t.noNotes,
+      : messages.noNotes,
     intervals: stats.days
       .map(({ date }) => {
         const ranges = stats.intervals
-          .filter((i) => i.date === date)
-          .map((i) =>
-            i.start && i.end
-              ? `${clock(locale, i.start)}–${clock(locale, i.end)} (${formatMinutes(locale, i.minutes)})`
-              : formatMinutes(locale, i.minutes),
+          .filter((interval) => interval.date === date)
+          .map((interval) =>
+            interval.start && interval.end
+              ? `${clock(locale, interval.start)}–${clock(locale, interval.end)} (${formatMinutes(locale, interval.minutes)})`
+              : formatMinutes(locale, interval.minutes),
           )
         return `- ${dayLabel(locale, date)}: ${ranges.join(', ')}`
       })
       .join('\n'),
     overtime: stats.overtimeMinutes
       ? [
-          `${t.overtime}: ${formatMinutes(locale, stats.overtimeMinutes)}`,
+          `${messages.overtime}: ${formatMinutes(locale, stats.overtimeMinutes)}`,
           ...stats.overtimeNotes.map(
             ({ date, minutes, note }) =>
               `- ${dayLabel(locale, date)}, ${formatMinutes(locale, minutes)}: ${note.replace(/\n+/g, ' ')}`,
           ),
         ].join('\n')
-      : t.noOvertime,
+      : messages.noOvertime,
     breakdown: stats.days
       .map(
         ({ date, minutes }) =>
@@ -99,20 +99,20 @@ export const defaultSummaryTemplate = (locale: Locale) =>
 export function sampleValues(locale: Locale): SummaryValues {
   const sample = settingsMessages[locale].summaries.sample
   const workDates = ['2026-11-02', '2026-11-03', '2026-11-04']
-  const entries: Array<TimeEntry> = [130, 95, 40].map((minutes, i) => ({
-    id: String(i),
+  const entries: Array<TimeEntry> = [130, 95, 40].map((minutes, index) => ({
+    id: String(index),
     taskTypeId: 'task',
     projectId: null,
     title: sample.task,
     link: 'https://acme.atlassian.net/browse/PAY-142',
     storyPoints: 3,
-    workDate: workDates[i]!,
-    startTime: ['09:15', '13:00', '06:40'][i]!,
-    endTime: ['11:25', '14:35', '07:20'][i]!,
+    workDate: workDates[index]!,
+    startTime: ['09:15', '13:00', '06:40'][index]!,
+    endTime: ['11:25', '14:35', '07:20'][index]!,
     durationMinutes: minutes,
-    note: sample.notes[i] ?? null,
-    overtimeMinutes: i === 2 ? 40 : null,
-    overtimeNote: i === 2 ? sample.overtime : null,
+    note: sample.notes[index] ?? null,
+    overtimeMinutes: index === 2 ? 40 : null,
+    overtimeNote: index === 2 ? sample.overtime : null,
     estimateMinutes: null,
     extensionMinutes: null,
     extensionNote: null,

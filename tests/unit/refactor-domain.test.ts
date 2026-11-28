@@ -34,9 +34,9 @@ import {
   historyStart,
 } from '../../src/features/settings/domain/workday'
 
-let n = 0
+let count = 0
 const entry = (patch: Partial<TimeEntry>): TimeEntry => ({
-  id: String(++n),
+  id: String(++count),
   finishedAt: null,
   taskTypeId: 'task',
   projectId: null,
@@ -56,7 +56,7 @@ const entry = (patch: Partial<TimeEntry>): TimeEntry => ({
   running: false,
   paused: false,
   startedAt: null,
-  createdAt: `2026-11-26T10:00:${String(n).padStart(2, '0')}.000Z`,
+  createdAt: `2026-11-26T10:00:${String(count).padStart(2, '0')}.000Z`,
   ...patch,
 })
 
@@ -106,11 +106,11 @@ describe('task groups', () => {
       entry({ title: 'A', workDate: '2026-11-26', startTime: '09:00' }),
     ])
     expect(
-      tasks.map((x) => [
-        x.latest.title,
-        x.sessions.length,
-        x.workedMinutes,
-        x.finished,
+      tasks.map((taskAggregate) => [
+        taskAggregate.latest.title,
+        taskAggregate.sessions.length,
+        taskAggregate.workedMinutes,
+        taskAggregate.finished,
       ]),
     ).toEqual([
       ['A', 2, 120, false],
@@ -129,10 +129,16 @@ describe('task groups', () => {
       entry({ title: 'A', startTime: '08:00', storyPoints: 5 }),
       entry({ title: 'B', running: true, startTime: '11:00' }),
     ])
-    expect(groups.map((g) => g.latest.title)).toEqual(['B', 'A'])
-    const a = groups[1]!
-    expect(a.sessions.map((e) => e.startTime)).toEqual(['08:00', '10:00'])
-    expect(a).toMatchObject({
+    expect(groups.map((dayTaskGroup) => dayTaskGroup.latest.title)).toEqual([
+      'B',
+      'A',
+    ])
+    const group = groups[1]!
+    expect(group.sessions.map((timeEntry) => timeEntry.startTime)).toEqual([
+      '08:00',
+      '10:00',
+    ])
+    expect(group).toMatchObject({
       doneMinutes: 120,
       storyPoints: 5,
       estimateMinutes: 90,
@@ -190,16 +196,16 @@ describe('templates', () => {
   })
 
   it('Should plan an entry, a scheduled meeting and a timer', () => {
-    const opts = { workDate: '2026-11-26', now: '09:31' }
+    const options = { workDate: '2026-11-26', now: '09:31' }
     expect(
-      templatePlan(template(), meeting, defaultChoice(template()), opts),
+      templatePlan(template(), meeting, defaultChoice(template()), options),
     ).toMatchObject({
       kind: 'entry',
       input: { durationMinutes: 15, startTime: null, storyPoints: null },
     })
     expect(
       templatePlan(template(), meeting, defaultChoice(template()), {
-        ...opts,
+        ...options,
         at: { template: template(), start: '09:30', end: '09:45' },
       }),
     ).toMatchObject({
@@ -208,7 +214,7 @@ describe('templates', () => {
     })
     const timer = template({ defaultDurationMinutes: null })
     expect(
-      templatePlan(timer, meeting, defaultChoice(timer), opts),
+      templatePlan(timer, meeting, defaultChoice(timer), options),
     ).toMatchObject({
       kind: 'timer',
       input: { startTime: '09:31' },
@@ -230,9 +236,13 @@ describe('sprint lists', () => {
   const today = '2026-11-27'
 
   it('Should list started sprints newest first, optionally within the plan history', () => {
-    expect(startedSprints(sprints, today).map((s) => s.id)).toEqual(['b', 'a'])
     expect(
-      startedSprints(sprints, today, '2026-10-29').map((s) => s.id),
+      startedSprints(sprints, today).map((startedSprint) => startedSprint.id),
+    ).toEqual(['b', 'a'])
+    expect(
+      startedSprints(sprints, today, '2026-10-29').map(
+        (startedSprint) => startedSprint.id,
+      ),
     ).toEqual(['b'])
   })
 
@@ -349,7 +359,12 @@ describe('day and task timelines', () => {
     ]
     const all = [...own, session('c', '10:00', '10:30', 30)]
     const line = taskDayTimeline('2026-11-20', own, all)
-    expect(line.segments.map((s) => [s.entry.id, s.own])).toEqual([
+    expect(
+      line.segments.map((taskDaySegment) => [
+        taskDaySegment.entry.id,
+        taskDaySegment.own,
+      ]),
+    ).toEqual([
       ['a', true],
       ['c', false],
     ])
@@ -365,7 +380,7 @@ describe('day and task timelines', () => {
       }),
       session('b', null, null, 15, { extensionNote: 'Tests' }),
     ])
-    expect(notes.map((x) => [x.entryId, x.kind])).toEqual([
+    expect(notes.map((note) => [note.entryId, note.kind])).toEqual([
       ['a', 'note'],
       ['a', 'overtime'],
       ['b', 'extension'],

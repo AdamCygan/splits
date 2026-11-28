@@ -1,6 +1,6 @@
 import type { Dictionary } from '../context'
 
-const en = {
+const english = {
   aside: 'Every hour of the sprint in its place.',
   or: 'or',
   google: 'Continue with Google',
@@ -102,9 +102,9 @@ const en = {
   },
 }
 
-export type AuthMessages = typeof en
+export type AuthMessages = typeof english
 
-const pl: AuthMessages = {
+const polish: AuthMessages = {
   aside: 'Każda godzina sprintu na swoim miejscu.',
   google: 'Kontynuuj z Google',
   googleError:
@@ -206,4 +206,7 @@ const pl: AuthMessages = {
   },
 }
 
-export const authMessages: Dictionary<AuthMessages> = { en, pl }
+export const authMessages: Dictionary<AuthMessages> = {
+  en: english,
+  pl: polish,
+}

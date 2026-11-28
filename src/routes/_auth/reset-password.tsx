@@ -37,7 +37,7 @@ export const Route = createFileRoute('/_auth/reset-password')({
 /** Strona z linku w e-mailu: nowe hasło dla tokenu z adresu (ważny 60 minut, jednorazowy). */
 function ResetPasswordPage() {
   const { token } = Route.useSearch()
-  const t = useMessages(authMessages)
+  const messages = useMessages(authMessages)
   const errorText = useErrorText()
   const navigate = useNavigate()
   const [formError, setFormError] = useState<string | null>(null)
@@ -46,10 +46,13 @@ function ResetPasswordPage() {
     defaultValues: { password: '', confirm: '' },
     validators: {
       onSubmit: z
-        .object({ password: passwordSchema(t.validation), confirm: z.string() })
-        .refine((v) => v.password === v.confirm, {
+        .object({
+          password: passwordSchema(messages.validation),
+          confirm: z.string(),
+        })
+        .refine((values) => values.password === values.confirm, {
           path: ['confirm'],
-          message: t.reset.confirmError,
+          message: messages.reset.confirmError,
         }),
     },
     onSubmit: async ({ value }) => {
@@ -66,15 +69,15 @@ function ResetPasswordPage() {
   if (!token) {
     return (
       <div>
-        <h1 className="type-display text-5xl">{t.reset.title}</h1>
+        <h1 className="type-display text-5xl">{messages.reset.title}</h1>
         <div className="mt-6">
-          <FormAlert>{t.reset.missing}</FormAlert>
+          <FormAlert>{messages.reset.missing}</FormAlert>
         </div>
         <Link
           to="/forgot-password"
           className="mt-6 inline-block rounded-sm font-medium underline underline-offset-4"
         >
-          {t.reset.again}
+          {messages.reset.again}
         </Link>
       </div>
     )
@@ -82,12 +85,12 @@ function ResetPasswordPage() {
 
   return (
     <div>
-      <h1 className="type-display text-5xl">{t.reset.title}</h1>
-      <p className="mt-3 mb-8 text-ink-soft">{t.reset.lead}</p>
+      <h1 className="type-display text-5xl">{messages.reset.title}</h1>
+      <p className="mt-3 mb-8 text-ink-soft">{messages.reset.lead}</p>
       <form
         noValidate
-        onSubmit={(e) => {
-          e.preventDefault()
+        onSubmit={(event) => {
+          event.preventDefault()
           void form.handleSubmit()
         }}
         className="space-y-5"
@@ -96,21 +99,21 @@ function ResetPasswordPage() {
           <FormAlert>
             {formError}{' '}
             <Link to="/forgot-password" className="font-medium underline">
-              {t.reset.again}
+              {messages.reset.again}
             </Link>
           </FormAlert>
         )}
         <form.Field name="password">
           {(field) => (
             <TextField
-              label={t.reset.password}
+              label={messages.reset.password}
               type="password"
               name={field.name}
               autoComplete="new-password"
-              hint={t.register.passwordHint}
+              hint={messages.register.passwordHint}
               value={field.state.value}
               onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              onChange={(event) => field.handleChange(event.target.value)}
               errors={errorMessages(field.state.meta.errors)}
             />
           )}
@@ -118,18 +121,18 @@ function ResetPasswordPage() {
         <form.Field name="confirm">
           {(field) => (
             <TextField
-              label={t.reset.confirm}
+              label={messages.reset.confirm}
               type="password"
               name={field.name}
               autoComplete="new-password"
               value={field.state.value}
               onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              onChange={(event) => field.handleChange(event.target.value)}
               errors={errorMessages(field.state.meta.errors)}
             />
           )}
         </form.Field>
-        <form.Subscribe selector={(s) => s.isSubmitting}>
+        <form.Subscribe selector={(formState) => formState.isSubmitting}>
           {(isSubmitting) => (
             <Button
               type="submit"
@@ -138,7 +141,7 @@ function ResetPasswordPage() {
               disabled={isSubmitting}
               aria-busy={isSubmitting}
             >
-              {isSubmitting ? t.reset.submitting : t.reset.submit}
+              {isSubmitting ? messages.reset.submitting : messages.reset.submit}
             </Button>
           )}
         </form.Subscribe>

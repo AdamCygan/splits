@@ -40,7 +40,7 @@ export interface GoogleSignInProps {
  * Pokazujemy go tylko, gdy serwer ma ustawione GOOGLE_CLIENT_ID i GOOGLE_CLIENT_SECRET.
  */
 export function GoogleSignIn({ redirectTo, className }: GoogleSignInProps) {
-  const t = useMessages(authMessages)
+  const messages = useMessages(authMessages)
   const enabled = useGoogleAvailable()
   if (!enabled) return null
 
@@ -48,7 +48,7 @@ export function GoogleSignIn({ redirectTo, className }: GoogleSignInProps) {
     <div className={className}>
       <div className="mb-5 flex items-center gap-3 text-sm text-ink-soft">
         <span aria-hidden className="h-px flex-1 bg-line" />
-        {t.or}
+        {messages.or}
         <span aria-hidden className="h-px flex-1 bg-line" />
       </div>
       <a
@@ -58,7 +58,7 @@ export function GoogleSignIn({ redirectTo, className }: GoogleSignInProps) {
         )}
       >
         <GoogleMark />
-        {t.google}
+        {messages.google}
       </a>
     </div>
   )

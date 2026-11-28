@@ -9,32 +9,32 @@ import { IdentityFields } from './identity-fields'
 import type { EmailViewModel } from '../controllers/use-email'
 
 export interface EmailChangeDialogProps {
-  vm: EmailViewModel
+  viewModel: EmailViewModel
 }
 
 /** Nowy adres + potwierdzenie tożsamości; serwer wysyła link na nowy adres. */
-export function EmailChangeDialog({ vm }: EmailChangeDialogProps) {
-  const t = useMessages(settingsMessages)
+export function EmailChangeDialog({ viewModel }: EmailChangeDialogProps) {
+  const messages = useMessages(settingsMessages)
   const app = useMessages(appMessages)
   return (
-    <Dialog open onOpenChange={(open) => !open && vm.close()}>
+    <Dialog open onOpenChange={(open) => !open && viewModel.close()}>
       <DialogContent
         size="sm"
-        title={t.account.changeEmailTitle}
-        description={t.account.changeEmailLead}
+        title={messages.account.changeEmailTitle}
+        description={messages.account.changeEmailLead}
         closeLabel={app.actions.close}
         footer={
           <>
-            <Button variant="outline" onClick={vm.close}>
+            <Button variant="outline" onClick={viewModel.close}>
               {app.actions.cancel}
             </Button>
             <Button
               type="submit"
               form="email-change-form"
-              disabled={vm.sending}
-              aria-busy={vm.sending}
+              disabled={viewModel.sending}
+              aria-busy={viewModel.sending}
             >
-              {t.account.sendLink}
+              {messages.account.sendLink}
             </Button>
           </>
         }
@@ -42,29 +42,34 @@ export function EmailChangeDialog({ vm }: EmailChangeDialogProps) {
         <form
           id="email-change-form"
           noValidate
-          onSubmit={vm.submit}
+          onSubmit={viewModel.submit}
           className="space-y-4"
         >
-          <Field label={t.security.newEmail} error={vm.errors.email}>
-            {(a) => (
+          <Field
+            label={messages.security.newEmail}
+            error={viewModel.errors.email}
+          >
+            {(fieldProps) => (
               <Input
-                {...a}
+                {...fieldProps}
                 type="email"
                 autoComplete="email"
-                value={vm.draft.email}
-                onChange={(e) => vm.update({ email: e.target.value })}
+                value={viewModel.draft.email}
+                onChange={(event) =>
+                  viewModel.update({ email: event.target.value })
+                }
               />
             )}
           </Field>
           <IdentityFields
-            needsPassword={vm.needsPassword}
-            needsCode={vm.needsCode}
-            password={vm.draft.password}
-            code={vm.draft.code}
-            onPassword={(password) => vm.update({ password })}
-            onCode={(code) => vm.update({ code })}
-            passwordError={vm.errors.password}
-            codeError={vm.errors.code}
+            needsPassword={viewModel.needsPassword}
+            needsCode={viewModel.needsCode}
+            password={viewModel.draft.password}
+            code={viewModel.draft.code}
+            onPassword={(password) => viewModel.update({ password })}
+            onCode={(code) => viewModel.update({ code })}
+            passwordError={viewModel.errors.password}
+            codeError={viewModel.errors.code}
           />
         </form>
       </DialogContent>

@@ -33,7 +33,7 @@ test.describe('cookie consent', () => {
     await banner.getByRole('button', { name: 'Necessary only' }).click()
     await expect(banner).toBeHidden()
     const cookies = await context.cookies()
-    expect(cookies.find((c) => c.name === 'app_consent')?.value).toBe(
+    expect(cookies.find((cookie) => cookie.name === 'app_consent')?.value).toBe(
       'v1:necessary',
     )
     await page.reload()
@@ -49,7 +49,8 @@ test.describe('cookie consent', () => {
     await settings.getByRole('switch', { name: /statistics/i }).click()
     await settings.getByRole('button', { name: 'Save choice' }).click()
     expect(
-      (await context.cookies()).find((c) => c.name === 'app_consent')?.value,
+      (await context.cookies()).find((cookie) => cookie.name === 'app_consent')
+        ?.value,
     ).toBe('v1:analytics')
   })
 

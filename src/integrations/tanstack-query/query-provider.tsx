@@ -8,8 +8,8 @@ import type { ReactNode } from 'react'
  */
 const QueryDevtools = import.meta.env.DEV
   ? lazy(() =>
-      import('@tanstack/react-query-devtools').then((m) => ({
-        default: m.ReactQueryDevtools,
+      import('@tanstack/react-query-devtools').then((devtoolsModule) => ({
+        default: devtoolsModule.ReactQueryDevtools,
       })),
     )
   : () => null

@@ -32,7 +32,7 @@ export const plans: ReadonlyArray<Plan> = [
   { id: 'pro', name: 'Pro' },
 ]
 
-export const planById = (id: PlanId) => plans.find((p) => p.id === id)!
+export const planById = (id: PlanId) => plans.find((plan) => plan.id === id)!
 
 /**
  * Pełny dostęp do funkcji Pro: płatny plan (Pro, Lifetime) albo konto administratora.

@@ -11,7 +11,7 @@ import {
   verifyTotp,
 } from '#/features/auth/data/totp.server'
 import type { Tx } from '#/server/db/client'
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 import {
   authTokens,
   externalLogins,
@@ -29,7 +29,7 @@ export const EMAIL_TOKEN_HOURS = 24
 
 /** Język e-maili: z ustawień konta (domyślnie angielski). */
 export async function localeOf(userId: string): Promise<Locale> {
-  const [row] = await db
+  const [row] = await database
     .select({ locale: userSettings.locale })
     .from(userSettings)
     .where(eq(userSettings.userId, userId))
@@ -42,7 +42,7 @@ const link = (path: string) => `${serverEnv.appUrl}${path}`
 export async function notify(
   user: Pick<UserRow, 'id' | 'email' | 'displayName' | 'isDemo'>,
   kind: Parameters<typeof accountEmail>[0],
-  vars: Record<string, string> = {},
+  variables: Record<string, string> = {},
   to = user.email,
 ) {
   if (user.isDemo) return
@@ -51,20 +51,20 @@ export async function notify(
       name: user.displayName,
       link: link('/forgot-password'),
       support: site.supportEmail,
-      ...vars,
+      ...variables,
     }),
   )
 }
 
 /** Link potwierdzający adres (rejestracja) albo nowy adres (zmiana e-maila), ważny 24 h. */
 export async function sendEmailConfirmation(
-  tx: Tx,
+  transaction: Tx,
   user: Pick<UserRow, 'id' | 'email' | 'displayName' | 'isDemo'>,
   newEmail: string | null,
 ) {
   // Poprzednie niewykorzystane linki tego rodzaju przestają działać.
   const purpose = newEmail ? 'email_change' : 'email_verification'
-  await tx
+  await transaction
     .update(authTokens)
     .set({ usedAt: new Date() })
     .where(
@@ -75,7 +75,7 @@ export async function sendEmailConfirmation(
       ),
     )
   const token = randomToken()
-  await tx.insert(authTokens).values({
+  await transaction.insert(authTokens).values({
     userId: user.id,
     purpose,
     tokenHash: sha256(token),
@@ -97,7 +97,7 @@ export async function sendEmailConfirmation(
  * Zapisuje zużyty krok TOTP albo usuwa kod zapasowy; zwraca false przy złym kodzie.
  */
 export async function useSecondFactor(
-  tx: Tx,
+  transaction: Tx,
   user: UserRow,
   code: string,
 ): Promise<boolean> {
@@ -108,7 +108,7 @@ export async function useSecondFactor(
     user.totpLastStep,
   )
   if (step !== null) {
-    await tx
+    await transaction
       .update(users)
       .set({ totpLastStep: step })
       .where(eq(users.id, user.id))
@@ -119,9 +119,13 @@ export async function useSecondFactor(
     code.replace(/[^a-f0-9]/gi, '').length === 10 &&
     user.recoveryCodes.includes(hash)
   ) {
-    await tx
+    await transaction
       .update(users)
-      .set({ recoveryCodes: user.recoveryCodes.filter((h) => h !== hash) })
+      .set({
+        recoveryCodes: user.recoveryCodes.filter(
+          (codeHash) => codeHash !== hash,
+        ),
+      })
       .where(eq(users.id, user.id))
     return true
   }
@@ -138,7 +142,7 @@ export interface IdentityProof {
  * i kod 2FA (jeśli włączone). Konto tylko z Google bez 2FA przechodzi samą sesją.
  */
 export async function confirmIdentity(
-  tx: Tx,
+  transaction: Tx,
   user: UserRow,
   input: IdentityProof,
 ) {
@@ -149,7 +153,7 @@ export async function confirmIdentity(
     throw new ApiError('auth.wrong_password', 400, 'password')
   if (
     user.totpEnabledAt &&
-    !(await useSecondFactor(tx, user, input.code ?? ''))
+    !(await useSecondFactor(transaction, user, input.code ?? ''))
   )
     throw new ApiError('auth.invalid_code', 400, 'code')
 }
@@ -165,10 +169,10 @@ const deletionHash = (userId: string, code: string) =>
  * przestają działać. Potwierdza, że usuwa właściciel skrzynki, także konta bez hasła.
  */
 export async function sendDeletionCode(
-  tx: Tx,
+  transaction: Tx,
   user: Pick<UserRow, 'id' | 'email' | 'displayName' | 'isDemo'>,
 ) {
-  await tx
+  await transaction
     .update(authTokens)
     .set({ usedAt: new Date() })
     .where(
@@ -179,7 +183,7 @@ export async function sendDeletionCode(
       ),
     )
   const code = String(randomInt(0, 1_000_000)).padStart(6, '0')
-  await tx.insert(authTokens).values({
+  await transaction.insert(authTokens).values({
     userId: user.id,
     purpose: 'account_deletion',
     tokenHash: deletionHash(user.id, code),
@@ -193,11 +197,11 @@ export async function sendDeletionCode(
 
 /** Zużywa kod usunięcia konta; zły, zużyty albo przeterminowany kod = błąd pola `code`. */
 export async function consumeDeletionCode(
-  tx: Tx,
+  transaction: Tx,
   userId: string,
   code: string,
 ) {
-  const [row] = await tx
+  const [row] = await transaction
     .update(authTokens)
     .set({ usedAt: new Date() })
     .where(
@@ -215,7 +219,7 @@ export async function consumeDeletionCode(
 
 /** Adres czekający na potwierdzenie (zmiana e-maila), jeśli link jeszcze działa. */
 export async function pendingEmailOf(userId: string) {
-  const [pending] = await db
+  const [pending] = await database
     .select({ email: authTokens.newEmail })
     .from(authTokens)
     .where(
@@ -235,7 +239,7 @@ export async function pendingEmailOf(userId: string) {
 export async function securityStatus(user: UserRow) {
   const [pendingEmail, [google]] = await Promise.all([
     pendingEmailOf(user.id),
-    db
+    database
       .select({ id: externalLogins.providerUserId })
       .from(externalLogins)
       .where(
@@ -256,8 +260,8 @@ export async function securityStatus(user: UserRow) {
 }
 
 /** Anuluje oczekującą zmianę e-maila; zwraca adres, na który czekała (albo null). */
-export async function cancelPendingEmail(tx: Tx, userId: string) {
-  const rows = await tx
+export async function cancelPendingEmail(transaction: Tx, userId: string) {
+  const rows = await transaction
     .update(authTokens)
     .set({ usedAt: new Date() })
     .where(
@@ -272,8 +276,8 @@ export async function cancelPendingEmail(tx: Tx, userId: string) {
 }
 
 /** Wyłącza logowanie dwuetapowe razem z kodami zapasowymi. */
-export function disableTwoFactor(tx: Tx, userId: string) {
-  return tx
+export function disableTwoFactor(transaction: Tx, userId: string) {
+  return transaction
     .update(users)
     .set({
       totpSecret: null,
@@ -286,20 +290,24 @@ export function disableTwoFactor(tx: Tx, userId: string) {
 
 /** Zalogowane urządzenia konta; `currentHash` = refresh token bieżącego urządzenia. */
 export async function sessionsOf(userId: string, currentHash: string | null) {
-  const rows = await db
+  const rows = await database
     .select()
     .from(refreshTokens)
     .where(eq(refreshTokens.userId, userId))
     .orderBy(asc(refreshTokens.createdAt))
   const currentFamily = currentHash
-    ? rows.find((r) => r.tokenHash === currentHash)?.familyId
+    ? rows.find((row) => row.tokenHash === currentHash)?.familyId
     : undefined
   return activeSessions(rows, currentFamily ?? null)
 }
 
 /** Wylogowuje jedno urządzenie (rodzinę refresh tokenów); true, jeśli było aktywne. */
-export async function revokeSession(tx: Tx, userId: string, familyId: string) {
-  const rows = await tx
+export async function revokeSession(
+  transaction: Tx,
+  userId: string,
+  familyId: string,
+) {
+  const rows = await transaction
     .update(refreshTokens)
     .set({ revokedAt: new Date() })
     .where(

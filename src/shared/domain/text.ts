@@ -7,4 +7,4 @@ export const foldText = (text: string) =>
     .replace(/ł/g, 'l')
 
 /** Liczba z zerem wiodącym do dwóch cyfr: 5 → „05”. */
-export const pad2 = (n: number) => String(n).padStart(2, '0')
+export const pad2 = (count: number) => String(count).padStart(2, '0')

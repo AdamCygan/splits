@@ -14,7 +14,7 @@ import { useConsent } from './consent-context'
  * i ponownie po kliknięciu „Ustawienia cookies” w stopce.
  */
 export function CookieBanner() {
-  const t = useMessages(commonMessages).legal
+  const messages = useMessages(commonMessages).legal
   const { consent, settingsOpen, save, closeSettings } = useConsent()
   const [customize, setCustomize] = useState(false)
   const [analytics, setAnalytics] = useState(consent === 'analytics')
@@ -38,39 +38,39 @@ export function CookieBanner() {
       tabIndex={-1}
       aria-labelledby="cookie-title"
       aria-describedby="cookie-text"
-      onKeyDown={(e) => {
-        if (e.key === 'Escape' && consent !== null) closeSettings()
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && consent !== null) closeSettings()
       }}
       className="fixed inset-x-3 bottom-3 z-[70] max-w-md rounded-2xl border border-line bg-surface p-5 text-ink shadow-[0_24px_60px_-20px_rgba(20,22,43,0.45)] outline-none sm:inset-x-auto sm:left-4 sm:bottom-4"
     >
       <h2 id="cookie-title" className="type-heading text-xl">
-        {t.banner.title}
+        {messages.banner.title}
       </h2>
       <p
         id="cookie-text"
         className="mt-2 text-sm leading-relaxed text-ink-soft"
       >
-        {fmt(t.banner.text, { name: site.name })}{' '}
+        {fmt(messages.banner.text, { name: site.name })}{' '}
         <Link
           to="/cookies"
           className="font-medium text-ink underline underline-offset-4"
         >
-          {t.banner.policy}
+          {messages.banner.policy}
         </Link>
       </p>
 
       {customize && (
         <div className="mt-4 space-y-3 rounded-xl border border-line p-3">
           <Switch
-            label={t.banner.necessaryTitle}
-            description={t.banner.necessaryText}
+            label={messages.banner.necessaryTitle}
+            description={messages.banner.necessaryText}
             checked
             disabled
             onCheckedChange={() => undefined}
           />
           <Switch
-            label={t.banner.analyticsTitle}
-            description={t.banner.analyticsText}
+            label={messages.banner.analyticsTitle}
+            description={messages.banner.analyticsText}
             checked={analytics}
             onCheckedChange={setAnalytics}
           />
@@ -80,7 +80,7 @@ export function CookieBanner() {
       <div className="mt-4 flex flex-wrap gap-2">
         {customize ? (
           <Button onClick={() => save(analytics ? 'analytics' : 'necessary')}>
-            {t.banner.save}
+            {messages.banner.save}
           </Button>
         ) : (
           <>
@@ -89,17 +89,17 @@ export function CookieBanner() {
               className="flex-1"
               onClick={() => save('necessary')}
             >
-              {t.banner.reject}
+              {messages.banner.reject}
             </Button>
             <Button
               variant="outline"
               className="flex-1"
               onClick={() => save('analytics')}
             >
-              {t.banner.accept}
+              {messages.banner.accept}
             </Button>
             <Button variant="ghost" onClick={() => setCustomize(true)}>
-              {t.banner.customize}
+              {messages.banner.customize}
             </Button>
           </>
         )}
@@ -114,11 +114,11 @@ export interface CookieSettingsButtonProps {
 
 /** Przycisk w stopce: ponownie otwiera baner z bieżącym wyborem. */
 export function CookieSettingsButton({ className }: CookieSettingsButtonProps) {
-  const t = useMessages(commonMessages).legal
+  const messages = useMessages(commonMessages).legal
   const { openSettings } = useConsent()
   return (
     <button type="button" onClick={openSettings} className={className}>
-      {t.cookieSettings}
+      {messages.cookieSettings}
     </button>
   )
 }

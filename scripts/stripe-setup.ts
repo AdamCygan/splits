@@ -84,7 +84,7 @@ async function ensureProduct() {
   return created.id
 }
 
-const usd = (cents: number, interval: BillingInterval) =>
+const amountUsd = (cents: number, interval: BillingInterval) =>
   `${(cents / 100).toFixed(0)} USD / ${interval === 'month' ? 'miesiąc' : 'rok'}`
 
 async function ensurePrice(productId: string, interval: BillingInterval) {
@@ -98,7 +98,7 @@ async function ensurePrice(productId: string, interval: BillingInterval) {
     productOf(current) === productId
   ) {
     console.log(
-      `✓ Cena ${lookupKey} już jest: ${current.id} (${usd(amount, interval)})`,
+      `✓ Cena ${lookupKey} już jest: ${current.id} (${amountUsd(amount, interval)})`,
     )
     return current
   }
@@ -122,10 +122,10 @@ async function ensurePrice(productId: string, interval: BillingInterval) {
       metadata: { ...current.metadata, plan: 'pro' },
     })
     console.log(
-      `✓ Nowa cena ${price.id} (${usd(amount, interval)}) zastąpiła ${current.id}; obecni subskrybenci zostają na starej.`,
+      `✓ Nowa cena ${price.id} (${amountUsd(amount, interval)}) zastąpiła ${current.id}; obecni subskrybenci zostają na starej.`,
     )
   } else {
-    console.log(`✓ Utworzono cenę ${price.id} (${usd(amount, interval)})`)
+    console.log(`✓ Utworzono cenę ${price.id} (${amountUsd(amount, interval)})`)
   }
   return price
 }
@@ -164,7 +164,9 @@ async function ensurePortal(
 ) {
   const configs = await stripe.billingPortal.configurations.list({ limit: 10 })
   const ours = configs.data.find(
-    (c) => c.metadata?.app === 'timeblame' || c.metadata?.app === 'splits',
+    (configuration) =>
+      configuration.metadata?.app === 'timeblame' ||
+      configuration.metadata?.app === 'splits',
   )
   const params: Stripe.BillingPortal.ConfigurationCreateParams = {
     business_profile: {
@@ -190,7 +192,9 @@ async function ensurePortal(
         enabled: true,
         default_allowed_updates: ['price'],
         proration_behavior: 'create_prorations',
-        products: [{ product: productId, prices: prices.map((p) => p.id) }],
+        products: [
+          { product: productId, prices: prices.map((price) => price.id) },
+        ],
       },
     },
     default_return_url: appUrl ? `${appUrl}/app/settings/plan` : undefined,
@@ -226,7 +230,9 @@ async function ensureWebhook() {
   }
   const url = `${appUrl}/api/v1/stripe/webhook`
   const endpoints = await stripe.webhookEndpoints.list({ limit: 100 })
-  const existing = endpoints.data.find((e) => e.url === url)
+  const existing = endpoints.data.find(
+    (webhookEndpoint) => webhookEndpoint.url === url,
+  )
   if (existing) {
     await stripe.webhookEndpoints.update(existing.id, {
       enabled_events: WEBHOOK_EVENTS,

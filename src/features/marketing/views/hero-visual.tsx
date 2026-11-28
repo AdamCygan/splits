@@ -16,13 +16,13 @@ const chips = [
  * Czysty HTML/CSS (bez obrazków), więc nie spowalnia LCP. Dla czytników jeden opis (role="img").
  */
 export function HeroVisual() {
-  const t = useMessages(marketingMessages).heroVisual
+  const messages = useMessages(marketingMessages).heroVisual
   const types = useMessages(commonMessages).workTypes
   const format = useFormat()
   return (
     <div
       role="img"
-      aria-label={t.label}
+      aria-label={messages.label}
       className="relative mx-auto hidden w-full max-w-md select-none lg:block"
     >
       {/* Timer */}
@@ -32,14 +32,14 @@ export function HeroVisual() {
           <span className="relative inline-flex size-2.5 rounded-full bg-wt-task" />
         </span>
         <span className="min-w-0 flex-1 truncate text-sm font-semibold">
-          {t.timerTitle}
+          {messages.timerTitle}
         </span>
         <span className="font-mono text-lg font-semibold tabular-nums">
           0:42:15
         </span>
         <span className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-white px-3 text-sm font-semibold text-[var(--ink-fixed)]">
           <Square className="size-3" fill="currentColor" />
-          {t.stop}
+          {messages.stop}
         </span>
       </div>
 
@@ -67,27 +67,27 @@ export function HeroVisual() {
           <p className="px-2.5 pt-1 pb-1.5 text-xs font-semibold text-ink-soft">
             {types.code_review}
           </p>
-          {[15, 30, 60].map((m, i) => (
+          {[15, 30, 60].map((minutes, index) => (
             <p
-              key={m}
+              key={minutes}
               className={
-                i === 1
+                index === 1
                   ? 'flex items-center gap-2.5 rounded-lg bg-muted px-2.5 py-1.5 text-sm font-medium'
                   : 'flex items-center gap-2.5 px-2.5 py-1.5 text-sm font-medium'
               }
             >
               <Clock className="size-4 text-ink-soft" />
-              {fmt(t.log, { time: format.minutes(m) })}
+              {fmt(messages.log, { time: format.minutes(minutes) })}
             </p>
           ))}
           <p className="flex items-center gap-2.5 px-2.5 py-1.5 text-sm font-medium">
             <Wand2 className="size-4 text-ink-soft" />
-            {t.custom}
+            {messages.custom}
           </p>
           <span className="my-1 block h-px bg-line" />
           <p className="flex items-center gap-2.5 px-2.5 py-1.5 text-sm font-medium">
             <Play className="size-4 text-ink-soft" />
-            {t.timer}
+            {messages.timer}
           </p>
         </div>
       </div>
@@ -96,10 +96,10 @@ export function HeroVisual() {
       <div className="relative -mt-14 ml-auto w-[88%] rounded-2xl border border-line bg-surface p-4 shadow-[0_24px_60px_-28px_rgba(20,22,43,0.35)]">
         <p className="flex items-center gap-2 text-xs font-semibold text-ok">
           <Copy className="size-3.5" />
-          {t.summaryTitle}
+          {messages.summaryTitle}
         </p>
         <p className="mt-2 font-mono text-xs leading-relaxed text-ink">
-          {t.summaryText}
+          {messages.summaryText}
         </p>
       </div>
     </div>

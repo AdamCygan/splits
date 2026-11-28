@@ -3,7 +3,7 @@ import { syncCadenceSprints } from '#/features/sprints/data/repository.server'
 import type { CopyKind } from '#/features/workspaces/domain/workspaces'
 import type { Tx } from '#/server/db/client'
 import { lowerName } from '#/server/db/helpers'
-import * as t from '#/server/db/schema'
+import * as schema from '#/server/db/schema'
 import { inScope, owner } from '#/server/db/scope'
 import type { Scope } from '#/server/db/scope'
 
@@ -14,20 +14,20 @@ import type { Scope } from '#/server/db/scope'
  * poza skalą SP, którą zastępuje skala źródła.
  */
 export async function copyInto(
-  tx: Tx,
+  transaction: Tx,
   from: Scope,
   to: Scope,
   kinds: ReadonlyArray<CopyKind>,
 ) {
-  const has = (k: CopyKind) => kinds.includes(k)
-  if (has('workTypes')) await copyTaskTypes(tx, from, to)
-  if (has('statuses')) await copyStatuses(tx, from, to)
-  if (has('tags')) await copyTags(tx, from, to)
-  if (has('storyPoints')) await copyScale(tx, from, to)
-  if (has('workday')) await copyWorkday(tx, from, to)
-  if (has('templates')) await copyTemplates(tx, from, to)
-  if (has('daysOff')) await copyDaysOff(tx, from, to)
-  if (has('sprints')) await copySprints(tx, from, to)
+  const has = (copyKind: CopyKind) => kinds.includes(copyKind)
+  if (has('workTypes')) await copyTaskTypes(transaction, from, to)
+  if (has('statuses')) await copyStatuses(transaction, from, to)
+  if (has('tags')) await copyTags(transaction, from, to)
+  if (has('storyPoints')) await copyScale(transaction, from, to)
+  if (has('workday')) await copyWorkday(transaction, from, to)
+  if (has('templates')) await copyTemplates(transaction, from, to)
+  if (has('daysOff')) await copyDaysOff(transaction, from, to)
+  if (has('sprints')) await copySprints(transaction, from, to)
 }
 
 interface Named {
@@ -47,165 +47,234 @@ export function findCounterpart<T extends Named>(
   source: SyncKey,
 ) {
   return (
-    rows.find((r) => r.syncId === source.syncId) ??
-    rows.find((r) => lowerName(r.name) === lowerName(source.name)) ??
+    rows.find((named) => named.syncId === source.syncId) ??
+    rows.find((named) => lowerName(named.name) === lowerName(source.name)) ??
     null
   )
 }
 
 /** Mapa id rodzaju pracy: źródło → docelowa przestrzeń (bez zmian w docelowej). */
-export async function taskTypeMap(tx: Tx, from: Scope, to: Scope) {
+export async function taskTypeMap(transaction: Tx, from: Scope, to: Scope) {
   const [source, target] = await Promise.all([
-    tx.select().from(t.taskTypes).where(inScope(t.taskTypes, from)),
-    tx.select().from(t.taskTypes).where(inScope(t.taskTypes, to)),
+    transaction
+      .select()
+      .from(schema.taskTypes)
+      .where(inScope(schema.taskTypes, from)),
+    transaction
+      .select()
+      .from(schema.taskTypes)
+      .where(inScope(schema.taskTypes, to)),
   ])
   const map = new Map<string, string>()
-  for (const s of source) {
-    const match = findCounterpart(target, s)
-    if (match) map.set(s.id, match.id)
+  for (const sourceRows of source) {
+    const match = findCounterpart(target, sourceRows)
+    if (match) map.set(sourceRows.id, match.id)
   }
   return map
 }
 
-async function copyTaskTypes(tx: Tx, from: Scope, to: Scope) {
+async function copyTaskTypes(transaction: Tx, from: Scope, to: Scope) {
   const [source, target] = await Promise.all([
-    tx.select().from(t.taskTypes).where(inScope(t.taskTypes, from)),
-    tx.select().from(t.taskTypes).where(inScope(t.taskTypes, to)),
+    transaction
+      .select()
+      .from(schema.taskTypes)
+      .where(inScope(schema.taskTypes, from)),
+    transaction
+      .select()
+      .from(schema.taskTypes)
+      .where(inScope(schema.taskTypes, to)),
   ])
-  for (const s of source) {
-    const { id: _id, userId: _u, workspaceId: _w, createdAt: _c, ...data } = s
-    const match = findCounterpart(target, s)
+  for (const sourceRows of source) {
+    const {
+      id: _id,
+      userId: _userId,
+      workspaceId: _workspaceId,
+      createdAt: _createdAt,
+      ...data
+    } = sourceRows
+    const match = findCounterpart(target, sourceRows)
     if (match)
-      await tx.update(t.taskTypes).set(data).where(eq(t.taskTypes.id, match.id))
-    else await tx.insert(t.taskTypes).values({ ...data, ...owner(to) })
+      await transaction
+        .update(schema.taskTypes)
+        .set(data)
+        .where(eq(schema.taskTypes.id, match.id))
+    else
+      await transaction
+        .insert(schema.taskTypes)
+        .values({ ...data, ...owner(to) })
   }
 }
 
-async function copyStatuses(tx: Tx, from: Scope, to: Scope) {
+async function copyStatuses(transaction: Tx, from: Scope, to: Scope) {
   const [source, target] = await Promise.all([
-    tx.select().from(t.taskStatuses).where(inScope(t.taskStatuses, from)),
-    tx.select().from(t.taskStatuses).where(inScope(t.taskStatuses, to)),
+    transaction
+      .select()
+      .from(schema.taskStatuses)
+      .where(inScope(schema.taskStatuses, from)),
+    transaction
+      .select()
+      .from(schema.taskStatuses)
+      .where(inScope(schema.taskStatuses, to)),
   ])
   // Status domyślny jest jeden na przestrzeń: przejmuje go odpowiednik domyślnego ze źródła.
-  if (source.some((s) => s.isDefault))
-    await tx
-      .update(t.taskStatuses)
+  if (source.some((sourceRow) => sourceRow.isDefault))
+    await transaction
+      .update(schema.taskStatuses)
       .set({ isDefault: false })
-      .where(inScope(t.taskStatuses, to))
-  for (const s of source) {
-    const { id: _id, userId: _u, workspaceId: _w, ...data } = s
-    const match = findCounterpart(target, s)
+      .where(inScope(schema.taskStatuses, to))
+  for (const sourceRows of source) {
+    const {
+      id: _id,
+      userId: _userId,
+      workspaceId: _workspaceId,
+      ...data
+    } = sourceRows
+    const match = findCounterpart(target, sourceRows)
     if (match)
-      await tx
-        .update(t.taskStatuses)
+      await transaction
+        .update(schema.taskStatuses)
         .set(data)
-        .where(eq(t.taskStatuses.id, match.id))
-    else await tx.insert(t.taskStatuses).values({ ...data, ...owner(to) })
+        .where(eq(schema.taskStatuses.id, match.id))
+    else
+      await transaction
+        .insert(schema.taskStatuses)
+        .values({ ...data, ...owner(to) })
   }
 }
 
-async function copyTags(tx: Tx, from: Scope, to: Scope) {
+async function copyTags(transaction: Tx, from: Scope, to: Scope) {
   const [source, target] = await Promise.all([
-    tx.select().from(t.tags).where(inScope(t.tags, from)),
-    tx.select().from(t.tags).where(inScope(t.tags, to)),
+    transaction.select().from(schema.tags).where(inScope(schema.tags, from)),
+    transaction.select().from(schema.tags).where(inScope(schema.tags, to)),
   ])
-  for (const s of source) {
-    const { id: _id, userId: _u, workspaceId: _w, ...data } = s
-    const match = findCounterpart(target, s)
-    if (match) await tx.update(t.tags).set(data).where(eq(t.tags.id, match.id))
-    else await tx.insert(t.tags).values({ ...data, ...owner(to) })
+  for (const sourceRows of source) {
+    const {
+      id: _id,
+      userId: _userId,
+      workspaceId: _workspaceId,
+      ...data
+    } = sourceRows
+    const match = findCounterpart(target, sourceRows)
+    if (match)
+      await transaction
+        .update(schema.tags)
+        .set(data)
+        .where(eq(schema.tags.id, match.id))
+    else await transaction.insert(schema.tags).values({ ...data, ...owner(to) })
   }
 }
 
-async function copyScale(tx: Tx, from: Scope, to: Scope) {
-  const source = await tx
+async function copyScale(transaction: Tx, from: Scope, to: Scope) {
+  const source = await transaction
     .select()
-    .from(t.storyPointScale)
-    .where(inScope(t.storyPointScale, from))
-  await tx.delete(t.storyPointScale).where(inScope(t.storyPointScale, to))
+    .from(schema.storyPointScale)
+    .where(inScope(schema.storyPointScale, from))
+  await transaction
+    .delete(schema.storyPointScale)
+    .where(inScope(schema.storyPointScale, to))
   if (source.length)
-    await tx.insert(t.storyPointScale).values(
-      source.map((s) => ({
-        points: s.points,
-        maxMinutes: s.maxMinutes,
+    await transaction.insert(schema.storyPointScale).values(
+      source.map((sourceRow) => ({
+        points: sourceRow.points,
+        maxMinutes: sourceRow.maxMinutes,
         ...owner(to),
       })),
     )
 }
 
-async function copyWorkday(tx: Tx, from: Scope, to: Scope) {
-  const [source] = await tx
+async function copyWorkday(transaction: Tx, from: Scope, to: Scope) {
+  const [source] = await transaction
     .select()
-    .from(t.workspaceSettings)
-    .where(eq(t.workspaceSettings.workspaceId, from.workspaceId))
+    .from(schema.workspaceSettings)
+    .where(eq(schema.workspaceSettings.workspaceId, from.workspaceId))
   if (!source) return
-  const { workspaceId: _w, userId: _u, updatedAt: _a, ...data } = source
-  await tx
-    .update(t.workspaceSettings)
+  const {
+    workspaceId: _workspaceId,
+    userId: _userId,
+    updatedAt: _updatedAt,
+    ...data
+  } = source
+  await transaction
+    .update(schema.workspaceSettings)
     .set(data)
-    .where(eq(t.workspaceSettings.workspaceId, to.workspaceId))
-  await syncCadenceSprints(tx, to)
+    .where(eq(schema.workspaceSettings.workspaceId, to.workspaceId))
+  await syncCadenceSprints(transaction, to)
 }
 
 /**
  * Szablony: rodzaj pracy przechodzi na odpowiednik w docelowej przestrzeni (bez niego szablon
  * jest pomijany), projekt nie (projekty są osobne), a zajęty skrót zostaje pusty.
  */
-async function copyTemplates(tx: Tx, from: Scope, to: Scope) {
+async function copyTemplates(transaction: Tx, from: Scope, to: Scope) {
   const [source, target, types] = await Promise.all([
-    tx.select().from(t.quickTemplates).where(inScope(t.quickTemplates, from)),
-    tx.select().from(t.quickTemplates).where(inScope(t.quickTemplates, to)),
-    taskTypeMap(tx, from, to),
+    transaction
+      .select()
+      .from(schema.quickTemplates)
+      .where(inScope(schema.quickTemplates, from)),
+    transaction
+      .select()
+      .from(schema.quickTemplates)
+      .where(inScope(schema.quickTemplates, to)),
+    taskTypeMap(transaction, from, to),
   ])
-  const hotkeys = new Set(target.map((x) => x.hotkey).filter((h) => h !== null))
+  const hotkeys = new Set(
+    target
+      .map((targetRow) => targetRow.hotkey)
+      .filter((hotkey) => hotkey !== null),
+  )
   let order = target.length
-  for (const s of source) {
-    const taskTypeId = types.get(s.taskTypeId)
+  for (const sourceRows of source) {
+    const taskTypeId = types.get(sourceRows.taskTypeId)
     if (!taskTypeId) continue
-    const match = target.find((x) => lowerName(x.label) === lowerName(s.label))
+    const match = target.find(
+      (targetRow) => lowerName(targetRow.label) === lowerName(sourceRows.label),
+    )
     const data = {
       taskTypeId,
       projectId: null,
-      askProject: s.askProject || s.projectId !== null,
-      label: s.label,
-      title: s.title,
-      storyPoints: s.storyPoints,
-      defaultDurationMinutes: s.defaultDurationMinutes,
-      schedule: s.schedule,
+      askProject: sourceRows.askProject || sourceRows.projectId !== null,
+      label: sourceRows.label,
+      title: sourceRows.title,
+      storyPoints: sourceRows.storyPoints,
+      defaultDurationMinutes: sourceRows.defaultDurationMinutes,
+      schedule: sourceRows.schedule,
     }
     if (match) {
-      await tx
-        .update(t.quickTemplates)
+      await transaction
+        .update(schema.quickTemplates)
         .set(data)
-        .where(eq(t.quickTemplates.id, match.id))
+        .where(eq(schema.quickTemplates.id, match.id))
       continue
     }
-    const hotkey = s.hotkey !== null && !hotkeys.has(s.hotkey) ? s.hotkey : null
+    const hotkey =
+      sourceRows.hotkey !== null && !hotkeys.has(sourceRows.hotkey)
+        ? sourceRows.hotkey
+        : null
     if (hotkey !== null) hotkeys.add(hotkey)
-    await tx
-      .insert(t.quickTemplates)
+    await transaction
+      .insert(schema.quickTemplates)
       .values({ ...data, hotkey, sortOrder: order++, ...owner(to) })
   }
 }
 
-async function copyDaysOff(tx: Tx, from: Scope, to: Scope) {
-  const source = await tx
+async function copyDaysOff(transaction: Tx, from: Scope, to: Scope) {
+  const source = await transaction
     .select()
-    .from(t.daysOff)
-    .where(inScope(t.daysOff, from))
+    .from(schema.daysOff)
+    .where(inScope(schema.daysOff, from))
   if (source.length === 0) return
-  await tx
-    .insert(t.daysOff)
+  await transaction
+    .insert(schema.daysOff)
     .values(
-      source.map((s) => ({
-        date: s.date,
-        kind: s.kind,
-        note: s.note,
+      source.map((sourceRow) => ({
+        date: sourceRow.date,
+        kind: sourceRow.kind,
+        note: sourceRow.note,
         ...owner(to),
       })),
     )
     .onConflictDoUpdate({
-      target: [t.daysOff.workspaceId, t.daysOff.date],
+      target: [schema.daysOff.workspaceId, schema.daysOff.date],
       set: { kind: sql`excluded.kind`, note: sql`excluded.note` },
     })
 }
@@ -214,33 +283,61 @@ async function copyDaysOff(tx: Tx, from: Scope, to: Scope) {
  * Sprinty: kadencja zastępuje kadencję docelowej, a sprinty łączą się po sync_id albo po
  * tych samych datach. Cele czasowe przechodzą na odpowiadające rodzaje pracy.
  */
-async function copySprints(tx: Tx, from: Scope, to: Scope) {
+async function copySprints(transaction: Tx, from: Scope, to: Scope) {
   const [[cadence], source, target, types] = await Promise.all([
-    tx.select().from(t.sprintCadences).where(inScope(t.sprintCadences, from)),
-    tx.select().from(t.sprints).where(inScope(t.sprints, from)),
-    tx.select().from(t.sprints).where(inScope(t.sprints, to)),
-    taskTypeMap(tx, from, to),
+    transaction
+      .select()
+      .from(schema.sprintCadences)
+      .where(inScope(schema.sprintCadences, from)),
+    transaction
+      .select()
+      .from(schema.sprints)
+      .where(inScope(schema.sprints, from)),
+    transaction
+      .select()
+      .from(schema.sprints)
+      .where(inScope(schema.sprints, to)),
+    taskTypeMap(transaction, from, to),
   ])
-  await tx.delete(t.sprintCadences).where(inScope(t.sprintCadences, to))
+  await transaction
+    .delete(schema.sprintCadences)
+    .where(inScope(schema.sprintCadences, to))
   if (cadence) {
-    const { workspaceId: _w, userId: _u, ...data } = cadence
-    await tx.insert(t.sprintCadences).values({ ...data, ...owner(to) })
+    const { workspaceId: _workspaceId, userId: _userId, ...data } = cadence
+    await transaction
+      .insert(schema.sprintCadences)
+      .values({ ...data, ...owner(to) })
   }
-  for (const s of source) {
-    const { id: _id, userId: _u, workspaceId: _w, ...data } = s
+  for (const sourceRows of source) {
+    const {
+      id: _id,
+      userId: _userId,
+      workspaceId: _workspaceId,
+      ...data
+    } = sourceRows
     const values = {
       ...data,
-      timeGoals: s.timeGoals.flatMap((g) => {
-        const id = types.get(g.taskTypeId)
-        return id ? [{ ...g, taskTypeId: id }] : []
+      timeGoals: sourceRows.timeGoals.flatMap((sprintTimeGoal) => {
+        const id = types.get(sprintTimeGoal.taskTypeId)
+        return id ? [{ ...sprintTimeGoal, taskTypeId: id }] : []
       }),
     }
     const match =
-      target.find((x) => x.syncId === s.syncId) ??
-      target.find((x) => x.startsOn === s.startsOn && x.endsOn === s.endsOn)
+      target.find((targetRow) => targetRow.syncId === sourceRows.syncId) ??
+      target.find(
+        (targetRow) =>
+          targetRow.startsOn === sourceRows.startsOn &&
+          targetRow.endsOn === sourceRows.endsOn,
+      )
     if (match)
-      await tx.update(t.sprints).set(values).where(eq(t.sprints.id, match.id))
-    else await tx.insert(t.sprints).values({ ...values, ...owner(to) })
+      await transaction
+        .update(schema.sprints)
+        .set(values)
+        .where(eq(schema.sprints.id, match.id))
+    else
+      await transaction
+        .insert(schema.sprints)
+        .values({ ...values, ...owner(to) })
   }
-  await syncCadenceSprints(tx, to)
+  await syncCadenceSprints(transaction, to)
 }

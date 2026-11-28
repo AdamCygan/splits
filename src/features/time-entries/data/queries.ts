@@ -53,10 +53,10 @@ export const taskSessionsQuery = (ref: TaskRef) =>
   })
 
 /** Wyszukiwanie zadań po tytule albo linku (od 2 znaków), wyniki ważne 10 s. */
-export const taskSearchQuery = (q: string) =>
+export const taskSearchQuery = (query: string) =>
   queryOptions({
-    queryKey: [...entryKeys.all, 'search', q],
-    queryFn: () => unwrap(entriesApi.search(q)),
-    enabled: q.length >= 2,
+    queryKey: [...entryKeys.all, 'search', query],
+    queryFn: () => unwrap(entriesApi.search(query)),
+    enabled: query.length >= 2,
     staleTime: 10_000,
   })

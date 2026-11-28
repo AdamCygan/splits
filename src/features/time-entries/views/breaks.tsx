@@ -31,7 +31,7 @@ export interface BreakBarProps {
  * i „Koniec przerwy”, które od razu wznawia zadanie wstrzymane na jej czas.
  */
 export function BreakBar({ running }: BreakBarProps) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const format = useFormat()
   const day = useBreakDay(running.workDate)
   const end = useEndBreak()
@@ -47,7 +47,7 @@ export function BreakBar({ running }: BreakBarProps) {
 
   return (
     <section
-      aria-label={t.breaks.running}
+      aria-label={messages.breaks.running}
       className="sticky top-0 z-20 border-b border-white/10 bg-[var(--ink-fixed)] text-white"
     >
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 sm:px-6 md:px-10">
@@ -59,21 +59,23 @@ export function BreakBar({ running }: BreakBarProps) {
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">
-            {t.breaks.running}
+            {messages.breaks.running}
             {running.startTime &&
-              ` · ${fmt(t.breaks.since, { time: format.time(running.startTime) })}`}
+              ` · ${fmt(messages.breaks.since, { time: format.time(running.startTime) })}`}
           </p>
           {day.limit > 0 && (
             <p className="truncate text-xs text-white/75">
               {left >= 0
-                ? fmt(t.breaks.left, { time: format.minutes(left) })
-                : fmt(t.breaks.over, { time: format.minutes(-left) })}
+                ? fmt(messages.breaks.left, { time: format.minutes(left) })
+                : fmt(messages.breaks.over, { time: format.minutes(-left) })}
             </p>
           )}
         </div>
         <span
           role="timer"
-          aria-label={fmt(t.timer.elapsed, { time: formatClock(day.seconds) })}
+          aria-label={fmt(messages.timer.elapsed, {
+            time: formatClock(day.seconds),
+          })}
           className="font-mono text-lg font-semibold tabular-nums sm:text-xl"
         >
           {formatClock(day.seconds)}
@@ -88,7 +90,7 @@ export function BreakBar({ running }: BreakBarProps) {
               onClick={() => end.mutate({ id: running.id, resume: false })}
               className="h-auto min-h-10 border-white/30 bg-transparent px-3 py-1.5 leading-tight whitespace-normal text-white hover:bg-white/10 hover:text-white sm:whitespace-nowrap"
             >
-              {t.breaks.endOnly}
+              {messages.breaks.endOnly}
             </Button>
           )}
           <Button
@@ -99,10 +101,10 @@ export function BreakBar({ running }: BreakBarProps) {
             {running.resumeEntryId ? (
               <>
                 <Play aria-hidden className="size-3.5" fill="currentColor" />
-                {t.breaks.endResume}
+                {messages.breaks.endResume}
               </>
             ) : (
-              t.breaks.end
+              messages.breaks.end
             )}
           </Button>
         </div>
@@ -117,7 +119,7 @@ export interface BreakTileProps {
 
 /** Kafelek „Przerwy” na Dziś: ile wykorzystane z limitu, start przerwy i lista. */
 export function BreakTile({ date }: BreakTileProps) {
-  const t = useMessages(entriesMessages).breaks
+  const messages = useMessages(entriesMessages).breaks
   const format = useFormat()
   const day = useBreakDay(date)
   const [open, setOpen] = useState(false)
@@ -126,14 +128,14 @@ export function BreakTile({ date }: BreakTileProps) {
 
   return (
     <StatTile
-      label={t.tile}
+      label={messages.tile}
       action={
         <Button
           size="icon"
           variant="ghost"
           className="-my-1.5 -mr-2 size-8"
-          title={t.manage}
-          aria-label={t.manage}
+          title={messages.manage}
+          aria-label={messages.manage}
           onClick={() => setOpen(true)}
         >
           <ListIcon aria-hidden className="size-4" />
@@ -141,7 +143,7 @@ export function BreakTile({ date }: BreakTileProps) {
       }
       value={
         day.limit > 0
-          ? fmt(t.tileValue, {
+          ? fmt(messages.tileValue, {
               used: format.minutes(day.used),
               limit: format.minutes(day.limit),
             })
@@ -157,11 +159,11 @@ export function BreakTile({ date }: BreakTileProps) {
           />
           {left < 0 ? (
             <p className="mt-1.5 text-xs font-medium text-ink">
-              {fmt(t.tileOver, { time: format.minutes(-left) })}
+              {fmt(messages.tileOver, { time: format.minutes(-left) })}
             </p>
           ) : (
             <p className="sr-only">
-              {fmt(t.tileLeft, { time: format.minutes(left) })}
+              {fmt(messages.tileLeft, { time: format.minutes(left) })}
             </p>
           )}
         </>
@@ -179,7 +181,7 @@ export interface StartBreakButtonProps {
 
 /** „Zacznij przerwę” w pasku nad dniem: tylko dziś i gdy przerwa nie trwa. */
 export function StartBreakButton({ date }: StartBreakButtonProps) {
-  const t = useMessages(entriesMessages).breaks
+  const messages = useMessages(entriesMessages).breaks
   const day = useBreakDay(date)
   const start = useStartBreak()
   if (day.running) return null
@@ -190,7 +192,7 @@ export function StartBreakButton({ date }: StartBreakButtonProps) {
       onClick={() => start.mutate()}
     >
       <Coffee aria-hidden />
-      {t.startLabel}
+      {messages.startLabel}
     </Button>
   )
 }
@@ -203,7 +205,7 @@ interface BreaksDialogProps {
 
 /** Lista przerw z dnia z usuwaniem i dopisaniem zapomnianej przerwy. */
 function BreaksDialog({ date, day, onClose }: BreaksDialogProps) {
-  const t = useMessages(entriesMessages).breaks
+  const messages = useMessages(entriesMessages).breaks
   const app = useMessages(appMessages)
   const format = useFormat()
   const [duration, setDuration] = useState('')
@@ -215,9 +217,9 @@ function BreaksDialog({ date, day, onClose }: BreaksDialogProps) {
   const { hasTimes, minutes } = draft
   const error =
     draft.error === 'times'
-      ? t.timesError
+      ? messages.timesError
       : draft.error === 'duration'
-        ? t.durationError
+        ? messages.durationError
         : null
 
   const { add, remove } = useBreakListActions({
@@ -229,15 +231,15 @@ function BreaksDialog({ date, day, onClose }: BreaksDialogProps) {
     },
   })
 
-  const label = (b: WorkBreak) =>
-    b.startTime && b.endTime
-      ? format.timeRange(b.startTime, b.endTime)
-      : b.running && b.startTime
-        ? `${format.time(b.startTime)}–${t.now}`
+  const label = (workBreak: WorkBreak) =>
+    workBreak.startTime && workBreak.endTime
+      ? format.timeRange(workBreak.startTime, workBreak.endTime)
+      : workBreak.running && workBreak.startTime
+        ? `${format.time(workBreak.startTime)}–${messages.now}`
         : null
 
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
+  const submit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     setSubmitted(true)
     if (error) return
     add.mutate({
@@ -252,34 +254,43 @@ function BreaksDialog({ date, day, onClose }: BreaksDialogProps) {
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         size="sm"
-        title={t.dialogTitle}
+        title={messages.dialogTitle}
         description={
           day.limit > 0
-            ? fmt(t.dialogLead, { limit: format.minutes(day.limit) })
-            : t.dialogLeadNoLimit
+            ? fmt(messages.dialogLead, { limit: format.minutes(day.limit) })
+            : messages.dialogLeadNoLimit
         }
         closeLabel={app.actions.close}
       >
         {day.list.length === 0 ? (
-          <p className="text-ink-soft">{t.empty}</p>
+          <p className="text-ink-soft">{messages.empty}</p>
         ) : (
           <ul className="divide-y divide-line rounded-xl border border-line">
-            {day.list.map((b) => (
-              <li key={b.id} className="flex items-center gap-3 px-3.5 py-2.5">
+            {day.list.map((workBreak) => (
+              <li
+                key={workBreak.id}
+                className="flex items-center gap-3 px-3.5 py-2.5"
+              >
                 <Coffee aria-hidden className="size-4 shrink-0 text-ink-soft" />
-                <span className="flex-1 text-sm tabular-nums">{label(b)}</span>
-                <span className="text-sm font-semibold tabular-nums">
-                  {b.running ? '…' : format.minutes(b.durationMinutes)}
+                <span className="flex-1 text-sm tabular-nums">
+                  {label(workBreak)}
                 </span>
-                {!b.running && (
+                <span className="text-sm font-semibold tabular-nums">
+                  {workBreak.running
+                    ? '…'
+                    : format.minutes(workBreak.durationMinutes)}
+                </span>
+                {!workBreak.running && (
                   <Button
                     variant="ghost"
                     size="icon"
                     disabled={remove.isPending}
-                    aria-label={fmt(t.removeLabel, {
-                      time: label(b) ?? format.minutes(b.durationMinutes),
+                    aria-label={fmt(messages.removeLabel, {
+                      time:
+                        label(workBreak) ??
+                        format.minutes(workBreak.durationMinutes),
                     })}
-                    onClick={() => remove.mutate(b.id)}
+                    onClick={() => remove.mutate(workBreak.id)}
                   >
                     <Trash2 aria-hidden className="size-4" />
                   </Button>
@@ -295,36 +306,38 @@ function BreaksDialog({ date, day, onClose }: BreaksDialogProps) {
           className="mt-6 space-y-4 border-t border-line pt-5"
         >
           <div>
-            <h3 className="font-semibold">{t.add}</h3>
-            <p className="text-sm text-ink-soft">{t.addLead}</p>
+            <h3 className="font-semibold">{messages.add}</h3>
+            <p className="text-sm text-ink-soft">{messages.addLead}</p>
           </div>
           <Field
-            label={t.duration}
+            label={messages.duration}
             error={submitted && !hasTimes ? error : null}
           >
-            {(a) => (
+            {(fieldProps) => (
               <div className="space-y-2">
                 <Input
-                  {...a}
+                  {...fieldProps}
                   autoComplete="off"
                   disabled={hasTimes}
                   value={hasTimes && minutes ? String(minutes) : duration}
-                  onChange={(e) => setDuration(e.target.value)}
+                  onChange={(event) => setDuration(event.target.value)}
                 />
                 <div className="flex flex-wrap gap-1.5">
-                  {[5, 10, 15, 30].map((m) => (
+                  {[5, 10, 15, 30].map((presetMinutes) => (
                     <Button
-                      key={m}
+                      key={presetMinutes}
                       type="button"
                       size="sm"
                       variant={
-                        !hasTimes && minutes === m ? 'default' : 'outline'
+                        !hasTimes && minutes === presetMinutes
+                          ? 'default'
+                          : 'outline'
                       }
-                      aria-pressed={!hasTimes && minutes === m}
+                      aria-pressed={!hasTimes && minutes === presetMinutes}
                       disabled={hasTimes}
-                      onClick={() => setDuration(String(m))}
+                      onClick={() => setDuration(String(presetMinutes))}
                     >
-                      {format.minutes(m)}
+                      {format.minutes(presetMinutes)}
                     </Button>
                   ))}
                 </div>
@@ -332,13 +345,22 @@ function BreaksDialog({ date, day, onClose }: BreaksDialogProps) {
             )}
           </Field>
           <fieldset>
-            <legend className="text-sm text-ink-soft">{t.timesHint}</legend>
+            <legend className="text-sm text-ink-soft">
+              {messages.timesHint}
+            </legend>
             <div className="mt-2 grid grid-cols-2 gap-3">
-              <Field label={t.from}>
-                {(a) => <TimeInput {...a} value={from} onChange={setFrom} />}
+              <Field label={messages.from}>
+                {(fieldProps) => (
+                  <TimeInput {...fieldProps} value={from} onChange={setFrom} />
+                )}
               </Field>
-              <Field label={t.to} error={submitted && hasTimes ? error : null}>
-                {(a) => <TimeInput {...a} value={to} onChange={setTo} />}
+              <Field
+                label={messages.to}
+                error={submitted && hasTimes ? error : null}
+              >
+                {(fieldProps) => (
+                  <TimeInput {...fieldProps} value={to} onChange={setTo} />
+                )}
               </Field>
             </div>
           </fieldset>
@@ -347,7 +369,7 @@ function BreaksDialog({ date, day, onClose }: BreaksDialogProps) {
             disabled={add.isPending}
             aria-busy={add.isPending}
           >
-            {t.add}
+            {messages.add}
           </Button>
         </form>
       </DialogContent>

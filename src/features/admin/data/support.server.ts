@@ -4,7 +4,7 @@ import { z } from 'zod'
 
 import { describeDevice } from '#/lib/user-agent'
 
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 
 import { notFound } from '#/server/http/errors'
 
@@ -30,9 +30,9 @@ export async function resendUserVerification(
   admin: UserRow,
   user: Awaited<ReturnType<typeof findUser>>,
 ) {
-  await db.transaction(async (tx) => {
-    await sendEmailConfirmation(tx, user, null)
-    await log(tx, admin, user, 'email.verification_sent')
+  await database.transaction(async (transaction) => {
+    await sendEmailConfirmation(transaction, user, null)
+    await log(transaction, admin, user, 'email.verification_sent')
   })
   return
 }
@@ -41,10 +41,10 @@ export async function cancelUserEmailChange(
   admin: UserRow,
   user: Awaited<ReturnType<typeof findUser>>,
 ) {
-  await db.transaction(async (tx) => {
-    const pending = await cancelPendingEmail(tx, user.id)
+  await database.transaction(async (transaction) => {
+    const pending = await cancelPendingEmail(transaction, user.id)
     if (!pending) throw notFound()
-    await log(tx, admin, user, 'email.change_canceled', pending)
+    await log(transaction, admin, user, 'email.change_canceled', pending)
   })
   return
 }
@@ -56,18 +56,21 @@ export async function revokeUserSession(
   sessionId: string,
 ) {
   const session = (await sessionsOf(user.id, null)).find(
-    (s) => s.id === sessionId,
+    (activeSession) => activeSession.id === sessionId,
   )
   if (!session) throw notFound()
   const device = describeDevice(session.userAgent)
-  await db.transaction(async (tx) => {
-    await revokeSession(tx, user.id, sessionId)
+  await database.transaction(async (transaction) => {
+    await revokeSession(transaction, user.id, sessionId)
     await log(
-      tx,
+      transaction,
       admin,
       user,
       'session.revoked',
-      [device ? `${device.browser}, ${device.os}` : null, session.ip]
+      [
+        device ? `${device.browser}, ${device.operatingSystem}` : null,
+        session.ip,
+      ]
         .filter(Boolean)
         .join(' · ') || null,
     )
@@ -84,10 +87,10 @@ export async function disableUserTwoFactor(
   user: Awaited<ReturnType<typeof findUser>>,
   input: z.infer<typeof twoFactorInput>,
 ) {
-  await db.transaction(async (tx) => {
-    await disableTwoFactor(tx, user.id)
-    await revokeAllSessions(tx, user.id)
-    await log(tx, admin, user, 'two_factor.disabled', input.reason)
+  await database.transaction(async (transaction) => {
+    await disableTwoFactor(transaction, user.id)
+    await revokeAllSessions(transaction, user.id)
+    await log(transaction, admin, user, 'two_factor.disabled', input.reason)
   })
   await notify(user, 'twoFactorOff')
   return
@@ -100,6 +103,8 @@ export async function listUserInvoices(
 ) {
   const invoices = await listInvoices(user.stripeCustomerId)
   if (user.stripeCustomerId)
-    await db.transaction((tx) => log(tx, admin, user, 'invoices.viewed'))
+    await database.transaction((transaction) =>
+      log(transaction, admin, user, 'invoices.viewed'),
+    )
   return invoices
 }

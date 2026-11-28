@@ -37,12 +37,12 @@ function TaskTotal({ done, running }: TaskTotalProps) {
 
 export interface TaskCardProps {
   task: DayTask
-  vm: EntryListViewModel
+  viewModel: EntryListViewModel
 }
 
 /** Karta zadania na liście dnia: nagłówek, opis, postęp SP, sesje i akcje timera. */
-export function TaskCard({ task, vm }: TaskCardProps) {
-  const t = useMessages(entriesMessages)
+export function TaskCard({ task, viewModel }: TaskCardProps) {
+  const messages = useMessages(entriesMessages)
   const format = useFormat()
   const { latest, running, paused, type, project } = task
   return (
@@ -59,8 +59,10 @@ export function TaskCard({ task, vm }: TaskCardProps) {
               <TaskLink task={latest}>{latest.title}</TaskLink>
             </h3>
             <p className="flex shrink-0 items-center gap-2 text-sm font-semibold tabular-nums">
-              {running && <Badge tone="success">{t.timer.running}</Badge>}
-              {paused && <Badge tone="warning">{t.timer.paused}</Badge>}
+              {running && (
+                <Badge tone="success">{messages.timer.running}</Badge>
+              )}
+              {paused && <Badge tone="warning">{messages.timer.paused}</Badge>}
               <TaskTotal done={task.doneMinutes} running={running} />
             </p>
           </div>
@@ -76,7 +78,7 @@ export function TaskCard({ task, vm }: TaskCardProps) {
               <>
                 <span aria-hidden>·</span>
                 <span>
-                  {fmt(t.list.estimate, {
+                  {fmt(messages.list.estimate, {
                     time: format.minutes(task.estimateMinutes),
                   })}
                 </span>
@@ -95,7 +97,7 @@ export function TaskCard({ task, vm }: TaskCardProps) {
                 <ExternalLink aria-hidden className="size-3.5" />
                 {task.taskKey ?? 'Link'}
                 <span className="sr-only">
-                  : {fmt(t.list.openLink, { name: latest.title })}
+                  : {fmt(messages.list.openLink, { name: latest.title })}
                 </span>
               </a>
             )}
@@ -106,11 +108,16 @@ export function TaskCard({ task, vm }: TaskCardProps) {
 
           {/* Odcinki czasu tego zadania, od najwcześniejszego: np. 6:40–7:20, potem 9:00–10:00 */}
           <ol
-            aria-label={fmt(t.list.sessions, { name: latest.title })}
+            aria-label={fmt(messages.list.sessions, { name: latest.title })}
             className="mt-3 space-y-2 border-l-2 border-line pl-3"
           >
             {task.sessions.map((entry) => (
-              <SessionRow key={entry.id} entry={entry} task={task} vm={vm} />
+              <SessionRow
+                key={entry.id}
+                entry={entry}
+                task={task}
+                viewModel={viewModel}
+              />
             ))}
           </ol>
 
@@ -120,25 +127,25 @@ export function TaskCard({ task, vm }: TaskCardProps) {
                 <Button
                   size="sm"
                   className="ml-2.5"
-                  disabled={vm.timerBusy}
-                  onClick={() => vm.pause(running)}
+                  disabled={viewModel.timerBusy}
+                  onClick={() => viewModel.pause(running)}
                 >
                   <Pause aria-hidden className="size-3.5" fill="currentColor" />
-                  {t.timer.pause}
+                  {messages.timer.pause}
                   <span className="sr-only">: {latest.title}</span>
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  disabled={vm.timerBusy}
-                  onClick={() => vm.stop(running)}
+                  disabled={viewModel.timerBusy}
+                  onClick={() => viewModel.stop(running)}
                 >
                   <Square
                     aria-hidden
                     className="size-3.5"
                     fill="currentColor"
                   />
-                  {t.timer.stop}
+                  {messages.timer.stop}
                   <span className="sr-only">: {latest.title}</span>
                 </Button>
               </>
@@ -147,33 +154,34 @@ export function TaskCard({ task, vm }: TaskCardProps) {
                 variant={paused ? 'default' : 'ghost'}
                 size="sm"
                 className={paused ? 'ml-2.5' : undefined}
-                disabled={vm.timerBusy}
-                onClick={() => vm.resume(latest)}
+                disabled={viewModel.timerBusy}
+                onClick={() => viewModel.resume(latest)}
               >
                 <Play aria-hidden className="size-4" />
-                {paused ? t.timer.resume : t.timer.startAgain}
+                {paused ? messages.timer.resume : messages.timer.startAgain}
                 <span className="sr-only">: {latest.title}</span>
               </Button>
             )}
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => vm.open({ kind: 'summary', entry: latest })}
+              onClick={() => viewModel.open({ kind: 'summary', entry: latest })}
             >
               <ScrollText aria-hidden className="size-4" />
-              {t.taskSummary.open}
+              {messages.taskSummary.open}
               <span className="sr-only">: {latest.title}</span>
             </Button>
             <ActionMenu
               className="ml-auto"
-              title={t.list.taskMore}
-              label={fmt(t.list.taskMoreLabel, { name: latest.title })}
+              title={messages.list.taskMore}
+              label={fmt(messages.list.taskMoreLabel, { name: latest.title })}
               actions={[
                 {
-                  label: t.deleteTask.dayItem,
+                  label: messages.deleteTask.dayItem,
                   icon: Trash2,
                   destructive: true,
-                  onSelect: () => vm.open({ kind: 'deleteTask', group: task }),
+                  onSelect: () =>
+                    viewModel.open({ kind: 'deleteTask', group: task }),
                 },
               ]}
             />

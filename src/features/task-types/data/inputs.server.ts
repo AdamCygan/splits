@@ -1,5 +1,5 @@
 import { LIMITS } from '#/features/task-types/domain/rules'
-import { color, requirement, sp, trimmed } from '#/server/http/inputs'
+import { color, requirement, storyPoints, trimmed } from '#/server/http/inputs'
 import { z } from 'zod'
 
 export const taskTypeInput = z.object({
@@ -10,7 +10,7 @@ export const taskTypeInput = z.object({
   linkLabel: z.string().trim().max(LIMITS.linkLabel),
   descriptionRequirement: requirement,
   storyPointsRequirement: requirement,
-  defaultStoryPoints: sp.nullable(),
+  defaultStoryPoints: storyPoints.nullable(),
   defaultTimeInput: z.enum(['range', 'duration']),
   countsAsFocusWork: z.boolean(),
 })

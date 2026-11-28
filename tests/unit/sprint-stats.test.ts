@@ -24,9 +24,9 @@ const sprint: Sprint = {
   fromCadence: true,
   timeGoals: [],
 }
-let n = 0
+let count = 0
 const entry = (over: Partial<TimeEntry>): TimeEntry => ({
-  id: `e${n++}`,
+  id: `e${count++}`,
   finishedAt: null,
   taskTypeId: 'task',
   projectId: null,
@@ -46,7 +46,7 @@ const entry = (over: Partial<TimeEntry>): TimeEntry => ({
   running: false,
   paused: false,
   startedAt: null,
-  createdAt: `2026-11-03T10:00:0${n % 10}Z`,
+  createdAt: `2026-11-03T10:00:0${count % 10}Z`,
   ...over,
 })
 
@@ -74,7 +74,9 @@ describe('sprintStats', () => {
     expect(stats.tasks).toBe(3)
     // (120 + 180 + 240) min na 8 SP: spotkanie bez SP nie zawyża wyniku.
     expect(stats.minutesPerSp).toBe(68)
-    expect(stats.types.map((r) => [r.taskTypeId, r.minutes])).toEqual([
+    expect(
+      stats.types.map((typeRow) => [typeRow.taskTypeId, typeRow.minutes]),
+    ).toEqual([
       ['task', 540],
       ['meeting', 90],
     ])

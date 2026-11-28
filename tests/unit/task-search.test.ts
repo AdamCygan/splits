@@ -5,9 +5,9 @@ import {
   likePattern,
 } from '../../src/features/tasks/domain/task-search'
 
-let n = 0
-const e = (over: Partial<TimeEntry>): TimeEntry => ({
-  id: `e${++n}`,
+let count = 0
+const makeTimeEntry = (over: Partial<TimeEntry>): TimeEntry => ({
+  id: `e${++count}`,
   finishedAt: null,
   taskTypeId: 'task',
   projectId: null,
@@ -27,25 +27,32 @@ const e = (over: Partial<TimeEntry>): TimeEntry => ({
   running: false,
   paused: false,
   startedAt: null,
-  createdAt: `2026-11-10T08:00:${String(n).padStart(2, '0')}Z`,
+  createdAt: `2026-11-10T08:00:${String(count).padStart(2, '0')}Z`,
   ...over,
 })
 
 describe('task search', () => {
   it('Should group sessions into tasks, newest first, with totals and state', () => {
     const results = groupSearchResults([
-      e({ workDate: '2026-11-10', finishedAt: '2026-11-11T10:00:00Z' }),
-      e({ workDate: '2026-11-11', durationMinutes: 30 }),
-      e({ title: 'PAY-140 Refund UI', workDate: '2026-11-20', running: true }),
+      makeTimeEntry({
+        workDate: '2026-11-10',
+        finishedAt: '2026-11-11T10:00:00Z',
+      }),
+      makeTimeEntry({ workDate: '2026-11-11', durationMinutes: 30 }),
+      makeTimeEntry({
+        title: 'PAY-140 Refund UI',
+        workDate: '2026-11-20',
+        running: true,
+      }),
     ])
     expect(
-      results.map((r) => [
-        r.entry.title,
-        r.workedMinutes,
-        r.sessions,
-        r.lastDate,
-        r.finished,
-        r.running,
+      results.map((result) => [
+        result.entry.title,
+        result.workedMinutes,
+        result.sessions,
+        result.lastDate,
+        result.finished,
+        result.running,
       ]),
     ).toEqual([
       ['PAY-140 Refund UI', 60, 1, '2026-11-20', false, true],

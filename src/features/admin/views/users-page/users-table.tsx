@@ -18,70 +18,82 @@ export const planTone = {
 } as const
 
 export interface UsersTableProps {
-  vm: UsersPageViewModel
+  viewModel: UsersPageViewModel
 }
 
 /** Lista kont z sortowaniem po kolumnach; nazwa konta prowadzi do jego strony. */
-export function UsersTable({ vm }: UsersTableProps) {
-  const t = useMessages(adminMessages)
+export function UsersTable({ viewModel }: UsersTableProps) {
+  const messages = useMessages(adminMessages)
   const format = useFormat()
   return (
     <div
-      aria-busy={vm.usersFetching}
+      aria-busy={viewModel.usersFetching}
       className="overflow-hidden rounded-2xl border border-line bg-surface"
     >
-      {vm.usersPending ? (
+      {viewModel.usersPending ? (
         <div role="status" className="space-y-3 p-5">
-          {[0, 1, 2, 3].map((i) => (
+          {[0, 1, 2, 3].map((index) => (
             <div
-              key={i}
+              key={index}
               aria-hidden
               className="h-12 animate-pulse rounded-lg bg-muted"
             />
           ))}
         </div>
-      ) : vm.users.length === 0 ? (
-        <p className="px-5 py-8 text-ink-soft sm:px-6">{t.empty}</p>
+      ) : viewModel.users.length === 0 ? (
+        <p className="px-5 py-8 text-ink-soft sm:px-6">{messages.empty}</p>
       ) : (
         <div
           className="relative overflow-x-auto"
           role="region"
           tabIndex={0}
-          aria-label={t.title}
+          aria-label={messages.title}
         >
           <table className="w-full min-w-[52rem] text-[0.9375rem]">
             <thead>
               <tr className="text-left text-sm text-ink-soft">
                 <SortHeader
-                  vm={vm}
+                  viewModel={viewModel}
                   column="name"
-                  label={t.columns.user}
+                  label={messages.columns.user}
                   first
                 />
-                <SortHeader vm={vm} column="plan" label={t.columns.plan} />
-                <SortHeader vm={vm} column="created" label={t.columns.joined} />
                 <SortHeader
-                  vm={vm}
+                  viewModel={viewModel}
+                  column="plan"
+                  label={messages.columns.plan}
+                />
+                <SortHeader
+                  viewModel={viewModel}
+                  column="created"
+                  label={messages.columns.joined}
+                />
+                <SortHeader
+                  viewModel={viewModel}
                   column="lastLogin"
-                  label={t.columns.lastLogin}
+                  label={messages.columns.lastLogin}
                 />
                 <SortHeader
-                  vm={vm}
+                  viewModel={viewModel}
                   column="lastActive"
-                  label={t.columns.lastActive}
+                  label={messages.columns.lastActive}
                 />
                 <SortHeader
-                  vm={vm}
+                  viewModel={viewModel}
                   column="entries"
-                  label={t.columns.entries}
+                  label={messages.columns.entries}
                   numeric
                   last
                 />
               </tr>
             </thead>
             <tbody>
-              {vm.users.map((u) => (
-                <UserRow key={u.id} user={u} me={u.id === vm.meId} />
+              {viewModel.users.map((user) => (
+                <UserRow
+                  key={user.id}
+                  user={user}
+                  me={user.id === viewModel.meId}
+                />
               ))}
             </tbody>
           </table>
@@ -89,9 +101,13 @@ export function UsersTable({ vm }: UsersTableProps) {
       )}
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3 text-sm sm:px-6">
         <p role="status" className="text-ink-soft">
-          {format.plural(t.total, vm.total)}
+          {format.plural(messages.total, viewModel.total)}
         </p>
-        <Pagination page={vm.page} pages={vm.pages} onPage={vm.setPage} />
+        <Pagination
+          page={viewModel.page}
+          pages={viewModel.pages}
+          onPage={viewModel.setPage}
+        />
       </footer>
     </div>
   )
@@ -102,12 +118,12 @@ interface UserRowProps {
   me: boolean
 }
 
-function UserRow({ user: u, me }: UserRowProps) {
-  const t = useMessages(adminMessages)
+function UserRow({ user, me }: UserRowProps) {
+  const messages = useMessages(adminMessages)
   const format = useFormat()
   const { locale } = useI18n()
   const day = (value: string | null) =>
-    value ? formatDate(locale, new Date(value)) : t.never
+    value ? formatDate(locale, new Date(value)) : messages.never
   return (
     <tr className="row-hover border-t border-line">
       <th
@@ -117,44 +133,52 @@ function UserRow({ user: u, me }: UserRowProps) {
         <span className="flex flex-wrap items-center gap-1.5">
           <Link
             to="/app/admin/users/$id"
-            params={{ id: u.id }}
+            params={{ id: user.id }}
             className="truncate font-semibold underline-offset-4 hover:underline"
           >
-            {u.displayName}
+            {user.displayName}
           </Link>
-          {me && <Badge tone="muted">{t.badges.you}</Badge>}
-          {u.isOwner ? (
-            <Badge tone="success">{t.badges.owner}</Badge>
+          {me && <Badge tone="muted">{messages.badges.you}</Badge>}
+          {user.isOwner ? (
+            <Badge tone="success">{messages.badges.owner}</Badge>
           ) : (
-            u.role === 'admin' && <Badge tone="info">{t.badges.admin}</Badge>
+            user.role === 'admin' && (
+              <Badge tone="info">{messages.badges.admin}</Badge>
+            )
           )}
-          {u.isDemo && <Badge tone="muted">{t.badges.demo}</Badge>}
-          {u.disabledAt && <Badge tone="warning">{t.badges.blocked}</Badge>}
-          {isPaymentProblem(u.subscription?.status) && (
-            <Badge tone="warning">{t.badges.paymentProblem}</Badge>
+          {user.isDemo && <Badge tone="muted">{messages.badges.demo}</Badge>}
+          {user.disabledAt && (
+            <Badge tone="warning">{messages.badges.blocked}</Badge>
           )}
-          {!u.emailVerified && !u.isDemo && (
-            <Badge tone="muted">{t.badges.unverified}</Badge>
+          {isPaymentProblem(user.subscription?.status) && (
+            <Badge tone="warning">{messages.badges.paymentProblem}</Badge>
           )}
-          {u.twoFactor && <Badge tone="muted">{t.badges.twoFactor}</Badge>}
+          {!user.emailVerified && !user.isDemo && (
+            <Badge tone="muted">{messages.badges.unverified}</Badge>
+          )}
+          {user.twoFactor && (
+            <Badge tone="muted">{messages.badges.twoFactor}</Badge>
+          )}
         </span>
-        <span className="block truncate text-sm text-ink-soft">{u.email}</span>
+        <span className="block truncate text-sm text-ink-soft">
+          {user.email}
+        </span>
       </th>
       <td className="px-3 py-3">
-        <Badge tone={planTone[u.plan]}>{t.plans[u.plan]}</Badge>
+        <Badge tone={planTone[user.plan]}>{messages.plans[user.plan]}</Badge>
       </td>
-      <td className="px-3 py-3 whitespace-nowrap">{day(u.createdAt)}</td>
-      <td className="px-3 py-3 whitespace-nowrap">{day(u.lastLoginAt)}</td>
-      <td className="px-3 py-3 whitespace-nowrap">{day(u.lastActiveAt)}</td>
+      <td className="px-3 py-3 whitespace-nowrap">{day(user.createdAt)}</td>
+      <td className="px-3 py-3 whitespace-nowrap">{day(user.lastLoginAt)}</td>
+      <td className="px-3 py-3 whitespace-nowrap">{day(user.lastActiveAt)}</td>
       <td className="px-5 py-3 text-right tabular-nums sm:px-6">
-        {format.number(u.entries, 0)}
+        {format.number(user.entries, 0)}
       </td>
     </tr>
   )
 }
 
 interface SortHeaderProps {
-  vm: UsersPageViewModel
+  viewModel: UsersPageViewModel
   column: AdminUserSort
   label: string
   numeric?: boolean
@@ -164,18 +188,18 @@ interface SortHeaderProps {
 
 /** Nagłówek kolumny z przyciskiem sortowania i aria-sort. */
 function SortHeader({
-  vm,
+  viewModel,
   column,
   label,
   numeric,
   first,
   last,
 }: SortHeaderProps) {
-  const t = useMessages(adminMessages).columns
-  const active = vm.sort.sort === column
+  const messages = useMessages(adminMessages).columns
+  const active = viewModel.sort.sort === column
   const Icon = !active
     ? ArrowUpDown
-    : vm.sort.dir === 'asc'
+    : viewModel.sort.dir === 'asc'
       ? ArrowUp
       : ArrowDown
   return (
@@ -183,7 +207,7 @@ function SortHeader({
       scope="col"
       aria-sort={
         active
-          ? vm.sort.dir === 'asc'
+          ? viewModel.sort.dir === 'asc'
             ? 'ascending'
             : 'descending'
           : undefined
@@ -196,7 +220,7 @@ function SortHeader({
     >
       <button
         type="button"
-        onClick={() => vm.toggleSort(column)}
+        onClick={() => viewModel.toggleSort(column)}
         className={cn(
           'inline-flex min-h-9 items-center gap-1 rounded hover:text-ink',
           active && 'text-ink',
@@ -204,7 +228,9 @@ function SortHeader({
       >
         {label}
         <Icon aria-hidden className="size-3.5" />
-        <span className="sr-only">, {fmt(t.sortBy, { column: label })}</span>
+        <span className="sr-only">
+          , {fmt(messages.sortBy, { column: label })}
+        </span>
       </button>
     </th>
   )

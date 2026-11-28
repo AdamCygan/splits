@@ -55,22 +55,22 @@ export function DayOffDialog({
   max,
   onClose,
 }: DayOffDialogProps) {
-  const t = useMessages(daysOffMessages)
+  const messages = useMessages(daysOffMessages)
   const app = useMessages(appMessages)
   const [draft, setDraft] = useState({ ...initial, note: initial.note ?? '' })
   const [submitted, setSubmitted] = useState(false)
 
   const rangeError =
     draft.to < draft.from
-      ? t.dialog.toBeforeFrom
+      ? messages.dialog.toBeforeFrom
       : diffDays(draft.from, draft.to) >= 366
-        ? t.dialog.tooLong
+        ? messages.dialog.tooLong
         : null
 
   const save = useSaveDaysOff({ replacing, onSaved: onClose })
 
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
+  const submit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     setSubmitted(true)
     if (rangeError) return
     save.mutate({
@@ -85,8 +85,8 @@ export function DayOffDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         size="md"
-        title={replacing ? t.dialog.edit : t.dialog.title}
-        description={t.dialog.lead}
+        title={replacing ? messages.dialog.edit : messages.dialog.title}
+        description={messages.dialog.lead}
         closeLabel={app.actions.close}
         footer={
           <>
@@ -99,7 +99,7 @@ export function DayOffDialog({
               disabled={save.isPending}
               aria-busy={save.isPending}
             >
-              {t.dialog.save}
+              {messages.dialog.save}
             </Button>
           </>
         }
@@ -112,7 +112,7 @@ export function DayOffDialog({
         >
           <fieldset>
             <legend className="mb-2 text-sm font-medium">
-              {t.dialog.kind}
+              {messages.dialog.kind}
             </legend>
             <div className="grid gap-2 sm:grid-cols-2">
               {DAY_OFF_KINDS.map((kind) => {
@@ -145,9 +145,11 @@ export function DayOffDialog({
                       <Icon className="size-4" />
                     </span>
                     <span className="min-w-0">
-                      <span className="block font-medium">{t.kinds[kind]}</span>
+                      <span className="block font-medium">
+                        {messages.kinds[kind]}
+                      </span>
                       <span className="block text-sm text-ink-soft">
-                        {t.kindHints[kind]}
+                        {messages.kindHints[kind]}
                       </span>
                     </span>
                   </label>
@@ -157,53 +159,64 @@ export function DayOffDialog({
           </fieldset>
 
           <div className="grid grid-cols-2 gap-4">
-            <Field label={t.dialog.from}>
-              {(a) => (
+            <Field label={messages.dialog.from}>
+              {(fieldProps) => (
                 <Input
-                  {...a}
+                  {...fieldProps}
                   type="date"
                   required
                   max={max}
                   value={draft.from}
-                  onChange={(e) =>
-                    e.target.value &&
+                  onChange={(event) =>
+                    event.target.value &&
                     setDraft({
                       ...draft,
-                      from: e.target.value,
-                      to: draft.to < e.target.value ? e.target.value : draft.to,
+                      from: event.target.value,
+                      to:
+                        draft.to < event.target.value
+                          ? event.target.value
+                          : draft.to,
                     })
                   }
                 />
               )}
             </Field>
-            <Field label={t.dialog.to} error={submitted ? rangeError : null}>
-              {(a) => (
+            <Field
+              label={messages.dialog.to}
+              error={submitted ? rangeError : null}
+            >
+              {(fieldProps) => (
                 <Input
-                  {...a}
+                  {...fieldProps}
                   type="date"
                   required
                   min={draft.from}
                   max={max}
                   value={draft.to}
-                  onChange={(e) =>
-                    e.target.value && setDraft({ ...draft, to: e.target.value })
+                  onChange={(event) =>
+                    event.target.value &&
+                    setDraft({ ...draft, to: event.target.value })
                   }
                 />
               )}
             </Field>
           </div>
           {draft.to !== draft.from && (
-            <p className="-mt-2 text-sm text-ink-soft">{t.dialog.range}</p>
+            <p className="-mt-2 text-sm text-ink-soft">
+              {messages.dialog.range}
+            </p>
           )}
 
-          <Field label={`${t.dialog.note} ${t.dialog.optional}`}>
-            {(a) => (
+          <Field label={`${messages.dialog.note} ${messages.dialog.optional}`}>
+            {(fieldProps) => (
               <Input
-                {...a}
+                {...fieldProps}
                 maxLength={200}
-                placeholder={t.dialog.notePlaceholder}
+                placeholder={messages.dialog.notePlaceholder}
                 value={draft.note}
-                onChange={(e) => setDraft({ ...draft, note: e.target.value })}
+                onChange={(event) =>
+                  setDraft({ ...draft, note: event.target.value })
+                }
               />
             )}
           </Field>

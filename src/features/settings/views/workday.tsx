@@ -23,10 +23,13 @@ import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 
 export function WorkdaySettings() {
-  const t = useMessages(settingsMessages)
+  const messages = useMessages(settingsMessages)
   return (
     <div>
-      <SectionHeader title={t.workday.title} lead={t.workday.lead} />
+      <SectionHeader
+        title={messages.workday.title}
+        lead={messages.workday.lead}
+      />
       <QueryView query={settingsQuery} skeletonRows={6}>
         {(settings) => <WorkdayForm settings={settings} />}
       </QueryView>
@@ -39,7 +42,7 @@ interface WorkdayFormProps {
 }
 
 function WorkdayForm({ settings }: WorkdayFormProps) {
-  const t = useMessages(settingsMessages).workday
+  const messages = useMessages(settingsMessages).workday
   const limits = useMessages(billingMessages).limits
   const isFree = useFreePlan()
   const { locale, tag } = useI18n()
@@ -57,12 +60,12 @@ function WorkdayForm({ settings }: WorkdayFormProps) {
       hours <= 24 &&
       draft.targetHours.trim() !== ''
         ? null
-        : t.targetError,
-    days: draft.workingDays.length > 0 ? null : t.workingDaysError,
+        : messages.targetError,
+    days: draft.workingDays.length > 0 ? null : messages.workingDaysError,
     reminder:
       !draft.reminderOn || TIME_RE.test(draft.reminderTime)
         ? null
-        : t.reminderError,
+        : messages.reminderError,
   }
   const valid = !errors.target && !errors.days && !errors.reminder
 
@@ -83,7 +86,7 @@ function WorkdayForm({ settings }: WorkdayFormProps) {
     workingDays: [...settings.workingDays].sort(),
   }
   const dirty = (Object.keys(next) as Array<keyof UserSettings>).some(
-    (k) => JSON.stringify(next[k]) !== JSON.stringify(saved[k]),
+    (part) => JSON.stringify(next[part]) !== JSON.stringify(saved[part]),
   )
   useUnsavedWarning(dirty)
 
@@ -91,7 +94,7 @@ function WorkdayForm({ settings }: WorkdayFormProps) {
   const shortDays = weekdayNames(locale, 'short')
   const orderedDays = Array.from(
     { length: 7 },
-    (_, i) => (draft.weekStartsOn + i) % 7,
+    (_unused, index) => (draft.weekStartsOn + index) % 7,
   )
   const zones = useMemo(() => timeZones(settings.timezone), [settings.timezone])
   const localTime = useMemo(() => {
@@ -105,8 +108,8 @@ function WorkdayForm({ settings }: WorkdayFormProps) {
     }
   }, [draft.timezone, tag])
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault()
+  const onSubmit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     setSubmitted(true)
     if (!valid) return
     save.mutate(next)
@@ -116,17 +119,17 @@ function WorkdayForm({ settings }: WorkdayFormProps) {
 
   return (
     <form noValidate onSubmit={onSubmit} className="space-y-6">
-      <SettingsCard title={t.cards.time}>
+      <SettingsCard title={messages.cards.time}>
         <div className="grid gap-6 sm:grid-cols-2">
           <Field
-            label={t.target}
-            hint={t.targetHint}
+            label={messages.target}
+            hint={messages.targetHint}
             error={show(errors.target)}
           >
-            {(a) => (
+            {(fieldProps) => (
               <div className="flex items-center gap-2">
                 <Input
-                  {...a}
+                  {...fieldProps}
                   type="number"
                   inputMode="decimal"
                   min={0}
@@ -134,50 +137,57 @@ function WorkdayForm({ settings }: WorkdayFormProps) {
                   step={0.5}
                   className="max-w-32"
                   value={draft.targetHours}
-                  onChange={(e) =>
-                    setDraft({ ...draft, targetHours: e.target.value })
+                  onChange={(event) =>
+                    setDraft({ ...draft, targetHours: event.target.value })
                   }
                 />
-                <span className="text-ink-soft">{t.hoursUnit}</span>
+                <span className="text-ink-soft">{messages.hoursUnit}</span>
               </div>
             )}
           </Field>
-          <Field label={t.rounding} hint={t.roundingHint}>
-            {(a) => (
+          <Field label={messages.rounding} hint={messages.roundingHint}>
+            {(fieldProps) => (
               <Select
-                {...a}
+                {...fieldProps}
                 value={draft.timeRoundingMinutes}
-                onChange={(e) =>
+                onChange={(event) =>
                   setDraft({
                     ...draft,
                     timeRoundingMinutes: Number(
-                      e.target.value,
+                      event.target.value,
                     ) as RoundingMinutes,
                   })
                 }
               >
-                {ROUNDING_OPTIONS.map((n) => (
-                  <option key={n} value={n}>
-                    {n === 0 ? t.roundingOff : fmt(t.roundingValue, { n })}
+                {ROUNDING_OPTIONS.map((roundingOption) => (
+                  <option key={roundingOption} value={roundingOption}>
+                    {roundingOption === 0
+                      ? messages.roundingOff
+                      : fmt(messages.roundingValue, { n: roundingOption })}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label={t.breakLabel} hint={t.breakHint}>
-            {(a) => (
+          <Field label={messages.breakLabel} hint={messages.breakHint}>
+            {(fieldProps) => (
               <Select
-                {...a}
+                {...fieldProps}
                 value={draft.breakMinutes}
-                onChange={(e) =>
-                  setDraft({ ...draft, breakMinutes: Number(e.target.value) })
+                onChange={(event) =>
+                  setDraft({
+                    ...draft,
+                    breakMinutes: Number(event.target.value),
+                  })
                 }
               >
                 {[...new Set([...BREAK_OPTIONS, draft.breakMinutes])]
-                  .sort((x, y) => x - y)
-                  .map((n) => (
-                    <option key={n} value={n}>
-                      {n === 0 ? t.breakOff : fmt(t.roundingValue, { n })}
+                  .sort((left, right) => left - right)
+                  .map((count) => (
+                    <option key={count} value={count}>
+                      {count === 0
+                        ? messages.breakOff
+                        : fmt(messages.roundingValue, { n: count })}
                     </option>
                   ))}
               </Select>
@@ -186,52 +196,55 @@ function WorkdayForm({ settings }: WorkdayFormProps) {
         </div>
       </SettingsCard>
 
-      <SettingsCard title={t.cards.calendar}>
+      <SettingsCard title={messages.cards.calendar}>
         <div className="space-y-6">
           <CheckboxGroup
-            legend={t.workingDays}
-            hint={t.workingDaysHint}
+            legend={messages.workingDays}
+            hint={messages.workingDaysHint}
             error={show(errors.days)}
             value={draft.workingDays}
             onChange={(value) => setDraft({ ...draft, workingDays: value })}
-            options={orderedDays.map((d) => ({
-              value: d,
-              label: shortDays[d]!,
+            options={orderedDays.map((orderedDay) => ({
+              value: orderedDay,
+              label: shortDays[orderedDay]!,
             }))}
           />
           <div className="grid gap-6 sm:grid-cols-2">
-            <Field label={t.weekStart}>
-              {(a) => (
+            <Field label={messages.weekStart}>
+              {(fieldProps) => (
                 <Select
-                  {...a}
+                  {...fieldProps}
                   value={draft.weekStartsOn}
-                  onChange={(e) =>
-                    setDraft({ ...draft, weekStartsOn: Number(e.target.value) })
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      weekStartsOn: Number(event.target.value),
+                    })
                   }
                 >
-                  {[1, 0, 6, 2, 3, 4, 5].map((d) => (
-                    <option key={d} value={d}>
-                      {days[d]}
+                  {[1, 0, 6, 2, 3, 4, 5].map((day) => (
+                    <option key={day} value={day}>
+                      {days[day]}
                     </option>
                   ))}
                 </Select>
               )}
             </Field>
             <Field
-              label={t.timezone}
-              hint={fmt(t.timezoneHint, { time: localTime })}
+              label={messages.timezone}
+              hint={fmt(messages.timezoneHint, { time: localTime })}
             >
-              {(a) => (
+              {(fieldProps) => (
                 <Select
-                  {...a}
+                  {...fieldProps}
                   value={draft.timezone}
-                  onChange={(e) =>
-                    setDraft({ ...draft, timezone: e.target.value })
+                  onChange={(event) =>
+                    setDraft({ ...draft, timezone: event.target.value })
                   }
                 >
-                  {zones.map((z) => (
-                    <option key={z} value={z}>
-                      {z.replaceAll('_', ' ')}
+                  {zones.map((zone) => (
+                    <option key={zone} value={zone}>
+                      {zone.replaceAll('_', ' ')}
                     </option>
                   ))}
                 </Select>
@@ -241,27 +254,31 @@ function WorkdayForm({ settings }: WorkdayFormProps) {
         </div>
       </SettingsCard>
 
-      <SettingsCard title={t.cards.reminders}>
+      <SettingsCard title={messages.cards.reminders}>
         {/* Przypomnienia są w Pro; Free może tylko wyłączyć przypomnienie ustawione wcześniej. */}
         {isFree && (
           <PlanLimit id="reminder-limit">{limits.reminders}</PlanLimit>
         )}
         <div className="space-y-5">
           <Switch
-            label={t.reminder}
-            description={t.reminderHint}
+            label={messages.reminder}
+            description={messages.reminderHint}
             checked={draft.reminderOn}
             disabled={isFree && !draft.reminderOn}
-            onCheckedChange={(v) => setDraft({ ...draft, reminderOn: v })}
+            onCheckedChange={(isChecked) =>
+              setDraft({ ...draft, reminderOn: isChecked })
+            }
           />
           {draft.reminderOn && (
-            <Field label={t.reminderTime} error={show(errors.reminder)}>
-              {(a) => (
+            <Field label={messages.reminderTime} error={show(errors.reminder)}>
+              {(fieldProps) => (
                 <TimeInput
-                  {...a}
+                  {...fieldProps}
                   className="max-w-40"
                   value={draft.reminderTime}
-                  onChange={(v) => setDraft({ ...draft, reminderTime: v })}
+                  onChange={(value) =>
+                    setDraft({ ...draft, reminderTime: value })
+                  }
                 />
               )}
             </Field>

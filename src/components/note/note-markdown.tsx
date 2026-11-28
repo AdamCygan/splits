@@ -96,14 +96,14 @@ export function NoteMarkdown({
       </a>
     ),
     // Obrazy w notatkach pokazujemy jako link (nic nie ładuje się samo z zewnątrz).
-    img: ({ src, alt }) => (
+    img: ({ src: source, alt: alternative }) => (
       <a
-        href={typeof src === 'string' ? src : undefined}
+        href={typeof source === 'string' ? source : undefined}
         target="_blank"
         rel="noopener noreferrer"
         className="font-medium break-words underline underline-offset-4"
       >
-        {alt || (typeof src === 'string' ? src : '')}
+        {alternative || (typeof source === 'string' ? source : '')}
       </a>
     ),
     // Zagnieżdżone listy wcinają się o szerokość znacznika; checkbox stoi w miejscu kropki.
@@ -129,10 +129,10 @@ export function NoteMarkdown({
         {children}
       </blockquote>
     ),
-    code: ({ className: cls, children }) =>
-      cls?.startsWith('language-') || String(children).includes('\n') ? (
+    code: ({ className: language, children }) =>
+      language?.startsWith('language-') || String(children).includes('\n') ? (
         <code className="font-mono text-[0.8125rem]">
-          {highlighted(String(children), cls?.slice('language-'.length))}
+          {highlighted(String(children), language?.slice('language-'.length))}
         </code>
       ) : (
         <code className="rounded bg-ink/8 px-1 py-0.5 font-mono text-[0.8125em]">
@@ -181,14 +181,14 @@ function ListItem({
   onTaskToggle,
 }: ComponentProps<'li'> &
   ExtraProps & { text: string; onTaskToggle?: (next: string) => void }) {
-  const hast = node as unknown as HastNode & {
+  const tree = node as unknown as HastNode & {
     position?: { start: { offset?: number } }
   }
   if (!className?.includes('task-list-item')) return <li>{children}</li>
-  const box = hast.children?.find((c) => c.tagName === 'input')
+  const box = tree.children?.find((child) => child.tagName === 'input')
   const checked = Boolean(box?.properties?.checked)
-  const offset = hast.position?.start.offset
-  const label = textOf(hast).trim()
+  const offset = tree.position?.start.offset
+  const label = textOf(tree).trim()
   const toggle =
     onTaskToggle && offset !== undefined
       ? () => {
@@ -247,18 +247,18 @@ export function CheckableNote({
 /** Blok kodu z kolorowaniem składni (linia po linii, bez końcowej pustej linii). */
 function highlighted(code: string, language = '') {
   const lines = code.replace(/\n$/, '').split('\n')
-  return lines.map((line, i) => (
-    <span key={i}>
-      {highlightCodeLine(line, language).map((p, j) =>
-        p.kind ? (
-          <span key={j} className={`tok-${p.kind}`}>
-            {p.text}
+  return lines.map((line, index) => (
+    <span key={index}>
+      {highlightCodeLine(line, language).map((part, position) =>
+        part.kind ? (
+          <span key={position} className={`tok-${part.kind}`}>
+            {part.text}
           </span>
         ) : (
-          p.text
+          part.text
         ),
       )}
-      {i < lines.length - 1 && '\n'}
+      {index < lines.length - 1 && '\n'}
     </span>
   ))
 }

@@ -19,23 +19,23 @@ export interface TaskAggregate {
 }
 
 /** Czy sesja `a` jest późniejsza od `b`: dzień, potem godzina startu, potem kolejność dodania. */
-export const isLaterSession = (a: TimeEntry, b: TimeEntry) =>
-  a.workDate !== b.workDate
-    ? a.workDate > b.workDate
-    : (a.startTime ?? '') !== (b.startTime ?? '')
-      ? (a.startTime ?? '') > (b.startTime ?? '')
-      : a.createdAt > b.createdAt
+export const isLaterSession = (entry: TimeEntry, otherEntry: TimeEntry) =>
+  entry.workDate !== otherEntry.workDate
+    ? entry.workDate > otherEntry.workDate
+    : (entry.startTime ?? '') !== (otherEntry.startTime ?? '')
+      ? (entry.startTime ?? '') > (otherEntry.startTime ?? '')
+      : entry.createdAt > otherEntry.createdAt
 
 /** Sesje pogrupowane po zadaniu, w kolejności pierwszego wystąpienia. */
 export function groupEntriesByTask(
   entries: ReadonlyArray<TimeEntry>,
 ): Map<string, Array<TimeEntry>> {
   const groups = new Map<string, Array<TimeEntry>>()
-  for (const e of entries) {
-    const key = taskGroupKey(e)
+  for (const timeEntry of entries) {
+    const key = taskGroupKey(timeEntry)
     const list = groups.get(key)
-    if (list) list.push(e)
-    else groups.set(key, [e])
+    if (list) list.push(timeEntry)
+    else groups.set(key, [timeEntry])
   }
   return groups
 }
@@ -46,18 +46,23 @@ export function aggregateTasks(
 ): Array<TaskAggregate> {
   return [...groupEntriesByTask(entries)]
     .map(([key, sessions]) => {
-      const latest = sessions.reduce((a, b) => (isLaterSession(b, a) ? b : a))
+      const latest = sessions.reduce((accumulator, timeEntry) =>
+        isLaterSession(timeEntry, accumulator) ? timeEntry : accumulator,
+      )
       return {
         key,
         latest,
         sessions,
-        workedMinutes: sessions.reduce((s, e) => s + e.durationMinutes, 0),
+        workedMinutes: sessions.reduce(
+          (accumulator, timeEntry) => accumulator + timeEntry.durationMinutes,
+          0,
+        ),
         lastDate: latest.workDate,
-        finished: sessions.some((e) => e.finishedAt !== null),
-        running: sessions.some((e) => e.running),
+        finished: sessions.some((timeEntry) => timeEntry.finishedAt !== null),
+        running: sessions.some((timeEntry) => timeEntry.running),
       }
     })
-    .sort((a, b) => (isLaterSession(a.latest, b.latest) ? -1 : 1))
+    .sort((left, right) => (isLaterSession(left.latest, right.latest) ? -1 : 1))
 }
 
 /** Zadanie na liście dnia: sesje chronologicznie i fakty pokazywane na karcie. */
@@ -85,31 +90,41 @@ export interface DayTaskGroup {
 export function dayTaskGroups(
   entries: ReadonlyArray<TimeEntry>,
 ): Array<DayTaskGroup> {
-  const order = (e: TimeEntry) => `${e.startTime ?? '99:99'}|${e.createdAt}`
+  const order = (timeEntry: TimeEntry) =>
+    `${timeEntry.startTime ?? '99:99'}|${timeEntry.createdAt}`
   const lastAdded = (list: ReadonlyArray<TimeEntry>) =>
-    list.reduce((max, e) => (e.createdAt > max ? e.createdAt : max), '')
+    list.reduce(
+      (max, timeEntry) =>
+        timeEntry.createdAt > max ? timeEntry.createdAt : max,
+      '',
+    )
   return [...groupEntriesByTask(entries)]
     .map(([key, list]) => {
-      const sessions = [...list].sort((a, b) =>
-        order(a).localeCompare(order(b)),
+      const sessions = [...list].sort((left, right) =>
+        order(left).localeCompare(order(right)),
       )
-      const running = sessions.find((e) => e.running)
+      const running = sessions.find((timeEntry) => timeEntry.running)
       return {
         key,
         sessions,
         latest: sessions.at(-1)!,
         running,
-        paused: !running && sessions.some((e) => e.paused),
-        doneMinutes: sessions.reduce((s, e) => s + e.durationMinutes, 0),
-        storyPoints: maxOf(sessions.map((e) => e.storyPoints)),
-        estimateMinutes: maxOf(sessions.map((e) => e.estimateMinutes)),
+        paused: !running && sessions.some((timeEntry) => timeEntry.paused),
+        doneMinutes: sessions.reduce(
+          (accumulator, timeEntry) => accumulator + timeEntry.durationMinutes,
+          0,
+        ),
+        storyPoints: maxOf(sessions.map((timeEntry) => timeEntry.storyPoints)),
+        estimateMinutes: maxOf(
+          sessions.map((timeEntry) => timeEntry.estimateMinutes),
+        ),
         addedAt: lastAdded(sessions),
       }
     })
     .sort(
-      (a, b) =>
-        Number(Boolean(b.running)) - Number(Boolean(a.running)) ||
-        b.addedAt.localeCompare(a.addedAt),
+      (left, right) =>
+        Number(Boolean(right.running)) - Number(Boolean(left.running)) ||
+        right.addedAt.localeCompare(left.addedAt),
     )
     .map(({ addedAt: _addedAt, ...group }) => group)
 }

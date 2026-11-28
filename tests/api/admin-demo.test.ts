@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 import { refreshTokens, users } from '#/server/db/schema'
 import { runMaintenance } from '#/server/maintenance'
 import { client, registered, registeredAdmin as admin, sample } from './helpers'
@@ -30,27 +30,27 @@ interface TestAccount {
   username: string
 }
 
-const login = (c: ReturnType<typeof client>, account: TestAccount) =>
-  c.post<Session>('/auth/login', {
+const login = (apiClient: ReturnType<typeof client>, account: TestAccount) =>
+  apiClient.post<Session>('/auth/login', {
     login: account.username,
     password: 'correct horse 42',
   })
 
 describe('demo account', () => {
   it('Should open a ready workspace without signing up', async () => {
-    const c = client()
-    const res = await c.post<Session>('/auth/demo', {
+    const apiClient = client()
+    const response = await apiClient.post<Session>('/auth/demo', {
       locale: 'pl',
       timezone: 'Europe/Warsaw',
     })
-    expect(res.status).toBe(201)
-    expect(res.body.user).toMatchObject({
+    expect(response.status).toBe(201)
+    expect(response.body.user).toMatchObject({
       isDemo: true,
       plan: 'pro',
       role: 'client',
     })
 
-    const boot = await c.get<{
+    const boot = await apiClient.get<{
       user: { isDemo: boolean }
       settings: { locale: string; timezone: string }
       taskTypes: Array<unknown>
@@ -66,53 +66,56 @@ describe('demo account', () => {
     expect(boot.body.today).toMatch(/^\d{4}-\d{2}-\d{2}$/)
     // Dane przykładowe: jest historia do raportów.
     const from = '2020-01-01'
-    const range = await c.get<Array<unknown>>(
+    const range = await apiClient.get<Array<unknown>>(
       `/time-entries?from=${from}&to=${boot.body.today}`,
     )
     expect(range.body.length).toBeGreaterThan(10)
   })
 
-  it.each<[string, (c: ApiClient) => Promise<ApiResponse<{ code: string }>>]>([
+  it.each<
+    [string, (apiClient: ApiClient) => Promise<ApiResponse<{ code: string }>>]
+  >([
     [
       'buy Pro',
-      (c) => c.post<{ code: string }>('/billing/checkout', { plan: 'pro' }),
+      (apiClient) =>
+        apiClient.post<{ code: string }>('/billing/checkout', { plan: 'pro' }),
     ],
     [
       'open the billing portal',
-      (c) => c.post<{ code: string }>('/billing/portal'),
+      (apiClient) => apiClient.post<{ code: string }>('/billing/portal'),
     ],
     [
       'change the profile',
-      (c) =>
-        c.put<{ code: string }>('/account/profile', {
+      (apiClient) =>
+        apiClient.put<{ code: string }>('/account/profile', {
           displayName: 'X',
           email: 'x@example.com',
         }),
     ],
     [
       'change the password',
-      (c) =>
-        c.post<{ code: string }>('/account/password', {
+      (apiClient) =>
+        apiClient.post<{ code: string }>('/account/password', {
           currentPassword: '',
           newPassword: 'new password 42',
         }),
     ],
   ])('Should not let a demo account %s', async (_action, request) => {
-    const c = client()
-    await c.post('/auth/demo', {})
-    const res = await request(c)
-    expect(res.status).toBe(403)
-    expect(res.body.code).toBe('demo.restricted')
+    const apiClient = client()
+    await apiClient.post('/auth/demo', {})
+    const response = await request(apiClient)
+    expect(response.status).toBe(403)
+    expect(response.body.code).toBe('demo.restricted')
   })
 
   it('Should let a demo account log time as usual', async () => {
-    const c = client()
-    await c.post('/auth/demo', {})
+    const apiClient = client()
+    await apiClient.post('/auth/demo', {})
     const types =
-      await c.get<Array<{ id: string; kind: string }>>('/task-types')
-    const meeting = types.body.find((x) => x.kind === 'meeting')!
-    const boot = await c.get<{ today: string }>('/bootstrap')
-    const created = await c.post('/time-entries', {
+      await apiClient.get<Array<{ id: string; kind: string }>>('/task-types')
+    const meeting = types.body.find((taskType) => taskType.kind === 'meeting')!
+    const boot = await apiClient.get<{ today: string }>('/bootstrap')
+    const created = await apiClient.post('/time-entries', {
       taskTypeId: meeting.id,
       projectId: null,
       title: 'Demo standup',
@@ -129,25 +132,25 @@ describe('demo account', () => {
   })
 
   it('Should be removed after 24 hours together with its data', async () => {
-    const c = client()
-    const res = await c.post<Session>('/auth/demo', {})
-    const id = res.body.user.id
+    const apiClient = client()
+    const response = await apiClient.post<Session>('/auth/demo', {})
+    const id = response.body.user.id
     expect((await runMaintenance()).demoAccounts).toBe(0)
-    await db
+    await database
       .update(users)
       .set({ createdAt: new Date(Date.now() - 25 * 3_600_000) })
       .where(eq(users.id, id))
     expect((await runMaintenance()).demoAccounts).toBeGreaterThanOrEqual(1)
-    expect((await c.get('/account')).status).toBe(401)
+    expect((await apiClient.get('/account')).status).toBe(401)
   })
 })
 
 describe('maintenance', () => {
   it('Should delete expired and long-revoked refresh tokens and keep live ones', async () => {
-    const { c } = await registered()
-    const me = await c.get<{ id: string }>('/account')
+    const { apiClient } = await registered()
+    const me = await apiClient.get<{ id: string }>('/account')
     const day = 86_400_000
-    await db.insert(refreshTokens).values([
+    await database.insert(refreshTokens).values([
       {
         userId: me.body.id,
         familyId: crypto.randomUUID(),
@@ -170,16 +173,16 @@ describe('maintenance', () => {
       },
     ])
     expect((await runMaintenance()).refreshTokens).toBeGreaterThanOrEqual(2)
-    const left = await db
+    const left = await database
       .select({ hash: refreshTokens.tokenHash })
       .from(refreshTokens)
       .where(eq(refreshTokens.userId, me.body.id))
-    const hashes = left.map((r) => r.hash)
+    const hashes = left.map((row) => row.hash)
     expect(hashes).toContain(`fresh-${me.body.id}`)
     expect(hashes).not.toContain(`expired-${me.body.id}`)
     expect(hashes).not.toContain(`revoked-${me.body.id}`)
     // Bieżąca sesja nadal się odświeża.
-    expect((await c.post('/auth/refresh')).status).toBe(200)
+    expect((await apiClient.post('/auth/refresh')).status).toBe(200)
   })
 })
 
@@ -187,10 +190,10 @@ describe('admin panel API', () => {
   it.each(['/admin/stats', '/admin/users', '/admin/actions'])(
     'Should forbid %s to regular users',
     async (path) => {
-      const { c } = await registered()
-      const res = await c.get<{ code: string }>(path)
-      expect(res.status).toBe(403)
-      expect(res.body.code).toBe('auth.forbidden')
+      const { apiClient } = await registered()
+      const response = await apiClient.get<{ code: string }>(path)
+      expect(response.status).toBe(403)
+      expect(response.body.code).toBe('auth.forbidden')
     },
   )
 
@@ -200,20 +203,22 @@ describe('admin panel API', () => {
 
   it('Should list and search users with entry counts, hiding demo accounts by default', async () => {
     const boss = await admin()
-    const c = boss.c
+    const apiClient = boss.apiClient
     const other = await registered()
     await sample()
     await client().post('/auth/demo', {})
 
-    const all = await c.get<Page>('/admin/users')
+    const all = await apiClient.get<Page>('/admin/users')
     expect(all.status).toBe(200)
-    expect(all.body.items.every((u) => !u.isDemo)).toBe(true)
+    expect(all.body.items.every((adminUser) => !adminUser.isDemo)).toBe(true)
     expect(all.body.total).toBeGreaterThanOrEqual(3)
 
-    const found = await c.get<Page>(
+    const found = await apiClient.get<Page>(
       `/admin/users?q=${encodeURIComponent(other.email.toUpperCase())}`,
     )
-    expect(found.body.items.map((u) => u.email)).toEqual([other.email])
+    expect(found.body.items.map((adminUser) => adminUser.email)).toEqual([
+      other.email,
+    ])
     expect(found.body.items[0]).toMatchObject({
       plan: 'free',
       role: 'client',
@@ -221,17 +226,19 @@ describe('admin panel API', () => {
       disabledAt: null,
     })
 
-    const samples = await c.get<Page>('/admin/users?q=sample-')
+    const samples = await apiClient.get<Page>('/admin/users?q=sample-')
     expect(samples.body.items[0]!.entries).toBeGreaterThan(10)
 
-    const demos = await c.get<Page>('/admin/users?status=demo')
+    const demos = await apiClient.get<Page>('/admin/users?status=demo')
     expect(demos.body.items.length).toBeGreaterThanOrEqual(1)
-    expect(demos.body.items.every((u) => u.isDemo)).toBe(true)
+    expect(demos.body.items.every((adminUser) => adminUser.isDemo)).toBe(true)
 
     // „%” w wyszukiwaniu to zwykły znak, nie wzorzec dopasowujący wszystko.
-    expect((await c.get<Page>('/admin/users?q=%25%25')).body.total).toBe(0)
+    expect(
+      (await apiClient.get<Page>('/admin/users?q=%25%25')).body.total,
+    ).toBe(0)
 
-    const stats = await c.get<{
+    const stats = await apiClient.get<{
       users: number
       new7: number
       free: number
@@ -248,18 +255,21 @@ describe('admin panel API', () => {
   it('Should change a plan and write it to the audit log', async () => {
     const boss = await admin()
     const other = await registered()
-    const id = (await other.c.get<{ id: string }>('/account')).body.id
+    const id = (await other.apiClient.get<{ id: string }>('/account')).body.id
 
-    const res = await boss.c.patch<AdminUser>(`/admin/users/${id}`, {
-      plan: 'lifetime',
-    })
-    expect(res.status).toBe(200)
-    expect(res.body.plan).toBe('lifetime')
-    expect((await other.c.get<{ plan: string }>('/account')).body.plan).toBe(
-      'lifetime',
+    const response = await boss.apiClient.patch<AdminUser>(
+      `/admin/users/${id}`,
+      {
+        plan: 'lifetime',
+      },
     )
+    expect(response.status).toBe(200)
+    expect(response.body.plan).toBe('lifetime')
+    expect(
+      (await other.apiClient.get<{ plan: string }>('/account')).body.plan,
+    ).toBe('lifetime')
 
-    const log = await boss.c.get<{
+    const log = await boss.apiClient.get<{
       items: Array<{
         action: string
         detail: string
@@ -274,26 +284,33 @@ describe('admin panel API', () => {
       adminEmail: boss.email,
     })
     expect(
-      (await boss.c.patch(`/admin/users/${id}`, { plan: 'gold' })).status,
+      (await boss.apiClient.patch(`/admin/users/${id}`, { plan: 'gold' }))
+        .status,
     ).toBe(400)
-    expect((await boss.c.patch(`/admin/users/${id}`, {})).status).toBe(400)
+    expect((await boss.apiClient.patch(`/admin/users/${id}`, {})).status).toBe(
+      400,
+    )
     expect(
-      (await boss.c.patch('/admin/users/not-a-uuid', { plan: 'pro' })).status,
+      (await boss.apiClient.patch('/admin/users/not-a-uuid', { plan: 'pro' }))
+        .status,
     ).toBe(404)
   })
 
   it('Should block a user at once and let them back in after unblocking', async () => {
     const boss = await admin()
     const other = await registered()
-    const id = (await other.c.get<{ id: string }>('/account')).body.id
+    const id = (await other.apiClient.get<{ id: string }>('/account')).body.id
 
     expect(
-      (await boss.c.patch<AdminUser>(`/admin/users/${id}`, { disabled: true }))
-        .body.disabledAt,
+      (
+        await boss.apiClient.patch<AdminUser>(`/admin/users/${id}`, {
+          disabled: true,
+        })
+      ).body.disabledAt,
     ).not.toBeNull()
     // Ważny jeszcze access token już nie działa, sesji nie da się odświeżyć, logowanie jest odrzucane.
-    expect((await other.c.get('/account')).status).toBe(401)
-    expect((await other.c.post('/auth/refresh')).status).toBe(401)
+    expect((await other.apiClient.get('/account')).status).toBe(401)
+    expect((await other.apiClient.post('/auth/refresh')).status).toBe(401)
     const again = await login(client(), other)
     expect(again.status).toBe(403)
     expect((again.body as unknown as { code: string }).code).toBe(
@@ -306,7 +323,7 @@ describe('admin panel API', () => {
     })
     expect(wrong.body.code).toBe('auth.invalid_credentials')
 
-    await boss.c.patch(`/admin/users/${id}`, { disabled: false })
+    await boss.apiClient.patch(`/admin/users/${id}`, { disabled: false })
     const back = client()
     expect((await login(back, other)).status).toBe(200)
     expect((await back.get('/account')).status).toBe(200)
@@ -314,29 +331,32 @@ describe('admin panel API', () => {
 
   it('Should protect the admin from locking themselves out', async () => {
     const boss = await admin()
-    const id = (await boss.c.get<{ id: string }>('/account')).body.id
+    const id = (await boss.apiClient.get<{ id: string }>('/account')).body.id
     const refused = await Promise.all(
       [{ role: 'client' }, { disabled: true }].map((change) =>
-        boss.c.patch<{ code: string }>(`/admin/users/${id}`, change),
+        boss.apiClient.patch<{ code: string }>(`/admin/users/${id}`, change),
       ),
     )
-    expect(refused.map((res) => [res.status, res.body.code])).toEqual([
+    expect(
+      refused.map((response) => [response.status, response.body.code]),
+    ).toEqual([
       [400, 'admin.self'],
       [400, 'admin.self'],
     ])
     expect(
-      (await boss.c.del<{ code: string }>(`/admin/users/${id}`)).body.code,
+      (await boss.apiClient.del<{ code: string }>(`/admin/users/${id}`)).body
+        .code,
     ).toBe('admin.self')
   })
 
   it('Should grant and remove the admin role with immediate effect', async () => {
     const boss = await admin()
     const other = await registered()
-    const id = (await other.c.get<{ id: string }>('/account')).body.id
-    await boss.c.patch(`/admin/users/${id}`, { role: 'admin' })
-    expect((await other.c.get('/admin/stats')).status).toBe(200)
-    await boss.c.patch(`/admin/users/${id}`, { role: 'client' })
-    expect((await other.c.get('/admin/stats')).status).toBe(403)
+    const id = (await other.apiClient.get<{ id: string }>('/account')).body.id
+    await boss.apiClient.patch(`/admin/users/${id}`, { role: 'admin' })
+    expect((await other.apiClient.get('/admin/stats')).status).toBe(200)
+    await boss.apiClient.patch(`/admin/users/${id}`, { role: 'client' })
+    expect((await other.apiClient.get('/admin/stats')).status).toBe(403)
   })
 
   it('Should log a user out everywhere and delete an account with its data', async () => {
@@ -347,30 +367,33 @@ describe('admin panel API', () => {
     ).body
 
     expect(
-      (await boss.c.post(`/admin/users/${id}/revoke-sessions`)).status,
+      (await boss.apiClient.post(`/admin/users/${id}/revoke-sessions`)).status,
     ).toBe(204)
     expect((await victim.post('/auth/refresh')).status).toBe(401)
 
-    const wrong = await boss.c.del<{ code: string }>(`/admin/users/${id}`, {
-      confirmEmail: 'someone@example.com',
-    })
+    const wrong = await boss.apiClient.del<{ code: string }>(
+      `/admin/users/${id}`,
+      {
+        confirmEmail: 'someone@example.com',
+      },
+    )
     expect([wrong.status, wrong.body.code]).toEqual([
       400,
       'admin.confirm_email',
     ])
     expect(
       (
-        await boss.c.del(`/admin/users/${id}`, {
+        await boss.apiClient.del(`/admin/users/${id}`, {
           confirmEmail: email.toUpperCase(),
         })
       ).status,
     ).toBe(204)
-    expect((await boss.c.get(`/admin/users/${id}`)).status).toBe(404)
+    expect((await boss.apiClient.get(`/admin/users/${id}`)).status).toBe(404)
     expect((await victim.get('/account')).status).toBe(401)
-    const log = await boss.c.get<{ items: Array<{ action: string }> }>(
+    const log = await boss.apiClient.get<{ items: Array<{ action: string }> }>(
       `/admin/actions?targetId=${id}`,
     )
-    expect(log.body.items.map((a) => a.action)).toEqual([
+    expect(log.body.items.map((item) => item.action)).toEqual([
       'user.deleted',
       'sessions.revoked',
     ])
@@ -379,16 +402,21 @@ describe('admin panel API', () => {
 
 describe('account data export', () => {
   it('Should return every part of the workspace without secrets', async () => {
-    const c = await sample()
-    const res = await c.get<Record<string, unknown>>('/account/export')
-    expect(res.status).toBe(200)
-    expect(res.headers.get('content-disposition')).toMatch(
+    const sampleUser = await sample()
+    const response =
+      await sampleUser.get<Record<string, unknown>>('/account/export')
+    expect(response.status).toBe(200)
+    expect(response.headers.get('content-disposition')).toMatch(
       /attachment; filename="timeblame-export-\d{4}-\d{2}-\d{2}\.json"/,
     )
-    expect(res.body).toMatchObject({ format: 'splits-export', version: 2 })
-    expect((res.body.timeEntries as Array<unknown>).length).toBeGreaterThan(10)
-    expect((res.body.taskTypes as Array<unknown>).length).toBeGreaterThan(3)
-    expect(JSON.stringify(res.body)).not.toMatch(
+    expect(response.body).toMatchObject({ format: 'splits-export', version: 2 })
+    expect(
+      (response.body.timeEntries as Array<unknown>).length,
+    ).toBeGreaterThan(10)
+    expect((response.body.taskTypes as Array<unknown>).length).toBeGreaterThan(
+      3,
+    )
+    expect(JSON.stringify(response.body)).not.toMatch(
       /passwordHash|password_hash|tokenHash|stripeCustomerId|userId/,
     )
   })

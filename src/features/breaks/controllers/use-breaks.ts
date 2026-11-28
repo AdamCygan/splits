@@ -34,21 +34,21 @@ export function useBreakDay(date: string) {
   const limit = useQuery(settingsQuery).data?.breakMinutes ?? 30
   const seconds = useBreakSeconds(running)
   const finished = list
-    .filter((b) => !b.running)
-    .reduce((sum, b) => sum + b.durationMinutes, 0)
+    .filter((workBreak) => !workBreak.running)
+    .reduce((sum, workBreak) => sum + workBreak.durationMinutes, 0)
   const live =
     running && running.workDate === date ? Math.floor(seconds / 60) : 0
   return { list, running, limit, used: finished + live, seconds }
 }
 
 export function useStartBreak() {
-  const t = useMessages(entriesMessages).breaks
+  const messages = useMessages(entriesMessages).breaks
   return useDataMutation(() => breaksApi.start(), {
     invalidate: [breakKeys.all, entryKeys.all],
     success: (result) =>
       result.paused
-        ? fmt(t.startedPaused, { name: result.paused.title })
-        : t.started,
+        ? fmt(messages.startedPaused, { name: result.paused.title })
+        : messages.started,
   })
 }
 
@@ -59,19 +59,19 @@ interface EndBreakInput {
 }
 
 export function useEndBreak() {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const format = useFormat()
   return useDataMutation(
     ({ id, resume }: EndBreakInput) => breaksApi.end(id, resume),
     {
       invalidate: [breakKeys.all, entryKeys.all],
       success: (result) =>
-        fmt(t.breaks.ended, {
+        fmt(messages.breaks.ended, {
           time: format.minutes(result.break.durationMinutes),
         }),
       onSuccess: (result) => {
         if (result.resumed)
-          toast(fmt(t.timer.resumed, { name: result.resumed.title }))
+          toast(fmt(messages.timer.resumed, { name: result.resumed.title }))
       },
     },
   )
@@ -84,17 +84,17 @@ export interface BreakListActionsOptions {
 
 /** Ręczne dodanie przerwy do dnia i usunięcie przerwy z listy. */
 export function useBreakListActions({ onAdded }: BreakListActionsOptions) {
-  const t = useMessages(entriesMessages).breaks
+  const messages = useMessages(entriesMessages).breaks
   const format = useFormat()
   const add = useDataMutation((input: WorkBreakInput) => breaksApi.add(input), {
     invalidate: [breakKeys.all],
     success: (added) =>
-      fmt(t.added, { time: format.minutes(added.durationMinutes) }),
+      fmt(messages.added, { time: format.minutes(added.durationMinutes) }),
     onSuccess: onAdded,
   })
   const remove = useDataMutation((id: string) => breaksApi.remove(id), {
     invalidate: [breakKeys.all],
-    success: t.removed,
+    success: messages.removed,
   })
   return { add, remove }
 }

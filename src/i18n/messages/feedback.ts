@@ -1,7 +1,7 @@
 import type { Dictionary } from '../context'
 
 /** „Zgłoś problem / pomysł”, strona Pomoc i skrzynka zgłoszeń w panelu admina. */
-const en = {
+const english = {
   open: 'Report a problem or idea',
   openShort: 'Report a problem',
   dialog: {
@@ -81,7 +81,7 @@ const en = {
   },
 }
 
-const pl: typeof en = {
+const polish: typeof english = {
   open: 'Zgłoś problem albo pomysł',
   openShort: 'Zgłoś problem',
   dialog: {
@@ -161,5 +161,8 @@ const pl: typeof en = {
   },
 }
 
-export type FeedbackMessages = typeof en
-export const feedbackMessages: Dictionary<FeedbackMessages> = { en, pl }
+export type FeedbackMessages = typeof english
+export const feedbackMessages: Dictionary<FeedbackMessages> = {
+  en: english,
+  pl: polish,
+}

@@ -95,7 +95,7 @@ export interface Command {
 }
 
 /** Synonimy w obu językach, żeby „create task” i „dodaj zadanie” trafiały w to samo. */
-export const KW = {
+export const KEYWORDS = {
   log: 'log time add entry new entry create task new task add task track time record time zapisz czas dodaj wpis nowy wpis utworz zadanie dodaj zadanie nowe zadanie wpisz czas todays entries dzisiejsze wpisy',
   timer:
     'start timer track now stopwatch clock in uruchom timer wlacz timer stoper licz czas start',
@@ -153,7 +153,7 @@ export interface PaletteContext {
     startBreak: () => void
     endBreak: (id: string) => void
     setTheme: (theme: Theme) => void
-    setClock: (pref: ClockPref) => void
+    setClock: (preference: ClockPref) => void
     setLocale: (locale: Locale) => void
     signOut: () => void
     showShortcuts: () => void
@@ -181,43 +181,47 @@ export const queryWords = (typed: string) =>
   foldText(typed).split(/\s+/).filter(Boolean)
 
 /** Czy polecenie pasuje do zapytania: każde słowo w nazwie, podpowiedzi albo synonimach. */
-export function matchesWords(cmd: Command, words: ReadonlyArray<string>) {
-  if (words.length === 0) return !cmd.onlyWhenSearching
-  const hay = foldText(`${cmd.label} ${cmd.hint ?? ''} ${cmd.keywords ?? ''}`)
-  return words.every((w) => hay.includes(w))
+export function matchesWords(command: Command, words: ReadonlyArray<string>) {
+  if (words.length === 0) return !command.onlyWhenSearching
+  const hay = foldText(
+    `${command.label} ${command.hint ?? ''} ${command.keywords ?? ''}`,
+  )
+  return words.every((word) => hay.includes(word))
 }
 
 /** Wyniki w stałej kolejności grup (ORDER), najwyżej `limit`. */
 export const orderResults = (list: ReadonlyArray<Command>, limit = 60) =>
-  ORDER.flatMap((g) => list.filter((x) => x.group === g)).slice(0, limit)
+  ORDER.flatMap((group) =>
+    list.filter((command) => command.group === group),
+  ).slice(0, limit)
 
 /** Stałe polecenia palety: teraz trwa, nowy wpis, akcje, dni, strony, ustawienia, preferencje. */
-export function buildCommands(ctx: PaletteContext): Array<Command> {
-  const { text: t, actions: a } = ctx
-  const c = t.commands
+export function buildCommands(context: PaletteContext): Array<Command> {
+  const { text, actions } = context
+  const commands = text.commands
   const go = (to: string, search?: Record<string, string>) => () =>
-    a.go(to, search)
+    actions.go(to, search)
   const list: Array<Command> = []
 
   // Teraz trwa: timer, przerwa i wstrzymane zadania na samej górze.
-  const { running, runningBreak } = ctx
+  const { running, runningBreak } = context
   if (running) {
     list.push(
       {
         id: 'timer-pause',
         group: 'timer',
-        label: fmt(c.pause, { title: running.title }),
+        label: fmt(commands.pause, { title: running.title }),
         icon: Pause,
-        keywords: KW.pause,
-        run: () => a.pause(running),
+        keywords: KEYWORDS.pause,
+        run: () => actions.pause(running),
       },
       {
         id: 'timer-stop',
         group: 'timer',
-        label: fmt(c.stop, { title: running.title }),
+        label: fmt(commands.stop, { title: running.title }),
         icon: Square,
-        keywords: KW.stop,
-        run: () => a.stop(running),
+        keywords: KEYWORDS.stop,
+        run: () => actions.stop(running),
       },
     )
   }
@@ -225,20 +229,20 @@ export function buildCommands(ctx: PaletteContext): Array<Command> {
     list.push({
       id: 'break-end',
       group: 'timer',
-      label: c.breakEnd,
+      label: commands.breakEnd,
       icon: Coffee,
-      keywords: KW.breakEnd,
-      run: () => a.endBreak(runningBreak.id),
+      keywords: KEYWORDS.breakEnd,
+      run: () => actions.endBreak(runningBreak.id),
     })
   }
-  for (const p of ctx.paused) {
+  for (const timeEntry of context.paused) {
     list.push({
-      id: `resume-${p.id}`,
+      id: `resume-${timeEntry.id}`,
       group: 'timer',
-      label: fmt(c.resume, { title: p.title }),
+      label: fmt(commands.resume, { title: timeEntry.title }),
       icon: Play,
-      keywords: KW.resume,
-      run: () => a.resume(p),
+      keywords: KEYWORDS.resume,
+      run: () => actions.resume(timeEntry),
     })
   }
 
@@ -247,18 +251,18 @@ export function buildCommands(ctx: PaletteContext): Array<Command> {
     {
       id: 'log',
       group: 'create',
-      label: c.logTime,
-      hint: c.logTimeHint,
+      label: commands.logTime,
+      hint: commands.logTimeHint,
       icon: Plus,
-      keywords: KW.log,
+      keywords: KEYWORDS.log,
       run: go('/app', { log: '' }),
     },
     {
       id: 'timer',
       group: 'create',
-      label: c.timer,
+      label: commands.timer,
       icon: Timer,
-      keywords: KW.timer,
+      keywords: KEYWORDS.timer,
       run: go('/app', { mode: 'timer' }),
     },
   )
@@ -266,50 +270,50 @@ export function buildCommands(ctx: PaletteContext): Array<Command> {
     list.push({
       id: 'break',
       group: 'actions',
-      label: c.breakStart,
+      label: commands.breakStart,
       icon: Coffee,
-      keywords: KW.breakStart,
-      run: a.startBreak,
+      keywords: KEYWORDS.breakStart,
+      run: actions.startBreak,
     })
-  for (const tpl of ctx.templates) {
-    const type = ctx.typeOf(tpl.taskTypeId)
+  for (const template of context.templates) {
+    const type = context.typeOf(template.taskTypeId)
     list.push({
-      id: `tpl-${tpl.id}`,
+      id: `tpl-${template.id}`,
       group: 'actions',
-      label: fmt(c.template, { name: tpl.title }),
+      label: fmt(commands.template, { name: template.title }),
       hint: [
-        tpl.defaultDurationMinutes !== null
-          ? ctx.formatMinutes(tpl.defaultDurationMinutes)
-          : c.templateHint,
-        tpl.hotkey ? `Alt+${tpl.hotkey}` : null,
+        template.defaultDurationMinutes !== null
+          ? context.formatMinutes(template.defaultDurationMinutes)
+          : commands.templateHint,
+        template.hotkey ? `Alt+${template.hotkey}` : null,
       ]
         .filter(Boolean)
         .join(' · '),
       icon: Zap,
       color: type?.color,
-      keywords: `${KW.template} ${type?.name ?? ''}`,
-      run: go('/app', { template: tpl.id }),
+      keywords: `${KEYWORDS.template} ${type?.name ?? ''}`,
+      run: go('/app', { template: template.id }),
     })
   }
 
   // Dni: wczoraj (po wpisaniu); wpisana data daje swój dzień w `typedCommands`.
-  const yesterday = addDays(ctx.today, -1)
+  const yesterday = addDays(context.today, -1)
   list.push(
     {
       id: 'yesterday-log',
       group: 'days',
-      label: c.yesterdayLog,
+      label: commands.yesterdayLog,
       icon: CalendarDays,
-      keywords: KW.day,
+      keywords: KEYWORDS.day,
       onlyWhenSearching: true,
       run: go('/app', { date: yesterday }),
     },
     {
       id: 'yesterday-open',
       group: 'days',
-      label: c.yesterdayOpen,
+      label: commands.yesterdayOpen,
       icon: CalendarDays,
-      keywords: KW.day,
+      keywords: KEYWORDS.day,
       onlyWhenSearching: true,
       run: go('/app/day', { date: yesterday }),
     },
@@ -319,51 +323,51 @@ export function buildCommands(ctx: PaletteContext): Array<Command> {
   const pages: Array<Omit<Command, 'group'>> = [
     {
       id: 'p-today',
-      label: t.nav.today,
+      label: text.nav.today,
       icon: Clock,
       keywords: 'today home dzis',
       run: go('/app'),
     },
     {
       id: 'p-tasks',
-      label: t.nav.tasks,
+      label: text.nav.tasks,
       icon: ListTodo,
-      keywords: KW.tasks,
+      keywords: KEYWORDS.tasks,
       run: go('/app/tasks'),
     },
     {
       id: 'p-sprints',
-      label: t.nav.sprints,
+      label: text.nav.sprints,
       icon: CalendarRange,
       keywords: 'sprints sprinty',
       run: go('/app/sprints'),
     },
     {
       id: 'p-reports',
-      label: t.nav.reports,
+      label: text.nav.reports,
       icon: BarChart3,
-      keywords: KW.report,
+      keywords: KEYWORDS.report,
       run: go('/app/analytics'),
     },
   ]
-  const sprint = ctx.currentSprint
+  const sprint = context.currentSprint
   if (sprint) {
     pages.push(
       {
         id: 'sprint-report',
-        label: c.sprintReport,
+        label: commands.sprintReport,
         hint: sprint.name,
         icon: BarChart3,
-        keywords: KW.report,
+        keywords: KEYWORDS.report,
         onlyWhenSearching: true,
         run: go('/app/analytics', { sprint: sprint.id }),
       },
       {
         id: 'sprint-tasks',
-        label: c.sprintTasks,
+        label: commands.sprintTasks,
         hint: sprint.name,
         icon: ListTodo,
-        keywords: KW.tasks,
+        keywords: KEYWORDS.tasks,
         onlyWhenSearching: true,
         run: go('/app/tasks', { sprint: sprint.id }),
       },
@@ -371,22 +375,22 @@ export function buildCommands(ctx: PaletteContext): Array<Command> {
   }
   pages.push({
     id: 'export',
-    label: c.export,
-    hint: ctx.isPro ? undefined : 'Pro',
+    label: commands.export,
+    hint: context.isPro ? undefined : 'Pro',
     icon: Download,
-    keywords: KW.export,
+    keywords: KEYWORDS.export,
     onlyWhenSearching: true,
     run: go('/app/analytics'),
   })
-  list.push(...pages.map((p) => ({ ...p, group: 'pages' as const })))
+  list.push(...pages.map((page) => ({ ...page, group: 'pages' as const })))
 
   // Ustawienia.
   for (const { to, key, icon } of settingsSections) {
     list.push({
       id: `s-${to}`,
       group: 'settings',
-      label: ctx.settingsText.sections[key].title,
-      hint: ctx.settingsText.sections[key].text,
+      label: context.settingsText.sections[key].title,
+      hint: context.settingsText.sections[key].text,
       icon,
       keywords: `settings ustawienia ${key}`,
       onlyWhenSearching: true,
@@ -396,105 +400,109 @@ export function buildCommands(ctx: PaletteContext): Array<Command> {
   list.push({
     id: 'day-off',
     group: 'settings',
-    label: c.dayOff,
+    label: commands.dayOff,
     icon: CalendarOff,
-    keywords: KW.dayOff,
+    keywords: KEYWORDS.dayOff,
     onlyWhenSearching: true,
     run: go('/app/settings/days-off'),
   })
   // Przestrzenie: przełączenie na inną i nowa przestrzeń.
-  for (const w of ctx.workspaces.items) {
-    if (w.id === ctx.workspaces.currentId) continue
+  for (const paletteWorkspace of context.workspaces.items) {
+    if (paletteWorkspace.id === context.workspaces.currentId) continue
     list.push({
-      id: `ws-${w.id}`,
+      id: `ws-${paletteWorkspace.id}`,
       group: 'actions',
-      label: fmt(ctx.workspaces.switchLabel, { name: w.name }),
-      hint: w.shortcut ?? undefined,
+      label: fmt(context.workspaces.switchLabel, {
+        name: paletteWorkspace.name,
+      }),
+      hint: paletteWorkspace.shortcut ?? undefined,
       icon: Briefcase,
-      keywords: KW.workspace,
+      keywords: KEYWORDS.workspace,
       onlyWhenSearching: true,
-      run: () => a.switchWorkspace(w.id),
+      run: () => actions.switchWorkspace(paletteWorkspace.id),
     })
   }
   list.push({
     id: 'ws-new',
     group: 'actions',
-    label: ctx.workspaces.createLabel,
+    label: context.workspaces.createLabel,
     icon: Briefcase,
-    keywords: KW.workspace,
+    keywords: KEYWORDS.workspace,
     onlyWhenSearching: true,
-    run: a.newWorkspace,
+    run: actions.newWorkspace,
   })
   list.push({
     id: 'feedback',
     group: 'actions',
-    label: ctx.feedbackLabel,
+    label: context.feedbackLabel,
     icon: MessageSquarePlus,
-    keywords: KW.feedback,
+    keywords: KEYWORDS.feedback,
     onlyWhenSearching: true,
     run: () => openFeedback(),
   })
-  if (!ctx.isPro)
+  if (!context.isPro)
     list.push({
       id: 'upgrade',
       group: 'settings',
-      label: c.upgrade,
+      label: commands.upgrade,
       icon: CreditCard,
-      keywords: KW.upgrade,
+      keywords: KEYWORDS.upgrade,
       onlyWhenSearching: true,
       run: go('/app/settings/plan'),
     })
 
   // Preferencje.
   const themeIcons = { dark: Moon, light: Sun, system: SunMoon } as const
-  for (const th of ['dark', 'light', 'system'] as const)
+  for (const tableHeader of ['dark', 'light', 'system'] as const)
     list.push({
-      id: `theme-${th}`,
+      id: `theme-${tableHeader}`,
       group: 'preferences',
-      label: `${t.menu.theme}: ${t.menu.themes[th]}`,
-      icon: themeIcons[th],
-      keywords: KW.theme,
+      label: `${text.menu.theme}: ${text.menu.themes[tableHeader]}`,
+      icon: themeIcons[tableHeader],
+      keywords: KEYWORDS.theme,
       onlyWhenSearching: true,
-      run: () => a.setTheme(th),
+      run: () => actions.setTheme(tableHeader),
     })
-  for (const pref of clockPrefs)
+  for (const preference of clockPrefs)
     list.push({
-      id: `clock-${pref}`,
+      id: `clock-${preference}`,
       group: 'preferences',
-      label: fmt(c.clock, { name: t.menu.clocks[pref] }),
+      label: fmt(commands.clock, { name: text.menu.clocks[preference] }),
       icon: Clock,
-      keywords: KW.clock,
+      keywords: KEYWORDS.clock,
       onlyWhenSearching: true,
-      run: () => a.setClock(pref),
+      run: () => actions.setClock(preference),
     })
-  for (const l of locales.filter((x) => x !== ctx.locale))
+  for (const locale of locales.filter(
+    (otherLocale) => otherLocale !== context.locale,
+  ))
     list.push({
-      id: `lang-${l}`,
+      id: `lang-${locale}`,
       group: 'preferences',
-      label: fmt(c.language, { name: localeNames[l] }),
+      label: fmt(commands.language, { name: localeNames[locale] }),
       icon: Languages,
-      keywords: KW.language,
+      keywords: KEYWORDS.language,
       onlyWhenSearching: true,
-      run: () => a.setLocale(l),
+      run: () => actions.setLocale(locale),
     })
   list.push(
     {
       id: 'shortcuts',
       group: 'preferences',
-      label: c.shortcuts,
+      label: commands.shortcuts,
       icon: Keyboard,
-      keywords: KW.shortcuts,
+      keywords: KEYWORDS.shortcuts,
       onlyWhenSearching: true,
-      run: a.showShortcuts,
+      run: actions.showShortcuts,
     },
     {
       id: 'logout',
       group: 'preferences',
-      label: c.logout,
+      label: commands.logout,
       icon: LogOut,
-      keywords: KW.logout,
+      keywords: KEYWORDS.logout,
       onlyWhenSearching: true,
-      run: a.signOut,
+      run: actions.signOut,
     },
   )
   return list
@@ -509,79 +517,83 @@ export interface TaskCommandMeta {
 
 /** Zadanie jako polecenie: Enter otwiera stronę zadania, Ctrl+Enter kontynuuje pracę. */
 export function taskCommand(
-  ctx: PaletteContext,
+  context: PaletteContext,
   entry: TimeEntry,
   group: Extract<Group, 'tasks' | 'found'>,
   meta: TaskCommandMeta = {},
 ): Command {
-  const c = ctx.text.commands
+  const commands = context.text.commands
   return {
     id: `t-${taskGroupKey(entry)}`,
     group,
     label: entry.title,
     hint: [
-      meta.running ? c.running : meta.finished ? c.finished : null,
+      meta.running
+        ? commands.running
+        : meta.finished
+          ? commands.finished
+          : null,
       meta.minutes !== undefined
-        ? fmt(c.taskMeta, {
-            date: ctx.formatDay(entry.workDate),
-            time: ctx.formatMinutes(meta.minutes),
+        ? fmt(commands.taskMeta, {
+            date: context.formatDay(entry.workDate),
+            time: context.formatMinutes(meta.minutes),
           })
-        : ctx.formatDay(entry.workDate),
+        : context.formatDay(entry.workDate),
     ]
       .filter(Boolean)
       .join(' · '),
     detail: meta.snippet ?? undefined,
     icon: ListTodo,
-    color: ctx.typeOf(entry.taskTypeId)?.color,
+    color: context.typeOf(entry.taskTypeId)?.color,
     run: () =>
-      ctx.actions.go('/app/task', {
+      context.actions.go('/app/task', {
         type: entry.taskTypeId,
         title: entry.title,
         ...(entry.link ? { link: entry.link } : {}),
       }),
-    alt: () => ctx.actions.resume(entry),
+    alt: () => context.actions.resume(entry),
   }
 }
 
 /** Polecenia z wpisanego tekstu: nowy wpis lub timer z tym tytułem i dzień, gdy to data. */
 export function typedCommands(
-  ctx: PaletteContext,
+  context: PaletteContext,
   typed: string,
 ): Array<Command> {
   if (!typed) return []
-  const c = ctx.text.commands
+  const commands = context.text.commands
   const go = (to: string, search?: Record<string, string>) => () =>
-    ctx.actions.go(to, search)
+    context.actions.go(to, search)
   const list: Array<Command> = [
     {
       id: 'log-titled',
       group: 'new',
-      label: fmt(c.logTitled, { title: typed }),
+      label: fmt(commands.logTitled, { title: typed }),
       icon: Plus,
       run: go('/app', { log: typed }),
     },
     {
       id: 'timer-titled',
       group: 'new',
-      label: fmt(c.timerTitled, { title: typed }),
+      label: fmt(commands.timerTitled, { title: typed }),
       icon: Timer,
       run: go('/app', { log: typed, mode: 'timer' }),
     },
   ]
-  const date = parseDateQuery(typed, ctx.today)
+  const date = parseDateQuery(typed, context.today)
   if (date)
     list.push(
       {
         id: 'date-log',
         group: 'days',
-        label: fmt(c.dayLog, { date: ctx.formatDay(date) }),
+        label: fmt(commands.dayLog, { date: context.formatDay(date) }),
         icon: CalendarDays,
-        run: go('/app', date === ctx.today ? {} : { date }),
+        run: go('/app', date === context.today ? {} : { date }),
       },
       {
         id: 'date-open',
         group: 'days',
-        label: fmt(c.dayOpen, { date: ctx.formatDay(date) }),
+        label: fmt(commands.dayOpen, { date: context.formatDay(date) }),
         icon: CalendarDays,
         run: go('/app/day', { date }),
       },

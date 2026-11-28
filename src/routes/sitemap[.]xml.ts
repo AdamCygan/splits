@@ -22,8 +22,8 @@ export const Route = createFileRoute('/sitemap.xml')({
       GET: () => {
         const urls = pages
           .map(
-            (p) =>
-              `  <url><loc>${absoluteUrl(p.path)}</loc><changefreq>${p.changefreq}</changefreq><priority>${p.priority}</priority></url>`,
+            (page) =>
+              `  <url><loc>${absoluteUrl(page.path)}</loc><changefreq>${page.changefreq}</changefreq><priority>${page.priority}</priority></url>`,
           )
           .join('\n')
         return new Response(

@@ -42,10 +42,10 @@ describe('recurring meetings', () => {
       { template: daily, start: '10:00', end: '10:15' },
     ])
     expect(
-      scheduledOn([daily, retro], '2026-11-27').map((m) => [
-        m.template.label,
-        m.start,
-        m.end,
+      scheduledOn([daily, retro], '2026-11-27').map((scheduledMeeting) => [
+        scheduledMeeting.template.label,
+        scheduledMeeting.start,
+        scheduledMeeting.end,
       ]),
     ).toEqual([
       ['Retro', '09:00', '10:00'],

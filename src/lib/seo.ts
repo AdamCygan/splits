@@ -32,14 +32,14 @@ export function seo({
   const locale = getLocale()
   image ??= locale === 'pl' ? site.ogImagePl : site.ogImage
   const common = commonMessages[locale]
-  const desc = description ?? common.seo.description
+  const pageDescription = description ?? common.seo.description
   const url = absoluteUrl(path)
   const imageUrl = absoluteUrl(image)
 
   return {
     meta: [
       { title },
-      { name: 'description', content: desc },
+      { name: 'description', content: pageDescription },
       {
         name: 'robots',
         content: noindex
@@ -50,7 +50,7 @@ export function seo({
       { property: 'og:locale', content: localeTags[locale].replace('-', '_') },
       { property: 'og:type', content: type },
       { property: 'og:title', content: title },
-      { property: 'og:description', content: desc },
+      { property: 'og:description', content: pageDescription },
       { property: 'og:url', content: url },
       { property: 'og:image', content: imageUrl },
       { property: 'og:image:width', content: '1200' },
@@ -58,7 +58,7 @@ export function seo({
       { property: 'og:image:alt', content: common.seo.ogAlt },
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: title },
-      { name: 'twitter:description', content: desc },
+      { name: 'twitter:description', content: pageDescription },
       { name: 'twitter:image', content: imageUrl },
     ],
     links: noindex ? [] : [{ rel: 'canonical', href: url }],

@@ -23,92 +23,99 @@ export interface ReportsPageProps {
  * Stan i dane: `useReportsViewModel`; obliczenia: domain/report.
  */
 export function ReportsPage({ initialSprintId }: ReportsPageProps) {
-  const t = useMessages(reportsMessages)
-  const vm = useReportsViewModel({ initialSprintId })
+  const messages = useMessages(reportsMessages)
+  const viewModel = useReportsViewModel({ initialSprintId })
   return (
     <div className="mx-auto max-w-6xl">
       <header className="mb-6">
-        <h1 className="type-display text-4xl sm:text-5xl">{t.pageTitle}</h1>
-        <p className="mt-2 max-w-2xl text-ink-soft">{t.lead}</p>
+        <h1 className="type-display text-4xl sm:text-5xl">
+          {messages.pageTitle}
+        </h1>
+        <p className="mt-2 max-w-2xl text-ink-soft">{messages.lead}</p>
       </header>
 
-      <ReportFilters vm={vm} />
-      <FreeLimitNote vm={vm} />
-      <ReportStats vm={vm} />
+      <ReportFilters viewModel={viewModel} />
+      <FreeLimitNote viewModel={viewModel} />
+      <ReportStats viewModel={viewModel} />
 
-      {vm.pending ? (
+      {viewModel.pending ? (
         <div role="status" className="space-y-3">
           <span className="sr-only">…</span>
-          {[0, 1, 2].map((i) => (
+          {[0, 1, 2].map((index) => (
             <div
-              key={i}
+              key={index}
               aria-hidden
               className="h-12 animate-pulse rounded-lg bg-muted"
             />
           ))}
         </div>
-      ) : vm.allRows.length === 0 ? (
+      ) : viewModel.allRows.length === 0 ? (
         <div className="rounded-2xl border border-line bg-surface px-5 py-10 text-center">
-          <p className="text-ink-soft">{t.empty}</p>
+          <p className="text-ink-soft">{messages.empty}</p>
           <Link
             to="/app"
             className={cn(buttonVariants({ variant: 'outline' }), 'mt-4')}
           >
-            {t.emptyCta}
+            {messages.emptyCta}
           </Link>
         </div>
       ) : (
         <>
           <section aria-labelledby="report-charts" className="mb-6">
             <h2 id="report-charts" className="sr-only">
-              {t.charts.title}
+              {messages.charts.title}
             </h2>
             {/* Wykres dnia i podział na rodzaje pracy obok siebie, tabela zadań pod spodem na całą szerokość. */}
             <div className="grid items-start gap-6 lg:grid-cols-3">
               <TimeChart
                 className="lg:col-span-2"
-                entries={vm.chartEntries}
-                from={vm.range.from}
-                to={vm.range.to}
-                types={vm.types}
-                onOpen={vm.openBucket}
+                entries={viewModel.chartEntries}
+                from={viewModel.range.from}
+                to={viewModel.range.to}
+                types={viewModel.types}
+                onOpen={viewModel.openBucket}
               />
-              <TypeBreakdown vm={vm} />
+              <TypeBreakdown viewModel={viewModel} />
               <HourHeatmap
-                entries={vm.chartEntries}
+                entries={viewModel.chartEntries}
                 className="lg:col-span-2"
               />
-              <EstimateChart rows={vm.rows} />
+              <EstimateChart rows={viewModel.rows} />
             </div>
           </section>
-          <TaskTable vm={vm} />
+          <TaskTable viewModel={viewModel} />
         </>
       )}
-      {vm.editing && <TaskDialog task={vm.editing} onClose={vm.closeEdit} />}
+      {viewModel.editing && (
+        <TaskDialog task={viewModel.editing} onClose={viewModel.closeEdit} />
+      )}
     </div>
   )
 }
 
 interface FreeLimitNoteProps {
-  vm: ReportsViewModel
+  viewModel: ReportsViewModel
 }
 
 /** Plan Free: okres sięga dalej niż historia planu, więc pokazujemy tylko ostatnie dni. */
-function FreeLimitNote({ vm }: FreeLimitNoteProps) {
-  const t = useMessages(reportsMessages)
+function FreeLimitNote({ viewModel }: FreeLimitNoteProps) {
+  const messages = useMessages(reportsMessages)
   const { locale } = useI18n()
-  if (!vm.clamped || !vm.oldest) return null
+  if (!viewModel.clamped || !viewModel.oldest) return null
   return (
     <p className="mb-6 rounded-xl border border-line bg-muted/50 px-4 py-3 text-sm">
-      {fmt(t.freeLimit, {
+      {fmt(messages.freeLimit, {
         days: FREE_LIMITS.historyDays,
-        date: formatDate(locale, vm.oldest, { day: 'numeric', month: 'long' }),
+        date: formatDate(locale, viewModel.oldest, {
+          day: 'numeric',
+          month: 'long',
+        }),
       })}{' '}
       <Link
         to="/app/settings/plan"
         className="font-medium underline underline-offset-4"
       >
-        {t.upgrade}
+        {messages.upgrade}
       </Link>
     </p>
   )

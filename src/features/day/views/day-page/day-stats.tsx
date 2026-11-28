@@ -6,57 +6,61 @@ import { dayViewMessages } from '#/i18n/messages/day-view'
 import type { DayViewModel } from '../../controllers/use-day'
 
 export interface DayStatsProps {
-  vm: DayViewModel
+  viewModel: DayViewModel
 }
 
 /** Sumy dnia: praca (wobec celu), skupienie, spotkania i przerwy. */
-export function DayStats({ vm }: DayStatsProps) {
-  const t = useMessages(dayViewMessages).stats
+export function DayStats({ viewModel }: DayStatsProps) {
+  const messages = useMessages(dayViewMessages).stats
   const format = useFormat()
-  const { summary, target } = vm
+  const { summary, target } = viewModel
   const joined = (parts: Array<string | null>) =>
     parts.filter(Boolean).join('; ') || undefined
   return (
     <StatGrid className="mb-6">
       <StatTile
-        label={t.worked}
+        label={messages.worked}
         value={format.minutes(summary.minutes)}
         hint={joined([
           target > 0
-            ? fmt(t.target, {
+            ? fmt(messages.target, {
                 percent: percentOf(summary.minutes, target),
                 target: format.minutes(target),
               })
             : null,
           summary.overtimeMinutes > 0
-            ? fmt(t.overtime, { time: format.minutes(summary.overtimeMinutes) })
+            ? fmt(messages.overtime, {
+                time: format.minutes(summary.overtimeMinutes),
+              })
             : null,
         ])}
       />
       <StatTile
-        label={t.focus}
+        label={messages.focus}
         value={format.minutes(summary.focusMinutes)}
         hint={joined([
           summary.longestFocus > 0
-            ? fmt(t.longest, { time: format.minutes(summary.longestFocus) })
+            ? fmt(messages.longest, {
+                time: format.minutes(summary.longestFocus),
+              })
             : null,
           summary.switches > 0
-            ? format.plural(t.switches, summary.switches)
+            ? format.plural(messages.switches, summary.switches)
             : null,
         ])}
       />
       <StatTile
-        label={t.meetings}
+        label={messages.meetings}
         value={format.minutes(summary.meetingMinutes)}
-        hint={format.plural(t.meetingCount, summary.meetings)}
+        hint={format.plural(messages.meetingCount, summary.meetings)}
       />
       <StatTile
-        label={t.breaks}
+        label={messages.breaks}
         value={format.minutes(summary.breakMinutes)}
         hint={
           summary.breaks === 0
-            ? t.noBreaks
-            : format.plural(t.breakCount, summary.breaks)
+            ? messages.noBreaks
+            : format.plural(messages.breakCount, summary.breaks)
         }
       />
     </StatGrid>

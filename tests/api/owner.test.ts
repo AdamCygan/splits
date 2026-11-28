@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { afterEach, describe, expect, it } from 'vitest'
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 import { users } from '#/server/db/schema'
 import { serverEnv } from '#/server/env'
 import { client, inSequence, numbered, registered } from './helpers'
@@ -15,14 +15,14 @@ interface Me {
   plan: string
 }
 
-const login = (c: ReturnType<typeof client>, username: string) =>
-  c.post<Session>('/auth/login', {
+const login = (apiClient: ReturnType<typeof client>, username: string) =>
+  apiClient.post<Session>('/auth/login', {
     login: username,
     password: 'correct horse 42',
   })
 
 const verify = (email: string) =>
-  db
+  database
     .update(users)
     .set({ emailVerifiedAt: new Date() })
     .where(sql`lower(${users.email}) = ${email}`)
@@ -32,7 +32,7 @@ async function owner() {
   const account = await registered()
   serverEnv.adminEmails.add(account.email)
   await verify(account.email)
-  const session = await login(account.c, account.username)
+  const session = await login(account.apiClient, account.username)
   return { ...account, id: session.body.user.id, session }
 }
 
@@ -44,21 +44,21 @@ describe('owner superuser (ADMIN_EMAILS)', () => {
     serverEnv.adminEmails.add(account.email)
 
     // Ktoś mógł założyć konto na cudzy adres: bez potwierdzenia nie ma panelu.
-    const unverified = await login(account.c, account.username)
+    const unverified = await login(account.apiClient, account.username)
     expect(unverified.body.user.role).toBe('client')
-    expect((await account.c.get('/admin/stats')).status).toBe(403)
+    expect((await account.apiClient.get('/admin/stats')).status).toBe(403)
 
     await verify(account.email)
-    const verified = await login(account.c, account.username)
+    const verified = await login(account.apiClient, account.username)
     expect(verified.body.user.role).toBe('admin')
-    expect((await account.c.get('/admin/stats')).status).toBe(200)
+    expect((await account.apiClient.get('/admin/stats')).status).toBe(200)
   })
 
   it('Should be promoted on token refresh, without logging in again', async () => {
     const account = await registered()
     serverEnv.adminEmails.add(account.email)
     await verify(account.email)
-    const refreshed = await account.c.post<Session>('/auth/refresh')
+    const refreshed = await account.apiClient.post<Session>('/auth/refresh')
     expect(refreshed.status).toBe(200)
     expect(refreshed.body.user.role).toBe('admin')
   })
@@ -68,7 +68,7 @@ describe('owner superuser (ADMIN_EMAILS)', () => {
     serverEnv.adminEmails.add(account.email)
     const logs: Array<string> = []
     const original = console.info
-    console.info = (msg: string) => logs.push(msg)
+    console.info = (message: string) => logs.push(message)
     try {
       await client().post('/auth/forgot-password', { email: account.email })
     } finally {
@@ -83,18 +83,20 @@ describe('owner superuser (ADMIN_EMAILS)', () => {
         })
       ).status,
     ).toBe(204)
-    const c = client()
-    expect((await login(c, account.username)).body.user.role).toBe('admin')
+    const apiClient = client()
+    expect((await login(apiClient, account.username)).body.user.role).toBe(
+      'admin',
+    )
   })
 
   it('Should get every Pro feature on the Free plan without paying', async () => {
-    const { c } = await owner()
-    const me = await c.get<Me>('/account')
+    const { apiClient } = await owner()
+    const me = await apiClient.get<Me>('/account')
     expect(me.body.plan).toBe('free')
 
     // Pełna historia: wpis sprzed 60 dni jest widoczny.
     const types =
-      await c.get<Array<Record<string, unknown> & { id: string }>>(
+      await apiClient.get<Array<Record<string, unknown> & { id: string }>>(
         '/task-types',
       )
     const today = new Intl.DateTimeFormat('en-CA', {
@@ -103,7 +105,7 @@ describe('owner superuser (ADMIN_EMAILS)', () => {
     const old = new Date(Date.now() - 60 * 86_400_000)
       .toISOString()
       .slice(0, 10)
-    const created = await c.post('/time-entries', {
+    const created = await apiClient.post('/time-entries', {
       taskTypeId: types.body[0]!.id,
       projectId: null,
       title: 'Old task',
@@ -117,22 +119,27 @@ describe('owner superuser (ADMIN_EMAILS)', () => {
       running: false,
     })
     expect(created.status).toBe(201)
-    const range = await c.get<Array<{ workDate: string }>>(
+    const range = await apiClient.get<Array<{ workDate: string }>>(
       `/time-entries?from=2000-01-01&to=${today}`,
     )
-    expect(range.body.map((e) => e.workDate)).toContain(old)
+    expect(range.body.map((entry) => entry.workDate)).toContain(old)
 
     // Bez limitu własnych typów pracy.
     const { id: _id, ...base } = types.body[1]!
-    const custom = await inSequence(numbered(5), (i) =>
-      c.post('/task-types', { ...base, name: `Custom ${i}` }),
+    const custom = await inSequence(numbered(5), (index) =>
+      apiClient.post('/task-types', { ...base, name: `Custom ${index}` }),
     )
-    expect(custom.map((res) => res.status)).toEqual([201, 201, 201, 201, 201])
+    expect(custom.map((response) => response.status)).toEqual([
+      201, 201, 201, 201, 201,
+    ])
 
     // Kupowanie samemu sobie nie ma sensu.
-    const checkout = await c.post<{ code: string }>('/billing/checkout', {
-      plan: 'pro',
-    })
+    const checkout = await apiClient.post<{ code: string }>(
+      '/billing/checkout',
+      {
+        plan: 'pro',
+      },
+    )
     expect(checkout.status).toBe(409)
     expect(checkout.body.code).toBe('billing.already_subscribed')
   })
@@ -140,35 +147,43 @@ describe('owner superuser (ADMIN_EMAILS)', () => {
   it('Should not be demoted, blocked or deleted by another admin', async () => {
     const boss = await owner()
     const other = await registered()
-    await db
+    await database
       .update(users)
       .set({ role: 'admin' })
       .where(sql`lower(${users.email}) = ${other.email}`)
-    await login(other.c, other.username)
+    await login(other.apiClient, other.username)
 
-    const listed = await other.c.get<{
+    const listed = await other.apiClient.get<{
       items: Array<{ id: string; isOwner: boolean }>
     }>(`/admin/users?q=${encodeURIComponent(boss.email)}`)
-    expect(listed.body.items.find((u) => u.id === boss.id)?.isOwner).toBe(true)
+    expect(listed.body.items.find((item) => item.id === boss.id)?.isOwner).toBe(
+      true,
+    )
 
     const refused = await Promise.all(
       [{ role: 'client' }, { disabled: true }].map((change) =>
-        other.c.patch<{ code: string }>(`/admin/users/${boss.id}`, change),
+        other.apiClient.patch<{ code: string }>(
+          `/admin/users/${boss.id}`,
+          change,
+        ),
       ),
     )
-    expect(refused.map((res) => [res.status, res.body.code])).toEqual([
+    expect(
+      refused.map((response) => [response.status, response.body.code]),
+    ).toEqual([
       [400, 'admin.owner'],
       [400, 'admin.owner'],
     ])
-    const deleted = await other.c.del<{ code: string }>(
+    const deleted = await other.apiClient.del<{ code: string }>(
       `/admin/users/${boss.id}`,
     )
     expect(deleted.body.code).toBe('admin.owner')
 
     // Zmiana planu właściciela jest dozwolona (np. testy płatności).
     expect(
-      (await other.c.patch(`/admin/users/${boss.id}`, { plan: 'pro' })).status,
+      (await other.apiClient.patch(`/admin/users/${boss.id}`, { plan: 'pro' }))
+        .status,
     ).toBe(200)
-    expect((await boss.c.get('/admin/stats')).status).toBe(200)
+    expect((await boss.apiClient.get('/admin/stats')).status).toBe(200)
   })
 })

@@ -69,8 +69,8 @@ const entry = (patch: Partial<TimeEntry> = {}): TimeEntry => ({
 
 describe('entry form model', () => {
   it('Should start a new draft from the work type and the current time', () => {
-    const d = initialDraft(null, type(), 10 * 60 + 5)
-    expect(d).toMatchObject({
+    const draft = initialDraft(null, type(), 10 * 60 + 5)
+    expect(draft).toMatchObject({
       taskTypeId: 'task',
       mode: 'range',
       start: '09:35',
@@ -84,8 +84,8 @@ describe('entry form model', () => {
   })
 
   it('Should edit an entry as it was saved', () => {
-    const d = initialDraft(entry(), undefined)
-    expect(d).toMatchObject({
+    const draft = initialDraft(entry(), undefined)
+    expect(draft).toMatchObject({
       mode: 'range',
       start: '09:00',
       end: '10:30',
@@ -94,12 +94,12 @@ describe('entry form model', () => {
       overtimeDuration: '30',
       estimate: '240',
     })
-    expect(draftMinutes(d)).toBe(90)
+    expect(draftMinutes(draft)).toBe(90)
   })
 
   it('Should copy an entry into the next slot without overtime', () => {
-    const d = copyDraft(entry())
-    expect(d).toMatchObject({
+    const draft = copyDraft(entry())
+    expect(draft).toMatchObject({
       mode: 'range',
       start: '10:30',
       end: '12:00',
@@ -112,13 +112,13 @@ describe('entry form model', () => {
   })
 
   it('Should turn a draft into API input and a timer start', () => {
-    const d = {
+    const draft = {
       ...initialDraft(null, type(), 600),
       title: '  Fix  ',
       duration: '1h 15m',
       mode: 'duration' as const,
     }
-    const input = toInput(d, '2026-11-26', 'required')
+    const input = toInput(draft, '2026-11-26', 'required')
     expect(input).toMatchObject({
       title: 'Fix',
       startTime: null,
@@ -127,10 +127,10 @@ describe('entry form model', () => {
       storyPoints: 3,
       running: false,
     })
-    expect(toInput(d, '2026-11-26', 'hidden').storyPoints).toBeNull()
+    expect(toInput(draft, '2026-11-26', 'hidden').storyPoints).toBeNull()
     const timer = toTimerInput(
       toInput(
-        { ...d, mode: 'timer', start: '08:00' },
+        { ...draft, mode: 'timer', start: '08:00' },
         '2026-11-26',
         'required',
       ),
@@ -140,30 +140,30 @@ describe('entry form model', () => {
   })
 
   it('Should switch type, mode and quick logs', () => {
-    const d = initialDraft(null, type(), 600)
-    expect(withType(d, meeting, false)).toMatchObject({
+    const draft = initialDraft(null, type(), 600)
+    expect(withType(draft, meeting, false)).toMatchObject({
       taskTypeId: 'meeting',
       mode: 'duration',
       storyPoints: '',
     })
     // Edycja zostawia SP wpisu.
-    expect(withType(d, meeting, true).storyPoints).toBe('3')
+    expect(withType(draft, meeting, true).storyPoints).toBe('3')
     // Z godzin na czas trwania: policzone minuty przechodzą do pola.
-    expect(withMode(d, 'duration', { now: '10:00' }).duration).toBe('30')
-    expect(withMode(d, 'timer', { now: '10:02' }).start).toBe('10:02')
+    expect(withMode(draft, 'duration', { now: '10:00' }).duration).toBe('30')
+    expect(withMode(draft, 'timer', { now: '10:02' }).start).toBe('10:02')
     expect(
-      withQuickLog(d, meeting, 45, { now: '10:00', editing: false }),
+      withQuickLog(draft, meeting, 45, { now: '10:00', editing: false }),
     ).toMatchObject({ taskTypeId: 'meeting', mode: 'duration', duration: '45' })
     expect(
-      withQuickLog(d, type(), 'timer', { now: '10:07', editing: false }),
+      withQuickLog(draft, type(), 'timer', { now: '10:07', editing: false }),
     ).toMatchObject({ mode: 'timer', start: '10:07' })
   })
 
   it('Should take a task from search, or a title and mode from the palette', () => {
-    const d = initialDraft(null, type(), 600)
+    const draft = initialDraft(null, type(), 600)
     expect(
       withPrefill(
-        d,
+        draft,
         { key: 1, entry: entry() },
         { timerAllowed: true, now: '10:00' },
       ),
@@ -173,11 +173,11 @@ describe('entry form model', () => {
       projectId: 'p1',
       estimate: '240',
       // czas zostaje z formularza
-      start: d.start,
+      start: draft.start,
     })
     expect(
       withPrefill(
-        d,
+        draft,
         { key: 2, title: 'Docs', mode: 'timer' },
         { timerAllowed: false, now: '10:00' },
       ),
@@ -185,12 +185,12 @@ describe('entry form model', () => {
   })
 
   it('Should continue where the saved entry ended', () => {
-    const d = {
+    const draft = {
       ...initialDraft(null, type(), 600),
       start: '09:00',
       end: '10:00',
     }
-    expect(afterSave(d, type())).toMatchObject({
+    expect(afterSave(draft, type())).toMatchObject({
       start: '10:00',
       end: '10:30',
       title: '',
@@ -208,7 +208,9 @@ describe('entry form model', () => {
       { id: 'a', points: 1, maxMinutes: 60 },
       { id: 'b', points: 3, maxMinutes: 240 },
     ]
-    expect(scaleWithValue(scale, 2).map((s) => s.points)).toEqual([1, 2, 3])
+    expect(
+      scaleWithValue(scale, 2).map((spScaleStep) => spScaleStep.points),
+    ).toEqual([1, 2, 3])
     expect(scaleWithValue(scale, 3)).toHaveLength(2)
   })
 })

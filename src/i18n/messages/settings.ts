@@ -1,7 +1,7 @@
 import type { Dictionary } from '../context'
 import type { Plural } from '../format'
 
-const en = {
+const english = {
   title: 'Settings',
   lead: 'Set up Timeblame to match how you and your team work. Changes apply right away.',
   sectionsLabel: 'Settings sections',
@@ -609,9 +609,9 @@ const en = {
   },
 }
 
-export type SettingsMessages = typeof en
+export type SettingsMessages = typeof english
 
-const pl: SettingsMessages = {
+const polish: SettingsMessages = {
   title: 'Ustawienia',
   lead: 'Dopasuj Timeblame do tego, jak pracujesz Ty i Twój zespół. Zmiany działają od razu.',
   sectionsLabel: 'Sekcje ustawień',
@@ -1254,4 +1254,7 @@ const pl: SettingsMessages = {
   },
 }
 
-export const settingsMessages: Dictionary<SettingsMessages> = { en, pl }
+export const settingsMessages: Dictionary<SettingsMessages> = {
+  en: english,
+  pl: polish,
+}

@@ -28,7 +28,7 @@ const AMOUNTS: Readonly<Record<TileId, number>> = {
  */
 export function PricingSection({ headingLevel = 3 }: PricingSectionProps) {
   const PlanHeading = headingLevel === 2 ? 'h2' : 'h3'
-  const t = useMessages(marketingMessages).pricing
+  const messages = useMessages(marketingMessages).pricing
   const { tag } = useI18n()
   const yearlyPerMonth = formatPrice(
     Math.round((PRO_PRICES.year / 12) * 100) / 100,
@@ -39,14 +39,14 @@ export function PricingSection({ headingLevel = 3 }: PricingSectionProps) {
     <div>
       <div className="grid overflow-hidden rounded-2xl border border-line bg-surface md:grid-cols-3">
         {TILES.map((id) => {
-          const tile = t.tiles[id]
+          const tile = messages.tiles[id]
           const featured = id === 'year'
-          const badge = id === 'year' ? t.tiles.year.badge : null
+          const badge = id === 'year' ? messages.tiles.year.badge : null
           const hint =
             id === 'year'
               ? fmt(tile.hint, { price: yearlyPerMonth })
               : tile.hint
-          const features = t.features[id === 'free' ? 'free' : 'pro']
+          const features = messages.features[id === 'free' ? 'free' : 'pro']
 
           return (
             <div
@@ -113,14 +113,14 @@ export function PricingSection({ headingLevel = 3 }: PricingSectionProps) {
                   to="/register"
                   search={id === 'free' ? {} : { plan: 'pro', interval: id }}
                 >
-                  {t.cta[id]}
+                  {messages.cta[id]}
                 </Link>
               </Button>
             </div>
           )
         })}
       </div>
-      <p className="mt-4 text-center text-sm text-ink-soft">{t.note}</p>
+      <p className="mt-4 text-center text-sm text-ink-soft">{messages.note}</p>
     </div>
   )
 }

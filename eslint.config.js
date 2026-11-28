@@ -3,8 +3,30 @@
 import { tanstackConfig } from '@tanstack/eslint-config'
 import security from 'eslint-plugin-security'
 
-/** Zasady kodu (src i testy): nazwane typy parametrów, bez IIFE. */
+/**
+ * Nazwy opisowe: zmienne, parametry i importy nie są skrótami słów
+ * (e → event/error, x → entry, tx → transaction, vm → viewModel…). Jednoliterowe łapie id-length.
+ */
+const abbreviation = String.raw`/^_*(acc|arg|args|arr|brk|btn|cb|cfg|cls|cmd|cnt|csp|ctx|cur|db|def|deps|desc|doc|el|err|ev|fn|idx|iso|iv|lvl|mod|msg|nav|nl|num|obj|op|opts|ph|pos|pref|prev|qr|req|res|sel|sp|str|subs|tmp|tpl|tx|tz|ua|uid|val|vars|vm|ymd)$/`
+const namingRules = [
+  'VariableDeclarator > Identifier.id',
+  ':function > Identifier.params',
+  'AssignmentPattern > Identifier.left',
+  'CatchClause > Identifier.param',
+  'ObjectPattern > Property > Identifier.value',
+  'ArrayPattern > Identifier',
+  'RestElement > Identifier',
+  'ImportNamespaceSpecifier > Identifier.local',
+  'ImportDefaultSpecifier > Identifier.local',
+].map((declaration) => ({
+  selector: `${declaration}[name=${abbreviation}]`,
+  message:
+    'Use a descriptive name instead of an abbreviation (event, error, transaction, viewModel, response…).',
+}))
+
+/** Zasady kodu (src i testy): opisowe nazwy, nazwane typy parametrów, bez IIFE. */
 const codeRules = [
+  ...namingRules,
   {
     selector:
       ':function > :matches(Identifier, ObjectPattern, ArrayPattern).params > TSTypeAnnotation > TSTypeLiteral',
@@ -135,6 +157,7 @@ export default [
       'pnpm/json-enforce-catalog': 'off',
       '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
       'no-restricted-syntax': ['error', ...codeRules],
+      'id-length': ['error', { min: 2, properties: 'never' }],
     },
   },
   {

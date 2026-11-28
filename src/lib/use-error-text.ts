@@ -5,11 +5,11 @@ import type { ApiFailure } from './api-client'
 
 /** Komunikat błędu w języku użytkownika: znany kod → tłumaczenie, inaczej tekst z serwera. */
 export function useErrorText() {
-  const t = useMessages(errorMessages)
+  const messages = useMessages(errorMessages)
   return useCallback(
     (failure: ApiFailure) =>
-      isKnownError(failure.code) ? t[failure.code] : failure.message,
-    [t],
+      isKnownError(failure.code) ? messages[failure.code] : failure.message,
+    [messages],
   )
 }
 

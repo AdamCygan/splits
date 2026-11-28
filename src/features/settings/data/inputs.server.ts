@@ -11,7 +11,9 @@ export const settingsInput = z.object({
     .max(LIMITS.workdayMinutes.max),
   workingDays: z.array(z.number().int().min(0).max(6)).min(1).max(7),
   weekStartsOn: z.number().int().min(0).max(6),
-  timeRoundingMinutes: z.union(ROUNDING_OPTIONS.map((v) => z.literal(v))),
+  timeRoundingMinutes: z.union(
+    ROUNDING_OPTIONS.map((roundingOption) => z.literal(roundingOption)),
+  ),
   timezone,
   locale,
   dailyReminderAt: time.nullable(),

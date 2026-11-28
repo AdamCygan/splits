@@ -11,7 +11,7 @@ export interface PlanLimitProps {
 
 /** Informacja o limicie planu Free z odnośnikiem do strony planu. */
 export function PlanLimit({ id, children }: PlanLimitProps) {
-  const t = useMessages(billingMessages).limits
+  const messages = useMessages(billingMessages).limits
   return (
     <p id={id} className="mb-4 rounded-lg bg-muted px-3.5 py-2.5 text-sm">
       {children}{' '}
@@ -19,7 +19,7 @@ export function PlanLimit({ id, children }: PlanLimitProps) {
         to="/app/settings/plan"
         className="font-medium underline underline-offset-4"
       >
-        {t.upgrade}
+        {messages.upgrade}
       </Link>
     </p>
   )

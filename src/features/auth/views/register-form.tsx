@@ -21,7 +21,7 @@ export function RegisterForm({
   next = 'setup',
   interval = 'year',
 }: RegisterFormProps) {
-  const t = useMessages(authMessages)
+  const messages = useMessages(authMessages)
   const { form, formError, serverErrors, clearServerError } = useRegister({
     next,
     interval,
@@ -30,8 +30,8 @@ export function RegisterForm({
   return (
     <form
       noValidate
-      onSubmit={(e) => {
-        e.preventDefault()
+      onSubmit={(event) => {
+        event.preventDefault()
         void form.handleSubmit()
       }}
       className="space-y-5"
@@ -41,18 +41,18 @@ export function RegisterForm({
       <form.Field name="username">
         {(field) => (
           <TextField
-            label={t.register.username}
+            label={messages.register.username}
             name={field.name}
             autoComplete="username"
             autoCapitalize="none"
             spellCheck={false}
             value={field.state.value}
             onBlur={field.handleBlur}
-            onChange={(e) => {
+            onChange={(event) => {
               clearServerError('username')
-              field.handleChange(e.target.value)
+              field.handleChange(event.target.value)
             }}
-            hint={t.register.usernameHint}
+            hint={messages.register.usernameHint}
             errors={errorMessages([
               ...field.state.meta.errors,
               ...(serverErrors.username ?? []),
@@ -64,15 +64,15 @@ export function RegisterForm({
       <form.Field name="email">
         {(field) => (
           <TextField
-            label={t.register.email}
+            label={messages.register.email}
             type="email"
             name={field.name}
             autoComplete="email"
             value={field.state.value}
             onBlur={field.handleBlur}
-            onChange={(e) => {
+            onChange={(event) => {
               clearServerError('email')
-              field.handleChange(e.target.value)
+              field.handleChange(event.target.value)
             }}
             errors={errorMessages([
               ...field.state.meta.errors,
@@ -85,17 +85,17 @@ export function RegisterForm({
       <form.Field name="password">
         {(field) => (
           <TextField
-            label={t.register.password}
+            label={messages.register.password}
             type="password"
             name={field.name}
             autoComplete="new-password"
             value={field.state.value}
             onBlur={field.handleBlur}
-            onChange={(e) => {
+            onChange={(event) => {
               clearServerError('password')
-              field.handleChange(e.target.value)
+              field.handleChange(event.target.value)
             }}
-            hint={t.register.passwordHint}
+            hint={messages.register.passwordHint}
             errors={errorMessages([
               ...field.state.meta.errors,
               ...(serverErrors.password ?? []),
@@ -114,16 +114,16 @@ export function RegisterForm({
                   type="checkbox"
                   name={field.name}
                   checked={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.checked)}
+                  onChange={(event) => field.handleChange(event.target.checked)}
                   aria-invalid={errors.length > 0 || undefined}
                   aria-describedby={errors.length ? 'terms-error' : undefined}
                   className="mt-0.5 size-4 shrink-0 accent-[var(--ink)]"
                 />
                 <span className="text-ink-soft">
                   <TermsText
-                    template={t.register.terms}
-                    terms={t.register.termsLink}
-                    privacy={t.register.privacyLink}
+                    template={messages.register.terms}
+                    terms={messages.register.termsLink}
+                    privacy={messages.register.privacyLink}
                   />
                 </span>
               </label>
@@ -137,7 +137,7 @@ export function RegisterForm({
         }}
       </form.Field>
 
-      <form.Subscribe selector={(s) => s.isSubmitting}>
+      <form.Subscribe selector={(formState) => formState.isSubmitting}>
         {(isSubmitting) => (
           <Button
             type="submit"
@@ -146,7 +146,9 @@ export function RegisterForm({
             disabled={isSubmitting}
             aria-busy={isSubmitting}
           >
-            {isSubmitting ? t.register.submitting : t.register.submit}
+            {isSubmitting
+              ? messages.register.submitting
+              : messages.register.submit}
           </Button>
         )}
       </form.Subscribe>
@@ -176,13 +178,13 @@ function TermsText({ template, terms, privacy }: TermsTextProps) {
     <>
       {template
         .split(/(\{terms\}|\{privacy\})/)
-        .map((part, i) =>
+        .map((part, index) =>
           part === '{terms}' ? (
             link('/terms', terms)
           ) : part === '{privacy}' ? (
             link('/privacy', privacy)
           ) : (
-            <span key={i}>{part}</span>
+            <span key={index}>{part}</span>
           ),
         )}
     </>

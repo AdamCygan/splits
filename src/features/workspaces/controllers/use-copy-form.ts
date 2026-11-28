@@ -14,7 +14,7 @@ export interface CopyFormOptions {
 export function useCopyForm({ target, onDone }: CopyFormOptions) {
   const { items } = useWorkspaces()
   const { copy } = useWorkspaceActions()
-  const sources = items.filter((w) => w.id !== target.id)
+  const sources = items.filter((item) => item.id !== target.id)
   const [from, setFrom] = useState(sources[0]?.id ?? '')
   const [kinds, setKinds] = useState<Array<CopyKind>>([...DEFAULT_COPY])
   return {

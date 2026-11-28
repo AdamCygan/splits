@@ -28,7 +28,10 @@ export function dayTotals(
   types: ReadonlyArray<TaskType>,
   targetMinutes: number,
 ) {
-  const minutes = entries.reduce((sum, e) => sum + e.durationMinutes, 0)
+  const minutes = entries.reduce(
+    (sum, timeEntry) => sum + timeEntry.durationMinutes,
+    0,
+  )
   return {
     minutes,
     storyPoints: totalsOf(groupTasks(entries, types)).storyPoints,

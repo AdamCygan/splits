@@ -23,7 +23,7 @@ export interface SummaryDialogProps {
 
 /** Podsumowanie zadania z wszystkich jego wpisów, według szablonu użytkownika. */
 export function SummaryDialog({ entry, type, onClose }: SummaryDialogProps) {
-  const t = useMessages(entriesMessages).taskSummary
+  const messages = useMessages(entriesMessages).taskSummary
   const app = useMessages(appMessages)
   const { locale } = useI18n()
   const template =
@@ -47,9 +47,9 @@ export function SummaryDialog({ entry, type, onClose }: SummaryDialogProps) {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(text)
-      toast.success(t.copied)
+      toast.success(messages.copied)
     } catch {
-      toast.error(t.copyFailed)
+      toast.error(messages.copyFailed)
     }
   }
 
@@ -57,8 +57,8 @@ export function SummaryDialog({ entry, type, onClose }: SummaryDialogProps) {
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         size="lg"
-        title={fmt(t.title, { name: entry.title })}
-        description={t.description}
+        title={fmt(messages.title, { name: entry.title })}
+        description={messages.description}
         closeLabel={app.actions.close}
         footer={
           <>
@@ -67,11 +67,11 @@ export function SummaryDialog({ entry, type, onClose }: SummaryDialogProps) {
               className={buttonVariants({ variant: 'ghost' })}
             >
               <Settings2 aria-hidden className="size-4" />
-              {t.editTemplate}
+              {messages.editTemplate}
             </Link>
             <Button onClick={() => void copy()} disabled={!text}>
               <Copy aria-hidden className="size-4" />
-              {t.copy}
+              {messages.copy}
             </Button>
           </>
         }
@@ -81,7 +81,7 @@ export function SummaryDialog({ entry, type, onClose }: SummaryDialogProps) {
         ) : (
           <>
             <label htmlFor="summary-text" className="sr-only">
-              {t.textLabel}
+              {messages.textLabel}
             </label>
             <textarea
               id="summary-text"
@@ -94,7 +94,7 @@ export function SummaryDialog({ entry, type, onClose }: SummaryDialogProps) {
                 ),
               )}
               value={text}
-              onFocus={(e) => e.currentTarget.select()}
+              onFocus={(event) => event.currentTarget.select()}
               className="w-full resize-y rounded-lg border border-line bg-muted/40 px-4 py-3 font-mono text-sm leading-relaxed text-ink"
             />
           </>

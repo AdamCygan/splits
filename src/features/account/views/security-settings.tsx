@@ -42,13 +42,13 @@ import {
  * logowanie dwuetapowe (TOTP + kody zapasowe), zalogowane urządzenia, Google i pomoc.
  */
 export function SecuritySettings() {
-  const t = useMessages(settingsMessages)
+  const messages = useMessages(settingsMessages)
   const me = useQuery(meQuery).data
   return (
     <div className="space-y-6">
       <SectionHeader
-        title={t.sections.security.title}
-        lead={t.sections.security.text}
+        title={messages.sections.security.title}
+        lead={messages.sections.security.text}
       />
       {me?.isDemo ? (
         <DemoNotice />
@@ -76,7 +76,7 @@ interface TwoFactorCardProps {
 }
 
 function TwoFactorCard({ security }: TwoFactorCardProps) {
-  const t = useMessages(settingsMessages).security
+  const messages = useMessages(settingsMessages).security
   const app = useMessages(appMessages)
   const format = useFormat()
   const [setup, setSetup] = useState(false)
@@ -96,15 +96,15 @@ function TwoFactorCard({ security }: TwoFactorCardProps) {
   const pending = confirm === 'disable' ? disable : regenerate
 
   return (
-    <SettingsCard title={t.twoFactorTitle} lead={t.twoFactorLead}>
+    <SettingsCard title={messages.twoFactorTitle} lead={messages.twoFactorLead}>
       {security.twoFactor ? (
         <div className="flex flex-wrap items-center gap-3">
           <Badge tone="success">
             <ShieldCheck aria-hidden className="size-3.5" />
-            {t.on}
+            {messages.on}
           </Badge>
           <span className="text-sm text-ink-soft">
-            {format.plural(t.codesLeft, security.recoveryCodesLeft)}
+            {format.plural(messages.codesLeft, security.recoveryCodesLeft)}
           </span>
           <span className="flex flex-wrap gap-2 sm:ml-auto">
             <Button
@@ -113,23 +113,23 @@ function TwoFactorCard({ security }: TwoFactorCardProps) {
               onClick={() => setConfirm('codes')}
             >
               <KeyRound aria-hidden className="size-4" />
-              {t.newCodes}
+              {messages.newCodes}
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setConfirm('disable')}
             >
-              {t.turnOff}
+              {messages.turnOff}
             </Button>
           </span>
         </div>
       ) : (
         <div className="flex flex-wrap items-center gap-3">
-          <Badge tone="muted">{t.off}</Badge>
+          <Badge tone="muted">{messages.off}</Badge>
           <Button onClick={() => setSetup(true)}>
             <ShieldCheck aria-hidden className="size-4" />
-            {t.turnOn}
+            {messages.turnOn}
           </Button>
         </div>
       )}
@@ -148,9 +148,15 @@ function TwoFactorCard({ security }: TwoFactorCardProps) {
       <ConfirmDialog
         open={confirm !== null}
         onOpenChange={(next) => !next && reset()}
-        title={confirm === 'disable' ? t.disableTitle : t.newCodesTitle}
-        description={confirm === 'disable' ? t.disableText : t.newCodesText}
-        confirmLabel={confirm === 'disable' ? t.turnOff : t.makeCodes}
+        title={
+          confirm === 'disable' ? messages.disableTitle : messages.newCodesTitle
+        }
+        description={
+          confirm === 'disable' ? messages.disableText : messages.newCodesText
+        }
+        confirmLabel={
+          confirm === 'disable' ? messages.turnOff : messages.makeCodes
+        }
         cancelLabel={app.actions.cancel}
         destructive={confirm === 'disable'}
         busy={pending.isPending || code.trim().length < 6}
@@ -181,11 +187,11 @@ interface SetupDialogProps {
 
 /** Włączanie 2FA: QR i klucz, potem kod z aplikacji (+ hasło); po sukcesie kody zapasowe. */
 function SetupDialog({ security, onClose, onEnabled }: SetupDialogProps) {
-  const t = useMessages(settingsMessages).security
+  const messages = useMessages(settingsMessages).security
   const app = useMessages(appMessages)
   const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
-  const { secret, qr, enable } = useTwoFactorSetup({
+  const { secret, qrCode, enable } = useTwoFactorSetup({
     hasPassword: security.hasPassword,
     onEnabled,
   })
@@ -193,8 +199,8 @@ function SetupDialog({ security, onClose, onEnabled }: SetupDialogProps) {
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        title={t.setupTitle}
-        description={t.setupScan}
+        title={messages.setupTitle}
+        description={messages.setupScan}
         closeLabel={app.actions.close}
         footer={
           <>
@@ -206,7 +212,7 @@ function SetupDialog({ security, onClose, onEnabled }: SetupDialogProps) {
               form="totp-setup"
               disabled={!secret || enable.isPending || code.trim().length < 6}
             >
-              {t.setupConfirm}
+              {messages.setupConfirm}
             </Button>
           </>
         }
@@ -214,50 +220,56 @@ function SetupDialog({ security, onClose, onEnabled }: SetupDialogProps) {
         <form
           id="totp-setup"
           noValidate
-          onSubmit={(e) => {
-            e.preventDefault()
+          onSubmit={(event) => {
+            event.preventDefault()
             enable.mutate({ code, password })
           }}
           className="space-y-4"
         >
           <div className="flex flex-wrap items-start gap-5">
             <div className="size-[200px] shrink-0 overflow-hidden rounded-lg border border-line bg-white p-1">
-              {qr && <img src={qr} alt={t.setupScan} className="size-full" />}
+              {qrCode && (
+                <img
+                  src={qrCode}
+                  alt={messages.setupScan}
+                  className="size-full"
+                />
+              )}
             </div>
             <div className="min-w-0 flex-1 basis-48">
-              <p className="text-sm text-ink-soft">{t.setupManual}</p>
+              <p className="text-sm text-ink-soft">{messages.setupManual}</p>
               <p className="mt-1 font-mono text-sm break-all select-all">
                 {secret?.secret.replace(/(.{4})/g, '$1 ').trim()}
               </p>
             </div>
           </div>
           <Field
-            label={t.setupCode}
+            label={messages.setupCode}
             error={mutationFieldError(enable.error, 'code')}
           >
-            {(a) => (
+            {(fieldProps) => (
               <Input
-                {...a}
+                {...fieldProps}
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 className="max-w-48 font-mono tracking-widest"
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
+                onChange={(event) => setCode(event.target.value)}
               />
             )}
           </Field>
           {security.hasPassword && (
             <Field
-              label={t.password}
+              label={messages.password}
               error={mutationFieldError(enable.error, 'password')}
             >
-              {(a) => (
+              {(fieldProps) => (
                 <Input
-                  {...a}
+                  {...fieldProps}
                   type="password"
                   autoComplete="current-password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(event) => setPassword(event.target.value)}
                 />
               )}
             </Field>
@@ -274,16 +286,16 @@ interface CodesDialogProps {
 }
 
 function CodesDialog({ codes, onClose }: CodesDialogProps) {
-  const t = useMessages(settingsMessages).security
+  const messages = useMessages(settingsMessages).security
   const app = useMessages(appMessages)
   const text = codes.join('\n')
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        title={t.codesTitle}
-        description={t.codesLead}
+        title={messages.codesTitle}
+        description={messages.codesLead}
         closeLabel={app.actions.close}
-        footer={<Button onClick={onClose}>{t.codesDone}</Button>}
+        footer={<Button onClick={onClose}>{messages.codesDone}</Button>}
       >
         <ul className="grid grid-cols-2 gap-2 rounded-lg border border-line bg-muted/50 p-4 font-mono text-[0.9375rem]">
           {codes.map((code) => (
@@ -297,11 +309,11 @@ function CodesDialog({ codes, onClose }: CodesDialogProps) {
             onClick={() =>
               void navigator.clipboard
                 .writeText(text)
-                .then(() => toast.success(t.codesCopied))
+                .then(() => toast.success(messages.codesCopied))
             }
           >
             <Copy aria-hidden className="size-4" />
-            {t.copyCodes}
+            {messages.copyCodes}
           </Button>
           <Button
             variant="outline"
@@ -310,15 +322,15 @@ function CodesDialog({ codes, onClose }: CodesDialogProps) {
               const url = URL.createObjectURL(
                 new Blob([text], { type: 'text/plain' }),
               )
-              const a = document.createElement('a')
-              a.href = url
-              a.download = 'timeblame-backup-codes.txt'
-              a.click()
+              const element = document.createElement('a')
+              element.href = url
+              element.download = 'timeblame-backup-codes.txt'
+              element.click()
               URL.revokeObjectURL(url)
             }}
           >
             <Download aria-hidden className="size-4" />
-            {t.downloadCodes}
+            {messages.downloadCodes}
           </Button>
         </div>
       </DialogContent>
@@ -327,11 +339,11 @@ function CodesDialog({ codes, onClose }: CodesDialogProps) {
 }
 
 function DevicesCard() {
-  const t = useMessages(settingsMessages).security
+  const messages = useMessages(settingsMessages).security
   const { locale } = useI18n()
   const { sessions, revoke, others } = useDevices()
-  const when = (iso: string) =>
-    formatDate(locale, new Date(iso), {
+  const when = (isoDate: string) =>
+    formatDate(locale, new Date(isoDate), {
       day: 'numeric',
       month: 'short',
       hour: '2-digit',
@@ -339,39 +351,45 @@ function DevicesCard() {
     })
 
   return (
-    <SettingsCard title={t.devicesTitle} lead={t.devicesLead}>
+    <SettingsCard title={messages.devicesTitle} lead={messages.devicesLead}>
       <ul className="divide-y divide-line rounded-lg border border-line">
-        {sessions.map((s) => {
-          const device = describeDevice(s.userAgent)
-          const name = device ? fmt(t.deviceOn, device) : t.unknownDevice
+        {sessions.map((session) => {
+          const device = describeDevice(session.userAgent)
+          const name = device
+            ? fmt(messages.deviceOn, device)
+            : messages.unknownDevice
           return (
             <li
-              key={s.id}
+              key={session.id}
               className="flex flex-wrap items-center gap-3 px-4 py-3"
             >
               <Monitor aria-hidden className="size-5 shrink-0 text-ink-soft" />
               <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-center gap-2 font-medium">
                   {name}
-                  {s.current && <Badge tone="info">{t.thisDevice}</Badge>}
+                  {session.current && (
+                    <Badge tone="info">{messages.thisDevice}</Badge>
+                  )}
                 </span>
                 <span className="block text-sm text-ink-soft">
-                  {fmt(t.lastActive, { date: when(s.lastActiveAt) })}
-                  {s.ip && <>, {s.ip}</>}
+                  {fmt(messages.lastActive, {
+                    date: when(session.lastActiveAt),
+                  })}
+                  {session.ip && <>, {session.ip}</>}
                   {', '}
-                  {fmt(t.since, { date: when(s.startedAt) })}
+                  {fmt(messages.since, { date: when(session.startedAt) })}
                 </span>
               </span>
-              {!s.current && (
+              {!session.current && (
                 <Button
                   size="sm"
                   variant="ghost"
                   disabled={revoke.isPending}
-                  aria-label={fmt(t.signOutNamed, { name })}
-                  onClick={() => revoke.mutate(s.id)}
+                  aria-label={fmt(messages.signOutNamed, { name })}
+                  onClick={() => revoke.mutate(session.id)}
                 >
                   <LogOut aria-hidden className="size-4" />
-                  {t.signOut}
+                  {messages.signOut}
                 </Button>
               )}
             </li>
@@ -385,7 +403,7 @@ function DevicesCard() {
           disabled={others.isPending}
           onClick={() => others.mutate(undefined)}
         >
-          {t.signOutOthers}
+          {messages.signOutOthers}
         </Button>
       )}
     </SettingsCard>
@@ -398,11 +416,13 @@ interface GoogleCardProps {
 }
 
 function GoogleCard({ user, security }: GoogleCardProps) {
-  const t = useMessages(settingsMessages).security
+  const messages = useMessages(settingsMessages).security
   return (
-    <SettingsCard title={t.googleTitle}>
+    <SettingsCard title={messages.googleTitle}>
       <p className="text-[0.9375rem]">
-        {fmt(security.google ? t.googleOn : t.googleOff, { email: user.email })}
+        {fmt(security.google ? messages.googleOn : messages.googleOff, {
+          email: user.email,
+        })}
       </p>
     </SettingsCard>
   )
@@ -413,17 +433,19 @@ interface HelpCardProps {
 }
 
 function HelpCard({ user }: HelpCardProps) {
-  const t = useMessages(settingsMessages).security
+  const messages = useMessages(settingsMessages).security
   const subject = encodeURIComponent(`Timeblame: ${user.id}`)
   return (
-    <SettingsCard title={t.helpTitle}>
-      <p className="text-[0.9375rem]">{fmt(t.helpText, { id: user.id })}</p>
+    <SettingsCard title={messages.helpTitle}>
+      <p className="text-[0.9375rem]">
+        {fmt(messages.helpText, { id: user.id })}
+      </p>
       <a
         href={`mailto:${site.supportEmail}?subject=${subject}`}
         className="mt-3 inline-flex items-center gap-2 font-medium underline underline-offset-4"
       >
         <LifeBuoy aria-hidden className="size-4" />
-        {t.helpButton}
+        {messages.helpButton}
       </a>
     </SettingsCard>
   )

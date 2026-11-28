@@ -33,10 +33,13 @@ export interface PlanSettingsProps {
 }
 
 export function PlanSettings({ checkoutSession }: PlanSettingsProps) {
-  const t = useMessages(settingsMessages)
+  const messages = useMessages(settingsMessages)
   return (
     <div className="space-y-6">
-      <SectionHeader title={t.plan.title} lead={t.sections.plan.text} />
+      <SectionHeader
+        title={messages.plan.title}
+        lead={messages.sections.plan.text}
+      />
       {checkoutSession && <CheckoutReturn sessionId={checkoutSession} />}
       <QueryView query={meQuery} skeletonRows={3}>
         {(user) => (
@@ -63,7 +66,7 @@ interface CheckoutReturnProps {
  * odświeżamy plan i czyścimy adres, żeby odświeżenie strony nie powtarzało tego kroku.
  */
 function CheckoutReturn({ sessionId }: CheckoutReturnProps) {
-  const t = useMessages(billingMessages).plan
+  const messages = useMessages(billingMessages).plan
   const { pending, paid } = useCheckoutReturn(sessionId)
   if (pending) return null
   return (
@@ -78,11 +81,11 @@ function CheckoutReturn({ sessionId }: CheckoutReturnProps) {
     >
       {paid ? (
         <>
-          <h2 className="type-heading text-xl">{t.thanksTitle}</h2>
-          <p className="mt-1 text-ink-soft">{t.thanksText}</p>
+          <h2 className="type-heading text-xl">{messages.thanksTitle}</h2>
+          <p className="mt-1 text-ink-soft">{messages.thanksText}</p>
         </>
       ) : (
-        <p>{t.pending}</p>
+        <p>{messages.pending}</p>
       )}
     </section>
   )
@@ -96,8 +99,8 @@ interface PlanDetailsProps {
 }
 
 function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
-  const t = useMessages(settingsMessages).plan
-  const b = useMessages(billingMessages).plan
+  const messages = useMessages(settingsMessages).plan
+  const copy = useMessages(billingMessages).plan
   const pricing = useMessages(marketingMessages).pricing
   const { tag, locale } = useI18n()
   const billing = useQuery(billingQuery).data
@@ -109,9 +112,9 @@ function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
       ? 'Lifetime'
       : planById(planId).name
   const featureList = pricing.features[planId === 'free' ? 'free' : 'pro']
-  const sub = billing?.subscription
-  const day = (iso: string) =>
-    formatDate(locale, iso.slice(0, 10), {
+  const subscription = billing?.subscription
+  const day = (isoDate: string) =>
+    formatDate(locale, isoDate.slice(0, 10), {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -120,27 +123,34 @@ function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
   return (
     <>
       <SettingsCard
-        title={t.current}
+        title={messages.current}
         actions={<Badge tone={isFree ? 'muted' : 'success'}>{name}</Badge>}
       >
-        {sub && planId === 'pro' && (
+        {subscription && planId === 'pro' && (
           <p
             className={cn(
               'mb-4 text-sm font-medium',
-              sub.status === 'past_due' && 'text-destructive',
+              subscription.status === 'past_due' && 'text-destructive',
             )}
           >
-            {sub.interval && sub.status !== 'past_due' && (
+            {subscription.interval && subscription.status !== 'past_due' && (
               <span className="block text-ink-soft">
-                {sub.interval === 'month' ? b.billedMonthly : b.billedYearly}
+                {subscription.interval === 'month'
+                  ? copy.billedMonthly
+                  : copy.billedYearly}
               </span>
             )}
-            {sub.status === 'past_due'
-              ? b.pastDue
-              : sub.currentPeriodEnd
-                ? fmt(sub.cancelAtPeriodEnd ? b.endsOn : b.renewsOn, {
-                    date: day(sub.currentPeriodEnd),
-                  })
+            {subscription.status === 'past_due'
+              ? copy.pastDue
+              : subscription.currentPeriodEnd
+                ? fmt(
+                    subscription.cancelAtPeriodEnd
+                      ? copy.endsOn
+                      : copy.renewsOn,
+                    {
+                      date: day(subscription.currentPeriodEnd),
+                    },
+                  )
                 : null}
           </p>
         )}
@@ -157,7 +167,7 @@ function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
         </ul>
         {planId === 'lifetime' && (
           <p className="mt-6 border-t border-line pt-5 text-ink-soft">
-            {admin ? b.adminNote : b.lifetimeNote}
+            {admin ? copy.adminNote : copy.lifetimeNote}
           </p>
         )}
       </SettingsCard>
@@ -165,31 +175,33 @@ function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
       {isFree && <FreeUsageCard />}
 
       {isFree && (
-        <SettingsCard title={t.upgradeTitle} lead={t.upgradeLead}>
+        <SettingsCard title={messages.upgradeTitle} lead={messages.upgradeLead}>
           <div className="flex flex-wrap gap-3">
             <Link
               to="/app/checkout"
               search={{ interval: 'year' }}
               className={buttonVariants()}
             >
-              {fmt(b.buyPro.year, { price: formatPrice(PRO_PRICES.year, tag) })}
+              {fmt(copy.buyPro.year, {
+                price: formatPrice(PRO_PRICES.year, tag),
+              })}
             </Link>
             <Link
               to="/app/checkout"
               search={{ interval: 'month' }}
               className={buttonVariants({ variant: 'outline' })}
             >
-              {fmt(b.buyPro.month, {
+              {fmt(copy.buyPro.month, {
                 price: formatPrice(PRO_PRICES.month, tag),
               })}
             </Link>
           </div>
-          <p className="mt-2 text-sm text-ink-soft">{b.buyProHint}</p>
+          <p className="mt-2 text-sm text-ink-soft">{copy.buyProHint}</p>
         </SettingsCard>
       )}
 
-      {sub && (
-        <SettingsCard title={b.manage} lead={b.manageHint}>
+      {subscription && (
+        <SettingsCard title={copy.manage} lead={copy.manageHint}>
           <Button
             variant="outline"
             disabled={portal.opening}
@@ -197,7 +209,7 @@ function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
             onClick={portal.open}
           >
             <ExternalLink aria-hidden className="size-4" />
-            {portal.opening ? b.opening : b.manage}
+            {portal.opening ? copy.opening : copy.manage}
           </Button>
         </SettingsCard>
       )}
@@ -206,7 +218,7 @@ function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
         to="/pricing"
         className="inline-flex items-center gap-1.5 font-medium underline underline-offset-4"
       >
-        {t.comparePlans}
+        {messages.comparePlans}
         <ArrowRight aria-hidden className="size-4" />
       </Link>
     </>
@@ -215,17 +227,17 @@ function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
 
 /** Ile z limitów Free jest już zajęte; wyczerpane limity wyróżnione. */
 function FreeUsageCard() {
-  const u = useMessages(billingMessages).usage
+  const messages = useMessages(billingMessages).usage
   const rows = useFreeUsage()
   return (
-    <SettingsCard title={u.title} lead={u.lead}>
+    <SettingsCard title={messages.title} lead={messages.lead}>
       <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
         {rows?.map((row) => (
           <div
             key={row.key}
             className="grid grid-cols-[1fr_auto] items-baseline gap-x-3"
           >
-            <dt className="text-sm">{u.rows[row.key]}</dt>
+            <dt className="text-sm">{messages.rows[row.key]}</dt>
             <dd
               className={cn(
                 'text-sm font-medium tabular-nums',
@@ -233,8 +245,8 @@ function FreeUsageCard() {
               )}
             >
               {row.limit === 0
-                ? u.none
-                : fmt(u.count, { used: row.used, limit: row.limit })}
+                ? messages.none
+                : fmt(messages.count, { used: row.used, limit: row.limit })}
             </dd>
             {row.limit > 0 && (
               <dd className="col-span-2 mt-2">
@@ -247,9 +259,12 @@ function FreeUsageCard() {
           </div>
         ))}
         {[
-          [u.history, fmt(u.historyValue, { days: FREE_LIMITS.historyDays })],
-          [u.reminders, u.proOnly],
-          [u.csv, u.proOnly],
+          [
+            messages.history,
+            fmt(messages.historyValue, { days: FREE_LIMITS.historyDays }),
+          ],
+          [messages.reminders, messages.proOnly],
+          [messages.csv, messages.proOnly],
         ].map(([label, value]) => (
           <div
             key={label}

@@ -6,29 +6,38 @@ import type { ScryptOptions } from 'node:crypto'
  * Parametry wg OWASP Password Storage Cheat Sheet: N=2^15, r=8, p=3 (ok. 32 MB pamięci na próbę).
  * Format: scrypt$N$r$p$sól$hash (base64url) — parametry można później podnieść bez migracji.
  */
-const N = 2 ** 15
-const r = 8
-const p = 3
+const SCRYPT_COST = 2 ** 15
+const SCRYPT_BLOCK_SIZE = 8
+const SCRYPT_PARALLELIZATION = 3
 const KEY_LENGTH = 32
 
-function scrypt(password: string, salt: Buffer, opts: ScryptOptions) {
+function scrypt(password: string, salt: Buffer, options: ScryptOptions) {
   return new Promise<Buffer>((resolve, reject) => {
-    scryptCb(password.normalize('NFKC'), salt, KEY_LENGTH, opts, (err, key) =>
-      err ? reject(err) : resolve(key),
+    scryptCb(
+      password.normalize('NFKC'),
+      salt,
+      KEY_LENGTH,
+      options,
+      (error, key) => (error ? reject(error) : resolve(key)),
     )
   })
 }
 
-const maxmem = (n: number, rr: number) => 256 * n * rr
+const maxmem = (cost: number, blockSize: number) => 256 * cost * blockSize
 
 export async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16)
-  const key = await scrypt(password, salt, { N, r, p, maxmem: maxmem(N, r) })
+  const key = await scrypt(password, salt, {
+    N: SCRYPT_COST,
+    r: SCRYPT_BLOCK_SIZE,
+    p: SCRYPT_PARALLELIZATION,
+    maxmem: maxmem(SCRYPT_COST, SCRYPT_BLOCK_SIZE),
+  })
   return [
     'scrypt',
-    N,
-    r,
-    p,
+    SCRYPT_COST,
+    SCRYPT_BLOCK_SIZE,
+    SCRYPT_PARALLELIZATION,
     salt.toString('base64url'),
     key.toString('base64url'),
   ].join('$')
@@ -38,14 +47,15 @@ export async function verifyPassword(
   password: string,
   stored: string,
 ): Promise<boolean> {
-  const [algo, n, rr, pp, salt, hash] = stored.split('$')
-  if (algo !== 'scrypt' || !salt || !hash) return false
+  const [algorithm, cost, blockSize, parallelization, salt, hash] =
+    stored.split('$')
+  if (algorithm !== 'scrypt' || !salt || !hash) return false
   const expected = Buffer.from(hash, 'base64url')
   const key = await scrypt(password, Buffer.from(salt, 'base64url'), {
-    N: Number(n),
-    r: Number(rr),
-    p: Number(pp),
-    maxmem: maxmem(Number(n), Number(rr)),
+    N: Number(cost),
+    r: Number(blockSize),
+    p: Number(parallelization),
+    maxmem: maxmem(Number(cost), Number(blockSize)),
   })
   return key.length === expected.length && timingSafeEqual(key, expected)
 }

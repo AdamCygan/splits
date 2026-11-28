@@ -1,6 +1,6 @@
 import type { Dictionary } from '../context'
 
-const en = {
+const english = {
   nav: {
     label: 'Main navigation',
     today: 'Today',
@@ -133,9 +133,9 @@ const en = {
   },
 }
 
-export type AppMessages = typeof en
+export type AppMessages = typeof english
 
-const pl: AppMessages = {
+const polish: AppMessages = {
   nav: {
     label: 'Główna nawigacja',
     today: 'Dziś',
@@ -273,4 +273,4 @@ const pl: AppMessages = {
   },
 }
 
-export const appMessages: Dictionary<AppMessages> = { en, pl }
+export const appMessages: Dictionary<AppMessages> = { en: english, pl: polish }

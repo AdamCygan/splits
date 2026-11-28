@@ -1,5 +1,5 @@
 import { LIMITS } from '#/features/task-types/domain/rules'
-import { sp, time, trimmed, uuid } from '#/server/http/inputs'
+import { storyPoints, time, trimmed, uuid } from '#/server/http/inputs'
 import { z } from 'zod'
 
 export const templateInput = z
@@ -9,7 +9,7 @@ export const templateInput = z
     askProject: z.boolean().default(false),
     label: trimmed(1, LIMITS.templateLabel),
     title: trimmed(1, LIMITS.templateTitle),
-    storyPoints: sp.nullable(),
+    storyPoints: storyPoints.nullable(),
     defaultDurationMinutes: z
       .number()
       .int()
@@ -21,14 +21,23 @@ export const templateInput = z
       .array(z.object({ day: z.number().int().min(0).max(6), time }))
       .max(7)
       .default([])
-      .refine((list) => new Set(list.map((x) => x.day)).size === list.length),
+      .refine(
+        (list) => new Set(list.map((slot) => slot.day)).size === list.length,
+      ),
   })
   // Powtarzane spotkanie wpisuje się od razu z godzinami, więc potrzebuje czasu trwania.
-  .refine((x) => x.schedule.length === 0 || x.defaultDurationMinutes !== null, {
-    path: ['schedule'],
-  })
+  .refine(
+    (template) =>
+      template.schedule.length === 0 ||
+      template.defaultDurationMinutes !== null,
+    {
+      path: ['schedule'],
+    },
+  )
   // Szablon „dowolny projekt” nie trzyma projektu: wybór pada przy użyciu.
-  .transform((x) => ({
-    ...(x.askProject ? { ...x, projectId: null } : x),
-    schedule: [...x.schedule].sort((a, b) => a.day - b.day),
+  .transform((template) => ({
+    ...(template.askProject ? { ...template, projectId: null } : template),
+    schedule: [...template.schedule].sort(
+      (left, right) => left.day - right.day,
+    ),
   }))

@@ -12,21 +12,21 @@ import { createRemoteJWKSet } from 'jose'
 
 export const secure = serverEnv.appUrl.startsWith('https://')
 
-export function requestMeta(c: Context) {
+export function requestMeta(context: Context) {
   return {
-    ip: clientIp(c.req, serverEnv.clientIpHeader),
-    userAgent: c.req.header('user-agent') ?? null,
+    ip: clientIp(context.req, serverEnv.clientIpHeader),
+    userAgent: context.req.header('user-agent') ?? null,
   }
 }
 
 /** Ustawia ciasteczko z refresh tokenem i zwraca sesję do odpowiedzi. */
-export function respondWithSession(c: Context, opened: OpenedSession) {
-  setRefreshCookie(c, opened.refreshToken)
+export function respondWithSession(context: Context, opened: OpenedSession) {
+  setRefreshCookie(context, opened.refreshToken)
   return opened.session
 }
 
-function setRefreshCookie(c: Context, token: string) {
-  setCookie(c, REFRESH_COOKIE, token, {
+function setRefreshCookie(context: Context, token: string) {
+  setCookie(context, REFRESH_COOKIE, token, {
     httpOnly: true,
     secure,
     sameSite: 'Lax',
@@ -35,8 +35,8 @@ function setRefreshCookie(c: Context, token: string) {
   })
 }
 
-export function clearRefreshCookie(c: Context) {
-  deleteCookie(c, REFRESH_COOKIE, { path: REFRESH_COOKIE_PATH, secure })
+export function clearRefreshCookie(context: Context) {
+  deleteCookie(context, REFRESH_COOKIE, { path: REFRESH_COOKIE_PATH, secure })
 }
 
 // ---------------------------------------------------------------------------

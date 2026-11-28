@@ -1,6 +1,6 @@
 import { api } from '#/server/app'
 import { sql } from 'drizzle-orm'
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 import { users } from '#/server/db/schema'
 import { outbox } from '#/server/email'
 
@@ -30,7 +30,11 @@ export function client() {
         ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(cookies.size
-          ? { Cookie: [...cookies].map(([k, v]) => `${k}=${v}`).join('; ') }
+          ? {
+              Cookie: [...cookies]
+                .map(([key, value]) => `${key}=${value}`)
+                .join('; '),
+            }
           : {}),
         Origin: 'http://localhost:3000',
         ...headers,
@@ -79,7 +83,7 @@ export function client() {
 
 export type ApiClient = ReturnType<typeof client>
 
-let n = 0
+let count = 0
 export interface RegisteredOptions {
   verify?: boolean
   /** Konto Pro (bez limitów planu Free), gdy test sprawdza coś innego niż limity. */
@@ -90,33 +94,34 @@ export async function registered(
   locale: 'en' | 'pl' = 'en',
   { verify = true, pro = false }: RegisteredOptions = {},
 ) {
-  const c = client()
-  const id = `${Date.now().toString(36)}${n++}`
-  const res = await c.post('/auth/register', {
+  const apiClient = client()
+  const id = `${Date.now().toString(36)}${count++}`
+  const response = await apiClient.post('/auth/register', {
     username: `user${id}`,
     email: `user${id}@example.com`,
     password: 'correct horse 42',
     locale,
     timezone: 'Europe/Warsaw',
   })
-  if (res.status !== 201) throw new Error(`register failed ${res.status}`)
+  if (response.status !== 201)
+    throw new Error(`register failed ${response.status}`)
   // Jak prawdziwy użytkownik: link z e-maila potwierdza adres (zakupy tego wymagają).
   if (verify)
-    await c.post('/auth/email/confirm', {
+    await apiClient.post('/auth/email/confirm', {
       token: lastToken(`user${id}@example.com`),
     })
   if (pro)
-    await db
+    await database
       .update(users)
       .set({ plan: 'pro' })
       .where(sql`lower(${users.email}) = ${`user${id}@example.com`}`)
-  return { c, username: `user${id}`, email: `user${id}@example.com` }
+  return { apiClient, username: `user${id}`, email: `user${id}@example.com` }
 }
 
 /** Konto z rolą administratora (zarejestrowane i potwierdzone jak każde inne). */
 export async function registeredAdmin() {
   const account = await registered()
-  await db
+  await database
     .update(users)
     .set({ role: 'admin' })
     .where(sql`lower(${users.email}) = ${account.email}`)
@@ -127,7 +132,7 @@ export async function registeredAdmin() {
 export function lastToken(to: string): string {
   const mail = [...outbox]
     .reverse()
-    .find((m) => m.to === to && /token=/.test(m.text))
+    .find((email) => email.to === to && /token=/.test(email.text))
   if (!mail) throw new Error(`no email with a link for ${to}`)
   return /token=([\w-]+)/.exec(mail.text)![1]!
 }
@@ -136,7 +141,7 @@ export function lastToken(to: string): string {
 export function lastDeleteCode(to: string): string {
   const mail = [...outbox]
     .reverse()
-    .find((m) => m.to === to && /delete/i.test(m.subject))
+    .find((email) => email.to === to && /delete/i.test(email.subject))
   const code = mail && /^(\d{6})$/m.exec(mail.text)?.[1]
   if (!code) throw new Error(`no delete code for ${to}`)
   return code
@@ -147,12 +152,13 @@ export const otherCode = (code: string) =>
   String((Number(code) + 1) % 1_000_000).padStart(6, '0')
 
 export async function sample() {
-  const c = client()
-  const res = await c.post('/test/sample-account', {
+  const apiClient = client()
+  const response = await apiClient.post('/test/sample-account', {
     timezone: 'Europe/Warsaw',
   })
-  if (res.status !== 201) throw new Error(`sample failed ${res.status}`)
-  return c
+  if (response.status !== 201)
+    throw new Error(`sample failed ${response.status}`)
+  return apiClient
 }
 
 export { inSequence, numbered } from '../support/sequence'

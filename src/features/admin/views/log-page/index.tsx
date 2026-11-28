@@ -14,70 +14,75 @@ export type AdminLogPageProps = LogPageOptions
 
 /** Panel admina → Dziennik zmian (MVVM): filtry w adresie strony, wpisy od najnowszych. */
 export function AdminLogPage(props: AdminLogPageProps) {
-  const t = useMessages(adminMessages).log
+  const messages = useMessages(adminMessages).log
   const format = useFormat()
-  const vm = useLogPageViewModel(props)
+  const viewModel = useLogPageViewModel(props)
   return (
     <>
-      <SectionHeader title={t.title} lead={t.lead} />
+      <SectionHeader title={messages.title} lead={messages.lead} />
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Field label={t.action}>
+        <Field label={messages.action}>
           {(control) => (
             <Select
               {...control}
-              value={vm.filter.action ?? ''}
-              onChange={(e) =>
-                vm.setAction(
-                  (e.target.value || undefined) as AdminActionKind | undefined,
+              value={viewModel.filter.action ?? ''}
+              onChange={(event) =>
+                viewModel.setAction(
+                  (event.target.value || undefined) as
+                    AdminActionKind | undefined,
                 )
               }
             >
-              <option value="">{t.allActions}</option>
+              <option value="">{messages.allActions}</option>
               {ADMIN_ACTION_KINDS.map((kind) => (
                 <option key={kind} value={kind}>
-                  {t.actions[kind]}
+                  {messages.actions[kind]}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label={t.targetFilter}>
+        <Field label={messages.targetFilter}>
           {(control) => (
             <Input
               {...control}
               type="search"
-              value={vm.target}
-              onChange={(e) => vm.setTarget(e.target.value)}
+              value={viewModel.target}
+              onChange={(event) => viewModel.setTarget(event.target.value)}
             />
           )}
         </Field>
-        <Field label={t.adminFilter}>
+        <Field label={messages.adminFilter}>
           {(control) => (
             <Input
               {...control}
               type="search"
-              value={vm.admin}
-              onChange={(e) => vm.setAdmin(e.target.value)}
+              value={viewModel.admin}
+              onChange={(event) => viewModel.setAdmin(event.target.value)}
             />
           )}
         </Field>
       </div>
       <div className="overflow-hidden rounded-2xl border border-line bg-surface">
-        {vm.pending ? (
+        {viewModel.pending ? (
           <div
             aria-hidden
             className="m-5 h-32 animate-pulse rounded-lg bg-muted"
           />
-        ) : vm.items.length === 0 ? (
-          <p className="px-5 py-8 text-ink-soft sm:px-6">{t.empty}</p>
+        ) : viewModel.items.length === 0 ? (
+          <p className="px-5 py-8 text-ink-soft sm:px-6">{messages.empty}</p>
         ) : (
-          <ActionsTable actions={vm.items} caption={t.title} />
+          <ActionsTable actions={viewModel.items} caption={messages.title} />
         )}
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3 text-sm sm:px-6">
           <p role="status" className="text-ink-soft">
-            {format.plural(t.total, vm.total)}
+            {format.plural(messages.total, viewModel.total)}
           </p>
-          <Pagination page={vm.page} pages={vm.pages} onPage={vm.setPage} />
+          <Pagination
+            page={viewModel.page}
+            pages={viewModel.pages}
+            onPage={viewModel.setPage}
+          />
         </footer>
       </div>
     </>

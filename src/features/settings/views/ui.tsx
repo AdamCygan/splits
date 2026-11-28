@@ -90,7 +90,7 @@ export function SaveBar({
   onSave,
   saveLabel,
 }: SaveBarProps) {
-  const t = useMessages(appMessages)
+  const messages = useMessages(appMessages)
   return (
     <div
       className={cn(
@@ -100,18 +100,18 @@ export function SaveBar({
     >
       {/* Region aria-live musi istnieć przed zmianą treści, więc jest poza ukrywanym paskiem. */}
       <p aria-live="polite" className="sr-only">
-        {dirty ? t.status.unsaved : ''}
+        {dirty ? messages.status.unsaved : ''}
       </p>
       <div
         role="region"
-        aria-label={t.status.unsaved}
+        aria-label={messages.status.unsaved}
         className={cn(
           'flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[var(--ink-fixed)] px-4 py-3 text-white shadow-lg transition-[opacity,transform] duration-200',
           dirty ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0',
         )}
         hidden={!dirty}
       >
-        <p className="text-sm font-medium">{t.status.unsaved}</p>
+        <p className="text-sm font-medium">{messages.status.unsaved}</p>
         <div className="flex gap-2">
           <Button
             type="button"
@@ -120,7 +120,7 @@ export function SaveBar({
             onClick={onDiscard}
             disabled={saving}
           >
-            {t.actions.discard}
+            {messages.actions.discard}
           </Button>
           <Button
             type={onSave ? 'button' : 'submit'}
@@ -129,7 +129,9 @@ export function SaveBar({
             disabled={saving}
             aria-busy={saving}
           >
-            {saving ? t.actions.saving : (saveLabel ?? t.actions.save)}
+            {saving
+              ? messages.actions.saving
+              : (saveLabel ?? messages.actions.save)}
           </Button>
         </div>
       </div>
@@ -149,15 +151,15 @@ export function QueryView<T, TKey extends QueryKey>({
   children,
   skeletonRows = 3,
 }: QueryViewProps<T, TKey>) {
-  const t = useMessages(appMessages)
+  const messages = useMessages(appMessages)
   const result = useQuery(query)
   if (result.isPending) {
     return (
       <div role="status" aria-live="polite" className="space-y-3">
-        <span className="sr-only">{t.status.loading}</span>
-        {Array.from({ length: skeletonRows }, (_, i) => (
+        <span className="sr-only">{messages.status.loading}</span>
+        {Array.from({ length: skeletonRows }, (_unused, index) => (
           <div
-            key={i}
+            key={index}
             aria-hidden
             className="h-12 animate-pulse rounded-lg bg-muted"
           />
@@ -172,13 +174,13 @@ export function QueryView<T, TKey extends QueryKey>({
         className="flex flex-wrap items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
       >
         <AlertCircle aria-hidden className="size-4" />
-        <span className="flex-1">{t.status.loadFailed}</span>
+        <span className="flex-1">{messages.status.loadFailed}</span>
         <Button
           size="sm"
           variant="outline"
           onClick={() => void result.refetch()}
         >
-          {t.actions.retry}
+          {messages.actions.retry}
         </Button>
       </div>
     )
@@ -200,7 +202,7 @@ export function ReorderButtons({
   onMove,
   itemName,
 }: ReorderButtonsProps) {
-  const t = useMessages(appMessages)
+  const messages = useMessages(appMessages)
   return (
     <div className="flex">
       <Button
@@ -210,7 +212,7 @@ export function ReorderButtons({
         className="size-8"
         disabled={index === 0}
         onClick={() => onMove(index, index - 1)}
-        aria-label={`${t.actions.moveUp}: ${itemName}`}
+        aria-label={`${messages.actions.moveUp}: ${itemName}`}
       >
         <ArrowUp aria-hidden className="size-4" />
       </Button>
@@ -221,7 +223,7 @@ export function ReorderButtons({
         className="size-8"
         disabled={index === total - 1}
         onClick={() => onMove(index, index + 1)}
-        aria-label={`${t.actions.moveDown}: ${itemName}`}
+        aria-label={`${messages.actions.moveDown}: ${itemName}`}
       >
         <ArrowDown aria-hidden className="size-4" />
       </Button>
@@ -247,15 +249,15 @@ export function useAnnouncer() {
 
 /** Konto demo nie ma własnego adresu ani hasła: zamiast formularzy krótka informacja. */
 export function DemoNotice() {
-  const t = useMessages(panelMessages).demo
+  const messages = useMessages(panelMessages).demo
   return (
     <p className="rounded-2xl border border-line bg-surface px-5 py-4 sm:px-6">
-      {t.restricted}{' '}
+      {messages.restricted}{' '}
       <Link
         to="/register"
         className="font-semibold underline underline-offset-4"
       >
-        {t.register}
+        {messages.register}
       </Link>
     </p>
   )

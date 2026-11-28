@@ -37,10 +37,10 @@ const painColors = [
   'var(--wt-pair)',
 ] as const
 
-const h2 = 'type-heading text-[clamp(2rem,4.5vw,3.25rem)]'
-const cta = 'h-12 px-6 text-base'
+const heading = 'type-heading text-[clamp(2rem,4.5vw,3.25rem)]'
+const callToAction = 'h-12 px-6 text-base'
 /** Główne wezwanie na jasnym tle: kolor typu „Task” (styles.css → --brand). */
-const brandCta = `${cta} bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]`
+const brandCta = `${callToAction} bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]`
 const visuals = [EntryFormDemo, IntervalsVisual, TimesheetVisual] as const
 /** Pasek nad końcowym wezwaniem: sprint podzielony na typy pracy (szerokość w %, kolor). */
 const finalStrip = [
@@ -65,8 +65,8 @@ function DemoLink({ label, dark }: DemoLinkProps) {
       asChild
       className={
         dark
-          ? `${cta} border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white`
-          : cta
+          ? `${callToAction} border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white`
+          : callToAction
       }
     >
       {/* Zwykły odnośnik: /demo zakłada konto demo, więc nie chcemy go pobierać z wyprzedzeniem. */}
@@ -85,13 +85,13 @@ function DemoLink({ label, dark }: DemoLinkProps) {
 const productSizes = '(min-width: 1200px) 1152px, calc(100vw - 2rem)'
 const productSrcSet = (locale: string, format: 'avif' | 'webp') =>
   [640, 960, 1440]
-    .map((w) => `/product-timeblame-${locale}-${w}.${format} ${w}w`)
+    .map((width) => `/product-timeblame-${locale}-${width}.${format} ${width}w`)
     .join(', ')
 
 function LandingPage() {
   const { locale } = useI18n()
-  const t = useMessages(homeMessages)
-  const m = useMessages(marketingMessages)
+  const messages = useMessages(homeMessages)
+  const copy = useMessages(marketingMessages)
 
   return (
     <>
@@ -105,19 +105,19 @@ function LandingPage() {
             id="hero-title"
             className="type-display text-[clamp(2.75rem,6.6vw,5rem)]"
           >
-            {t.hero.title}
+            {messages.hero.title}
           </h1>
           <p className="mt-6 max-w-[52ch] text-lg text-ink-soft sm:text-xl">
-            {t.hero.lead}
+            {messages.hero.lead}
           </p>
           {/* Na telefonie oba przyciski na całą szerokość, jeden pod drugim. */}
           <div className="mt-8 grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-center">
             <Button size="lg" asChild className={brandCta}>
-              <Link to="/register">{t.hero.primary}</Link>
+              <Link to="/register">{messages.hero.primary}</Link>
             </Button>
-            <DemoLink label={t.hero.demo} />
+            <DemoLink label={messages.hero.demo} />
           </div>
-          <p className="mt-4 text-sm text-ink-soft">{t.hero.note}</p>
+          <p className="mt-4 text-sm text-ink-soft">{messages.hero.note}</p>
         </div>
         <SprintSplit />
       </section>
@@ -138,7 +138,7 @@ function LandingPage() {
             height={900}
             loading="lazy"
             decoding="async"
-            alt={t.product.alt}
+            alt={messages.product.alt}
             className="mx-auto block h-auto w-full max-w-6xl rounded-2xl border border-line bg-surface shadow-[0_32px_80px_-32px_rgba(20,22,43,0.45)]"
           />
         </picture>
@@ -151,11 +151,11 @@ function LandingPage() {
           className="below-fold bg-[var(--ink-fixed)] text-white"
         >
           <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-            <h2 id="pains-title" className={`${h2} max-w-3xl`}>
-              {m.pains.title}
+            <h2 id="pains-title" className={`${heading} max-w-3xl`}>
+              {copy.pains.title}
             </h2>
             <div className="mt-12 grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-0 md:divide-x md:divide-white/15">
-              {m.pains.items.map((pain, i) => (
+              {copy.pains.items.map((pain, index) => (
                 <div
                   key={pain.title}
                   className="md:px-8 md:first:pl-0 md:last:pr-0"
@@ -164,8 +164,8 @@ function LandingPage() {
                     aria-hidden
                     className="fill-on-view block h-1.5 w-12 rounded-full"
                     style={{
-                      background: painColors[i],
-                      ['--fill-step' as string]: i,
+                      background: painColors[index],
+                      ['--fill-step' as string]: index,
                     }}
                   />
                   <h3 className="mt-5 text-xl font-semibold">{pain.title}</h3>
@@ -186,18 +186,18 @@ function LandingPage() {
           className="below-fold scroll-mt-20"
         >
           <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
-            <h2 id="features-title" className={`${h2} max-w-2xl`}>
-              {t.how.title}
+            <h2 id="features-title" className={`${heading} max-w-2xl`}>
+              {messages.how.title}
             </h2>
             <div className="mt-14 space-y-20 lg:space-y-28">
-              {t.how.steps.map((step, i) => {
-                const Visual = visuals[i]!
+              {messages.how.steps.map((step, index) => {
+                const Visual = visuals[index]!
                 return (
                   <div
                     key={step.title}
                     className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16"
                   >
-                    <div className={i % 2 ? 'lg:order-2' : undefined}>
+                    <div className={index % 2 ? 'lg:order-2' : undefined}>
                       <h3 className="type-heading text-3xl sm:text-4xl">
                         {step.title}
                       </h3>
@@ -224,10 +224,10 @@ function LandingPage() {
         >
           <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
             <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
-              <h2 id="video-title" className={`${h2} max-w-2xl`}>
-                {m.video.title}
+              <h2 id="video-title" className={`${heading} max-w-2xl`}>
+                {copy.video.title}
               </h2>
-              <p className="max-w-[40ch] text-ink-soft">{m.video.lead}</p>
+              <p className="max-w-[40ch] text-ink-soft">{copy.video.lead}</p>
             </div>
             <VideoSection />
           </div>
@@ -244,12 +244,12 @@ function LandingPage() {
           <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
             <h2
               id="pricing-title"
-              className={`${h2} mx-auto max-w-3xl text-center`}
+              className={`${heading} mx-auto max-w-3xl text-center`}
             >
-              {t.pricing.title}
+              {messages.pricing.title}
             </h2>
             <p className="mx-auto mt-4 mb-10 max-w-[56ch] text-center text-ink-soft">
-              {t.pricing.lead}
+              {messages.pricing.lead}
             </p>
             <PricingSection />
           </div>
@@ -264,8 +264,8 @@ function LandingPage() {
           className="below-fold scroll-mt-20 border-t border-line bg-surface/60"
         >
           <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-            <h2 id="faq-title" className={h2}>
-              {m.faq.title}
+            <h2 id="faq-title" className={heading}>
+              {copy.faq.title}
             </h2>
             <Faq />
           </div>
@@ -279,14 +279,14 @@ function LandingPage() {
           className="below-fold bg-[var(--ink-fixed)] text-white"
         >
           <div aria-hidden className="flex h-2">
-            {finalStrip.map(([width, color], i) => (
+            {finalStrip.map(([width, color], index) => (
               <span
                 key={color}
                 className="fill-on-view"
                 style={{
                   width: `${width}%`,
                   background: color,
-                  ['--fill-step' as string]: i,
+                  ['--fill-step' as string]: index,
                 }}
               />
             ))}
@@ -296,19 +296,19 @@ function LandingPage() {
               id="final-title"
               className="type-display max-w-[18ch] text-[clamp(2.5rem,6vw,4.5rem)]"
             >
-              {t.final.title}
+              {messages.final.title}
             </h2>
             <div className="mt-10 flex flex-wrap items-center gap-3">
               <Button
                 asChild
                 size="lg"
-                className={`${cta} bg-white text-[var(--ink-fixed)] hover:bg-white/90`}
+                className={`${callToAction} bg-white text-[var(--ink-fixed)] hover:bg-white/90`}
               >
-                <Link to="/register">{t.final.primary}</Link>
+                <Link to="/register">{messages.final.primary}</Link>
               </Button>
-              <DemoLink label={t.final.demo} dark />
+              <DemoLink label={messages.final.demo} dark />
             </div>
-            <p className="mt-5 text-white/70">{t.final.note}</p>
+            <p className="mt-5 text-white/70">{messages.final.note}</p>
           </div>
         </section>
       </Suspense>

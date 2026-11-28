@@ -47,14 +47,16 @@ import { jwtVerify } from 'jose'
 import { createHash } from 'node:crypto'
 
 export const authRoutes = new Hono<AppEnv>()
-  .get('/providers', (c) => c.json({ google: serverEnv.google !== null }))
+  .get('/providers', (context) =>
+    context.json({ google: serverEnv.google !== null }),
+  )
 
-  .post('/register', async (c) => {
-    const meta = requestMeta(c)
+  .post('/register', async (context) => {
+    const meta = requestMeta(context)
     rateLimit(`register:${meta.ip}`, 10, 60 * 60_000)
-    const input = await body(c, registerInput)
-    return c.json(
-      respondWithSession(c, await registerAccount(meta, input)),
+    const input = await body(context, registerInput)
+    return context.json(
+      respondWithSession(context, await registerAccount(meta, input)),
       201,
     )
   })
@@ -64,19 +66,19 @@ export const authRoutes = new Hono<AppEnv>()
    * Nie ma hasła ani prawdziwego adresu, nie może kupować ani zmieniać danych konta,
    * a po 24 h jest usuwane (src/server/maintenance.ts).
    */
-  .post('/demo', async (c) => {
-    const meta = requestMeta(c)
+  .post('/demo', async (context) => {
+    const meta = requestMeta(context)
     rateLimit(`demo:${meta.ip}`, 10, 60 * 60_000)
-    const input = await body(c, demoInput)
-    return c.json(
-      respondWithSession(c, await createDemoAccount(meta, input)),
+    const input = await body(context, demoInput)
+    return context.json(
+      respondWithSession(context, await createDemoAccount(meta, input)),
       201,
     )
   })
 
-  .post('/login', async (c) => {
-    const meta = requestMeta(c)
-    const input = await body(c, loginInput)
+  .post('/login', async (context) => {
+    const meta = requestMeta(context)
+    const input = await body(context, loginInput)
     rateLimit(`login-ip:${meta.ip}`, 30, 15 * 60_000)
     // Ten sam próg co blokada konta: nieistniejący login też dostaje 429 po tylu próbach,
     // więc odpowiedź 429 nie zdradza, czy konto istnieje.
@@ -87,73 +89,73 @@ export const authRoutes = new Hono<AppEnv>()
     )
     const result = await loginWithPassword(meta, input)
     // 2FA: hasło się zgadza, ale sesja dopiero po kodzie z aplikacji.
-    return c.json(
-      'mfaRequired' in result ? result : respondWithSession(c, result),
+    return context.json(
+      'mfaRequired' in result ? result : respondWithSession(context, result),
     )
   })
 
   /** Drugi krok logowania: bilet z pierwszego kroku + kod z aplikacji albo kod zapasowy. */
-  .post('/login/2fa', async (c) => {
-    const meta = requestMeta(c)
-    const input = await body(c, mfaLoginInput)
+  .post('/login/2fa', async (context) => {
+    const meta = requestMeta(context)
+    const input = await body(context, mfaLoginInput)
     rateLimit(`mfa-ip:${meta.ip}`, 30, 15 * 60_000)
-    return c.json(
-      respondWithSession(c, await loginWithSecondFactor(meta, input)),
+    return context.json(
+      respondWithSession(context, await loginWithSecondFactor(meta, input)),
     )
   })
 
   /** Link z e-maila: potwierdzenie adresu po rejestracji albo nowego adresu po zmianie. */
-  .post('/email/confirm', async (c) => {
-    const meta = requestMeta(c)
+  .post('/email/confirm', async (context) => {
+    const meta = requestMeta(context)
     rateLimit(`email-confirm:${meta.ip}`, 30, 60 * 60_000)
-    const { token } = await body(c, tokenInput)
-    return c.json(await confirmEmail(token))
+    const { token } = await body(context, tokenInput)
+    return context.json(await confirmEmail(token))
   })
 
-  .post('/refresh', async (c) => {
-    const token = getCookie(c, REFRESH_COOKIE)
+  .post('/refresh', async (context) => {
+    const token = getCookie(context, REFRESH_COOKIE)
     if (!token) throw new ApiError('auth.no_session', 401)
-    const opened = await refreshSession(token, requestMeta(c))
+    const opened = await refreshSession(token, requestMeta(context))
     if (!opened) {
-      clearRefreshCookie(c)
+      clearRefreshCookie(context)
       throw new ApiError('auth.no_session', 401)
     }
-    return c.json(respondWithSession(c, opened))
+    return context.json(respondWithSession(context, opened))
   })
 
-  .post('/logout', async (c) => {
-    const token = getCookie(c, REFRESH_COOKIE)
+  .post('/logout', async (context) => {
+    const token = getCookie(context, REFRESH_COOKIE)
     if (token) await endSession(token)
-    clearRefreshCookie(c)
-    return c.body(null, 204)
+    clearRefreshCookie(context)
+    return context.body(null, 204)
   })
 
-  .post('/forgot-password', async (c) => {
-    const meta = requestMeta(c)
+  .post('/forgot-password', async (context) => {
+    const meta = requestMeta(context)
     rateLimit(`forgot:${meta.ip}`, 10, 60 * 60_000)
-    const { email } = await body(c, emailInput)
-    const locale = c.get('locale')
+    const { email } = await body(context, emailInput)
+    const locale = context.get('locale')
     rateLimit(`forgot:${lower(email)}`, 3, 60 * 60_000)
     await requestPasswordReset(email, locale)
-    return c.body(null, 204)
+    return context.body(null, 204)
   })
 
-  .post('/reset-password', async (c) => {
-    const meta = requestMeta(c)
+  .post('/reset-password', async (context) => {
+    const meta = requestMeta(context)
     rateLimit(`reset:${meta.ip}`, 20, 60 * 60_000)
-    const input = await body(c, resetInput)
+    const input = await body(context, resetInput)
     await resetPassword(input)
-    return c.body(null, 204)
+    return context.body(null, 204)
   })
 
-  .get('/google', (c) => {
+  .get('/google', (context) => {
     const google = serverEnv.google
-    const redirectTo = safeRedirect(c.req.query('redirect'))
-    if (!google) return c.redirect('/login?error=google_unavailable')
+    const redirectTo = safeRedirect(context.req.query('redirect'))
+    if (!google) return context.redirect('/login?error=google_unavailable')
     const state = randomToken()
     const verifier = randomToken()
     const challenge = createHash('sha256').update(verifier).digest('base64url')
-    const tz = timezoneSchema.safeParse(c.req.query('tz'))
+    const timeZone = timezoneSchema.safeParse(context.req.query('tz'))
     const cookie = {
       httpOnly: true,
       secure,
@@ -161,10 +163,10 @@ export const authRoutes = new Hono<AppEnv>()
       path: GOOGLE_COOKIE_PATH,
       maxAge: 600,
     }
-    setCookie(c, 'g_state', state, cookie)
-    setCookie(c, 'g_verifier', verifier, cookie)
-    setCookie(c, 'g_redirect', redirectTo, cookie)
-    setCookie(c, 'g_tz', tz.success ? tz.data : 'UTC', cookie)
+    setCookie(context, 'g_state', state, cookie)
+    setCookie(context, 'g_verifier', verifier, cookie)
+    setCookie(context, 'g_redirect', redirectTo, cookie)
+    setCookie(context, 'g_tz', timeZone.success ? timeZone.data : 'UTC', cookie)
     const url = new URL('https://accounts.google.com/o/oauth2/v2/auth')
     url.search = new URLSearchParams({
       client_id: google.clientId,
@@ -176,25 +178,25 @@ export const authRoutes = new Hono<AppEnv>()
       code_challenge_method: 'S256',
       prompt: 'select_account',
     }).toString()
-    return c.redirect(url.toString())
+    return context.redirect(url.toString())
   })
 
-  .get('/google/callback', async (c) => {
+  .get('/google/callback', async (context) => {
     const google = serverEnv.google
-    const fail = () => c.redirect('/login?error=google')
-    const state = getCookie(c, 'g_state')
-    const verifier = getCookie(c, 'g_verifier')
-    const redirectTo = safeRedirect(getCookie(c, 'g_redirect'))
-    const tz = getCookie(c, 'g_tz') ?? 'UTC'
+    const fail = () => context.redirect('/login?error=google')
+    const state = getCookie(context, 'g_state')
+    const verifier = getCookie(context, 'g_verifier')
+    const redirectTo = safeRedirect(getCookie(context, 'g_redirect'))
+    const timeZone = getCookie(context, 'g_tz') ?? 'UTC'
     for (const name of ['g_state', 'g_verifier', 'g_redirect', 'g_tz'])
-      deleteCookie(c, name, { path: GOOGLE_COOKIE_PATH, secure })
-    const code = c.req.query('code')
+      deleteCookie(context, name, { path: GOOGLE_COOKIE_PATH, secure })
+    const code = context.req.query('code')
     if (
       !google ||
       !code ||
       !state ||
       !verifier ||
-      c.req.query('state') !== state
+      context.req.query('state') !== state
     )
       return fail()
 
@@ -227,18 +229,23 @@ export const authRoutes = new Hono<AppEnv>()
       return fail()
     }
     if (!claims.email || claims.email_verified !== true) return fail()
-    const localeCookie = getCookie(c, 'app_locale')
+    const localeCookie = getCookie(context, 'app_locale')
     const locale: Locale = isLocale(localeCookie)
       ? localeCookie
-      : c.get('locale')
+      : context.get('locale')
     const verified = { ...claims, email: claims.email }
 
-    const outcome = await signInWithGoogle(verified, locale, tz, requestMeta(c))
-    if (outcome.opened) respondWithSession(c, outcome.opened)
-    if (outcome.blocked) return c.redirect('/login?error=disabled')
+    const outcome = await signInWithGoogle(
+      verified,
+      locale,
+      timeZone,
+      requestMeta(context),
+    )
+    if (outcome.opened) respondWithSession(context, outcome.opened)
+    if (outcome.blocked) return context.redirect('/login?error=disabled')
     if (outcome.mfaToken)
-      return c.redirect(
+      return context.redirect(
         `/login?${new URLSearchParams({ mfa: outcome.mfaToken, redirect: redirectTo }).toString()}`,
       )
-    return c.redirect(redirectTo)
+    return context.redirect(redirectTo)
   })

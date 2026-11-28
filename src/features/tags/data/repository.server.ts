@@ -1,36 +1,36 @@
 import { inScope, owner } from '#/server/db/scope'
 import type { Scope } from '#/server/db/scope'
 import { and, asc, eq } from 'drizzle-orm'
-import { db } from '#/server/db/client'
-import * as t from '#/server/db/schema'
+import { database } from '#/server/db/client'
+import * as schema from '#/server/db/schema'
 import { notFound } from '#/server/http/errors'
 import type { TagInput } from './dto'
 import { toTag } from './mappers.server'
 
 const ownTag = (scope: Scope, id: string) =>
-  and(eq(t.tags.id, id), inScope(t.tags, scope))
+  and(eq(schema.tags.id, id), inScope(schema.tags, scope))
 
 /** Tagi konta, alfabetycznie. */
 export async function listTags(scope: Scope) {
-  const rows = await db
+  const rows = await database
     .select()
-    .from(t.tags)
-    .where(inScope(t.tags, scope))
-    .orderBy(asc(t.tags.name))
+    .from(schema.tags)
+    .where(inScope(schema.tags, scope))
+    .orderBy(asc(schema.tags.name))
   return rows.map(toTag)
 }
 
 export async function createTag(scope: Scope, input: TagInput) {
-  const [created] = await db
-    .insert(t.tags)
+  const [created] = await database
+    .insert(schema.tags)
     .values({ ...input, ...owner(scope) })
     .returning()
   return toTag(created!)
 }
 
 export async function updateTag(scope: Scope, id: string, input: TagInput) {
-  const [row] = await db
-    .update(t.tags)
+  const [row] = await database
+    .update(schema.tags)
     .set(input)
     .where(ownTag(scope, id))
     .returning()
@@ -39,5 +39,5 @@ export async function updateTag(scope: Scope, id: string, input: TagInput) {
 }
 
 export async function removeTag(scope: Scope, id: string) {
-  await db.delete(t.tags).where(ownTag(scope, id))
+  await database.delete(schema.tags).where(ownTag(scope, id))
 }

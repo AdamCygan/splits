@@ -9,7 +9,7 @@ import type { Locale } from '#/i18n/config'
 import { site } from '#/config/site'
 import { isCutOff } from '#/features/auth/data/access.server'
 import { verifyAccessToken } from '#/features/auth/data/tokens.server'
-import { db, ensureMigrated } from './db/client'
+import { database, ensureMigrated } from './db/client'
 import { serverEnv } from './env'
 import { accountRoutes } from '#/features/account/controllers/routes.server'
 import { adminRoutes } from '#/features/admin/controllers/routes.server'
@@ -89,37 +89,40 @@ api.use(
     strictTransportSecurity: 'max-age=63072000; includeSubDomains',
   }),
 )
-api.use('*', async (c, next) => {
-  c.set('traceId', randomUUID())
-  c.set(
+api.use('*', async (context, next) => {
+  context.set('traceId', randomUUID())
+  context.set(
     'locale',
-    detectLocale(getCookie(c, LOCALE_COOKIE), c.req.header('accept-language')),
+    detectLocale(
+      getCookie(context, LOCALE_COOKIE),
+      context.req.header('accept-language'),
+    ),
   )
-  c.header('Cache-Control', 'no-store')
+  context.header('Cache-Control', 'no-store')
   await ensureMigrated()
   await next()
 })
 api.use('*', limitBody)
 
-api.use('/auth/*', async (c, next) => {
+api.use('/auth/*', async (context, next) => {
   const allowed = sameOrigin({
-    origin: c.req.header('origin'),
-    fetchSite: c.req.header('sec-fetch-site'),
-    requestUrl: c.req.url,
+    origin: context.req.header('origin'),
+    fetchSite: context.req.header('sec-fetch-site'),
+    requestUrl: context.req.url,
     appUrl: serverEnv.appUrl,
   })
-  if (c.req.method !== 'GET' && !allowed) throw new HTTPException(403)
+  if (context.req.method !== 'GET' && !allowed) throw new HTTPException(403)
   await next()
 })
 
 /** Wymaga ważnego access tokenu (nagłówek Authorization: Bearer). */
-const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
-  const header = c.req.header('authorization')
+const requireAuth: MiddlewareHandler<AppEnv> = async (context, next) => {
+  const header = context.req.header('authorization')
   const token = header?.startsWith('Bearer ') ? header.slice(7) : null
   const userId = token ? await verifyAccessToken(token) : null
   // Konto zablokowane albo usunięte przed chwilą: token jeszcze ważny, ale dostęp już odcięty.
   if (!userId || isCutOff(userId)) throw new ApiError('auth.no_session', 401)
-  c.set('userId', userId)
+  context.set('userId', userId)
   await next()
 }
 
@@ -127,10 +130,13 @@ const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
  * Bieżąca przestrzeń: z ciasteczka tej przeglądarki, jeśli należy do konta, inaczej pierwsza.
  * Każde zapytanie o dane pracy filtruje potem po niej (scopeOf).
  */
-const withWorkspace: MiddlewareHandler<AppEnv> = async (c, next) => {
-  c.set(
+const withWorkspace: MiddlewareHandler<AppEnv> = async (context, next) => {
+  context.set(
     'workspaceId',
-    await resolveWorkspace(c.get('userId'), getCookie(c, WORKSPACE_COOKIE)),
+    await resolveWorkspace(
+      context.get('userId'),
+      getCookie(context, WORKSPACE_COOKIE),
+    ),
   )
   await next()
 }
@@ -155,17 +161,17 @@ const protectedRoutes = {
   '/admin': adminRoutes,
 } as const
 
-api.get('/meta', (c) =>
-  c.json({
+api.get('/meta', (context) =>
+  context.json({
     name: site.name,
     version: VERSION,
     environment: serverEnv.isProduction ? 'Production' : 'Development',
     serverTime: new Date().toISOString(),
   }),
 )
-api.get('/health', async (c) => {
-  await db.execute('select 1')
-  return c.json({ status: 'ok' })
+api.get('/health', async (context) => {
+  await database.execute('select 1')
+  return context.json({ status: 'ok' })
 })
 api.route('/auth', authRoutes)
 // Webhook Stripe: bez logowania, uwierzytelniony podpisem Stripe-Signature.
@@ -185,20 +191,23 @@ interface LocaleContext {
 }
 
 /** Locale z middleware; przy błędzie przed middleware (np. zły nagłówek) — angielski. */
-const localeOf = (c: LocaleContext) => c.get('locale') ?? 'en'
+const localeOf = (localeContext: LocaleContext) =>
+  localeContext.get('locale') ?? 'en'
 
-api.notFound((c) => c.json(problem(localeOf(c), 'not_found', 404), 404))
+api.notFound((context) =>
+  context.json(problem(localeOf(context), 'not_found', 404), 404),
+)
 
-api.onError(async (error, c) => {
-  const locale = localeOf(c)
-  const traceId = c.get('traceId')
+api.onError(async (error, context) => {
+  const locale = localeOf(context)
+  const traceId = context.get('traceId')
   const known = error instanceof ApiError ? error : fromDatabaseError(error)
   const where = {
     traceId,
-    method: c.req.method,
-    path: c.req.path,
-    userId: c.get('userId') as string | undefined,
-    tags: (c.req.path.includes('/stripe/')
+    method: context.req.method,
+    path: context.req.path,
+    userId: context.get('userId') as string | undefined,
+    tags: (context.req.path.includes('/stripe/')
       ? { area: 'stripe-webhook' }
       : {}) as Record<string, string>,
   }
@@ -210,7 +219,7 @@ api.onError(async (error, c) => {
         level: 'warning',
         tags: { ...where.tags, code: known.code },
       })
-    return c.json(
+    return context.json(
       problem(
         locale,
         known.code,
@@ -222,12 +231,21 @@ api.onError(async (error, c) => {
     )
   }
   if (error instanceof HTTPException) {
-    return c.json(
+    return context.json(
       problem(locale, 'validation.invalid', error.status, [], traceId),
       error.status,
     )
   }
-  console.error('[api] %s %s %s', traceId, c.req.method, c.req.path, error)
+  console.error(
+    '[api] %s %s %s',
+    traceId,
+    context.req.method,
+    context.req.path,
+    error,
+  )
   await reportError(error, where)
-  return c.json(problem(locale, 'server.unexpected', 500, [], traceId), 500)
+  return context.json(
+    problem(locale, 'server.unexpected', 500, [], traceId),
+    500,
+  )
 })

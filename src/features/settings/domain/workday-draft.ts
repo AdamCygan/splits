@@ -3,10 +3,10 @@ import type { UserSettings } from '#/features/settings/data/dto'
 /** Lista stref IANA z przeglądarki; na starszych silnikach przynajmniej bieżąca i UTC. */
 export function timeZones(current: string) {
   // Starsze przeglądarki (Safari < 15.4) nie mają supportedValuesOf.
-  const intl = Intl as unknown as {
+  const formatter = Intl as unknown as {
     supportedValuesOf?: (key: string) => Array<string>
   }
-  const list = intl.supportedValuesOf?.('timeZone') ?? []
+  const list = formatter.supportedValuesOf?.('timeZone') ?? []
   return [...new Set(['UTC', current, ...list])].sort()
 }
 
@@ -19,9 +19,9 @@ export type Draft = UserSettings & {
   reminderTime: string
 }
 
-export const toDraft = (s: UserSettings): Draft => ({
-  ...s,
-  targetHours: String(s.workdayTargetMinutes / 60),
-  reminderOn: s.dailyReminderAt !== null,
-  reminderTime: s.dailyReminderAt ?? '17:00',
+export const toDraft = (userSettings: UserSettings): Draft => ({
+  ...userSettings,
+  targetHours: String(userSettings.workdayTargetMinutes / 60),
+  reminderOn: userSettings.dailyReminderAt !== null,
+  reminderTime: userSettings.dailyReminderAt ?? '17:00',
 })

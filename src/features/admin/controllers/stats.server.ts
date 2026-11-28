@@ -7,6 +7,6 @@ import type { AppEnv } from '#/server/http/context'
  * się zalogowały). Przychód = faktycznie zapłacone kwoty minus zwroty (tabela payments,
  * z webhooków Stripe), osobno dla każdej waluty.
  */
-export const statsRoutes = new Hono<AppEnv>().get('/stats', async (c) => {
-  return c.json(await getStats())
+export const statsRoutes = new Hono<AppEnv>().get('/stats', async (context) => {
+  return context.json(await getStats())
 })

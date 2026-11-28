@@ -10,64 +10,73 @@ import { adminMessages } from '#/i18n/messages/admin'
 import type { SectionProps } from './account-section'
 
 /** Subskrypcja, link do klienta w Stripe i faktury (ładowane na żądanie, z wpisem w dzienniku). */
-export function BillingSection({ vm }: SectionProps) {
-  const t = useMessages(adminMessages).user.billing
+export function BillingSection({ viewModel }: SectionProps) {
+  const messages = useMessages(adminMessages).user.billing
   const { locale } = useI18n()
-  const u = vm.user
-  if (!u || u.isDemo) return null
-  const sub = u.subscription
+  const user = viewModel.user
+  if (!user || user.isDemo) return null
+  const subscription = user.subscription
   const day = (value: string) => formatDate(locale, new Date(value))
   return (
-    <Panel title={t.title}>
-      {!u.billing.enabled ? (
-        <p className="text-sm text-ink-soft">{t.off}</p>
+    <Panel title={messages.title}>
+      {!user.billing.enabled ? (
+        <p className="text-sm text-ink-soft">{messages.off}</p>
       ) : (
         <>
           <dl className="text-[0.9375rem]">
-            <dt className="text-sm text-ink-soft">{t.subscription}</dt>
+            <dt className="text-sm text-ink-soft">{messages.subscription}</dt>
             <dd className="flex flex-wrap items-center gap-2 font-medium">
-              {sub ? (
+              {subscription ? (
                 <>
                   <Badge
                     tone={
-                      isPaymentProblem(sub.status)
+                      isPaymentProblem(subscription.status)
                         ? 'warning'
-                        : sub.active
+                        : subscription.active
                           ? 'success'
                           : 'muted'
                     }
                   >
-                    {t.status[sub.status] ?? sub.status}
+                    {messages.status[subscription.status] ??
+                      subscription.status}
                   </Badge>
-                  {sub.currentPeriodEnd &&
-                    fmt(sub.cancelAtPeriodEnd ? t.ends : t.renews, {
-                      date: day(sub.currentPeriodEnd),
-                    })}
+                  {subscription.currentPeriodEnd &&
+                    fmt(
+                      subscription.cancelAtPeriodEnd
+                        ? messages.ends
+                        : messages.renews,
+                      {
+                        date: day(subscription.currentPeriodEnd),
+                      },
+                    )}
                 </>
               ) : (
-                t.none
+                messages.none
               )}
             </dd>
           </dl>
-          {u.billing.stripeUrl && u.billing.stripeCustomerId ? (
+          {user.billing.stripeUrl && user.billing.stripeCustomerId ? (
             <a
-              href={u.billing.stripeUrl}
+              href={user.billing.stripeUrl}
               target="_blank"
               rel="noreferrer noopener"
               className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium underline-offset-4 hover:underline"
             >
               <ExternalLink aria-hidden className="size-4" />
-              {t.stripe}
-              <span className="sr-only"> ({u.billing.stripeCustomerId})</span>
+              {messages.stripe}
+              <span className="sr-only">
+                {' '}
+                ({user.billing.stripeCustomerId})
+              </span>
             </a>
           ) : (
-            <p className="mt-3 text-sm text-ink-soft">{t.noCustomer}</p>
+            <p className="mt-3 text-sm text-ink-soft">{messages.noCustomer}</p>
           )}
-          {u.billing.stripeCustomerId && (
+          {user.billing.stripeCustomerId && (
             <div className="mt-5 border-t border-line pt-5">
-              <h3 className="font-semibold">{t.invoices}</h3>
-              {vm.showInvoices ? (
-                vm.invoicesPending ? (
+              <h3 className="font-semibold">{messages.invoices}</h3>
+              {viewModel.showInvoices ? (
+                viewModel.invoicesPending ? (
                   <div
                     aria-hidden
                     className="mt-3 h-20 animate-pulse rounded-lg bg-muted"
@@ -75,17 +84,23 @@ export function BillingSection({ vm }: SectionProps) {
                 ) : (
                   <div className="mt-3">
                     <InvoicesTable
-                      invoices={vm.invoices}
-                      caption={t.invoices}
+                      invoices={viewModel.invoices}
+                      caption={messages.invoices}
                     />
                   </div>
                 )
               ) : (
                 <div className="mt-2 flex flex-wrap items-center gap-3">
-                  <Button size="sm" variant="outline" onClick={vm.loadInvoices}>
-                    {t.showInvoices}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={viewModel.loadInvoices}
+                  >
+                    {messages.showInvoices}
                   </Button>
-                  <p className="text-sm text-ink-soft">{t.invoicesHint}</p>
+                  <p className="text-sm text-ink-soft">
+                    {messages.invoicesHint}
+                  </p>
                 </div>
               )}
             </div>

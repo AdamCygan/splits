@@ -115,16 +115,16 @@ export const users = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [
-    index('users_created_idx').on(t.createdAt),
+  (messages) => [
+    index('users_created_idx').on(messages.createdAt),
     index('users_demo_idx')
-      .on(t.createdAt)
-      .where(sql`${t.isDemo}`),
-    uniqueIndex('users_username_key').on(sql`lower(${t.username})`),
-    uniqueIndex('users_email_key').on(sql`lower(${t.email})`),
+      .on(messages.createdAt)
+      .where(sql`${messages.isDemo}`),
+    uniqueIndex('users_username_key').on(sql`lower(${messages.username})`),
+    uniqueIndex('users_email_key').on(sql`lower(${messages.email})`),
     check(
       'users_display_name_len',
-      sql`char_length(${t.displayName}) between 1 and 80`,
+      sql`char_length(${messages.displayName}) between 1 and 80`,
     ),
   ],
 )
@@ -138,9 +138,9 @@ export const externalLogins = pgTable(
     userId: userId(),
     createdAt: createdAt(),
   },
-  (t) => [
-    primaryKey({ columns: [t.provider, t.providerUserId] }),
-    index('external_logins_user_idx').on(t.userId),
+  (messages) => [
+    primaryKey({ columns: [messages.provider, messages.providerUserId] }),
+    index('external_logins_user_idx').on(messages.userId),
   ],
 )
 
@@ -161,7 +161,7 @@ export const refreshTokens = pgTable(
     ip: text('ip'),
     createdAt: createdAt(),
   },
-  (t) => [index('refresh_tokens_user_idx').on(t.userId)],
+  (messages) => [index('refresh_tokens_user_idx').on(messages.userId)],
 )
 
 export const authTokens = pgTable('auth_tokens', {
@@ -201,8 +201,11 @@ export const userSettings = pgTable(
     askWorkspaceDaily: boolean('ask_workspace_daily').notNull().default(true),
     updatedAt: updatedAt(),
   },
-  (t) => [
-    check('user_settings_week_start', sql`${t.weekStartsOn} between 0 and 6`),
+  (messages) => [
+    check(
+      'user_settings_week_start',
+      sql`${messages.weekStartsOn} between 0 and 6`,
+    ),
   ],
 )
 
@@ -220,9 +223,15 @@ export const workspaces = pgTable(
     sortOrder: integer('sort_order').notNull().default(0),
     createdAt: createdAt(),
   },
-  (t) => [
-    uniqueIndex('workspaces_name_key').on(t.userId, sql`lower(${t.name})`),
-    check('workspaces_name', sql`char_length(${t.name}) between 1 and 40`),
+  (messages) => [
+    uniqueIndex('workspaces_name_key').on(
+      messages.userId,
+      sql`lower(${messages.name})`,
+    ),
+    check(
+      'workspaces_name',
+      sql`char_length(${messages.name}) between 1 and 40`,
+    ),
   ],
 )
 
@@ -248,15 +257,18 @@ export const workspaceSettings = pgTable(
     breakMinutes: smallint('break_minutes').notNull().default(30),
     updatedAt: updatedAt(),
   },
-  (t) => [
-    check('workspace_settings_break', sql`${t.breakMinutes} between 0 and 240`),
+  (messages) => [
+    check(
+      'workspace_settings_break',
+      sql`${messages.breakMinutes} between 0 and 240`,
+    ),
     check(
       'workspace_settings_target',
-      sql`${t.workdayTargetMinutes} between 0 and 1440`,
+      sql`${messages.workdayTargetMinutes} between 0 and 1440`,
     ),
     check(
       'workspace_settings_rounding',
-      sql`${t.timeRoundingMinutes} in (0, 1, 5, 10, 15, 30)`,
+      sql`${messages.timeRoundingMinutes} in (0, 1, 5, 10, 15, 30)`,
     ),
   ],
 )
@@ -274,11 +286,14 @@ export const storyPointScale = pgTable(
     points: points('points').notNull(),
     maxMinutes: integer('max_minutes').notNull(),
   },
-  (t) => [
-    uniqueIndex('story_point_scale_points_key').on(t.workspaceId, t.points),
+  (messages) => [
+    uniqueIndex('story_point_scale_points_key').on(
+      messages.workspaceId,
+      messages.points,
+    ),
     check(
       'story_point_scale_range',
-      sql`${t.points} > 0 and ${t.points} <= 100 and ${t.maxMinutes} between 1 and 100000`,
+      sql`${messages.points} > 0 and ${messages.points} <= 100 and ${messages.maxMinutes} between 1 and 100000`,
     ),
   ],
 )
@@ -314,13 +329,19 @@ export const taskTypes = pgTable(
     archivedAt: timestamp('archived_at', { withTimezone: true }),
     createdAt: createdAt(),
   },
-  (t) => [
-    uniqueIndex('task_types_name_key').on(t.workspaceId, sql`lower(${t.name})`),
-    uniqueIndex('task_types_sync_key').on(t.workspaceId, t.syncId),
+  (messages) => [
+    uniqueIndex('task_types_name_key').on(
+      messages.workspaceId,
+      sql`lower(${messages.name})`,
+    ),
+    uniqueIndex('task_types_sync_key').on(
+      messages.workspaceId,
+      messages.syncId,
+    ),
     check(
       'task_types_sp_default',
-      sql`(${t.storyPointsRequirement} <> 'hidden' or ${t.defaultStoryPoints} is null)
-        and (${t.storyPointsRequirement} <> 'required' or ${t.defaultStoryPoints} is not null)`,
+      sql`(${messages.storyPointsRequirement} <> 'hidden' or ${messages.defaultStoryPoints} is null)
+        and (${messages.storyPointsRequirement} <> 'required' or ${messages.defaultStoryPoints} is not null)`,
     ),
   ],
 )
@@ -340,16 +361,19 @@ export const taskStatuses = pgTable(
     sortOrder: integer('sort_order').notNull().default(0),
     archivedAt: timestamp('archived_at', { withTimezone: true }),
   },
-  (t) => [
+  (messages) => [
     uniqueIndex('task_statuses_name_key').on(
-      t.workspaceId,
-      sql`lower(${t.name})`,
+      messages.workspaceId,
+      sql`lower(${messages.name})`,
     ),
-    uniqueIndex('task_statuses_sync_key').on(t.workspaceId, t.syncId),
+    uniqueIndex('task_statuses_sync_key').on(
+      messages.workspaceId,
+      messages.syncId,
+    ),
     // Najwyżej jeden status domyślny w przestrzeni.
     uniqueIndex('task_statuses_default_key')
-      .on(t.workspaceId)
-      .where(sql`${t.isDefault}`),
+      .on(messages.workspaceId)
+      .where(sql`${messages.isDefault}`),
   ],
 )
 
@@ -384,10 +408,10 @@ export const sprints = pgTable(
       .notNull()
       .default(sql`'[]'::jsonb`),
   },
-  (t) => [
-    index('sprints_user_start_idx').on(t.workspaceId, t.startsOn),
-    uniqueIndex('sprints_sync_key').on(t.workspaceId, t.syncId),
-    check('sprints_dates', sql`${t.endsOn} >= ${t.startsOn}`),
+  (messages) => [
+    index('sprints_user_start_idx').on(messages.workspaceId, messages.startsOn),
+    uniqueIndex('sprints_sync_key').on(messages.workspaceId, messages.syncId),
+    check('sprints_dates', sql`${messages.endsOn} >= ${messages.startsOn}`),
   ],
 )
 
@@ -415,15 +439,15 @@ export const breaks = pgTable(
     }),
     createdAt: createdAt(),
   },
-  (t) => [
-    index('breaks_user_date').on(t.workspaceId, t.workDate),
+  (messages) => [
+    index('breaks_user_date').on(messages.workspaceId, messages.workDate),
     uniqueIndex('breaks_one_running')
-      .on(t.userId)
-      .where(sql`${t.running}`),
+      .on(messages.userId)
+      .where(sql`${messages.running}`),
     check(
       'breaks_duration',
-      sql`${t.durationMinutes} between 0 and 1440
-        and (${t.running} or ${t.durationMinutes} >= 1)`,
+      sql`${messages.durationMinutes} between 0 and 1440
+        and (${messages.running} or ${messages.durationMinutes} >= 1)`,
     ),
   ],
 )
@@ -443,15 +467,15 @@ export const daysOff = pgTable(
     note: text('note'),
     createdAt: createdAt(),
   },
-  (t) => [
-    uniqueIndex('days_off_user_date').on(t.workspaceId, t.date),
+  (messages) => [
+    uniqueIndex('days_off_user_date').on(messages.workspaceId, messages.date),
     check(
       'days_off_kind',
-      sql`${t.kind} in ('vacation', 'sick', 'holiday', 'other')`,
+      sql`${messages.kind} in ('vacation', 'sick', 'holiday', 'other')`,
     ),
     check(
       'days_off_note',
-      sql`${t.note} is null or char_length(${t.note}) between 1 and 200`,
+      sql`${messages.note} is null or char_length(${messages.note}) between 1 and 200`,
     ),
   ],
 )
@@ -467,11 +491,14 @@ export const projects = pgTable(
     color: text('color').notNull(),
     archivedAt: timestamp('archived_at', { withTimezone: true }),
   },
-  (t) => [
-    uniqueIndex('projects_name_key').on(t.workspaceId, sql`lower(${t.name})`),
+  (messages) => [
+    uniqueIndex('projects_name_key').on(
+      messages.workspaceId,
+      sql`lower(${messages.name})`,
+    ),
     uniqueIndex('projects_key_key')
-      .on(t.workspaceId, t.key)
-      .where(sql`${t.key} is not null`),
+      .on(messages.workspaceId, messages.key)
+      .where(sql`${messages.key} is not null`),
   ],
 )
 
@@ -485,9 +512,12 @@ export const tags = pgTable(
     name: text('name').notNull(),
     color: text('color').notNull(),
   },
-  (t) => [
-    uniqueIndex('tags_name_key').on(t.workspaceId, sql`lower(${t.name})`),
-    uniqueIndex('tags_sync_key').on(t.workspaceId, t.syncId),
+  (messages) => [
+    uniqueIndex('tags_name_key').on(
+      messages.workspaceId,
+      sql`lower(${messages.name})`,
+    ),
+    uniqueIndex('tags_sync_key').on(messages.workspaceId, messages.syncId),
   ],
 )
 
@@ -549,40 +579,43 @@ export const timeEntries = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [
-    index('time_entries_user_date_idx').on(t.workspaceId, t.workDate),
-    index('time_entries_user_link_idx').on(t.workspaceId, t.link),
+  (messages) => [
+    index('time_entries_user_date_idx').on(
+      messages.workspaceId,
+      messages.workDate,
+    ),
+    index('time_entries_user_link_idx').on(messages.workspaceId, messages.link),
     index('time_entries_user_paused_idx')
-      .on(t.workspaceId, t.workDate)
-      .where(sql`${t.paused}`),
+      .on(messages.workspaceId, messages.workDate)
+      .where(sql`${messages.paused}`),
     // Najwyżej jeden działający timer na użytkownika.
     uniqueIndex('time_entries_running_key')
-      .on(t.userId)
-      .where(sql`${t.running}`),
+      .on(messages.userId)
+      .where(sql`${messages.running}`),
     check(
       'time_entries_limits',
-      sql`char_length(${t.title}) between 1 and 200
-        and (${t.link} is null or char_length(${t.link}) <= 2048)
-        and (${t.note} is null or char_length(${t.note}) <= 20000)
-        and ${t.durationMinutes} between 0 and 1440`,
+      sql`char_length(${messages.title}) between 1 and 200
+        and (${messages.link} is null or char_length(${messages.link}) <= 2048)
+        and (${messages.note} is null or char_length(${messages.note}) <= 20000)
+        and ${messages.durationMinutes} between 0 and 1440`,
     ),
     check(
       'time_entries_overtime',
-      sql`(${t.overtimeMinutes} is null and ${t.overtimeNote} is null)
-        or (${t.overtimeMinutes} between 1 and ${t.durationMinutes}
-          and not ${t.running}
-          and char_length(${t.overtimeNote}) between 1 and 1000)`,
+      sql`(${messages.overtimeMinutes} is null and ${messages.overtimeNote} is null)
+        or (${messages.overtimeMinutes} between 1 and ${messages.durationMinutes}
+          and not ${messages.running}
+          and char_length(${messages.overtimeNote}) between 1 and 1000)`,
     ),
     check(
       'time_entries_estimate',
-      sql`${t.estimateMinutes} is null or ${t.estimateMinutes} between 1 and 60000`,
+      sql`${messages.estimateMinutes} is null or ${messages.estimateMinutes} between 1 and 60000`,
     ),
     check(
       'time_entries_extension',
-      sql`(${t.extensionMinutes} is null and ${t.extensionNote} is null)
-        or (${t.extensionMinutes} between 1 and ${t.durationMinutes}
-          and not ${t.running}
-          and char_length(${t.extensionNote}) between 1 and 1000)`,
+      sql`(${messages.extensionMinutes} is null and ${messages.extensionNote} is null)
+        or (${messages.extensionMinutes} between 1 and ${messages.durationMinutes}
+          and not ${messages.running}
+          and char_length(${messages.extensionNote}) between 1 and 1000)`,
     ),
   ],
 )
@@ -613,10 +646,10 @@ export const quickTemplates = pgTable(
       .notNull()
       .default(sql`'[]'::jsonb`),
   },
-  (t) => [
+  (messages) => [
     uniqueIndex('quick_templates_hotkey_key')
-      .on(t.workspaceId, t.hotkey)
-      .where(sql`${t.hotkey} is not null`),
+      .on(messages.workspaceId, messages.hotkey)
+      .where(sql`${messages.hotkey} is not null`),
   ],
 )
 
@@ -644,7 +677,7 @@ export const subscriptions = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index('subscriptions_user_idx').on(t.userId)],
+  (messages) => [index('subscriptions_user_idx').on(messages.userId)],
 )
 
 /** Przetworzone zdarzenia webhooków: każde obsługujemy dokładnie raz. */
@@ -680,9 +713,9 @@ export const adminActions = pgTable(
     detail: text('detail'),
     createdAt: createdAt(),
   },
-  (t) => [
-    index('admin_actions_created_idx').on(t.createdAt),
-    index('admin_actions_target_idx').on(t.targetUserId),
+  (messages) => [
+    index('admin_actions_created_idx').on(messages.createdAt),
+    index('admin_actions_target_idx').on(messages.targetUserId),
   ],
 )
 
@@ -708,7 +741,7 @@ export const payments = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index('payments_paid_idx').on(t.paidAt)],
+  (messages) => [index('payments_paid_idx').on(messages.paidAt)],
 )
 
 /**
@@ -732,21 +765,27 @@ export const feedback = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [
-    index('feedback_status_created_idx').on(t.status, t.createdAt),
-    index('feedback_user_idx').on(t.userId, t.createdAt),
-    check('feedback_kind', sql`${t.kind} in ('bug', 'idea', 'question')`),
+  (messages) => [
+    index('feedback_status_created_idx').on(
+      messages.status,
+      messages.createdAt,
+    ),
+    index('feedback_user_idx').on(messages.userId, messages.createdAt),
+    check(
+      'feedback_kind',
+      sql`${messages.kind} in ('bug', 'idea', 'question')`,
+    ),
     check(
       'feedback_status',
-      sql`${t.status} in ('new', 'in_progress', 'done', 'dismissed')`,
+      sql`${messages.status} in ('new', 'in_progress', 'done', 'dismissed')`,
     ),
     check(
       'feedback_message',
-      sql`char_length(${t.message}) between 5 and 4000`,
+      sql`char_length(${messages.message}) between 5 and 4000`,
     ),
     check(
       'feedback_reply',
-      sql`${t.reply} is null or char_length(${t.reply}) between 1 and 4000`,
+      sql`${messages.reply} is null or char_length(${messages.reply}) between 1 and 4000`,
     ),
   ],
 )

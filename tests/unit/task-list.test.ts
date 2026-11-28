@@ -44,10 +44,10 @@ describe('task list', () => {
 
   it('Should group by kind of work, most time first, keeping the order inside', () => {
     expect(
-      groupTaskList(items, 'kind').map((g) => [
-        g.key,
-        g.minutes,
-        g.items.map((x) => x.row.title),
+      groupTaskList(items, 'kind').map((taskGroup) => [
+        taskGroup.key,
+        taskGroup.minutes,
+        taskGroup.items.map((item) => item.row.title),
       ]),
     ).toEqual([
       ['task', 300, ['B']],
@@ -56,10 +56,9 @@ describe('task list', () => {
   })
 
   it('Should group by the day of last work, newest first, or not at all', () => {
-    expect(groupTaskList(items, 'day').map((g) => g.key)).toEqual([
-      '2026-11-25',
-      '2026-11-20',
-    ])
+    expect(
+      groupTaskList(items, 'day').map((taskGroup) => taskGroup.key),
+    ).toEqual(['2026-11-25', '2026-11-20'])
     expect(groupTaskList(items, 'none')).toEqual([
       { key: 'all', items, minutes: 375 },
     ])
@@ -114,10 +113,12 @@ describe('task list filters and period', () => {
   ]
 
   it('Should filter by text in title, link or ticket number', () => {
-    const f = { ...NO_TASK_FILTERS, query: 'ph-12' }
-    expect(filterTaskRows(rows, f, new Set()).map((x) => x.row.key)).toEqual([
-      'a',
-    ])
+    const filters = { ...NO_TASK_FILTERS, query: 'ph-12' }
+    expect(
+      filterTaskRows(rows, filters, new Set()).map(
+        (filterTaskRow) => filterTaskRow.row.key,
+      ),
+    ).toEqual(['a'])
     expect(matchesTaskQuery(rows[1]!.row, 'review')).toBe(true)
   })
 

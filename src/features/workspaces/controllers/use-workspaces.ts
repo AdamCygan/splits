@@ -44,7 +44,8 @@ const PICKED_KEY = 'tb:workspace-picked-on'
 export function useWorkspaces() {
   const { data } = useQuery(workspacesQuery)
   const items = data?.items ?? []
-  const current = items.find((w) => w.id === data?.current) ?? items[0] ?? null
+  const current =
+    items.find((item) => item.id === data?.current) ?? items[0] ?? null
   const isPro = hasProAccess(useCurrentUser())
   return {
     state: data ?? null,
@@ -54,7 +55,7 @@ export function useWorkspaces() {
     /** Plan Free ma jedną przestrzeń: nowa prowadzi do planu Pro. */
     canCreate: isPro || items.length < FREE_LIMITS.workspaces,
     shortcutOf: (id: string) =>
-      workspaceShortcut(items.findIndex((w) => w.id === id)),
+      workspaceShortcut(items.findIndex((workspace) => workspace.id === id)),
   }
 }
 
@@ -65,7 +66,7 @@ export function useWorkspaces() {
 async function loadWorkspace(client: QueryClient, state: WorkspaceState) {
   await client.cancelQueries()
   client.removeQueries({
-    predicate: (q) => !KEEP.has(String(q.queryKey[0])),
+    predicate: (cachedQuery) => !KEEP.has(String(cachedQuery.queryKey[0])),
   })
   const boot = await appApi.bootstrap()
   if (boot.ok) primeCache(client, boot.value)
@@ -96,7 +97,7 @@ function useToday() {
 /** Przełączenie przestrzeni (menu, skrót, paleta, okno na start dnia). */
 export function useSwitchWorkspace() {
   const client = useQueryClient()
-  const t = useMessages(workspacesMessages)
+  const messages = useMessages(workspacesMessages)
   const errorText = useErrorText()
   const today = useToday()
   return useCallback(
@@ -111,10 +112,10 @@ export function useSwitchWorkspace() {
       }
       await loadWorkspace(client, result.value)
       broadcast(workspace.id)
-      toast.success(fmt(t.switched, { name: workspace.name }))
+      toast.success(fmt(messages.switched, { name: workspace.name }))
       return true
     },
-    [client, errorText, t.switched, today],
+    [client, errorText, messages.switched, today],
   )
 }
 
@@ -148,13 +149,19 @@ export function useWorkspaceShortcuts() {
   const { items } = useWorkspaces()
   const switchTo = useSwitchWorkspace()
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!e.altKey || !e.shiftKey || e.ctrlKey || e.metaKey) return
-      const match = /^Digit([1-9])$/.exec(e.code)
+    const onKey = (keyboardEvent: KeyboardEvent) => {
+      if (
+        !keyboardEvent.altKey ||
+        !keyboardEvent.shiftKey ||
+        keyboardEvent.ctrlKey ||
+        keyboardEvent.metaKey
+      )
+        return
+      const match = /^Digit([1-9])$/.exec(keyboardEvent.code)
       if (!match) return
       const target = workspaceForDigit(items, Number(match[1]))
       if (!target) return
-      e.preventDefault()
+      keyboardEvent.preventDefault()
       void switchTo(target)
     }
     window.addEventListener('keydown', onKey)
@@ -224,7 +231,7 @@ interface WorkspaceCopy {
 }
 
 export function useWorkspaceActions() {
-  const t = useMessages(workspacesMessages).settings
+  const messages = useMessages(workspacesMessages).settings
   const client = useQueryClient()
   const switchTo = useSwitchWorkspace()
   const { items, current } = useWorkspaces()
@@ -234,21 +241,22 @@ export function useWorkspaceActions() {
     (input: WorkspaceCreateInput) => workspacesApi.create(input),
     {
       invalidate: refresh,
-      success: (w) => fmt(t.created, { name: w.name }),
+      success: (workspace) => fmt(messages.created, { name: workspace.name }),
     },
   )
   const update = useDataMutation(
     ({ id, input }: WorkspaceUpdate) => workspacesApi.update(id, input),
-    { invalidate: refresh, success: t.saved },
+    { invalidate: refresh, success: messages.saved },
   )
   const remove = useDataMutation(
     (workspace: Workspace) => workspacesApi.remove(workspace.id),
     {
       invalidate: [],
-      success: (_r, w) => fmt(t.deleted, { name: w.name }),
-      onSuccess: (_r, w) => {
+      success: (_result, workspace) =>
+        fmt(messages.deleted, { name: workspace.name }),
+      onSuccess: (_result, workspace) => {
         // Usunięta była bieżąca: serwer wraca do pierwszej, więc ładujemy ją od nowa.
-        if (w.id === current?.id)
+        if (workspace.id === current?.id)
           void unwrap(workspacesApi.state()).then((state) =>
             loadWorkspace(client, state),
           )
@@ -265,10 +273,11 @@ export function useWorkspaceActions() {
       workspacesApi.copy(to.id, { from, copy: kinds }),
     {
       invalidate: [],
-      success: (_r, v) => fmt(t.copied, { name: v.to.name }),
-      onSuccess: (_r, v) => {
+      success: (_result, workspaceCopy) =>
+        fmt(messages.copied, { name: workspaceCopy.to.name }),
+      onSuccess: (_result, workspaceCopy) => {
         // Kopia do bieżącej przestrzeni: odświeżamy jej dane.
-        if (v.to.id === current?.id) {
+        if (workspaceCopy.to.id === current?.id) {
           const state = client.getQueryData<WorkspaceState>(workspaceKeys.state)
           if (state) void loadWorkspace(client, state)
         }
@@ -276,7 +285,7 @@ export function useWorkspaceActions() {
     },
   )
   const move = (id: string, delta: -1 | 1) => {
-    const ids = items.map((w) => w.id)
+    const ids = items.map((item) => item.id)
     const from = ids.indexOf(id)
     const to = from + delta
     if (from < 0 || to < 0 || to >= ids.length) return
@@ -295,7 +304,7 @@ export function useRunningElsewhere() {
   const switchTo = useSwitchWorkspace()
   const elsewhere = useQuery(runningElsewhereQuery).data ?? null
   const runningHere = useQuery(runningQuery).data
-  const workspace = items.find((w) => w.id === elsewhere?.workspaceId)
+  const workspace = items.find((item) => item.id === elsewhere?.workspaceId)
   if (!elsewhere || !workspace || runningHere) return null
   return {
     workspace,

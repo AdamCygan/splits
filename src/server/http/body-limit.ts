@@ -11,8 +11,8 @@ const tooLarge = () => new ApiError('validation.too_large', 413)
  * Bez bodyLimit z Hono: ten odtwarza obiekt Request, czego Request serwera Nitro nie obsługuje.
  * Ciało bez Content-Length (chunked) ogranicza readBody przy czytaniu.
  */
-export const limitBody: MiddlewareHandler = async (c, next) => {
-  const length = Number(c.req.header('content-length') ?? 0)
+export const limitBody: MiddlewareHandler = async (context, next) => {
+  const length = Number(context.req.header('content-length') ?? 0)
   if (length > MAX_BODY_BYTES) throw tooLarge()
   await next()
 }

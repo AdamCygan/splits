@@ -32,12 +32,12 @@ import { useEffect, useState } from 'react'
  * Licznik ma role="timer" (czytniki nie ogłaszają każdej sekundy), a tytuł karty pokazuje czas.
  */
 export function TimerBar() {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const format = useFormat()
   const running = useQuery(runningQuery).data
   const paused = useQuery(pausedQuery).data ?? []
   const types = useQuery(taskTypesQuery).data ?? []
-  const type = types.find((x) => x.id === running?.taskTypeId)
+  const type = types.find((workType) => workType.id === running?.taskTypeId)
   const seconds = useElapsed(running)
   const stop = useStopTimer()
   const pause = usePauseTimer()
@@ -65,11 +65,11 @@ export function TimerBar() {
   if (!running) return paused.length > 0 ? <PausedBar paused={paused} /> : null
 
   const waiting = paused.filter(
-    (p) => taskGroupKey(p) !== taskGroupKey(running),
+    (pausedEntry) => taskGroupKey(pausedEntry) !== taskGroupKey(running),
   )
   return (
     <section
-      aria-label={t.timer.running}
+      aria-label={messages.timer.running}
       className="sticky top-0 z-20 border-b border-white/10 bg-[var(--ink-fixed)] text-white"
     >
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 sm:px-6 md:px-10">
@@ -87,8 +87,8 @@ export function TimerBar() {
           <button
             type="button"
             onClick={() => setEditing(true)}
-            title={t.timer.edit}
-            aria-label={fmt(t.timer.editNamed, { name: running.title })}
+            title={messages.timer.edit}
+            aria-label={fmt(messages.timer.editNamed, { name: running.title })}
             className="group/title -mx-1 flex max-w-full items-center gap-1.5 rounded px-1 text-left text-sm font-semibold hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
           >
             <span className="truncate">{running.title}</span>
@@ -100,13 +100,15 @@ export function TimerBar() {
           <p className="truncate text-xs text-white/70">
             {type?.name}
             {running.startTime &&
-              ` · ${fmt(t.timer.since, { time: format.time(running.startTime) })}`}
+              ` · ${fmt(messages.timer.since, { time: format.time(running.startTime) })}`}
             <RunningProgress entry={running} />
           </p>
         </div>
         <span
           role="timer"
-          aria-label={fmt(t.timer.elapsed, { time: formatClock(seconds) })}
+          aria-label={fmt(messages.timer.elapsed, {
+            time: formatClock(seconds),
+          })}
           className="font-mono text-lg font-semibold tabular-nums sm:text-xl"
         >
           {formatClock(seconds)}
@@ -119,7 +121,7 @@ export function TimerBar() {
             className="h-10 border-white/30 bg-transparent px-3 text-white hover:bg-white/10 hover:text-white"
           >
             <Coffee aria-hidden className="size-3.5" />
-            {t.breaks.start}
+            {messages.breaks.start}
           </Button>
           <Button
             variant="outline"
@@ -128,7 +130,7 @@ export function TimerBar() {
             className="h-10 border-white/30 bg-transparent px-3 text-white hover:bg-white/10 hover:text-white"
           >
             <Pause aria-hidden className="size-3.5" fill="currentColor" />
-            {t.timer.pause}
+            {messages.timer.pause}
             <span className="sr-only">: {running.title}</span>
           </Button>
           <Button
@@ -139,29 +141,29 @@ export function TimerBar() {
             )}
           >
             <Square aria-hidden className="size-3.5" fill="currentColor" />
-            {t.timer.stop}
+            {messages.timer.stop}
             <span className="sr-only">: {running.title}</span>
           </Button>
         </div>
         {waiting.length > 0 && (
           <ul
-            aria-label={t.timer.pausedRegion}
+            aria-label={messages.timer.pausedRegion}
             className="flex w-full flex-wrap items-center gap-2 border-t border-white/10 pt-2 text-xs"
           >
             <li aria-hidden className="text-white/60">
-              {t.timer.paused}:
+              {messages.timer.paused}:
             </li>
-            {waiting.slice(0, 3).map((p) => (
-              <li key={p.id} className="min-w-0">
+            {waiting.slice(0, 3).map((pausedEntry) => (
+              <li key={pausedEntry.id} className="min-w-0">
                 <button
                   type="button"
                   disabled={busy}
-                  onClick={() => resume.mutate(p.id)}
+                  onClick={() => resume.mutate(pausedEntry.id)}
                   className="inline-flex max-w-[16rem] items-center gap-1.5 rounded-full border border-white/25 px-2.5 py-1 font-medium hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none"
                 >
                   <Play aria-hidden className="size-3" fill="currentColor" />
-                  <span className="truncate">{p.title}</span>
-                  <span className="sr-only">: {t.timer.resume}</span>
+                  <span className="truncate">{pausedEntry.title}</span>
+                  <span className="sr-only">: {messages.timer.resume}</span>
                 </button>
               </li>
             ))}
@@ -181,7 +183,7 @@ interface PausedBarProps {
 
 /** Nic nie działa, ale są wstrzymane zadania: „Wznów” albo „Gotowe” jednym kliknięciem. */
 function PausedBar({ paused }: PausedBarProps) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const format = useFormat()
   const types = useQuery(taskTypesQuery).data ?? []
   const timeZone = useQuery(settingsQuery).data?.timezone
@@ -192,18 +194,20 @@ function PausedBar({ paused }: PausedBarProps) {
 
   return (
     <section
-      aria-label={t.timer.pausedRegion}
+      aria-label={messages.timer.pausedRegion}
       className="sticky top-0 z-20 border-b border-line bg-surface"
     >
       <ul className="mx-auto flex max-w-6xl flex-col divide-y divide-line px-4 sm:px-6 md:px-10">
-        {paused.slice(0, 3).map((p) => {
-          const type = types.find((x) => x.id === p.taskTypeId)
+        {paused.slice(0, 3).map((timeEntry) => {
+          const type = types.find(
+            (workType) => workType.id === timeEntry.taskTypeId,
+          )
           const minutes = today
-            .filter((e) => taskGroupKey(e) === taskGroupKey(p))
-            .reduce((sum, e) => sum + e.durationMinutes, 0)
+            .filter((entry) => taskGroupKey(entry) === taskGroupKey(timeEntry))
+            .reduce((sum, entry) => sum + entry.durationMinutes, 0)
           return (
             <li
-              key={p.id}
+              key={timeEntry.id}
               className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2"
             >
               <Pause
@@ -213,31 +217,35 @@ function PausedBar({ paused }: PausedBarProps) {
                 fill="currentColor"
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">{p.title}</p>
+                <p className="truncate text-sm font-semibold">
+                  {timeEntry.title}
+                </p>
                 <p className="truncate text-xs text-ink-soft">
-                  {t.timer.paused} · {type?.name} ·{' '}
-                  {fmt(t.timer.todayTotal, { time: format.minutes(minutes) })}
+                  {messages.timer.paused} · {type?.name} ·{' '}
+                  {fmt(messages.timer.todayTotal, {
+                    time: format.minutes(minutes),
+                  })}
                 </p>
               </div>
               <div className="flex shrink-0 gap-1.5">
                 <Button
                   size="sm"
                   disabled={busy}
-                  onClick={() => resume.mutate(p.id)}
+                  onClick={() => resume.mutate(timeEntry.id)}
                 >
                   <Play aria-hidden className="size-3.5" fill="currentColor" />
-                  {t.timer.resume}
-                  <span className="sr-only">: {p.title}</span>
+                  {messages.timer.resume}
+                  <span className="sr-only">: {timeEntry.title}</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="ghost"
                   disabled={busy}
-                  onClick={() => dismiss.mutate(p)}
+                  onClick={() => dismiss.mutate(timeEntry)}
                 >
                   <Check aria-hidden className="size-3.5" />
-                  {t.timer.done}
-                  <span className="sr-only">: {p.title}</span>
+                  {messages.timer.done}
+                  <span className="sr-only">: {timeEntry.title}</span>
                 </Button>
               </div>
             </li>
@@ -254,15 +262,18 @@ interface RunningProgressProps {
 
 /** „≈ 1,9 z 5 SP” na pasku timera: ile zadania już zrobione wg przepracowanego czasu. */
 function RunningProgress({ entry }: RunningProgressProps) {
-  const t = useMessages(entriesMessages).progress
+  const messages = useMessages(entriesMessages).progress
   const format = useFormat()
-  const p = useTaskProgress(entry)
-  if (!p) return null
+  const taskProgress = useTaskProgress(entry)
+  if (!taskProgress) return null
   return (
     <>
       {' · '}
       <span className="font-semibold text-white">
-        {fmt(t.short, { earned: format.number(p.earned), sp: format.sp(p.sp) })}
+        {fmt(messages.short, {
+          earned: format.number(taskProgress.earned),
+          sp: format.sp(taskProgress.sp),
+        })}
       </span>
     </>
   )

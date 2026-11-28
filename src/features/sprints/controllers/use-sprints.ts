@@ -47,7 +47,8 @@ export function useSprintsViewModel() {
     enabled: shown.length > 0,
   })
   const stats = useMemo(
-    () => shown.map((s) => sprintStats(s, entries.data ?? [], types)),
+    () =>
+      shown.map((dateSpan) => sprintStats(dateSpan, entries.data ?? [], types)),
     [shown, entries.data, types],
   )
   const currentStats = current ? stats[0] : undefined
@@ -85,7 +86,7 @@ export function useSprintsViewModel() {
     entriesPending: entries.isPending,
     clamped: oldest !== null && from < oldest,
     average: averageMinutesPerSp(basis),
-    averaged: basis.filter((s) => s.minutesPerSp !== null).length,
+    averaged: basis.filter((sprint) => sprint.minutesPerSp !== null).length,
     goals:
       current && currentStats && day && current.timeGoals.length > 0
         ? timeGoalProgress(
@@ -95,12 +96,12 @@ export function useSprintsViewModel() {
             day.total,
           )
         : [],
-    typeOf: (id: string) => types.find((x) => x.id === id),
+    typeOf: (id: string) => types.find((type) => type.id === id),
     availability,
     /** Dni wolne sprintu wg rodzaju, np. „Urlop 2, Święto 1”. */
     offSummary: (byKind: ReturnType<typeof availability>['byKind']) =>
-      DAY_OFF_KINDS.filter((k) => byKind[k])
-        .map((k) => `${off.kinds[k]} ${byKind[k]}`)
+      DAY_OFF_KINDS.filter((dayOffKind) => byKind[dayOffKind])
+        .map((dayOffKind) => `${off.kinds[dayOffKind]} ${byKind[dayOffKind]}`)
         .join(', '),
   }
 }

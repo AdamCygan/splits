@@ -5,7 +5,9 @@ import {
 } from '../../src/shared/domain/highlight'
 
 const joined = (lines: ReturnType<typeof markdownLines>) =>
-  lines.map((l) => l.parts.map((p) => p.text).join('')).join('\n')
+  lines
+    .map((markdownLine) => markdownLine.parts.map((part) => part.text).join(''))
+    .join('\n')
 
 describe('code highlighting', () => {
   it('Should mark keywords, strings, numbers, comments and types', () => {
@@ -67,7 +69,7 @@ describe('markdown in the editor', () => {
       { text: '## ', kind: 'marker' },
       { text: 'Plan', kind: 'heading' },
     ])
-    expect(lines[1]!.parts.map((p) => p.kind)).toEqual([
+    expect(lines[1]!.parts.map((part) => part.kind)).toEqual([
       'marker',
       'checkbox',
       'marker',
@@ -78,7 +80,7 @@ describe('markdown in the editor', () => {
       'code',
       'marker',
     ])
-    expect(lines.slice(3, 6).map((l) => l.kind)).toEqual([
+    expect(lines.slice(3, 6).map((markdownLine) => markdownLine.kind)).toEqual([
       'fence',
       'code',
       'fence',
@@ -92,7 +94,11 @@ describe('markdown in the editor', () => {
 
   it('Should treat an unclosed code block as code until the end', () => {
     const open = markdownLines('```\nlet x\n- not a list')
-    expect(open.map((l) => l.kind)).toEqual(['fence', 'code', 'code'])
+    expect(open.map((markdownLine) => markdownLine.kind)).toEqual([
+      'fence',
+      'code',
+      'code',
+    ])
   })
 
   it('Should leave snake_case and plain text alone', () => {

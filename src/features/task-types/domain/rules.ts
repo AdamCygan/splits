@@ -43,16 +43,16 @@ export const PALETTE = [
 
 export type PaletteName = (typeof PALETTE)[number]['name']
 
-export const sameName = (a: string, b: string) =>
-  a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase()
+export const sameName = (name: string, otherName: string) =>
+  name.trim().toLocaleLowerCase() === otherName.trim().toLocaleLowerCase()
 
 /** Klucz zadania z linku: PAY-142 (Jira) albo !481 (GitLab MR) albo #123 (GitHub). */
 export function extractTaskKey(url: string): string | null {
   const jira = url.match(/\b([A-Z][A-Z0-9]{1,9}-\d+)\b/)
   if (jira) return jira[1]!
-  const mr = url.match(/merge_requests\/(\d+)/)
-  if (mr) return `!${mr[1]}`
-  const gh = url.match(/\/(?:pull|issues)\/(\d+)/)
-  if (gh) return `#${gh[1]}`
+  const mergeRequest = url.match(/merge_requests\/(\d+)/)
+  if (mergeRequest) return `!${mergeRequest[1]}`
+  const github = url.match(/\/(?:pull|issues)\/(\d+)/)
+  if (github) return `#${github[1]}`
   return null
 }

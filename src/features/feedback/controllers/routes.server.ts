@@ -16,23 +16,29 @@ import {
 
 /** Zgłoszenia użytkownika (/api/v1/feedback). */
 export const feedbackRoutes = new Hono<AppEnv>()
-  .get('/', async (c) => c.json(await listMyFeedback(c.get('userId'))))
-  .post('/', async (c) => {
-    const userId = c.get('userId')
+  .get('/', async (context) =>
+    context.json(await listMyFeedback(context.get('userId'))),
+  )
+  .post('/', async (context) => {
+    const userId = context.get('userId')
     rateLimit(`feedback:${userId}`, 10, 60 * 60_000)
-    const input = await body(c, feedbackInput)
-    return c.json(await createFeedback(userId, input), 201)
+    const input = await body(context, feedbackInput)
+    return context.json(await createFeedback(userId, input), 201)
   })
 
 /** Skrzynka zgłoszeń w panelu admina (/api/v1/admin/feedback; dostęp pilnuje requireAdmin). */
 export const adminFeedbackRoutes = new Hono<AppEnv>()
-  .get('/feedback', async (c) => {
-    const filter = parse(adminFeedbackFilterInput, c.req.query())
-    return c.json(await listFeedback(filter))
+  .get('/feedback', async (context) => {
+    const filter = parse(adminFeedbackFilterInput, context.req.query())
+    return context.json(await listFeedback(filter))
   })
-  .patch('/feedback/:id', async (c) => {
-    const change = await body(c, adminFeedbackChangeInput)
-    return c.json(
-      await updateFeedback(c.get('admin')!, c.req.param('id'), change),
+  .patch('/feedback/:id', async (context) => {
+    const change = await body(context, adminFeedbackChangeInput)
+    return context.json(
+      await updateFeedback(
+        context.get('admin')!,
+        context.req.param('id'),
+        change,
+      ),
     )
   })

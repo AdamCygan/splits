@@ -17,14 +17,14 @@ export interface ConfirmEmailPageProps {
  * zmianie w ustawieniach. Działa też bez logowania (link otwarty na innym urządzeniu).
  */
 export function ConfirmEmailPage({ token }: ConfirmEmailPageProps) {
-  const t = useMessages(authMessages).confirmEmail
-  const vm = useConfirmEmailViewModel(token)
-  const { state } = vm
+  const messages = useMessages(authMessages).confirmEmail
+  const viewModel = useConfirmEmailViewModel(token)
+  const { state } = viewModel
 
   if (state.status === 'checking')
     return (
       <div role="status" aria-live="polite">
-        <h1 className="type-display text-5xl">{t.checking}</h1>
+        <h1 className="type-display text-5xl">{messages.checking}</h1>
       </div>
     )
 
@@ -33,48 +33,52 @@ export function ConfirmEmailPage({ token }: ConfirmEmailPageProps) {
       <div role="status">
         <CircleCheck aria-hidden className="mb-4 size-10 text-ok" />
         <h1 className="type-display text-5xl">
-          {state.status === 'verified' ? t.verifiedTitle : t.changedTitle}
+          {state.status === 'verified'
+            ? messages.verifiedTitle
+            : messages.changedTitle}
         </h1>
         <p className="mt-3 text-ink-soft">
-          {state.status === 'verified' ? t.verifiedText : t.changedText}
+          {state.status === 'verified'
+            ? messages.verifiedText
+            : messages.changedText}
         </p>
-        <NextStep vm={vm} />
+        <NextStep viewModel={viewModel} />
       </div>
     )
 
   return (
     <div>
-      <h1 className="type-display text-5xl">{t.failedTitle}</h1>
+      <h1 className="type-display text-5xl">{messages.failedTitle}</h1>
       <div className="mt-6">
-        <FormAlert>{vm.errorText ?? t.missing}</FormAlert>
+        <FormAlert>{viewModel.errorText ?? messages.missing}</FormAlert>
       </div>
-      <NextStep vm={vm} failed />
+      <NextStep viewModel={viewModel} failed />
     </div>
   )
 }
 
 interface NextStepProps {
-  vm: ConfirmEmailViewModel
+  viewModel: ConfirmEmailViewModel
   failed?: boolean
 }
 
 /** Dalej: do aplikacji (albo do ustawień po nowy link), a bez sesji do logowania. */
-function NextStep({ vm, failed = false }: NextStepProps) {
-  const t = useMessages(authMessages).confirmEmail
+function NextStep({ viewModel, failed = false }: NextStepProps) {
+  const messages = useMessages(authMessages).confirmEmail
   const className = cn(buttonVariants({ size: 'lg' }), 'mt-8 h-11 text-base')
-  if (!vm.signedIn)
+  if (!viewModel.signedIn)
     return (
       <Link to="/login" className={className}>
-        {t.logIn}
+        {messages.logIn}
       </Link>
     )
   return failed ? (
     <Link to="/app/settings/account" className={className}>
-      {t.toAccount}
+      {messages.toAccount}
     </Link>
   ) : (
     <Link to="/app" className={className}>
-      {t.openApp}
+      {messages.openApp}
     </Link>
   )
 }

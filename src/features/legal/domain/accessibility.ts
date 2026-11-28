@@ -10,7 +10,7 @@ import type { LegalDoc } from './types'
  */
 const UPDATED = '2026-11-27'
 
-const pl: LegalDoc = {
+const polish: LegalDoc = {
   title: 'Deklaracja dostępności',
   summary:
     'Jak {name} dba o dostępność, co już działa, czego jeszcze brakuje i jak zgłosić problem.',
@@ -93,7 +93,7 @@ const pl: LegalDoc = {
   ],
 }
 
-const en: LegalDoc = {
+const english: LegalDoc = {
   title: 'Accessibility statement',
   summary:
     'How {name} approaches accessibility, what already works, what is still missing and how to report a problem.',
@@ -176,4 +176,7 @@ const en: LegalDoc = {
   ],
 }
 
-export const accessibilityDoc: Dictionary<LegalDoc> = { pl, en }
+export const accessibilityDoc: Dictionary<LegalDoc> = {
+  pl: polish,
+  en: english,
+}

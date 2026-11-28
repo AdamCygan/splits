@@ -1,30 +1,30 @@
 /** Przeglądarka i system z nagłówka User-Agent, do listy zalogowanych urządzeń. */
 export function describeDevice(
-  ua: string | null,
-): { browser: string; os: string } | null {
-  if (!ua) return null
-  const browser = /Edg\//.test(ua)
+  userAgent: string | null,
+): { browser: string; operatingSystem: string } | null {
+  if (!userAgent) return null
+  const browser = /Edg\//.test(userAgent)
     ? 'Edge'
-    : /OPR\/|Opera/.test(ua)
+    : /OPR\/|Opera/.test(userAgent)
       ? 'Opera'
-      : /Firefox\//.test(ua)
+      : /Firefox\//.test(userAgent)
         ? 'Firefox'
-        : /Chrome\/|CriOS\//.test(ua)
+        : /Chrome\/|CriOS\//.test(userAgent)
           ? 'Chrome'
-          : /Safari\//.test(ua)
+          : /Safari\//.test(userAgent)
             ? 'Safari'
             : null
-  const os = /iPhone|iPad|iPod/.test(ua)
+  const operatingSystem = /iPhone|iPad|iPod/.test(userAgent)
     ? 'iOS'
-    : /Android/.test(ua)
+    : /Android/.test(userAgent)
       ? 'Android'
-      : /Windows/.test(ua)
+      : /Windows/.test(userAgent)
         ? 'Windows'
-        : /Mac OS X|Macintosh/.test(ua)
+        : /Mac OS X|Macintosh/.test(userAgent)
           ? 'macOS'
-          : /Linux/.test(ua)
+          : /Linux/.test(userAgent)
             ? 'Linux'
             : null
-  if (!browser && !os) return null
-  return { browser: browser ?? '?', os: os ?? '?' }
+  if (!browser && !operatingSystem) return null
+  return { browser: browser ?? '?', operatingSystem: operatingSystem ?? '?' }
 }

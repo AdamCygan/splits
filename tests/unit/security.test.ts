@@ -19,15 +19,15 @@ const directives = (policy: string) =>
 
 describe('Content-Security-Policy', () => {
   it('Should allow only our own scripts and the request nonce', () => {
-    const csp = directives(contentSecurityPolicy({ nonce: 'abc123' }))
-    expect(csp['script-src']).toEqual(["'self'", "'nonce-abc123'"])
-    expect(csp['script-src']).not.toContain("'unsafe-inline'")
-    expect(csp['script-src']).not.toContain("'unsafe-eval'")
+    const policy = directives(contentSecurityPolicy({ nonce: 'abc123' }))
+    expect(policy['script-src']).toEqual(["'self'", "'nonce-abc123'"])
+    expect(policy['script-src']).not.toContain("'unsafe-inline'")
+    expect(policy['script-src']).not.toContain("'unsafe-eval'")
   })
 
   it('Should forbid plugins, framing, foreign forms and base changes', () => {
-    const csp = directives(contentSecurityPolicy({ nonce: 'n' }))
-    expect(csp).toMatchObject({
+    const policy = directives(contentSecurityPolicy({ nonce: 'n' }))
+    expect(policy).toMatchObject({
       'default-src': ["'self'"],
       'object-src': ["'none'"],
       'frame-ancestors': ["'none'"],
@@ -37,20 +37,20 @@ describe('Content-Security-Policy', () => {
   })
 
   it('Should add PostHog and a separate API origin to the allowed hosts', () => {
-    const csp = directives(
+    const policy = directives(
       contentSecurityPolicy({
         nonce: 'n',
         apiUrl: 'https://api.example.com/v1',
         posthogHost: 'https://eu.i.posthog.com',
       }),
     )
-    expect(csp['connect-src']).toEqual([
+    expect(policy['connect-src']).toEqual([
       "'self'",
       'https://api.example.com',
       'https://eu.i.posthog.com',
       'https://eu-assets.i.posthog.com',
     ])
-    expect(csp['script-src']).toContain('https://eu-assets.i.posthog.com')
+    expect(policy['script-src']).toContain('https://eu-assets.i.posthog.com')
   })
 
   it.each([

@@ -37,7 +37,10 @@ export function groupTaskList<T extends { row: TaskRow }>(
       {
         key: 'all',
         items: [...items],
-        minutes: items.reduce((s, x) => s + x.row.minutes, 0),
+        minutes: items.reduce(
+          (accumulator, item) => accumulator + item.row.minutes,
+          0,
+        ),
       },
     ]
   const groups = new Map<string, TaskGroup<T>>()
@@ -48,10 +51,10 @@ export function groupTaskList<T extends { row: TaskRow }>(
     group.minutes += item.row.minutes
     groups.set(key, group)
   }
-  return [...groups.values()].sort((a, b) =>
+  return [...groups.values()].sort((left, right) =>
     by === 'kind'
-      ? b.minutes - a.minutes || a.key.localeCompare(b.key)
-      : b.key.localeCompare(a.key),
+      ? right.minutes - left.minutes || left.key.localeCompare(right.key)
+      : right.key.localeCompare(left.key),
   )
 }
 

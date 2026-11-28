@@ -21,12 +21,12 @@ export { PasswordCard } from './password-card'
  * Konto demo ma tylko język i eksport (usuwa się samo po 24 godzinach).
  */
 export function AccountSettings() {
-  const t = useMessages(settingsMessages)
+  const messages = useMessages(settingsMessages)
   return (
     <div className="space-y-6">
       <SectionHeader
-        title={t.sections.account.title}
-        lead={t.sections.account.text}
+        title={messages.sections.account.title}
+        lead={messages.sections.account.text}
       />
       <QueryView query={meQuery} skeletonRows={3}>
         {(user) =>

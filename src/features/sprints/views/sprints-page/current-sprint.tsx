@@ -13,14 +13,14 @@ import { TypeBar } from './type-bar'
 import type { SprintsViewModel } from '../../controllers/use-sprints'
 
 export interface CurrentSprintProps {
-  vm: SprintsViewModel
+  viewModel: SprintsViewModel
 }
 
 /** Bieżący sprint: dzień sprintu, liczby, dostępność, cele czasu, podział i linki. */
-export function CurrentSprint({ vm }: CurrentSprintProps) {
-  const t = useMessages(panelMessages).sprints
+export function CurrentSprint({ viewModel }: CurrentSprintProps) {
+  const messages = useMessages(panelMessages).sprints
   const { locale } = useI18n()
-  const { current } = vm
+  const { current } = viewModel
   return (
     <section
       aria-labelledby="current-sprint"
@@ -28,9 +28,11 @@ export function CurrentSprint({ vm }: CurrentSprintProps) {
     >
       <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-line px-5 py-4 sm:px-6">
         <div>
-          <p className="text-sm font-medium text-ink-soft">{t.current}</p>
+          <p className="text-sm font-medium text-ink-soft">
+            {messages.current}
+          </p>
           <h2 id="current-sprint" className="type-heading text-2xl">
-            {current ? current.name : t.noCurrent}
+            {current ? current.name : messages.noCurrent}
           </h2>
         </div>
         {current && (
@@ -39,11 +41,11 @@ export function CurrentSprint({ vm }: CurrentSprintProps) {
           </p>
         )}
       </header>
-      {current && vm.currentStats ? (
-        <CurrentSprintBody vm={vm} />
+      {current && viewModel.currentStats ? (
+        <CurrentSprintBody viewModel={viewModel} />
       ) : (
         <div className="px-5 py-6 sm:px-6">
-          {vm.sprintsPending ? (
+          {viewModel.sprintsPending ? (
             <div
               aria-hidden
               className="h-24 animate-pulse rounded-lg bg-muted"
@@ -53,7 +55,7 @@ export function CurrentSprint({ vm }: CurrentSprintProps) {
               to="/app/settings/sprints"
               className={buttonVariants({ variant: 'default' })}
             >
-              {t.noCurrentCta}
+              {messages.noCurrentCta}
             </Link>
           )}
         </div>
@@ -63,19 +65,19 @@ export function CurrentSprint({ vm }: CurrentSprintProps) {
 }
 
 interface CurrentSprintBodyProps {
-  vm: SprintsViewModel
+  viewModel: SprintsViewModel
 }
 
-function CurrentSprintBody({ vm }: CurrentSprintBodyProps) {
-  const t = useMessages(panelMessages).sprints
+function CurrentSprintBody({ viewModel }: CurrentSprintBodyProps) {
+  const messages = useMessages(panelMessages).sprints
   const tasks = useMessages(panelMessages).tasks
   const off = useMessages(daysOffMessages)
   const format = useFormat()
   const { locale } = useI18n()
-  const { current, currentStats: stats, day, upcoming } = vm
+  const { current, currentStats: stats, day, upcoming } = viewModel
   if (!current || !stats || !day) return null
-  const available = vm.availability(current)
-  const dayOf = fmt(t.dayOf, day)
+  const available = viewModel.availability(current)
+  const dayOf = fmt(messages.dayOf, day)
   return (
     <div className="px-5 py-5 sm:px-6">
       <div className="mb-5">
@@ -83,7 +85,7 @@ function CurrentSprintBody({ vm }: CurrentSprintBodyProps) {
           <span className="font-medium">{dayOf}</span>
           {current.goal && (
             <span className="max-w-[60%] truncate text-ink-soft">
-              {t.goal}: {current.goal}
+              {messages.goal}: {current.goal}
             </span>
           )}
         </div>
@@ -104,7 +106,7 @@ function CurrentSprintBody({ vm }: CurrentSprintBodyProps) {
 
       <StatGrid cols={5} className="rounded-xl">
         <StatTile
-          label={t.logged}
+          label={messages.logged}
           value={format.minutes(stats.minutes)}
           hint={
             stats.overtimeMinutes > 0
@@ -115,10 +117,10 @@ function CurrentSprintBody({ vm }: CurrentSprintBodyProps) {
           }
         />
         <StatTile
-          label={t.points}
+          label={messages.points}
           value={
             current.capacityStoryPoints
-              ? fmt(t.ofCapacity, {
+              ? fmt(messages.ofCapacity, {
                   done: format.number(stats.storyPoints),
                   capacity: format.number(current.capacityStoryPoints),
                 })
@@ -126,15 +128,15 @@ function CurrentSprintBody({ vm }: CurrentSprintBodyProps) {
           }
         />
         <StatTile
-          label={t.perSp}
+          label={messages.perSp}
           value={
             stats.minutesPerSp === null
               ? '–'
               : format.minutes(stats.minutesPerSp)
           }
-          hint={stats.minutesPerSp === null ? t.noSp : undefined}
+          hint={stats.minutesPerSp === null ? messages.noSp : undefined}
         />
-        <StatTile label={t.tasks} value={String(stats.tasks)} />
+        <StatTile label={messages.tasks} value={String(stats.tasks)} />
         <StatTile
           className="col-span-2 lg:col-span-1"
           label={off.sprint.available}
@@ -147,29 +149,29 @@ function CurrentSprintBody({ vm }: CurrentSprintBodyProps) {
               ? off.sprint.none
               : format
                   .plural(off.sprint.off, available.off)
-                  .replace('{kinds}', vm.offSummary(available.byKind))
+                  .replace('{kinds}', viewModel.offSummary(available.byKind))
           }
         />
       </StatGrid>
 
-      {vm.goals.length > 0 && (
-        <TimeGoals progress={vm.goals} types={vm.types} />
+      {viewModel.goals.length > 0 && (
+        <TimeGoals progress={viewModel.goals} types={viewModel.types} />
       )}
 
       {stats.minutes === 0 ? (
         <p className="mt-5 text-ink-soft">
-          {vm.entriesPending ? '…' : t.empty}
+          {viewModel.entriesPending ? '…' : messages.empty}
         </p>
       ) : (
         <div className="mt-6">
-          <h3 className="mb-3 font-semibold">{t.breakdown}</h3>
-          <TypeBar rows={stats.types} types={vm.types} className="h-4" />
+          <h3 className="mb-3 font-semibold">{messages.breakdown}</h3>
+          <TypeBar rows={stats.types} types={viewModel.types} className="h-4" />
           <ul className="mt-4 grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
-            {stats.types.map((r) => {
-              const type = vm.typeOf(r.taskTypeId)
+            {stats.types.map((typeRow) => {
+              const type = viewModel.typeOf(typeRow.taskTypeId)
               return (
                 <li
-                  key={r.taskTypeId}
+                  key={typeRow.taskTypeId}
                   className="flex items-center gap-2.5 text-[0.9375rem]"
                 >
                   <ColorDot color={type?.color ?? 'var(--wt-custom)'} />
@@ -177,10 +179,10 @@ function CurrentSprintBody({ vm }: CurrentSprintBodyProps) {
                     {type?.name ?? '?'}
                   </span>
                   <span className="tabular-nums">
-                    {format.minutes(r.minutes)}
+                    {format.minutes(typeRow.minutes)}
                   </span>
                   <span className="w-11 text-right text-ink-soft tabular-nums">
-                    {percentOf(r.minutes, stats.minutes)}%
+                    {percentOf(typeRow.minutes, stats.minutes)}%
                   </span>
                 </li>
               )
@@ -192,7 +194,7 @@ function CurrentSprintBody({ vm }: CurrentSprintBodyProps) {
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
         <p className="text-sm text-ink-soft">
           {upcoming &&
-            fmt(t.upcoming, {
+            fmt(messages.upcoming, {
               name: upcoming.name,
               date: formatDate(locale, upcoming.startsOn, {
                 day: 'numeric',
@@ -206,14 +208,14 @@ function CurrentSprintBody({ vm }: CurrentSprintBodyProps) {
             search={{ sprint: current.id }}
             className={buttonVariants({ variant: 'outline', size: 'sm' })}
           >
-            {t.openTasks}
+            {messages.openTasks}
           </Link>
           <Link
             to="/app/analytics"
             search={{ sprint: current.id }}
             className={buttonVariants({ variant: 'outline', size: 'sm' })}
           >
-            {t.openReport}
+            {messages.openReport}
             <ArrowRight aria-hidden />
           </Link>
         </span>

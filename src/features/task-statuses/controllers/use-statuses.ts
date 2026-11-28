@@ -18,7 +18,7 @@ interface NamedItem {
 
 /** Kolejność, domyślny status, archiwizacja i limit planu Free dla listy statusów. */
 export function useStatuses(activeCount: number) {
-  const t = useMessages(settingsMessages).statuses
+  const messages = useMessages(settingsMessages).statuses
   const reorder = useDataMutation(
     (ids: Array<string>) => statusesApi.reorder(ids),
     { invalidate: [keys.statuses] },
@@ -28,12 +28,13 @@ export function useStatuses(activeCount: number) {
     ({ id }: NamedItem, apply) => statusesApi.setDefault(id, apply),
     {
       invalidate: [keys.statuses],
-      success: (_r, v) => fmt(t.defaultSet, { name: v.name }),
+      success: (_result, status) =>
+        fmt(messages.defaultSet, { name: status.name }),
     },
   )
   const archive = useApplyArchive('statuses', statusesApi.setArchived, {
     invalidate: keys.statuses,
-    messages: t,
+    messages,
   })
   const atLimit = useFreePlan() && activeCount >= FREE_LIMITS.statuses
   return { reorder, makeDefault, archive, atLimit }
@@ -47,7 +48,7 @@ export interface SaveStatusOptions {
 
 /** Zapis statusu: nowy albo zmiana istniejącego. */
 export function useSaveStatus({ status, onSaved }: SaveStatusOptions) {
-  const t = useMessages(settingsMessages).statuses
+  const messages = useMessages(settingsMessages).statuses
   const app = useMessages(appMessages)
   return useApplyMutation(
     'statuses',
@@ -57,7 +58,7 @@ export function useSaveStatus({ status, onSaved }: SaveStatusOptions) {
         : statusesApi.create(input, apply),
     {
       invalidate: [keys.statuses],
-      success: status ? app.status.saved : t.created,
+      success: status ? app.status.saved : messages.created,
       onSuccess: onSaved,
     },
   )

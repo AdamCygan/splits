@@ -55,7 +55,7 @@ export interface ReportsViewModelOptions {
 export function useReportsViewModel({
   initialSprintId,
 }: ReportsViewModelOptions) {
-  const t = useMessages(reportsMessages)
+  const messages = useMessages(reportsMessages)
   const { locale } = useI18n()
   const navigate = useNavigate()
   const settings = useQuery(settingsQuery).data
@@ -80,7 +80,9 @@ export function useReportsViewModel({
 
   const started = startedSprints(sprints, today).slice(0, RECENT_SPRINTS)
   // Sprint z linku (strona Sprinty) może być starszy niż ostatnie: dokładamy go do listy.
-  const linked = sprints.find((s) => s.id === initialSprintId)
+  const linked = sprints.find(
+    (listedSprint) => listedSprint.id === initialSprintId,
+  )
   const recent =
     linked && !started.includes(linked) ? [...started, linked] : started
   const current = currentSprint(recent, today)
@@ -89,11 +91,11 @@ export function useReportsViewModel({
   const period: ReportPeriod =
     chosen?.startsWith('sprint:') &&
     sprints.length > 0 &&
-    !sprints.some((s) => `sprint:${s.id}` === chosen)
+    !sprints.some((listedSprint) => `sprint:${listedSprint.id}` === chosen)
       ? fallback
       : (chosen ?? fallback)
   const sprint = period.startsWith('sprint:')
-    ? sprints.find((s) => `sprint:${s.id}` === period)
+    ? sprints.find((listedSprint) => `sprint:${listedSprint.id}` === period)
     : undefined
   const { range, clamped } = reportRange({
     period,
@@ -114,15 +116,18 @@ export function useReportsViewModel({
     () => groupTasks(withElapsed(entries.data ?? [], Date.now()), types),
     [entries.data, types],
   )
-  const rows = typeId ? allRows.filter((r) => r.taskTypeId === typeId) : allRows
+  const rows = typeId
+    ? allRows.filter((taskRow) => taskRow.taskTypeId === typeId)
+    : allRows
   const sorted = sortRows(rows, sort.by, sort.dir)
   const typeRows = byType(
     allRows,
-    types.map((x) => x.id),
+    types.map((type) => type.id),
   )
-  const allMinutes = typeRows.reduce((sum, r) => sum + r.minutes, 0)
-  const typeOf = (id: string) => types.find((x) => x.id === id)
-  const projectOf = (id: string | null) => projects.find((p) => p.id === id)
+  const allMinutes = typeRows.reduce((sum, typeRow) => sum + typeRow.minutes, 0)
+  const typeOf = (id: string) => types.find((type) => type.id === id)
+  const projectOf = (id: string | null) =>
+    projects.find((project) => project.id === id)
 
   return {
     today,
@@ -147,10 +152,10 @@ export function useReportsViewModel({
     sorted,
     // Wykresy liczą się z tych samych danych co tabela: filtr rodzaju zawęża wszystko.
     chartEntries: (entries.data ?? []).filter(
-      (e) => !typeId || e.taskTypeId === typeId,
+      (entry) => !typeId || entry.taskTypeId === typeId,
     ),
     totals: totalsOf(rows),
-    sessions: rows.reduce((sum, r) => sum + r.sessions, 0),
+    sessions: rows.reduce((sum, taskRow) => sum + taskRow.sessions, 0),
     typeRows,
     editing,
     typeOf,
@@ -161,22 +166,24 @@ export function useReportsViewModel({
     choosePeriod: setChosen,
     setCustom,
     setTypeId,
-    toggleType: (id: string) => setTypeId((v) => (v === id ? '' : id)),
-    toggleSort: (by: TaskSort) => setSort((s) => nextSort(s, by)),
+    toggleType: (id: string) =>
+      setTypeId((currentTypeId) => (currentTypeId === id ? '' : id)),
+    toggleSort: (by: TaskSort) =>
+      setSort((currentSort) => nextSort(currentSort, by)),
     edit: setEditing,
     closeEdit: () => setEditing(null),
     /** Słupek wykresu: dzień otwiera widok dnia, tydzień/miesiąc zawęża raport. */
-    openBucket: (b: ChartBucket) => {
-      if (b.unit === 'day')
-        void navigate({ to: '/app/day', search: { date: b.from } })
+    openBucket: (chartBucket: ChartBucket) => {
+      if (chartBucket.unit === 'day')
+        void navigate({ to: '/app/day', search: { date: chartBucket.from } })
       else {
-        setCustom({ from: b.from, to: b.to })
+        setCustom({ from: chartBucket.from, to: chartBucket.to })
         setChosen('custom')
       }
     },
     exportCsv: () => {
       const csv = reportCsv(sorted, {
-        head: t.csvHead,
+        head: messages.csvHead,
         typeName: (id) => typeOf(id)?.name ?? '',
         projectName: (id) => projectOf(id)?.name ?? '',
       })
@@ -186,7 +193,7 @@ export function useReportsViewModel({
         ['﻿', csv],
         'text/csv;charset=utf-8',
       )
-      toast.success(t.exported)
+      toast.success(messages.exported)
     },
   }
 }

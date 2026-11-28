@@ -1,6 +1,6 @@
 import type { Dictionary } from '../context'
 
-const en = {
+const english = {
   seo: {
     title:
       'Timeblame: time tracking for developers. Tasks, code reviews, sprints',
@@ -71,9 +71,9 @@ const en = {
   },
 }
 
-export type CommonMessages = typeof en
+export type CommonMessages = typeof english
 
-const pl: CommonMessages = {
+const polish: CommonMessages = {
   seo: {
     title:
       'Timeblame: time tracker dla programistów. Zadania, Code Review, sprinty',
@@ -145,4 +145,7 @@ const pl: CommonMessages = {
   },
 }
 
-export const commonMessages: Dictionary<CommonMessages> = { en, pl }
+export const commonMessages: Dictionary<CommonMessages> = {
+  en: english,
+  pl: polish,
+}

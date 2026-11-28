@@ -14,4 +14,4 @@ export async function inSequence<TItem, TResult>(
 
 /** Liczby 1…count (numery kolejnych pozycji w testach). */
 export const numbered = (count: number) =>
-  Array.from({ length: count }, (_, i) => i + 1)
+  Array.from({ length: count }, (_unused, index) => index + 1)

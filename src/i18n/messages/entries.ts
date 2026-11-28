@@ -1,7 +1,7 @@
 import type { Dictionary } from '../context'
 import type { Plural } from '../format'
 
-const en = {
+const english = {
   pageTitle: 'Today',
   day: {
     nav: 'Choose a day',
@@ -401,9 +401,9 @@ const en = {
   },
 }
 
-export type EntriesMessages = typeof en
+export type EntriesMessages = typeof english
 
-const pl: EntriesMessages = {
+const polish: EntriesMessages = {
   pageTitle: 'Dziś',
   day: {
     nav: 'Wybór dnia',
@@ -831,4 +831,7 @@ const pl: EntriesMessages = {
   },
 }
 
-export const entriesMessages: Dictionary<EntriesMessages> = { en, pl }
+export const entriesMessages: Dictionary<EntriesMessages> = {
+  en: english,
+  pl: polish,
+}

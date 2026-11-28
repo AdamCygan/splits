@@ -23,23 +23,25 @@ export function useElapsed(entry: TimeEntry | null | undefined) {
 
 /** Zatrzymanie timera z komunikatem o zalogowanym czasie. */
 export function useStopTimer() {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const format = useFormat()
   return useDataMutation((id: string) => entriesApi.stop(id), {
     invalidate: [entryKeys.all],
     success: (stopped) =>
-      fmt(t.timer.stopped, { time: format.minutes(stopped.durationMinutes) }),
+      fmt(messages.timer.stopped, {
+        time: format.minutes(stopped.durationMinutes),
+      }),
   })
 }
 
 /** Przerwa: sesja się kończy, a zadanie czeka na pasku z przyciskiem „Wznów”. */
 export function usePauseTimer() {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const format = useFormat()
   return useDataMutation((id: string) => entriesApi.pause(id), {
     invalidate: [entryKeys.all],
     success: (paused) =>
-      fmt(t.timer.pausedDone, {
+      fmt(messages.timer.pausedDone, {
         name: paused.title,
         time: format.minutes(paused.durationMinutes),
       }),
@@ -48,15 +50,16 @@ export function usePauseTimer() {
 
 /** Wznowienie zadania (nowy odcinek czasu); działający timer innego zadania zostaje wstrzymany. */
 export function useResumeTask() {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const format = useFormat()
   return useDataMutation((id: string) => entriesApi.resume(id), {
     invalidate: [entryKeys.all],
-    success: (result) => fmt(t.timer.resumed, { name: result.started.title }),
+    success: (result) =>
+      fmt(messages.timer.resumed, { name: result.started.title }),
     onSuccess: (result) => {
       if (result.stopped)
         toast(
-          fmt(t.form.previousStopped, {
+          fmt(messages.form.previousStopped, {
             name: result.stopped.title,
             time: format.minutes(result.stopped.durationMinutes),
           }),
@@ -67,9 +70,10 @@ export function useResumeTask() {
 
 /** Zadanie skończone: znika z listy wstrzymanych. */
 export function useDismissPaused() {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   return useDataMutation((entry: TimeEntry) => entriesApi.dismiss(entry.id), {
     invalidate: [entryKeys.all],
-    success: (_, entry) => fmt(t.timer.dismissed, { name: entry.title }),
+    success: (_unused, entry) =>
+      fmt(messages.timer.dismissed, { name: entry.title }),
   })
 }

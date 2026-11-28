@@ -20,7 +20,7 @@ export interface FeedbackFormOptions {
 
 /** Okno zgłoszenia: rodzaj, treść, zgoda na dołączenie strony i przeglądarki, wysyłka. */
 export function useFeedbackForm({ initialKind, onSent }: FeedbackFormOptions) {
-  const t = useMessages(feedbackMessages).dialog
+  const messages = useMessages(feedbackMessages).dialog
   const [kind, setKind] = useState<FeedbackKind>(initialKind)
   const [message, setMessage] = useState('')
   const [withContext, setWithContext] = useState(true)
@@ -31,7 +31,7 @@ export function useFeedbackForm({ initialKind, onSent }: FeedbackFormOptions) {
 
   const send = useDataMutation(feedbackApi.send, {
     invalidate: [feedbackKeys.mine],
-    success: t.sent,
+    success: messages.sent,
     onSuccess: onSent,
   })
 
@@ -55,7 +55,7 @@ export function useFeedbackForm({ initialKind, onSent }: FeedbackFormOptions) {
     setWithContext,
     page,
     browser: browserLabel(userAgent),
-    error: submitted && error ? t[error] : null,
+    error: submitted && error ? messages[error] : null,
     sending: send.isPending,
     submit,
   }

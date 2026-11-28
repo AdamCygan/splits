@@ -12,8 +12,8 @@ import { promoVideoFiles, promoVideoMeta } from '../domain/video'
 export function VideoSection() {
   const [playing, setPlaying] = useState(false)
   const { locale } = useI18n()
-  const t = useMessages(marketingMessages).video
-  const { src, poster, captions } = promoVideoFiles(locale)
+  const messages = useMessages(marketingMessages).video
+  const { src: videoSource, poster, captions } = promoVideoFiles(locale)
   const sizes = '(min-width: 1152px) 1104px, 100vw'
 
   return (
@@ -22,21 +22,21 @@ export function VideoSection() {
         {playing ? (
           <video
             className="size-full"
-            src={src}
+            src={videoSource}
             poster={poster.webp}
             controls
             autoPlay
             playsInline
             muted={!promoVideoMeta.hasVoice}
             onEnded={() => track('promo_video_completed', { locale })}
-            aria-label={t.name}
+            aria-label={messages.name}
             aria-describedby="video-transcript"
           >
             <track
               kind="captions"
               src={captions}
               srcLang={locale}
-              label={t.captionsLabel}
+              label={messages.captionsLabel}
               default
             />
           </video>
@@ -75,21 +75,21 @@ export function VideoSection() {
                   fill="currentColor"
                 />
               </span>
-              {t.play}
-              <span className="sr-only">{t.playSuffix}</span>
+              {messages.play}
+              <span className="sr-only">{messages.playSuffix}</span>
             </span>
           </button>
         )}
       </div>
       <details className="text-sm text-ink-soft">
         <summary className="w-fit cursor-pointer rounded-md font-medium text-ink">
-          {t.transcriptToggle}
+          {messages.transcriptToggle}
         </summary>
         <ul
           id="video-transcript"
           className="mt-3 max-w-[68ch] list-disc space-y-1.5 pl-5"
         >
-          {t.transcript.map((line) => (
+          {messages.transcript.map((line) => (
             <li key={line}>{line}</li>
           ))}
         </ul>

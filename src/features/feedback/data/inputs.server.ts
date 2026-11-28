@@ -26,4 +26,4 @@ export const adminFeedbackChangeInput = z
     reply: trimmed(1, FEEDBACK_REPLY_MAX).nullable().optional(),
     note: trimmed(1, 2000).nullable().optional(),
   })
-  .refine((v) => Object.keys(v).length > 0)
+  .refine((patch) => Object.keys(patch).length > 0)

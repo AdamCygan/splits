@@ -56,19 +56,19 @@ export const Route = createFileRoute('/_auth/login')({
 
 function LoginPage() {
   const { redirect, error, reset, expired } = Route.useSearch()
-  const t = useMessages(authMessages)
+  const messages = useMessages(authMessages)
   const errors = useMessages(errorMessages)
 
   return (
     <div>
-      <h1 className="type-display text-5xl">{t.login.title}</h1>
+      <h1 className="type-display text-5xl">{messages.login.title}</h1>
       <p className="mt-3 mb-8 text-ink-soft">
-        {t.login.noAccount}{' '}
+        {messages.login.noAccount}{' '}
         <Link
           to="/register"
           className="rounded-sm font-medium text-ink underline underline-offset-4"
         >
-          {t.login.createOne}
+          {messages.login.createOne}
         </Link>
       </p>
       {expired && (
@@ -76,7 +76,7 @@ function LoginPage() {
           role="status"
           className="mb-6 rounded-lg border border-line bg-surface px-3.5 py-3 text-sm"
         >
-          {t.login.expired}
+          {messages.login.expired}
         </p>
       )}
       {reset && (
@@ -84,7 +84,7 @@ function LoginPage() {
           role="status"
           className="mb-6 rounded-lg border border-line bg-surface px-3.5 py-3 text-sm"
         >
-          {t.reset.done}
+          {messages.reset.done}
         </p>
       )}
       {error && (
@@ -93,8 +93,8 @@ function LoginPage() {
             {error === 'disabled'
               ? errors['auth.account_disabled']
               : error === 'google'
-                ? t.googleError
-                : t.googleUnavailable}
+                ? messages.googleError
+                : messages.googleUnavailable}
           </FormAlert>
         </div>
       )}

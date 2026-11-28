@@ -41,7 +41,7 @@ export type FeedbackInboxViewModel = ReturnType<typeof useFeedbackInbox>
 
 /** Zapis stanu, odpowiedzi i notatki jednego zgłoszenia. */
 export function useUpdateFeedback(report: AdminFeedback) {
-  const t = useMessages(feedbackMessages).admin
+  const messages = useMessages(feedbackMessages).admin
   return useDataMutation(
     (change: AdminFeedbackChange) =>
       feedbackApi.admin.update(report.id, change),
@@ -49,8 +49,8 @@ export function useUpdateFeedback(report: AdminFeedback) {
       invalidate: [feedbackKeys.all],
       success: (_saved, change) =>
         change.reply && change.reply !== report.reply
-          ? fmt(t.replied, { email: report.user.email })
-          : t.saved,
+          ? fmt(messages.replied, { email: report.user.email })
+          : messages.saved,
     },
   )
 }

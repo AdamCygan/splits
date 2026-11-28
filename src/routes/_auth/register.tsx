@@ -25,10 +25,10 @@ const validateSearch = (search: Record<string, unknown>): RegisterSearch =>
 export const Route = createFileRoute('/_auth/register')({
   validateSearch,
   head: () => {
-    const t = authMessages[getLocale()].register
+    const messages = authMessages[getLocale()].register
     return seo({
-      title: t.seoTitle,
-      description: t.seoDescription,
+      title: messages.seoTitle,
+      description: messages.seoDescription,
       path: '/register',
     })
   },
@@ -37,22 +37,22 @@ export const Route = createFileRoute('/_auth/register')({
 
 function RegisterPage() {
   const { plan, interval = 'year' } = Route.useSearch()
-  const t = useMessages(authMessages)
+  const messages = useMessages(authMessages)
   const pro = plan === 'pro'
-  const note = pro ? t.register.planNote[interval] : null
+  const note = pro ? messages.register.planNote[interval] : null
   const checkoutUrl = `/app/checkout?interval=${interval}`
 
   return (
     <div>
-      <h1 className="type-display text-5xl">{t.register.title}</h1>
+      <h1 className="type-display text-5xl">{messages.register.title}</h1>
       <p className="mt-3 mb-8 text-ink-soft">
-        {t.register.haveAccount}{' '}
+        {messages.register.haveAccount}{' '}
         <Link
           to="/login"
           search={pro ? { redirect: checkoutUrl } : {}}
           className="rounded-sm font-medium text-ink underline underline-offset-4"
         >
-          {t.register.logIn}
+          {messages.register.logIn}
         </Link>
       </p>
       {note && (

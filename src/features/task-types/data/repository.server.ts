@@ -2,43 +2,43 @@ import { inScope, owner } from '#/server/db/scope'
 import type { Scope } from '#/server/db/scope'
 import { FREE_LIMITS, hasProAccess } from '#/features/billing/domain/plans'
 import type { TaskTypeInput } from '#/features/task-types/data/dto'
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 import type { Tx } from '#/server/db/client'
 import { lowerName, nameKey } from '#/server/db/helpers'
-import * as t from '#/server/db/schema'
+import * as schema from '#/server/db/schema'
 import { currentUser } from '#/features/account/data/repository.server'
 import { ApiError, conflict, invalid, notFound } from '#/server/http/errors'
 import { toTaskType } from './mappers.server'
 import { and, asc, eq, isNull, ne, sql } from 'drizzle-orm'
 
 /** Rekord należy do użytkownika? (id spoza konta traktujemy jak nieistniejące). */
-export async function ownTaskType(tx: Tx, scope: Scope, id: string) {
-  const [row] = await tx
+export async function ownTaskType(transaction: Tx, scope: Scope, id: string) {
+  const [row] = await transaction
     .select()
-    .from(t.taskTypes)
-    .where(and(eq(t.taskTypes.id, id), inScope(t.taskTypes, scope)))
+    .from(schema.taskTypes)
+    .where(and(eq(schema.taskTypes.id, id), inScope(schema.taskTypes, scope)))
   return row
 }
 
-async function activeCustomTypes(tx: Tx, scope: Scope) {
-  const [row] = await tx
+async function activeCustomTypes(transaction: Tx, scope: Scope) {
+  const [row] = await transaction
     .select({ n: sql<number>`count(*)::int` })
-    .from(t.taskTypes)
+    .from(schema.taskTypes)
     .where(
       and(
-        inScope(t.taskTypes, scope),
-        eq(t.taskTypes.isSystem, false),
-        isNull(t.taskTypes.archivedAt),
+        inScope(schema.taskTypes, scope),
+        eq(schema.taskTypes.isSystem, false),
+        isNull(schema.taskTypes.archivedAt),
       ),
     )
   return row?.n ?? 0
 }
 
-export async function assertTypeSlot(tx: Tx, scope: Scope) {
+export async function assertTypeSlot(transaction: Tx, scope: Scope) {
   const user = await currentUser(scope.userId)
   if (
     !hasProAccess(user) &&
-    (await activeCustomTypes(tx, scope)) >= FREE_LIMITS.customWorkTypes
+    (await activeCustomTypes(transaction, scope)) >= FREE_LIMITS.customWorkTypes
   )
     throw new ApiError('plan.limit_custom_types', 403)
 }
@@ -56,19 +56,19 @@ export function cleanType(input: TaskTypeInput): TaskTypeInput {
 }
 
 export async function assertUniqueTypeName(
-  tx: Tx,
+  transaction: Tx,
   scope: Scope,
   name: string,
   exceptId?: string,
 ) {
-  const [dupe] = await tx
-    .select({ id: t.taskTypes.id })
-    .from(t.taskTypes)
+  const [dupe] = await transaction
+    .select({ id: schema.taskTypes.id })
+    .from(schema.taskTypes)
     .where(
       and(
-        inScope(t.taskTypes, scope),
-        eq(nameKey(t.taskTypes.name), lowerName(name)),
-        exceptId ? ne(t.taskTypes.id, exceptId) : undefined,
+        inScope(schema.taskTypes, scope),
+        eq(nameKey(schema.taskTypes.name), lowerName(name)),
+        exceptId ? ne(schema.taskTypes.id, exceptId) : undefined,
       ),
     )
   if (dupe) throw conflict('name_taken', 'name')
@@ -76,31 +76,31 @@ export async function assertUniqueTypeName(
 
 /** Rodzaje pracy konta w ustalonej kolejności. */
 export async function listTaskTypes(scope: Scope) {
-  const rows = await db
+  const rows = await database
     .select()
-    .from(t.taskTypes)
-    .where(inScope(t.taskTypes, scope))
-    .orderBy(asc(t.taskTypes.sortOrder))
+    .from(schema.taskTypes)
+    .where(inScope(schema.taskTypes, scope))
+    .orderBy(asc(schema.taskTypes.sortOrder))
   return rows.map(toTaskType)
 }
 
 /** Nowy własny rodzaj pracy na końcu listy (unikalna nazwa, limit planu Free). */
 export async function createTaskType(scope: Scope, input: TaskTypeInput) {
-  const row = await db.transaction(async (tx) => {
-    await assertUniqueTypeName(tx, scope, input.name)
-    await assertTypeSlot(tx, scope)
-    const [{ n } = { n: 0 }] = await tx
+  const row = await database.transaction(async (transaction) => {
+    await assertUniqueTypeName(transaction, scope, input.name)
+    await assertTypeSlot(transaction, scope)
+    const [{ n: count } = { n: 0 }] = await transaction
       .select({ n: sql<number>`count(*)::int` })
-      .from(t.taskTypes)
-      .where(inScope(t.taskTypes, scope))
-    const [created] = await tx
-      .insert(t.taskTypes)
+      .from(schema.taskTypes)
+      .where(inScope(schema.taskTypes, scope))
+    const [created] = await transaction
+      .insert(schema.taskTypes)
       .values({
         ...input,
         ...owner(scope),
         kind: 'custom',
         isSystem: false,
-        sortOrder: n,
+        sortOrder: count,
       })
       .returning()
     return created!
@@ -113,13 +113,13 @@ export async function updateTaskType(
   id: string,
   input: TaskTypeInput,
 ) {
-  const row = await db.transaction(async (tx) => {
-    if (!(await ownTaskType(tx, scope, id))) throw notFound()
-    await assertUniqueTypeName(tx, scope, input.name, id)
-    const [updated] = await tx
-      .update(t.taskTypes)
+  const row = await database.transaction(async (transaction) => {
+    if (!(await ownTaskType(transaction, scope, id))) throw notFound()
+    await assertUniqueTypeName(transaction, scope, input.name, id)
+    const [updated] = await transaction
+      .update(schema.taskTypes)
       .set(input)
-      .where(eq(t.taskTypes.id, id))
+      .where(eq(schema.taskTypes.id, id))
       .returning()
     return updated!
   })
@@ -132,16 +132,16 @@ export async function setTaskTypeArchived(
   id: string,
   archived: boolean,
 ) {
-  const row = await db.transaction(async (tx) => {
-    const type = await ownTaskType(tx, scope, id)
+  const row = await database.transaction(async (transaction) => {
+    const type = await ownTaskType(transaction, scope, id)
     if (!type) throw notFound()
     if (type.isSystem && archived) throw conflict('type.system_archive')
     if (!archived && !type.isSystem && type.archivedAt)
-      await assertTypeSlot(tx, scope)
-    const [updated] = await tx
-      .update(t.taskTypes)
+      await assertTypeSlot(transaction, scope)
+    const [updated] = await transaction
+      .update(schema.taskTypes)
       .set({ archivedAt: archived ? new Date() : null })
-      .where(eq(t.taskTypes.id, id))
+      .where(eq(schema.taskTypes.id, id))
       .returning()
     return updated!
   })

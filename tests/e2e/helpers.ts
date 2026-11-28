@@ -92,7 +92,7 @@ export async function mailsTo(page: Page, to: string) {
 export async function lastLink(page: Page, to: string) {
   const mail = (await mailsTo(page, to))
     .reverse()
-    .find((m) => /token=/.test(m.text))
+    .find((sentEmail) => /token=/.test(sentEmail.text))
   const url = mail && /https?:\/\/\S+/.exec(mail.text)?.[0]
   if (!url) throw new Error(`no link sent to ${to}`)
   const { pathname, search } = new URL(url)
@@ -133,7 +133,8 @@ export async function expectNoA11yViolations(page: Page) {
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
     .analyze()
   const summary = results.violations.map(
-    (v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`,
+    (violation) =>
+      `${violation.id}: ${violation.nodes.map((node) => node.target.join(' ')).join(', ')}`,
   )
   expect(summary).toEqual([])
 }
@@ -147,7 +148,7 @@ export async function openTaskFilters(page: Page) {
 /** Tytuł przypadku jak w it.each: `%s` = wartość, `$pole` = pole obiektu. */
 function caseTitle<TCase>(title: string, item: TCase) {
   if (typeof item === 'object' && item !== null)
-    return title.replace(/\$(\w+)/g, (_, key: string) =>
+    return title.replace(/\$(\w+)/g, (_unused, key: string) =>
       String((item as Record<string, unknown>)[key]),
     )
   return title.replace('%s', String(item))

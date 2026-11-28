@@ -21,11 +21,15 @@ function state(marked: string): TextState {
   const end = marked.indexOf('»') - 1
   return { value: marked.replace('«', '').replace('»', ''), start, end }
 }
-function show(s: TextState | null): string | null {
-  if (!s) return null
-  if (s.start === s.end)
-    return s.value.slice(0, s.start) + '|' + s.value.slice(s.start)
-  return `${s.value.slice(0, s.start)}«${s.value.slice(s.start, s.end)}»${s.value.slice(s.end)}`
+function show(textState: TextState | null): string | null {
+  if (!textState) return null
+  if (textState.start === textState.end)
+    return (
+      textState.value.slice(0, textState.start) +
+      '|' +
+      textState.value.slice(textState.start)
+    )
+  return `${textState.value.slice(0, textState.start)}«${textState.value.slice(textState.start, textState.end)}»${textState.value.slice(textState.end)}`
 }
 
 describe('note editor operations', () => {

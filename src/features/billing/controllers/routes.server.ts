@@ -19,41 +19,41 @@ import { currentUser } from '#/features/account/data/repository.server'
 
 export const billingRoutes = new Hono<AppEnv>()
   /** Stan planu i subskrypcji do strony „Plan” i koszyka. */
-  .get('/', async (c) => {
-    const user = await currentUser(c.get('userId'))
-    return c.json(await getBillingStatus(user))
+  .get('/', async (context) => {
+    const user = await currentUser(context.get('userId'))
+    return context.json(await getBillingStatus(user))
   })
 
   /** Faktury i paragony ze Stripe (ostatnie 24), z linkami do PDF i strony płatności. */
-  .get('/invoices', async (c) => {
-    const user = await currentUser(c.get('userId'))
-    return c.json(await getInvoices(user))
+  .get('/invoices', async (context) => {
+    const user = await currentUser(context.get('userId'))
+    return context.json(await getInvoices(user))
   })
 
   /** Koszyk → Stripe Checkout: subskrypcja Pro płatna z góry za miesiąc albo za rok. */
-  .post('/checkout', async (c) => {
-    const user = await currentUser(c.get('userId'))
+  .post('/checkout', async (context) => {
+    const user = await currentUser(context.get('userId'))
     // Płatność tylko z potwierdzonym adresem: na niego idą faktury i e-maile o odnowieniu.
     if (!user.emailVerifiedAt && !user.isDemo)
       throw new ApiError('auth.email_unverified', 403)
-    const { plan, interval } = await body(c, checkoutInput)
-    return c.json(await openCheckout(user, plan, interval))
+    const { plan, interval } = await body(context, checkoutInput)
+    return context.json(await openCheckout(user, plan, interval))
   })
 
   /**
    * Po powrocie z płatności: synchronizacja od razu (webhook bywa o kilka sekund wolniejszy).
    * Sesja musi należeć do zalogowanego użytkownika.
    */
-  .post('/sync', async (c) => {
-    const userId = c.get('userId')
-    const { sessionId } = await body(c, syncInput)
-    return c.json(await syncCheckout(userId, sessionId))
+  .post('/sync', async (context) => {
+    const userId = context.get('userId')
+    const { sessionId } = await body(context, syncInput)
+    return context.json(await syncCheckout(userId, sessionId))
   })
 
   /** Stripe Customer Portal: faktury, karta, anulowanie na koniec okresu. */
-  .post('/portal', async (c) => {
-    const user = await currentUser(c.get('userId'))
-    return c.json(await openPortal(user))
+  .post('/portal', async (context) => {
+    const user = await currentUser(context.get('userId'))
+    return context.json(await openPortal(user))
   })
 
 /**
@@ -62,11 +62,11 @@ export const billingRoutes = new Hono<AppEnv>()
  */
 export const stripeWebhookRoutes = new Hono<AppEnv>().post(
   '/webhook',
-  async (c) => {
+  async (context) => {
     const secret = serverEnv.stripe?.webhookSecret
-    const signature = c.req.header('stripe-signature')
+    const signature = context.req.header('stripe-signature')
     if (!secret || !signature) throw new ApiError('validation.invalid', 400)
-    const payload = await c.req.text()
+    const payload = await context.req.text()
     let event: Stripe.Event
     try {
       event = await stripe().webhooks.constructEventAsync(
@@ -79,7 +79,7 @@ export const stripeWebhookRoutes = new Hono<AppEnv>().post(
     }
 
     const handled = await handleStripeEvent(event)
-    return c.json(
+    return context.json(
       handled ? { received: true } : { received: true, duplicate: true },
     )
   },

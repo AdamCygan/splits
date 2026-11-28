@@ -26,14 +26,16 @@ export interface WorkspaceDialogProps {
 
 /** Nowa przestrzeń (nazwa, kolor, z czego skopiować) albo zmiana nazwy i koloru. */
 export function WorkspaceDialog({ workspace, onClose }: WorkspaceDialogProps) {
-  const t = useMessages(workspacesMessages)
+  const messages = useMessages(workspacesMessages)
   const app = useMessages(appMessages)
   const palette = usePalette()
   const form = useWorkspaceForm({ workspace, onDone: onClose })
-  const source = form.sources.find((w) => w.id === form.copyFrom)
+  const source = form.sources.find(
+    (sourceWorkspace) => sourceWorkspace.id === form.copyFrom,
+  )
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault()
+  const onSubmit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     form.submit()
   }
 
@@ -43,10 +45,10 @@ export function WorkspaceDialog({ workspace, onClose }: WorkspaceDialogProps) {
         size="md"
         title={
           workspace
-            ? fmt(t.dialog.editTitle, { name: workspace.name })
-            : t.dialog.addTitle
+            ? fmt(messages.dialog.editTitle, { name: workspace.name })
+            : messages.dialog.addTitle
         }
-        description={form.isNew ? t.settings.lead : undefined}
+        description={form.isNew ? messages.settings.lead : undefined}
         closeLabel={app.actions.close}
         footer={
           <>
@@ -62,7 +64,7 @@ export function WorkspaceDialog({ workspace, onClose }: WorkspaceDialogProps) {
               {form.pending
                 ? app.actions.saving
                 : form.isNew
-                  ? t.dialog.create
+                  ? messages.dialog.create
                   : app.actions.save}
             </Button>
           </>
@@ -74,37 +76,40 @@ export function WorkspaceDialog({ workspace, onClose }: WorkspaceDialogProps) {
           onSubmit={onSubmit}
           className="space-y-5"
         >
-          <Field label={t.dialog.name} error={form.nameError}>
-            {(a) => (
+          <Field label={messages.dialog.name} error={form.nameError}>
+            {(fieldProps) => (
               <Input
-                {...a}
+                {...fieldProps}
                 autoFocus
                 maxLength={WORKSPACE_NAME_MAX}
-                placeholder={t.dialog.namePlaceholder}
+                placeholder={messages.dialog.namePlaceholder}
                 value={form.name}
-                onChange={(e) => form.setName(e.target.value)}
+                onChange={(event) => form.setName(event.target.value)}
               />
             )}
           </Field>
           <ColorPicker
-            legend={t.dialog.color}
+            legend={messages.dialog.color}
             value={form.color}
             onChange={form.setColor}
             swatches={withCurrent(palette, form.color)}
           />
           {form.isNew && (
             <>
-              <Field label={t.dialog.copyFrom}>
-                {(a) => (
+              <Field label={messages.dialog.copyFrom}>
+                {(fieldProps) => (
                   <Select
-                    {...a}
+                    {...fieldProps}
                     value={form.copyFrom}
-                    onChange={(e) => form.setCopyFrom(e.target.value)}
+                    onChange={(event) => form.setCopyFrom(event.target.value)}
                   >
-                    <option value="">{t.dialog.blank}</option>
-                    {form.sources.map((w) => (
-                      <option key={w.id} value={w.id}>
-                        {w.name}
+                    <option value="">{messages.dialog.blank}</option>
+                    {form.sources.map((workspaceOption) => (
+                      <option
+                        key={workspaceOption.id}
+                        value={workspaceOption.id}
+                      >
+                        {workspaceOption.name}
                       </option>
                     ))}
                   </Select>
@@ -112,10 +117,10 @@ export function WorkspaceDialog({ workspace, onClose }: WorkspaceDialogProps) {
               </Field>
               {source && (
                 <CheckboxGroup
-                  legend={fmt(t.dialog.copyWhat, { name: source.name })}
+                  legend={fmt(messages.dialog.copyWhat, { name: source.name })}
                   options={form.copyKinds.map((kind) => ({
                     value: kind,
-                    label: t.copyKinds[kind],
+                    label: messages.copyKinds[kind],
                   }))}
                   value={form.copy}
                   onChange={form.setCopy}
@@ -136,12 +141,12 @@ export interface CopyDialogProps {
 
 /** Kopiowanie wybranych rzeczy z innej przestrzeni do `target`. */
 export function CopyDialog({ target, onClose }: CopyDialogProps) {
-  const t = useMessages(workspacesMessages)
+  const messages = useMessages(workspacesMessages)
   const app = useMessages(appMessages)
   const form = useCopyForm({ target, onDone: onClose })
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault()
+  const onSubmit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     form.submit()
   }
 
@@ -149,8 +154,8 @@ export function CopyDialog({ target, onClose }: CopyDialogProps) {
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         size="md"
-        title={t.settings.copyTitle}
-        description={fmt(t.settings.copyLead, { name: target.name })}
+        title={messages.settings.copyTitle}
+        description={fmt(messages.settings.copyLead, { name: target.name })}
         closeLabel={app.actions.close}
         footer={
           <>
@@ -163,7 +168,7 @@ export function CopyDialog({ target, onClose }: CopyDialogProps) {
               disabled={!form.canSubmit || form.pending}
               aria-busy={form.pending}
             >
-              {t.settings.copyButton}
+              {messages.settings.copyButton}
             </Button>
           </>
         }
@@ -174,26 +179,26 @@ export function CopyDialog({ target, onClose }: CopyDialogProps) {
           onSubmit={onSubmit}
           className="space-y-5"
         >
-          <Field label={t.settings.copyFrom}>
-            {(a) => (
+          <Field label={messages.settings.copyFrom}>
+            {(fieldProps) => (
               <Select
-                {...a}
+                {...fieldProps}
                 value={form.from}
-                onChange={(e) => form.setFrom(e.target.value)}
+                onChange={(event) => form.setFrom(event.target.value)}
               >
-                {form.sources.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.name}
+                {form.sources.map((source) => (
+                  <option key={source.id} value={source.id}>
+                    {source.name}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
           <CheckboxGroup
-            legend={t.settings.copyWhat}
+            legend={messages.settings.copyWhat}
             options={form.copyKinds.map((kind) => ({
               value: kind,
-              label: t.copyKinds[kind],
+              label: messages.copyKinds[kind],
             }))}
             value={form.kinds}
             onChange={form.setKinds}

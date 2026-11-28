@@ -34,7 +34,7 @@ export function CheckoutPage({
   canceled,
   onIntervalChange,
 }: CheckoutPageProps) {
-  const t = useMessages(billingMessages).checkout
+  const messages = useMessages(billingMessages).checkout
   const features = useMessages(marketingMessages).pricing.features
   const { tag, locale } = useI18n()
   const { status, owned, pay, redirecting } = useCheckout()
@@ -45,10 +45,10 @@ export function CheckoutPage({
 
   const intervalOptions = BILLING_INTERVALS.map((value) => ({
     value,
-    label: t.intervals[value],
+    label: messages.intervals[value],
     description:
       value === 'year'
-        ? `${formatPrice(PRO_PRICES.year, tag)}, ${t.saveBadge}`
+        ? `${formatPrice(PRO_PRICES.year, tag)}, ${messages.saveBadge}`
         : formatPrice(PRO_PRICES.month, tag),
   }))
 
@@ -69,11 +69,11 @@ export function CheckoutPage({
         className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-ink-soft hover:text-ink"
       >
         <ArrowLeft aria-hidden className="size-4" />
-        {t.back}
+        {messages.back}
       </Link>
       <header className="mb-8">
-        <h1 className="type-display text-4xl sm:text-5xl">{t.title}</h1>
-        <p className="mt-2 text-ink-soft">{t.lead}</p>
+        <h1 className="type-display text-4xl sm:text-5xl">{messages.title}</h1>
+        <p className="mt-2 text-ink-soft">{messages.lead}</p>
       </header>
 
       {canceled && !owned && (
@@ -81,19 +81,19 @@ export function CheckoutPage({
           role="status"
           className="mb-6 rounded-xl border border-line bg-muted/50 px-4 py-3 text-sm"
         >
-          {t.canceled}
+          {messages.canceled}
         </p>
       )}
 
       {owned ? (
         <section className="rounded-2xl border border-line bg-surface p-6">
-          <h2 className="type-heading text-2xl">{t.alreadyTitle}</h2>
-          <p className="mt-2 text-ink-soft">{t.alreadyText}</p>
+          <h2 className="type-heading text-2xl">{messages.alreadyTitle}</h2>
+          <p className="mt-2 text-ink-soft">{messages.alreadyText}</p>
           <Link
             to="/app/settings/plan"
             className={cn(buttonVariants(), 'mt-5')}
           >
-            {t.goToPlan}
+            {messages.goToPlan}
           </Link>
         </section>
       ) : (
@@ -106,21 +106,23 @@ export function CheckoutPage({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 id="cart-item" className="type-heading text-2xl">
-                  {fmt(t.item, { plan: plan.name })}
+                  {fmt(messages.item, { plan: plan.name })}
                 </h2>
-                <p className="mt-1 text-ink-soft">{t.itemPeriod[interval]}</p>
+                <p className="mt-1 text-ink-soft">
+                  {messages.itemPeriod[interval]}
+                </p>
               </div>
               <p className="type-display text-3xl tabular-nums">{price}</p>
             </div>
             <Segmented
               className="mt-5"
-              label={t.billing}
+              label={messages.billing}
               name="billing-interval"
               value={interval}
               onChange={onIntervalChange}
               options={intervalOptions}
             />
-            <h3 className="mt-6 text-sm font-semibold">{t.included}</h3>
+            <h3 className="mt-6 text-sm font-semibold">{messages.included}</h3>
             <ul className="mt-3 grid gap-2 sm:grid-cols-2">
               {features.pro.map((feature) => (
                 <li key={feature} className="flex gap-2 text-[0.9375rem]">
@@ -140,47 +142,51 @@ export function CheckoutPage({
             className="rounded-2xl border border-line bg-surface p-6 lg:sticky lg:top-20"
           >
             <h2 id="cart-summary" className="type-heading text-xl">
-              {t.summary}
+              {messages.summary}
             </h2>
             <dl className="mt-4 space-y-2 text-sm">
               <div className="flex justify-between gap-3">
-                <dt>{fmt(t.line[interval], { plan: plan.name })}</dt>
+                <dt>{fmt(messages.line[interval], { plan: plan.name })}</dt>
                 <dd className="tabular-nums">{price}</dd>
               </div>
               <div className="flex justify-between gap-3 text-ink-soft">
-                <dt>{t.vat}</dt>
-                <dd>{t.vatValue}</dd>
+                <dt>{messages.vat}</dt>
+                <dd>{messages.vatValue}</dd>
               </div>
               <div className="flex justify-between gap-3 border-t border-line pt-3 text-base font-semibold">
-                <dt>{t.total}</dt>
+                <dt>{messages.total}</dt>
                 <dd className="tabular-nums">{price}</dd>
               </div>
             </dl>
             <p className="mt-3 text-sm text-ink-soft">
-              {fmt(t.renews, { date: renewal, price })}
+              {fmt(messages.renews, { date: renewal, price })}
             </p>
-            <p className="mt-1 text-sm text-ink-soft">{t.promo}</p>
+            <p className="mt-1 text-sm text-ink-soft">{messages.promo}</p>
 
             <div className="mt-5 flex gap-3">
               <input
                 id={consentId}
                 type="checkbox"
                 checked={accepted}
-                onChange={(e) => setAccepted(e.target.checked)}
+                onChange={(event) => setAccepted(event.target.checked)}
                 className="mt-1 size-4 shrink-0 accent-[var(--ink-fixed)]"
               />
               <label htmlFor={consentId} className="text-sm">
-                <Consent text={t.consent} terms={t.terms} privacy={t.privacy} />
+                <Consent
+                  text={messages.consent}
+                  terms={messages.terms}
+                  privacy={messages.privacy}
+                />
               </label>
             </div>
             <p className="mt-3 flex gap-2 text-sm text-ink-soft">
               <ShieldCheck aria-hidden className="mt-0.5 size-4 shrink-0" />
-              {t.refund}
+              {messages.refund}
             </p>
 
             {status && !status.enabled && (
               <div className="mt-4">
-                <FormAlert>{t.disabled}</FormAlert>
+                <FormAlert>{messages.disabled}</FormAlert>
               </div>
             )}
             <Button
@@ -191,9 +197,9 @@ export function CheckoutPage({
               onClick={() => pay(interval)}
             >
               <Lock aria-hidden className="size-4" />
-              {redirecting ? t.redirecting : t.pay}
+              {redirecting ? messages.redirecting : messages.pay}
             </Button>
-            <p className="mt-3 text-xs text-ink-soft">{t.secure}</p>
+            <p className="mt-3 text-xs text-ink-soft">{messages.secure}</p>
           </section>
         </div>
       )}

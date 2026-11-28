@@ -16,42 +16,48 @@ export interface ProfileCardProps {
 
 /** Login (stały), wyświetlana nazwa (edycja z paskiem zapisu) i e-mail ze zmianą przez link. */
 export function ProfileCard({ user }: ProfileCardProps) {
-  const t = useMessages(settingsMessages).account
-  const vm = useProfileViewModel(user)
+  const messages = useMessages(settingsMessages).account
+  const viewModel = useProfileViewModel(user)
   const email = useEmailViewModel(user)
   return (
     <>
-      <form noValidate onSubmit={vm.submit}>
-        <SettingsCard title={t.profileTitle} lead={t.profileLead}>
+      <form noValidate onSubmit={viewModel.submit}>
+        <SettingsCard title={messages.profileTitle} lead={messages.profileLead}>
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label={t.username} hint={t.usernameHint}>
-              {(a) => (
+            <Field label={messages.username} hint={messages.usernameHint}>
+              {(fieldProps) => (
                 <Input
-                  {...a}
+                  {...fieldProps}
                   value={user.username}
                   readOnly
                   className="bg-muted/60"
                 />
               )}
             </Field>
-            <Field label={t.displayName} error={vm.nameError}>
-              {(a) => (
+            <Field label={messages.displayName} error={viewModel.nameError}>
+              {(fieldProps) => (
                 <Input
-                  {...a}
+                  {...fieldProps}
                   autoComplete="name"
                   maxLength={LIMITS.displayName}
-                  value={vm.displayName}
-                  onChange={(e) => vm.setDisplayName(e.target.value)}
+                  value={viewModel.displayName}
+                  onChange={(event) =>
+                    viewModel.setDisplayName(event.target.value)
+                  }
                 />
               )}
             </Field>
-            <EmailField vm={email} />
+            <EmailField viewModel={email} />
           </div>
         </SettingsCard>
-        <SaveBar dirty={vm.dirty} saving={vm.saving} onDiscard={vm.discard} />
+        <SaveBar
+          dirty={viewModel.dirty}
+          saving={viewModel.saving}
+          onDiscard={viewModel.discard}
+        />
       </form>
       {/* Poza formularzem profilu: zdarzenia z portalu okna nie trafiają do jego onSubmit. */}
-      {email.open && <EmailChangeDialog vm={email} />}
+      {email.open && <EmailChangeDialog viewModel={email} />}
     </>
   )
 }

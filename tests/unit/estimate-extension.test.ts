@@ -38,7 +38,9 @@ const type = {
   storyPointsRequirement: 'optional',
 } as const
 const fields = (input: TimeEntryInput) =>
-  validateEntry(input, type).map((i) => `${i.field}:${i.code}`)
+  validateEntry(input, type).map(
+    (entryIssue) => `${entryIssue.field}:${entryIssue.code}`,
+  )
 
 const entry = (over: Partial<TimeEntry>): TimeEntry => ({
   ...meeting,
@@ -146,7 +148,7 @@ describe('task estimate', () => {
       ],
       [{ id: 'm', storyPointsRequirement: 'optional' }],
     )
-    const pay = rows.find((r) => r.title === 'PAY-1')!
+    const pay = rows.find((taskRow) => taskRow.title === 'PAY-1')!
     expect(pay).toMatchObject({ minutes: 290, estimateMinutes: 240 })
     expect(estimateOf(pay, [])).toMatchObject({
       status: 'over',
@@ -165,8 +167,8 @@ describe('task estimate', () => {
       typeName: () => '',
       projectName: () => '',
     }).split('\r\n')
-    expect(csv.find((l) => l.startsWith('PAY-1'))).toMatch(/,240,50,0,$/)
-    expect(csv.find((l) => l.startsWith('Planning'))).toMatch(
+    expect(csv.find((line) => line.startsWith('PAY-1'))).toMatch(/,240,50,0,$/)
+    expect(csv.find((line) => line.startsWith('Planning'))).toMatch(
       /,,,20,Scope talk$/,
     )
   })

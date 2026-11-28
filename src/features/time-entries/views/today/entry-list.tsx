@@ -17,17 +17,17 @@ export interface EntryListProps {
 
 /** Wpisy dnia jako karty zadań i okna otwierane z nich (jedno naraz). */
 export function EntryList({ entries }: EntryListProps) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const app = useMessages(appMessages)
-  const vm = useEntryListViewModel(entries)
-  const { dialog } = vm
+  const viewModel = useEntryListViewModel(entries)
+  const { dialog } = viewModel
   const deleting = dialog?.kind === 'delete' ? dialog.entry : null
   const deletingTask = dialog?.kind === 'deleteTask' ? dialog.group : null
   return (
     <>
       <ul className="divide-y divide-line">
-        {vm.tasks.map((task) => (
-          <TaskCard key={task.key} task={task} vm={vm} />
+        {viewModel.tasks.map((task) => (
+          <TaskCard key={task.key} task={task} viewModel={viewModel} />
         ))}
       </ul>
 
@@ -35,20 +35,24 @@ export function EntryList({ entries }: EntryListProps) {
         <EditEntryDialog
           entry={dialog.entry}
           focusNotes={dialog.notes}
-          onClose={vm.close}
+          onClose={viewModel.close}
         />
       )}
       {dialog?.kind === 'duplicate' && (
-        <EditEntryDialog entry={dialog.entry} duplicate onClose={vm.close} />
+        <EditEntryDialog
+          entry={dialog.entry}
+          duplicate
+          onClose={viewModel.close}
+        />
       )}
       {dialog?.kind === 'extend' && (
-        <ExtendDialog entry={dialog.entry} onClose={vm.close} />
+        <ExtendDialog entry={dialog.entry} onClose={viewModel.close} />
       )}
       {dialog?.kind === 'summary' && (
         <SummaryDialog
           entry={dialog.entry}
-          type={vm.typeOf(dialog.entry.taskTypeId)}
-          onClose={vm.close}
+          type={viewModel.typeOf(dialog.entry.taskTypeId)}
+          onClose={viewModel.close}
         />
       )}
       <DeleteTaskDialog
@@ -56,18 +60,18 @@ export function EntryList({ entries }: EntryListProps) {
         date={deletingTask?.latest.workDate ?? null}
         sessions={deletingTask?.sessions.length ?? 0}
         minutes={deletingTask?.doneMinutes ?? 0}
-        onClose={vm.close}
+        onClose={viewModel.close}
       />
       <ConfirmDialog
         open={deleting !== null}
-        onOpenChange={(open) => !open && vm.close()}
-        title={fmt(t.list.deleteTitle, { name: deleting?.title ?? '' })}
-        description={t.list.deleteText}
+        onOpenChange={(open) => !open && viewModel.close()}
+        title={fmt(messages.list.deleteTitle, { name: deleting?.title ?? '' })}
+        description={messages.list.deleteText}
         confirmLabel={app.actions.delete}
         cancelLabel={app.actions.cancel}
         destructive
-        busy={vm.removing}
-        onConfirm={() => deleting && vm.removeEntry(deleting)}
+        busy={viewModel.removing}
+        onConfirm={() => deleting && viewModel.removeEntry(deleting)}
       />
     </>
   )

@@ -139,11 +139,11 @@ export function copyDraft(source: TimeEntry): Draft {
 }
 
 /** Minuty z bieżącego trybu czasu (null = jeszcze nie da się policzyć). */
-export function draftMinutes(d: Draft) {
-  if (d.mode === 'timer') return null
-  return d.mode === 'range'
-    ? minutesBetween(d.start, d.end)
-    : parseDuration(d.duration)
+export function draftMinutes(draft: Draft) {
+  if (draft.mode === 'timer') return null
+  return draft.mode === 'range'
+    ? minutesBetween(draft.start, draft.end)
+    : parseDuration(draft.duration)
 }
 
 /**
@@ -151,44 +151,44 @@ export function draftMinutes(d: Draft) {
  * Puste pole czasu przy włączonych nadgodzinach = cały czas wpisu.
  */
 export function overtimeOf(
-  d: Draft,
+  draft: Draft,
 ): Pick<TimeEntryInput, 'overtimeMinutes' | 'overtimeNote'> {
-  if (!d.overtime || d.mode === 'timer')
+  if (!draft.overtime || draft.mode === 'timer')
     return { overtimeMinutes: null, overtimeNote: null }
-  const minutes = d.overtimeDuration.trim()
-    ? (parseDuration(d.overtimeDuration) ?? -1)
-    : (draftMinutes(d) ?? -1)
-  return { overtimeMinutes: minutes, overtimeNote: d.overtimeNote }
+  const minutes = draft.overtimeDuration.trim()
+    ? (parseDuration(draft.overtimeDuration) ?? -1)
+    : (draftMinutes(draft) ?? -1)
+  return { overtimeMinutes: minutes, overtimeNote: draft.overtimeNote }
 }
 
 /** Szkic → dane do API (walidacja w domain/entries sprawdza je tak samo jak serwer). */
 export function toInput(
-  d: Draft,
+  draft: Draft,
   workDate: string,
   spRequirement: TaskType['storyPointsRequirement'],
 ): TimeEntryInput {
-  const minutes = draftMinutes(d) ?? 0
+  const minutes = draftMinutes(draft) ?? 0
   return {
-    taskTypeId: d.taskTypeId,
-    projectId: d.projectId || null,
-    title: d.title.trim(),
-    link: d.link.trim() || null,
+    taskTypeId: draft.taskTypeId,
+    projectId: draft.projectId || null,
+    title: draft.title.trim(),
+    link: draft.link.trim() || null,
     storyPoints:
-      spRequirement === 'hidden' || d.storyPoints === ''
+      spRequirement === 'hidden' || draft.storyPoints === ''
         ? null
-        : Number(d.storyPoints),
+        : Number(draft.storyPoints),
     workDate,
-    startTime: d.mode === 'duration' ? null : d.start || null,
-    endTime: d.mode === 'range' ? d.end || null : null,
-    durationMinutes: d.mode === 'timer' ? 0 : minutes,
-    note: d.note.trim() ? d.note : null,
-    ...overtimeOf(d),
-    estimateMinutes: d.estimate.trim()
-      ? (parseDuration(d.estimate) ?? -1)
+    startTime: draft.mode === 'duration' ? null : draft.start || null,
+    endTime: draft.mode === 'range' ? draft.end || null : null,
+    durationMinutes: draft.mode === 'timer' ? 0 : minutes,
+    note: draft.note.trim() ? draft.note : null,
+    ...overtimeOf(draft),
+    estimateMinutes: draft.estimate.trim()
+      ? (parseDuration(draft.estimate) ?? -1)
       : null,
-    extensionMinutes: d.mode === 'timer' ? null : d.extensionMinutes,
-    extensionNote: d.mode === 'timer' ? null : d.extensionNote,
-    running: d.mode === 'timer',
+    extensionMinutes: draft.mode === 'timer' ? null : draft.extensionMinutes,
+    extensionNote: draft.mode === 'timer' ? null : draft.extensionNote,
+    running: draft.mode === 'timer',
   }
 }
 
@@ -208,12 +208,16 @@ export function toTimerInput(input: TimeEntryInput): TimerStartInput {
 }
 
 /** Zmiana typu pracy: tryb czasu z typu (gdy nic jeszcze nie wpisano) i domyślne SP (nowy wpis). */
-export function withType(d: Draft, next: TaskType, editing: boolean): Draft {
+export function withType(
+  draft: Draft,
+  next: TaskType,
+  editing: boolean,
+): Draft {
   return {
-    ...d,
+    ...draft,
     taskTypeId: next.id,
-    mode: d.title || d.duration ? d.mode : next.defaultTimeInput,
-    storyPoints: editing ? d.storyPoints : spDefault(next),
+    mode: draft.title || draft.duration ? draft.mode : next.defaultTimeInput,
+    storyPoints: editing ? draft.storyPoints : spDefault(next),
   }
 }
 
@@ -227,22 +231,22 @@ export interface WithModeOptions {
  * wpisu), a „czas trwania” przejmuje policzone już minuty z godzin.
  */
 export function withMode(
-  d: Draft,
+  draft: Draft,
   mode: DraftMode,
   options: WithModeOptions,
 ): Draft {
-  const minutes = draftMinutes(d)
+  const minutes = draftMinutes(draft)
   return {
-    ...d,
+    ...draft,
     mode,
     start:
-      mode === 'timer' && d.mode !== 'timer'
+      mode === 'timer' && draft.mode !== 'timer'
         ? (options.entryStart ?? options.now)
-        : d.start,
+        : draft.start,
     duration:
-      mode === 'duration' && !d.duration && minutes
+      mode === 'duration' && !draft.duration && minutes
         ? String(minutes)
-        : d.duration,
+        : draft.duration,
   }
 }
 
@@ -253,12 +257,12 @@ export interface WithQuickLogOptions {
 
 /** Szybki wpis z menu typu: typ i czas trwania (albo timer od teraz). */
 export function withQuickLog(
-  d: Draft,
+  draft: Draft,
   type: TaskType,
   minutes: number | 'timer',
   options: WithQuickLogOptions,
 ): Draft {
-  const typed = withType(d, type, options.editing)
+  const typed = withType(draft, type, options.editing)
   return minutes === 'timer'
     ? { ...typed, mode: 'timer', start: options.now }
     : { ...typed, mode: 'duration', duration: String(minutes) }
@@ -274,31 +278,32 @@ export interface WithPrefillOptions {
  * i estymata (czas zostaje). Sam tytuł i tryb (z palety): timer tylko, gdy wolno.
  */
 export function withPrefill(
-  d: Draft,
+  draft: Draft,
   prefill: EntryPrefill,
   options: WithPrefillOptions,
 ): Draft {
-  const e = prefill.entry
-  if (!e) {
+  const entry = prefill.entry
+  if (!entry) {
     const mode =
       prefill.mode === 'timer' && !options.timerAllowed
         ? 'duration'
         : prefill.mode
     return {
-      ...d,
+      ...draft,
       ...(prefill.title !== undefined ? { title: prefill.title } : {}),
       ...(mode ? { mode } : {}),
       ...(mode === 'timer' ? { start: options.now } : {}),
     }
   }
   return {
-    ...d,
-    taskTypeId: e.taskTypeId,
-    title: e.title,
-    link: e.link ?? '',
-    projectId: e.projectId ?? '',
-    storyPoints: e.storyPoints === null ? '' : String(e.storyPoints),
-    estimate: e.estimateMinutes === null ? '' : String(e.estimateMinutes),
+    ...draft,
+    taskTypeId: entry.taskTypeId,
+    title: entry.title,
+    link: entry.link ?? '',
+    projectId: entry.projectId ?? '',
+    storyPoints: entry.storyPoints === null ? '' : String(entry.storyPoints),
+    estimate:
+      entry.estimateMinutes === null ? '' : String(entry.estimateMinutes),
   }
 }
 
@@ -306,27 +311,30 @@ export function withPrefill(
  * Szkic po zapisie nowego wpisu: zostaje typ, projekt i tryb, a następny wpis
  * z godzinami zaczyna się tam, gdzie skończył się poprzedni (+30 min).
  */
-export function afterSave(d: Draft, type: TaskType | undefined): Draft {
+export function afterSave(draft: Draft, type: TaskType | undefined): Draft {
   const fresh = initialDraft(null, type)
-  const continues = d.mode === 'range' && d.end !== ''
+  const continues = draft.mode === 'range' && draft.end !== ''
   return {
     ...fresh,
-    taskTypeId: d.taskTypeId,
-    projectId: d.projectId,
-    mode: d.mode,
-    start: continues ? d.end : fresh.start,
+    taskTypeId: draft.taskTypeId,
+    projectId: draft.projectId,
+    mode: draft.mode,
+    start: continues ? draft.end : fresh.start,
     end: continues
-      ? fromMinutes(Math.min(toMinutes(d.end) + 30, 23 * 60 + 55))
+      ? fromMinutes(Math.min(toMinutes(draft.end) + 30, 23 * 60 + 55))
       : fresh.end,
   }
 }
 
 /** Szkic po starcie timera: zostaje typ i projekt, następny wpis jako czas trwania. */
-export function afterTimerStart(d: Draft, type: TaskType | undefined): Draft {
+export function afterTimerStart(
+  draft: Draft,
+  type: TaskType | undefined,
+): Draft {
   return {
     ...initialDraft(null, type),
-    taskTypeId: d.taskTypeId,
-    projectId: d.projectId,
+    taskTypeId: draft.taskTypeId,
+    projectId: draft.projectId,
     mode: 'duration',
   }
 }
@@ -345,9 +353,12 @@ export function scaleWithValue(
   scale: ReadonlyArray<SpScaleStep>,
   points: number | null,
 ): Array<SpScaleStep> {
-  if (points === null || scale.some((s) => s.points === points))
+  if (
+    points === null ||
+    scale.some((spScaleStep) => spScaleStep.points === points)
+  )
     return [...scale]
   return [...scale, { id: 'current', points, maxMinutes: 0 }].sort(
-    (a, b) => a.points - b.points,
+    (left, right) => left.points - right.points,
   )
 }

@@ -14,13 +14,13 @@ const EMPTY = { current: '', next: '', confirm: '' }
  * ustawia się bez podawania obecnego.
  */
 export function usePasswordViewModel(hasPassword: boolean) {
-  const t = useMessages(settingsMessages).account
-  const v = useMessages(authMessages).validation
+  const messages = useMessages(settingsMessages).account
+  const copy = useMessages(authMessages).validation
   const [draft, setDraft] = useState(EMPTY)
   const [submitted, setSubmitted] = useState(false)
   const save = useDataMutation(accountApi.changePassword, {
     invalidate: [],
-    success: t.passwordSaved,
+    success: messages.passwordSaved,
     onSuccess: () => {
       setDraft(EMPTY)
       setSubmitted(false)
@@ -30,10 +30,11 @@ export function usePasswordViewModel(hasPassword: boolean) {
     current:
       draft.current || !hasPassword
         ? mutationFieldError(save.error, 'currentPassword')
-        : v.passwordRequired,
+        : copy.passwordRequired,
     next:
-      passwordSchema(v).safeParse(draft.next).error?.issues[0]?.message ?? null,
-    confirm: draft.confirm === draft.next ? null : t.confirmError,
+      passwordSchema(copy).safeParse(draft.next).error?.issues[0]?.message ??
+      null,
+    confirm: draft.confirm === draft.next ? null : messages.confirmError,
   }
   const shown = (error: string | null) => (submitted ? error : null)
 
@@ -47,9 +48,9 @@ export function usePasswordViewModel(hasPassword: boolean) {
       confirm: shown(errors.confirm),
     },
     update: (patch: Partial<typeof EMPTY>) =>
-      setDraft((d) => ({ ...d, ...patch })),
-    submit: (e: FormEvent) => {
-      e.preventDefault()
+      setDraft((previousDraft) => ({ ...previousDraft, ...patch })),
+    submit: (formEvent: FormEvent) => {
+      formEvent.preventDefault()
       setSubmitted(true)
       if ((draft.current || !hasPassword) && !errors.next && !errors.confirm)
         save.mutate({ currentPassword: draft.current, newPassword: draft.next })

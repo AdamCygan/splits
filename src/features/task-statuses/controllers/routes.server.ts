@@ -14,49 +14,51 @@ import {
 } from '../data/repository.server'
 
 export const statusRoutes = new Hono<AppEnv>()
-  .get('/', async (c) => c.json(await getStatuses(scopeOf(c))))
-  .post('/', async (c) => {
-    const input = await body(c, statusInput)
-    const scope = scopeOf(c)
+  .get('/', async (context) =>
+    context.json(await getStatuses(scopeOf(context))),
+  )
+  .post('/', async (context) => {
+    const input = await body(context, statusInput)
+    const scope = scopeOf(context)
     const created = await mirrored(
       scope,
-      applyOf(c),
+      applyOf(context),
       'statuses',
       null,
       () => createStatus(scope, input),
-      (r) => r.id,
+      (taskStatus) => taskStatus.id,
     )
-    return c.json(created, 201)
+    return context.json(created, 201)
   })
-  .put('/order', async (c) => {
-    const { ids } = await body(c, idsInput)
-    return c.json(await reorderStatuses(scopeOf(c), ids))
+  .put('/order', async (context) => {
+    const { ids } = await body(context, idsInput)
+    return context.json(await reorderStatuses(scopeOf(context), ids))
   })
-  .put('/:id', async (c) => {
-    const input = await body(c, statusInput)
-    const scope = scopeOf(c)
-    const id = c.req.param('id')
-    return c.json(
-      await mirrored(scope, applyOf(c), 'statuses', id, () =>
+  .put('/:id', async (context) => {
+    const input = await body(context, statusInput)
+    const scope = scopeOf(context)
+    const id = context.req.param('id')
+    return context.json(
+      await mirrored(scope, applyOf(context), 'statuses', id, () =>
         updateStatus(scope, id, input),
       ),
     )
   })
-  .post('/:id/default', async (c) => {
-    const scope = scopeOf(c)
-    const id = c.req.param('id')
-    return c.json(
-      await mirrored(scope, applyOf(c), 'statuses', id, () =>
+  .post('/:id/default', async (context) => {
+    const scope = scopeOf(context)
+    const id = context.req.param('id')
+    return context.json(
+      await mirrored(scope, applyOf(context), 'statuses', id, () =>
         setDefaultStatus(scope, id),
       ),
     )
   })
-  .post('/:id/:action{archive|restore}', async (c) => {
-    const archived = c.req.param('action') === 'archive'
-    const scope = scopeOf(c)
-    const id = c.req.param('id')
-    return c.json(
-      await mirrored(scope, applyOf(c), 'statuses', id, () =>
+  .post('/:id/:action{archive|restore}', async (context) => {
+    const archived = context.req.param('action') === 'archive'
+    const scope = scopeOf(context)
+    const id = context.req.param('id')
+    return context.json(
+      await mirrored(scope, applyOf(context), 'statuses', id, () =>
         setStatusArchived(scope, id, archived),
       ),
     )

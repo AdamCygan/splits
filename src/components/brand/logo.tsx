@@ -1,7 +1,7 @@
 import { cn } from '#/lib/utils'
 import { site } from '#/config/site'
 
-const C = 69.115 // obwód okręgu r=11
+const CIRCUMFERENCE = 69.115 // obwód okręgu r=11
 
 export interface LogoMarkProps {
   className?: string
@@ -33,7 +33,7 @@ export function LogoMark({ className }: LogoMarkProps) {
           cy="18"
           r="11"
           stroke="var(--wt-task)"
-          strokeDasharray={`25.33 ${C}`}
+          strokeDasharray={`25.33 ${CIRCUMFERENCE}`}
           strokeDashoffset="-1.1"
         />
         <circle
@@ -41,7 +41,7 @@ export function LogoMark({ className }: LogoMarkProps) {
           cy="18"
           r="11"
           stroke="var(--wt-review)"
-          strokeDasharray={`9.65 ${C}`}
+          strokeDasharray={`9.65 ${CIRCUMFERENCE}`}
           strokeDashoffset="-28.63"
         />
         <circle
@@ -49,7 +49,7 @@ export function LogoMark({ className }: LogoMarkProps) {
           cy="18"
           r="11"
           stroke="var(--wt-pair)"
-          strokeDasharray={`15.68 ${C}`}
+          strokeDasharray={`15.68 ${CIRCUMFERENCE}`}
           strokeDashoffset="-40.48"
         />
         <circle
@@ -57,7 +57,7 @@ export function LogoMark({ className }: LogoMarkProps) {
           cy="18"
           r="11"
           stroke="var(--wt-extra)"
-          strokeDasharray={`9.65 ${C}`}
+          strokeDasharray={`9.65 ${CIRCUMFERENCE}`}
           strokeDashoffset="-58.36"
         />
       </g>

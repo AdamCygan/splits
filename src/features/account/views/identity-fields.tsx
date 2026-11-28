@@ -27,32 +27,32 @@ export function IdentityFields({
   passwordError,
   codeError,
 }: IdentityFieldsProps) {
-  const t = useMessages(settingsMessages).security
+  const messages = useMessages(settingsMessages).security
   return (
     <>
       {needsPassword && (
-        <Field label={t.password} error={passwordError}>
-          {(a) => (
+        <Field label={messages.password} error={passwordError}>
+          {(fieldProps) => (
             <Input
-              {...a}
+              {...fieldProps}
               type="password"
               autoComplete="current-password"
               value={password}
-              onChange={(e) => onPassword(e.target.value)}
+              onChange={(event) => onPassword(event.target.value)}
             />
           )}
         </Field>
       )}
       {needsCode && (
-        <Field label={t.code} hint={t.codeHint} error={codeError}>
-          {(a) => (
+        <Field label={messages.code} hint={messages.codeHint} error={codeError}>
+          {(fieldProps) => (
             <Input
-              {...a}
+              {...fieldProps}
               inputMode="numeric"
               autoComplete="one-time-code"
               className="max-w-48 font-mono tracking-widest"
               value={code}
-              onChange={(e) => onCode(e.target.value)}
+              onChange={(event) => onCode(event.target.value)}
             />
           )}
         </Field>

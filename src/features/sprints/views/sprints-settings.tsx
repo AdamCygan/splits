@@ -40,12 +40,12 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 
 export function SprintSettings() {
-  const t = useMessages(settingsMessages)
+  const messages = useMessages(settingsMessages)
   return (
     <div className="space-y-6">
       <SectionHeader
-        title={t.sections.sprints.title}
-        lead={t.sprints.scheduleLead}
+        title={messages.sections.sprints.title}
+        lead={messages.sprints.scheduleLead}
       />
       <QueryView query={cadenceQuery} skeletonRows={4}>
         {(cadence) => <ScheduleCard cadence={cadence} />}
@@ -60,7 +60,7 @@ interface ScheduleCardProps {
 }
 
 function ScheduleCard({ cadence }: ScheduleCardProps) {
-  const t = useMessages(settingsMessages).sprints
+  const messages = useMessages(settingsMessages).sprints
   const app = useMessages(appMessages)
   const { locale } = useI18n()
   const format = useFormat()
@@ -84,12 +84,12 @@ function ScheduleCard({ cadence }: ScheduleCardProps) {
       lengthDays >= LIMITS.sprintLengthDays.min &&
       lengthDays <= LIMITS.sprintLengthDays.max
         ? null
-        : t.customDaysError,
-    anchor: isValidDate(draft.anchorDate) ? null : t.dateError,
+        : messages.customDaysError,
+    anchor: isValidDate(draft.anchorDate) ? null : messages.dateError,
     pattern:
       draft.namePattern.trim() && draft.namePattern.length <= LIMITS.sprintName
         ? null
-        : t.patternError,
+        : messages.patternError,
   }
   const valid = !errors.length && !errors.anchor && !errors.pattern
   const next: SprintCadence = {
@@ -103,20 +103,20 @@ function ScheduleCard({ cadence }: ScheduleCardProps) {
       ? editing
       : JSON.stringify(next) !== JSON.stringify(cadence)
   const preview = valid ? previewCadence(next, todayIn(settings?.timezone)) : []
-  const show = (e: string | null) => (submitted ? e : null)
+  const show = (error: string | null) => (submitted ? error : null)
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault()
+  const onSubmit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     setSubmitted(true)
     if (valid) save.mutate(next)
   }
 
   if (!editing) {
     return (
-      <SettingsCard title={t.scheduleTitle}>
+      <SettingsCard title={messages.scheduleTitle}>
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <p className="text-ink-soft">{t.noSchedule}</p>
-          <Button onClick={() => setEditing(true)}>{t.setUp}</Button>
+          <p className="text-ink-soft">{messages.noSchedule}</p>
+          <Button onClick={() => setEditing(true)}>{messages.setUp}</Button>
         </div>
       </SettingsCard>
     )
@@ -125,7 +125,7 @@ function ScheduleCard({ cadence }: ScheduleCardProps) {
   return (
     <form noValidate onSubmit={onSubmit}>
       <SettingsCard
-        title={t.scheduleTitle}
+        title={messages.scheduleTitle}
         actions={
           cadence ? (
             <Button
@@ -133,7 +133,7 @@ function ScheduleCard({ cadence }: ScheduleCardProps) {
               variant="ghost"
               onClick={() => setConfirmOff(true)}
             >
-              {t.turnOff}
+              {messages.turnOff}
             </Button>
           ) : null
         }
@@ -141,36 +141,38 @@ function ScheduleCard({ cadence }: ScheduleCardProps) {
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
           <div className="space-y-6">
             <Switch
-              label={t.auto}
-              description={t.autoHint}
+              label={messages.auto}
+              description={messages.autoHint}
               checked={draft.autoCreate}
-              onCheckedChange={(v) => setDraft({ ...draft, autoCreate: v })}
+              onCheckedChange={(isChecked) =>
+                setDraft({ ...draft, autoCreate: isChecked })
+              }
             />
             <Segmented
-              label={t.length}
+              label={messages.length}
               value={draft.length}
               onChange={(length) => setDraft({ ...draft, length })}
               options={[
-                ...PRESETS.map((d) => ({
-                  value: String(d) as LengthChoice,
-                  label: t.lengths[d],
+                ...PRESETS.map((preset) => ({
+                  value: String(preset) as LengthChoice,
+                  label: messages.lengths[preset],
                 })),
-                { value: 'custom' as const, label: t.lengths.custom },
+                { value: 'custom' as const, label: messages.lengths.custom },
               ]}
             />
             {draft.length === 'custom' && (
-              <Field label={t.customDays} error={show(errors.length)}>
-                {(a) => (
+              <Field label={messages.customDays} error={show(errors.length)}>
+                {(fieldProps) => (
                   <Input
-                    {...a}
+                    {...fieldProps}
                     type="number"
                     min={1}
                     max={56}
                     inputMode="numeric"
                     className="max-w-32"
                     value={draft.customDays}
-                    onChange={(e) =>
-                      setDraft({ ...draft, customDays: e.target.value })
+                    onChange={(event) =>
+                      setDraft({ ...draft, customDays: event.target.value })
                     }
                   />
                 )}
@@ -178,33 +180,33 @@ function ScheduleCard({ cadence }: ScheduleCardProps) {
             )}
             <div className="grid gap-6 sm:grid-cols-2">
               <Field
-                label={t.anchor}
-                hint={t.anchorHint}
+                label={messages.anchor}
+                hint={messages.anchorHint}
                 error={show(errors.anchor)}
               >
-                {(a) => (
+                {(fieldProps) => (
                   <Input
-                    {...a}
+                    {...fieldProps}
                     type="date"
                     value={draft.anchorDate}
-                    onChange={(e) =>
-                      setDraft({ ...draft, anchorDate: e.target.value })
+                    onChange={(event) =>
+                      setDraft({ ...draft, anchorDate: event.target.value })
                     }
                   />
                 )}
               </Field>
               <Field
-                label={t.pattern}
-                hint={t.patternHint}
+                label={messages.pattern}
+                hint={messages.patternHint}
                 error={show(errors.pattern)}
               >
-                {(a) => (
+                {(fieldProps) => (
                   <Input
-                    {...a}
+                    {...fieldProps}
                     maxLength={LIMITS.sprintName}
                     value={draft.namePattern}
-                    onChange={(e) =>
-                      setDraft({ ...draft, namePattern: e.target.value })
+                    onChange={(event) =>
+                      setDraft({ ...draft, namePattern: event.target.value })
                     }
                   />
                 )}
@@ -221,23 +223,23 @@ function ScheduleCard({ cadence }: ScheduleCardProps) {
               id="sprint-preview-title"
               className="mb-3 text-sm font-semibold"
             >
-              {t.preview}
+              {messages.preview}
             </h3>
             {preview.length === 0 ? (
-              <p className="text-sm text-ink-soft">{t.previewEmpty}</p>
+              <p className="text-sm text-ink-soft">{messages.previewEmpty}</p>
             ) : (
               <ol className="space-y-3" aria-live="polite">
-                {preview.map((s) => (
-                  <li key={s.number} className="text-sm">
-                    <p className="font-semibold">{s.name}</p>
+                {preview.map((sprint) => (
+                  <li key={sprint.number} className="text-sm">
+                    <p className="font-semibold">{sprint.name}</p>
                     <p className="text-ink-soft">
-                      {formatDateRange(locale, s.startsOn, s.endsOn)}
+                      {formatDateRange(locale, sprint.startsOn, sprint.endsOn)}
                       {settings && (
                         <>
                           ,{' '}
                           {format.plural(
-                            t.workingDays,
-                            sprintWorkingDays(s, settings.workingDays),
+                            messages.workingDays,
+                            sprintWorkingDays(sprint, settings.workingDays),
                           )}
                         </>
                       )}
@@ -252,7 +254,7 @@ function ScheduleCard({ cadence }: ScheduleCardProps) {
       <SaveBar
         dirty={dirty}
         saving={save.isPending}
-        saveLabel={t.saveSchedule}
+        saveLabel={messages.saveSchedule}
         onDiscard={() => {
           setDraft(toDraft(cadence, 'Sprint {n}'))
           setSubmitted(false)
@@ -262,9 +264,9 @@ function ScheduleCard({ cadence }: ScheduleCardProps) {
       <ConfirmDialog
         open={confirmOff}
         onOpenChange={setConfirmOff}
-        title={t.turnOffTitle}
-        description={t.turnOffText}
-        confirmLabel={t.turnOff}
+        title={messages.turnOffTitle}
+        description={messages.turnOffText}
+        confirmLabel={messages.turnOff}
         cancelLabel={app.actions.cancel}
         busy={save.isPending}
         onConfirm={() =>
@@ -278,13 +280,13 @@ function ScheduleCard({ cadence }: ScheduleCardProps) {
 // ---------------------------------------------------------------- lista sprintów
 
 function SprintList() {
-  const t = useMessages(settingsMessages).sprints
+  const messages = useMessages(settingsMessages).sprints
   const app = useMessages(appMessages)
   const { locale } = useI18n()
   const format = useFormat()
   const taskTypes = useQuery(taskTypesQuery).data ?? []
   const typeName = (id: string) =>
-    taskTypes.find((x) => x.id === id)?.name ?? '?'
+    taskTypes.find((taskType) => taskType.id === id)?.name ?? '?'
   const settings = useQuery(settingsQuery).data
   const [showPast, setShowPast] = useState(false)
   const [editing, setEditing] = useState<Sprint | 'new' | null>(null)
@@ -295,23 +297,25 @@ function SprintList() {
 
   return (
     <SettingsCard
-      title={t.listTitle}
-      lead={t.listLead}
+      title={messages.listTitle}
+      lead={messages.listLead}
       actions={
         <Button onClick={() => setEditing('new')}>
           <CalendarPlus aria-hidden className="size-4" />
-          {t.add}
+          {messages.add}
         </Button>
       }
     >
       <QueryView query={sprintsQuery}>
         {(sprints) => {
-          const past = sprints.filter((s) => sprintPhase(s, today) === 'past')
+          const past = sprints.filter(
+            (sprint) => sprintPhase(sprint, today) === 'past',
+          )
           const visible = showPast
             ? sprints
-            : sprints.filter((s) => sprintPhase(s, today) !== 'past')
+            : sprints.filter((sprint) => sprintPhase(sprint, today) !== 'past')
           if (sprints.length === 0)
-            return <p className="text-ink-soft">{t.empty}</p>
+            return <p className="text-ink-soft">{messages.empty}</p>
           return (
             <div className="space-y-4">
               <ul className="divide-y divide-line">
@@ -334,7 +338,7 @@ function SprintList() {
                                   : 'muted'
                             }
                           >
-                            {t.phase[phase]}
+                            {messages.phase[phase]}
                           </Badge>
                         </div>
                         <p className="text-sm text-ink-soft">
@@ -347,7 +351,7 @@ function SprintList() {
                             <>
                               ,{' '}
                               {format.plural(
-                                t.workingDays,
+                                messages.workingDays,
                                 sprintWorkingDays(sprint, settings.workingDays),
                               )}
                             </>
@@ -355,24 +359,26 @@ function SprintList() {
                           {sprint.capacityStoryPoints !== null && (
                             <>
                               ,{' '}
-                              {fmt(t.capacityShort, {
+                              {fmt(messages.capacityShort, {
                                 sp: format.sp(sprint.capacityStoryPoints),
                               })}
                             </>
                           )}
                           {', '}
-                          {sprint.fromCadence ? t.fromSchedule : t.manual}
+                          {sprint.fromCadence
+                            ? messages.fromSchedule
+                            : messages.manual}
                         </p>
                         {sprint.goal && (
                           <p className="mt-1 text-sm">{sprint.goal}</p>
                         )}
                         {sprint.timeGoals.length > 0 && (
                           <p className="mt-1 text-sm text-ink-soft">
-                            {fmt(t.timeGoals.summary, {
+                            {fmt(messages.timeGoals.summary, {
                               goals: sprint.timeGoals
                                 .map(
-                                  (g) =>
-                                    `${typeName(g.taskTypeId)} ${format.minutes(g.minutes)}`,
+                                  (timeGoal) =>
+                                    `${typeName(timeGoal.taskTypeId)} ${format.minutes(timeGoal.minutes)}`,
                                 )
                                 .join(', '),
                             })}
@@ -413,8 +419,8 @@ function SprintList() {
                   onClick={() => setShowPast(!showPast)}
                 >
                   {showPast
-                    ? t.hidePast
-                    : fmt(t.showPast, { count: past.length })}
+                    ? messages.hidePast
+                    : fmt(messages.showPast, { count: past.length })}
                 </Button>
               )}
             </div>
@@ -432,8 +438,8 @@ function SprintList() {
       <ConfirmDialog
         open={deleting !== null}
         onOpenChange={(open) => !open && setDeleting(null)}
-        title={fmt(t.deleteTitle, { name: deleting?.name ?? '' })}
-        description={t.deleteText}
+        title={fmt(messages.deleteTitle, { name: deleting?.name ?? '' })}
+        description={messages.deleteText}
         confirmLabel={app.actions.delete}
         cancelLabel={app.actions.cancel}
         destructive
@@ -450,7 +456,7 @@ interface SprintDialogProps {
 }
 
 function SprintDialog({ sprint, onClose }: SprintDialogProps) {
-  const t = useMessages(settingsMessages).sprints
+  const messages = useMessages(settingsMessages).sprints
   const app = useMessages(appMessages)
   const format = useFormat()
   const today = todayIn()
@@ -477,19 +483,19 @@ function SprintDialog({ sprint, onClose }: SprintDialogProps) {
     name:
       draft.name.trim() && draft.name.length <= LIMITS.sprintName
         ? null
-        : t.nameError,
+        : messages.nameError,
     startsOn: isValidDate(draft.startsOn)
       ? (mutationFieldError(save.error, 'startsOn') ?? null)
-      : t.dateError,
+      : messages.dateError,
     endsOn: !isValidDate(draft.endsOn)
-      ? t.dateError
+      ? messages.dateError
       : draft.endsOn < draft.startsOn
-        ? (mutationFieldError(save.error, 'endsOn') ?? t.dateError)
+        ? (mutationFieldError(save.error, 'endsOn') ?? messages.dateError)
         : mutationFieldError(save.error, 'endsOn'),
     capacity:
       capacity === null || (Number.isFinite(capacity) && capacity >= 0)
         ? null
-        : t.capacityError,
+        : messages.capacityError,
   }
   const invalid =
     !(draft.name.trim() && draft.name.length <= LIMITS.sprintName) ||
@@ -498,10 +504,10 @@ function SprintDialog({ sprint, onClose }: SprintDialogProps) {
     draft.endsOn < draft.startsOn ||
     errors.capacity !== null ||
     timeGoals === null
-  const show = (e: string | null) => (submitted ? e : null)
+  const show = (error: string | null) => (submitted ? error : null)
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault()
+  const onSubmit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     setSubmitted(true)
     if (invalid) return
     save.mutate({
@@ -517,8 +523,8 @@ function SprintDialog({ sprint, onClose }: SprintDialogProps) {
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        title={sprint ? t.dialog.editTitle : t.dialog.addTitle}
-        description={t.dialog.description}
+        title={sprint ? messages.dialog.editTitle : messages.dialog.addTitle}
+        description={messages.dialog.description}
         closeLabel={app.actions.close}
         footer={
           <>
@@ -535,7 +541,7 @@ function SprintDialog({ sprint, onClose }: SprintDialogProps) {
                 ? app.actions.saving
                 : sprint
                   ? app.actions.save
-                  : t.add}
+                  : messages.add}
             </Button>
           </>
         }
@@ -546,71 +552,78 @@ function SprintDialog({ sprint, onClose }: SprintDialogProps) {
           onSubmit={onSubmit}
           className="space-y-5"
         >
-          <Field label={t.fields.name} error={show(errors.name)}>
-            {(a) => (
+          <Field label={messages.fields.name} error={show(errors.name)}>
+            {(fieldProps) => (
               <Input
-                {...a}
+                {...fieldProps}
                 autoFocus
                 maxLength={LIMITS.sprintName}
                 value={draft.name}
-                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                onChange={(event) =>
+                  setDraft({ ...draft, name: event.target.value })
+                }
               />
             )}
           </Field>
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label={t.fields.startsOn} error={show(errors.startsOn)}>
-              {(a) => (
+            <Field
+              label={messages.fields.startsOn}
+              error={show(errors.startsOn)}
+            >
+              {(fieldProps) => (
                 <Input
-                  {...a}
+                  {...fieldProps}
                   type="date"
                   value={draft.startsOn}
-                  onChange={(e) =>
-                    setDraft({ ...draft, startsOn: e.target.value })
+                  onChange={(event) =>
+                    setDraft({ ...draft, startsOn: event.target.value })
                   }
                 />
               )}
             </Field>
-            <Field label={t.fields.endsOn} error={show(errors.endsOn)}>
-              {(a) => (
+            <Field label={messages.fields.endsOn} error={show(errors.endsOn)}>
+              {(fieldProps) => (
                 <Input
-                  {...a}
+                  {...fieldProps}
                   type="date"
                   min={draft.startsOn}
                   value={draft.endsOn}
-                  onChange={(e) =>
-                    setDraft({ ...draft, endsOn: e.target.value })
+                  onChange={(event) =>
+                    setDraft({ ...draft, endsOn: event.target.value })
                   }
                 />
               )}
             </Field>
           </div>
-          <Field label={t.fields.goal} hint={t.fields.goalHint}>
-            {(a) => (
+          <Field label={messages.fields.goal} hint={messages.fields.goalHint}>
+            {(fieldProps) => (
               <Textarea
-                {...a}
+                {...fieldProps}
                 maxLength={LIMITS.sprintGoal}
                 rows={2}
                 value={draft.goal}
-                onChange={(e) => setDraft({ ...draft, goal: e.target.value })}
+                onChange={(event) =>
+                  setDraft({ ...draft, goal: event.target.value })
+                }
               />
             )}
           </Field>
           <Field
-            label={t.fields.capacity}
-            hint={t.fields.capacityHint}
+            label={messages.fields.capacity}
+            hint={messages.fields.capacityHint}
             error={show(errors.capacity)}
           >
-            {(a) => (
+            {(fieldProps) => (
               <Input
-                {...a}
+                {...fieldProps}
                 type="number"
                 min={0}
                 step={0.5}
                 inputMode="decimal"
                 className="max-w-32"
                 value={draft.capacity}
-                onChange={(e) =>
-                  setDraft({ ...draft, capacity: e.target.value })
+                onChange={(event) =>
+                  setDraft({ ...draft, capacity: event.target.value })
                 }
               />
             )}

@@ -39,7 +39,9 @@ const type = {
   storyPointsRequirement: 'optional',
 } as const
 const fields = (input: TimeEntryInput) =>
-  validateEntry(input, type).map((i) => `${i.field}:${i.code}`)
+  validateEntry(input, type).map(
+    (entryIssue) => `${entryIssue.field}:${entryIssue.code}`,
+  )
 
 describe('overtime validation', () => {
   it('Should accept overtime that is part of the entry, up to the whole entry', () => {
@@ -84,9 +86,9 @@ describe('overtime validation', () => {
   })
 })
 
-let n = 0
+let count = 0
 const entry = (over: Partial<TimeEntry>): TimeEntry => ({
-  id: `e${n++}`,
+  id: `e${count++}`,
   ...base,
   finishedAt: null,
   overtimeMinutes: null,
@@ -96,7 +98,7 @@ const entry = (over: Partial<TimeEntry>): TimeEntry => ({
   extensionNote: null,
   paused: false,
   startedAt: null,
-  createdAt: `2026-11-12T10:00:0${n % 10}Z`,
+  createdAt: `2026-11-12T10:00:0${count % 10}Z`,
   ...over,
 })
 
@@ -123,7 +125,7 @@ describe('overtime in reports and summaries', () => {
 
   it('Should sum overtime per task and in totals, as part of the time', () => {
     const rows = groupTasks(entries, types)
-    const hotfix = rows.find((r) => r.title === 'Checkout hotfix')!
+    const hotfix = rows.find((taskRow) => taskRow.title === 'Checkout hotfix')!
     expect(hotfix).toMatchObject({
       minutes: 270,
       overtimeMinutes: 90,
@@ -134,7 +136,7 @@ describe('overtime in reports and summaries', () => {
 
   it('Should add overtime columns to the CSV', () => {
     const rows = groupTasks(entries, types).filter(
-      (r) => r.title === 'Checkout hotfix',
+      (taskRow) => taskRow.title === 'Checkout hotfix',
     )
     const csv = reportCsv(rows, {
       head: ['Task'],

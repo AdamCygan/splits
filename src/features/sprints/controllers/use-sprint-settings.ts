@@ -9,24 +9,24 @@ import type { Sprint, SprintInput } from '../data/dto'
 
 /** Zapis kadencji sprintów (albo jej wyłączenie, gdy null). */
 export function useSaveCadence() {
-  const t = useMessages(settingsMessages).sprints
+  const messages = useMessages(settingsMessages).sprints
   const app = useMessages(appMessages)
   return useApplyMutation('sprints', sprintsApi.setCadence, {
     invalidate: [keys.cadence, keys.sprints],
-    success: (result) => (result ? t.scheduleSaved : app.status.saved),
+    success: (result) => (result ? messages.scheduleSaved : app.status.saved),
     onSuccess: () => markSetupStep('sprints'),
   })
 }
 
 /** Usunięcie sprintu z listy. */
 export function useRemoveSprint(onRemoved: () => void) {
-  const t = useMessages(settingsMessages).sprints
+  const messages = useMessages(settingsMessages).sprints
   return useApplyMutation(
     'sprints',
     (id: string, apply) => sprintsApi.remove(id, apply),
     {
       invalidate: [keys.sprints],
-      success: t.deleted,
+      success: messages.deleted,
       onSuccess: onRemoved,
     },
   )
@@ -40,7 +40,7 @@ export interface SaveSprintOptions {
 
 /** Zapis sprintu: nowy albo zmiana istniejącego. */
 export function useSaveSprint({ sprint, onSaved }: SaveSprintOptions) {
-  const t = useMessages(settingsMessages).sprints
+  const messages = useMessages(settingsMessages).sprints
   const app = useMessages(appMessages)
   return useApplyMutation(
     'sprints',
@@ -50,7 +50,7 @@ export function useSaveSprint({ sprint, onSaved }: SaveSprintOptions) {
         : sprintsApi.create(input, apply),
     {
       invalidate: [keys.sprints],
-      success: sprint ? app.status.saved : t.created,
+      success: sprint ? app.status.saved : messages.created,
       onSuccess: onSaved,
     },
   )

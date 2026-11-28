@@ -50,9 +50,9 @@ export function I18nProvider({ locale, children }: I18nProviderProps) {
 }
 
 export function useI18n() {
-  const ctx = useContext(I18nContext)
-  if (!ctx) throw new Error('useI18n must be used inside <I18nProvider>.')
-  return ctx
+  const context = useContext(I18nContext)
+  if (!context) throw new Error('useI18n must be used inside <I18nProvider>.')
+  return context
 }
 
 /**
@@ -118,8 +118,8 @@ export function useFormat() {
       plural: (
         forms: Plural,
         count: number,
-        vars?: Record<string, string | number>,
-      ) => plural(locale, forms, count, vars),
+        variables?: Record<string, string | number>,
+      ) => plural(locale, forms, count, variables),
     }
     // `clock` w zależnościach: ta sama funkcja daje inny wynik po zmianie 12h/24h.
   }, [locale, tag, clock])

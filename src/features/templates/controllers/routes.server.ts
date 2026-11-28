@@ -12,20 +12,24 @@ import {
 } from '../data/repository.server'
 
 export const templateRoutes = new Hono<AppEnv>()
-  .get('/', async (c) => c.json(await getTemplates(scopeOf(c))))
-  .post('/', async (c) => {
-    const input = await body(c, templateInput)
-    return c.json(await createTemplate(scopeOf(c), input), 201)
+  .get('/', async (context) =>
+    context.json(await getTemplates(scopeOf(context))),
+  )
+  .post('/', async (context) => {
+    const input = await body(context, templateInput)
+    return context.json(await createTemplate(scopeOf(context), input), 201)
   })
-  .put('/order', async (c) => {
-    const { ids } = await body(c, idsInput)
-    return c.json(await reorderTemplates(scopeOf(c), ids))
+  .put('/order', async (context) => {
+    const { ids } = await body(context, idsInput)
+    return context.json(await reorderTemplates(scopeOf(context), ids))
   })
-  .put('/:id', async (c) => {
-    const input = await body(c, templateInput)
-    return c.json(await updateTemplate(scopeOf(c), c.req.param('id'), input))
+  .put('/:id', async (context) => {
+    const input = await body(context, templateInput)
+    return context.json(
+      await updateTemplate(scopeOf(context), context.req.param('id'), input),
+    )
   })
-  .delete('/:id', async (c) => {
-    await removeTemplate(scopeOf(c), c.req.param('id'))
-    return c.body(null, 204)
+  .delete('/:id', async (context) => {
+    await removeTemplate(scopeOf(context), context.req.param('id'))
+    return context.body(null, 204)
   })

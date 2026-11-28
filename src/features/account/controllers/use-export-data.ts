@@ -10,10 +10,10 @@ export const exportFileName = (now = new Date()) =>
 
 /** Pobranie wszystkich danych konta jako plik JSON (RODO: prawo do przenoszenia danych). */
 export function useExportData() {
-  const t = useMessages(panelMessages).export
+  const messages = useMessages(panelMessages).export
   const download = useDataMutation(() => accountApi.exportData(), {
     invalidate: [],
-    success: t.done,
+    success: messages.done,
     onSuccess: (payload) =>
       downloadFile(
         exportFileName(),

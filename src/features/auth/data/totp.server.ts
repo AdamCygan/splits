@@ -98,23 +98,28 @@ const key = () =>
   createHash('sha256').update(`totp:${serverEnv.jwtSecret}`).digest()
 
 export function encryptSecret(secret: string): string {
-  const iv = randomBytes(12)
-  const cipher = createCipheriv('aes-256-gcm', key(), iv, {
+  const initializationVector = randomBytes(12)
+  const cipher = createCipheriv('aes-256-gcm', key(), initializationVector, {
     authTagLength: GCM_TAG_LENGTH,
   })
   const data = Buffer.concat([cipher.update(secret, 'utf8'), cipher.final()])
-  return [iv, cipher.getAuthTag(), data]
-    .map((b) => b.toString('base64url'))
+  return [initializationVector, cipher.getAuthTag(), data]
+    .map((nonSharedBuffer) => nonSharedBuffer.toString('base64url'))
     .join('.')
 }
 
 export function decryptSecret(stored: string): string {
-  const [iv, tag, data] = stored
+  const [initializationVector, tag, data] = stored
     .split('.')
-    .map((p) => Buffer.from(p, 'base64url'))
-  const decipher = createDecipheriv('aes-256-gcm', key(), iv!, {
-    authTagLength: GCM_TAG_LENGTH,
-  })
+    .map((part) => Buffer.from(part, 'base64url'))
+  const decipher = createDecipheriv(
+    'aes-256-gcm',
+    key(),
+    initializationVector!,
+    {
+      authTagLength: GCM_TAG_LENGTH,
+    },
+  )
   decipher.setAuthTag(tag!)
   return Buffer.concat([decipher.update(data!), decipher.final()]).toString(
     'utf8',

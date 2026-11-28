@@ -1,26 +1,28 @@
 import type { Sprint, SprintCadence } from '#/features/sprints/data/dto'
-import type * as t from '#/server/db/schema'
+import type * as schema from '#/server/db/schema'
 
 export const toCadence = (
-  x: typeof t.sprintCadences.$inferSelect | undefined,
+  sprintCadenceRow: typeof schema.sprintCadences.$inferSelect | undefined,
 ): SprintCadence | null =>
-  x
+  sprintCadenceRow
     ? {
-        lengthDays: x.lengthDays,
-        anchorDate: x.anchorDate,
-        namePattern: x.namePattern,
-        autoCreate: x.autoCreate,
+        lengthDays: sprintCadenceRow.lengthDays,
+        anchorDate: sprintCadenceRow.anchorDate,
+        namePattern: sprintCadenceRow.namePattern,
+        autoCreate: sprintCadenceRow.autoCreate,
       }
     : null
 
-export const toSprint = (x: typeof t.sprints.$inferSelect): Sprint => ({
-  id: x.id,
-  number: x.number,
-  name: x.name,
-  goal: x.goal,
-  startsOn: x.startsOn,
-  endsOn: x.endsOn,
-  capacityStoryPoints: x.capacityStoryPoints,
-  timeGoals: x.timeGoals,
-  fromCadence: x.fromCadence,
+export const toSprint = (
+  sprintRow: typeof schema.sprints.$inferSelect,
+): Sprint => ({
+  id: sprintRow.id,
+  number: sprintRow.number,
+  name: sprintRow.name,
+  goal: sprintRow.goal,
+  startsOn: sprintRow.startsOn,
+  endsOn: sprintRow.endsOn,
+  capacityStoryPoints: sprintRow.capacityStoryPoints,
+  timeGoals: sprintRow.timeGoals,
+  fromCadence: sprintRow.fromCadence,
 })

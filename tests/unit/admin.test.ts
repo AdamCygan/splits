@@ -34,8 +34,8 @@ describe('admin sorting', () => {
       [{ sort: 'name', dir: 'asc' }, 'lastActive'],
       { sort: 'lastActive', dir: 'desc' },
     ],
-  ])('Should %s', (_case, args, expected) => {
-    expect(nextAdminSort(...args)).toEqual(expected)
+  ])('Should %s', (_case, callArguments, expected) => {
+    expect(nextAdminSort(...callArguments)).toEqual(expected)
   })
 })
 
@@ -143,8 +143,8 @@ describe('admin filters in the address', () => {
     [{}, 0],
     [{ q: 'ada', sort: 'name' as const }, 0],
     [{ plan: 'pro' as const, inactiveDays: 30 }, 2],
-  ])('Should count active filters in %o as %i', (filter, n) => {
-    expect(activeUserFilters(filter)).toBe(n)
+  ])('Should count active filters in %o as %i', (filter, count) => {
+    expect(activeUserFilters(filter)).toBe(count)
   })
 
   it.each([

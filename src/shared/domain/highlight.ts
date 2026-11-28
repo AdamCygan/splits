@@ -51,7 +51,7 @@ export function highlightCodeLine(line: string, language = ''): Array<Part> {
   const hash = HASH_COMMENTS.has(lang)
   const sqlDash = lang === 'sql' || lang === ''
   const parts: Array<Part> = []
-  let i = 0
+  let index = 0
   let plain = ''
   const flush = () => {
     if (plain) parts.push({ text: plain })
@@ -60,11 +60,11 @@ export function highlightCodeLine(line: string, language = ''): Array<Part> {
   const push = (text: string, kind: CodeKind) => {
     flush()
     parts.push({ text, kind })
-    i += text.length
+    index += text.length
   }
-  while (i < line.length) {
-    const rest = line.slice(i)
-    const prev = line[i - 1] ?? ' '
+  while (index < line.length) {
+    const rest = line.slice(index)
+    const previous = line[index - 1] ?? ' '
     if (rest.startsWith('//') || rest.startsWith('/*')) {
       const close = rest.startsWith('/*') ? rest.indexOf('*/', 2) : -1
       push(close === -1 ? rest : rest.slice(0, close + 2), 'comment')
@@ -73,37 +73,44 @@ export function highlightCodeLine(line: string, language = ''): Array<Part> {
     if (
       (hash && rest.startsWith('#')) ||
       (sqlDash && rest.startsWith('-- ')) ||
-      (lang === '' && rest.startsWith('#') && line.slice(0, i).trim() === '')
+      (lang === '' &&
+        rest.startsWith('#') &&
+        line.slice(0, index).trim() === '')
     ) {
       push(rest, 'comment')
       continue
     }
     const quote = rest[0]
     if (quote === '"' || quote === "'" || quote === '`') {
-      let j = 1
-      while (j < rest.length && rest[j] !== quote) j += rest[j] === '\\' ? 2 : 1
-      push(rest.slice(0, Math.min(j + 1, rest.length)), 'string')
+      let position = 1
+      while (position < rest.length && rest[position] !== quote)
+        position += rest[position] === '\\' ? 2 : 1
+      push(rest.slice(0, Math.min(position + 1, rest.length)), 'string')
       continue
     }
     const number = /^(?:0x[\da-f]+|\d[\d_]*(?:\.\d+)?)/i.exec(rest)
-    if (number && !/[\w$]/.test(prev)) {
+    if (number && !/[\w$]/.test(previous)) {
       push(number[0], 'number')
       continue
     }
     const word = /^[A-Za-z_$][\w$]*/.exec(rest)
-    if (word && !/[\w$]/.test(prev)) {
-      const w = word[0]
-      if (KEYWORDS.has(w) || (lang === 'sql' && KEYWORDS.has(w.toLowerCase())))
-        push(w, 'keyword')
-      else if (/^[A-Z][a-z0-9]+[A-Za-z0-9]*$/.test(w)) push(w, 'type')
+    if (word && !/[\w$]/.test(previous)) {
+      const firstCharacter = word[0]
+      if (
+        KEYWORDS.has(firstCharacter) ||
+        (lang === 'sql' && KEYWORDS.has(firstCharacter.toLowerCase()))
+      )
+        push(firstCharacter, 'keyword')
+      else if (/^[A-Z][a-z0-9]+[A-Za-z0-9]*$/.test(firstCharacter))
+        push(firstCharacter, 'type')
       else {
-        plain += w
-        i += w.length
+        plain += firstCharacter
+        index += firstCharacter.length
       }
       continue
     }
-    plain += line[i]
-    i += 1
+    plain += line[index]
+    index += 1
   }
   flush()
   return parts
@@ -133,31 +140,31 @@ const INLINE =
 function inline(text: string, base?: InlineKind): Array<Part> {
   const parts: Array<Part> = []
   let last = 0
-  const add = (t: string, kind?: InlineKind) => {
-    if (t) parts.push({ text: t, kind: kind ?? base })
+  const add = (messages: string, kind?: InlineKind) => {
+    if (messages) parts.push({ text: messages, kind: kind ?? base })
   }
-  for (const m of text.matchAll(INLINE)) {
-    add(text.slice(last, m.index))
-    const whole = m[0]
-    if (m[1]) {
-      add(m[1], 'marker')
-      add(whole.slice(m[1].length, whole.length - m[1].length), 'code')
-      add(m[1], 'marker')
-    } else if (m[3] !== undefined || m[4] !== undefined) {
+  for (const part of text.matchAll(INLINE)) {
+    add(text.slice(last, part.index))
+    const whole = part[0]
+    if (part[1]) {
+      add(part[1], 'marker')
+      add(whole.slice(part[1].length, whole.length - part[1].length), 'code')
+      add(part[1], 'marker')
+    } else if (part[3] !== undefined || part[4] !== undefined) {
       const mark = whole.slice(0, 2)
       add(mark, 'marker')
       add(whole.slice(2, -2), 'bold')
       add(mark, 'marker')
-    } else if (m[5] !== undefined || m[6] !== undefined) {
+    } else if (part[5] !== undefined || part[6] !== undefined) {
       add(whole[0]!, 'marker')
       add(whole.slice(1, -1), 'italic')
       add(whole.at(-1)!, 'marker')
-    } else if (m[7] !== undefined) {
+    } else if (part[7] !== undefined) {
       add('[', 'marker')
-      add(m[7], 'link')
-      add(`](${m[8]})`, 'marker')
+      add(part[7], 'link')
+      add(`](${part[8]})`, 'marker')
     } else add(whole, 'link')
-    last = m.index + whole.length
+    last = part.index + whole.length
   }
   add(text.slice(last))
   return parts

@@ -27,7 +27,7 @@ export function DeleteTaskDialog({
   onClose,
   onDeleted,
 }: DeleteTaskDialogProps) {
-  const t = useMessages(entriesMessages).deleteTask
+  const messages = useMessages(entriesMessages).deleteTask
   const app = useMessages(appMessages)
   const format = useFormat()
   const remove = useDeleteTask({
@@ -42,11 +42,13 @@ export function DeleteTaskDialog({
     <ConfirmDialog
       open={task !== null}
       onOpenChange={(open) => !open && onClose()}
-      title={fmt(date ? t.titleDay : t.titleAll, { name: task?.title ?? '' })}
+      title={fmt(date ? messages.titleDay : messages.titleAll, {
+        name: task?.title ?? '',
+      })}
       description={format
-        .plural(date ? t.textDay : t.textAll, sessions)
+        .plural(date ? messages.textDay : messages.textAll, sessions)
         .replace('{time}', format.minutes(minutes))}
-      confirmLabel={t.confirm}
+      confirmLabel={messages.confirm}
       cancelLabel={app.actions.cancel}
       destructive
       busy={remove.isPending}

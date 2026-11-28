@@ -29,10 +29,12 @@ export function useApplyArchive<TData>(
       setArchived(id, archived, apply),
     {
       invalidate: [options.invalidate],
-      success: (_r, v) =>
+      success: (_result, change) =>
         fmt(
-          v.archived ? options.messages.archived : options.messages.restored,
-          { name: v.name },
+          change.archived
+            ? options.messages.archived
+            : options.messages.restored,
+          { name: change.name },
         ),
     },
   )

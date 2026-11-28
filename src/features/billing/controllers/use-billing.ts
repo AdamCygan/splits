@@ -17,11 +17,11 @@ import type { BillingInterval } from '../domain/plans'
  * Przejście do Stripe (Checkout albo Customer Portal): pełne przekierowanie,
  * więc przycisk zostaje zablokowany aż do opuszczenia strony.
  */
-function useStripeRedirect<T>(open: (arg: T) => R<{ url: string }>) {
+function useStripeRedirect<T>(open: (argument: T) => R<{ url: string }>) {
   const errorText = useErrorText()
   return useMutation({
-    mutationFn: async (arg: T) => {
-      const { url } = await unwrap(open(arg))
+    mutationFn: async (argument: T) => {
+      const { url } = await unwrap(open(argument))
       window.location.assign(url)
       // Czekamy na nawigację, żeby przycisk nie odblokował się tuż przed przejściem.
       await new Promise(() => undefined)

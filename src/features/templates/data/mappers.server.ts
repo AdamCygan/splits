@@ -1,18 +1,18 @@
 import type { QuickTemplate } from '#/features/templates/data/dto'
-import type * as t from '#/server/db/schema'
+import type * as schema from '#/server/db/schema'
 
 export const toTemplate = (
-  x: typeof t.quickTemplates.$inferSelect,
+  quickTemplateRow: typeof schema.quickTemplates.$inferSelect,
 ): QuickTemplate => ({
-  id: x.id,
-  taskTypeId: x.taskTypeId,
-  projectId: x.projectId,
-  askProject: x.askProject,
-  label: x.label,
-  title: x.title,
-  storyPoints: x.storyPoints,
-  defaultDurationMinutes: x.defaultDurationMinutes,
-  hotkey: x.hotkey,
-  sortOrder: x.sortOrder,
-  schedule: x.schedule,
+  id: quickTemplateRow.id,
+  taskTypeId: quickTemplateRow.taskTypeId,
+  projectId: quickTemplateRow.projectId,
+  askProject: quickTemplateRow.askProject,
+  label: quickTemplateRow.label,
+  title: quickTemplateRow.title,
+  storyPoints: quickTemplateRow.storyPoints,
+  defaultDurationMinutes: quickTemplateRow.defaultDurationMinutes,
+  hotkey: quickTemplateRow.hotkey,
+  sortOrder: quickTemplateRow.sortOrder,
+  schedule: quickTemplateRow.schedule,
 })

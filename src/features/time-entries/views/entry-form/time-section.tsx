@@ -10,70 +10,74 @@ import type { DraftMode } from '../../domain/entry-form'
 import type { EntryFormViewModel } from '../../controllers/use-entry-form'
 
 export interface TimeSectionProps {
-  vm: EntryFormViewModel
+  viewModel: EntryFormViewModel
 }
 
 /** Czas wpisu: timer od teraz, godziny od–do albo czas trwania z szybkimi wartościami. */
-export function TimeSection({ vm }: TimeSectionProps) {
-  const { t, format, draft, minutes } = vm
-  const timeId = vm.fieldId('time')
+export function TimeSection({ viewModel }: TimeSectionProps) {
+  const { messages, format, draft, minutes } = viewModel
+  const timeId = viewModel.fieldId('time')
   return (
     <div className="sm:col-span-2">
       <Segmented<DraftMode>
-        label={t.form.time}
+        label={messages.form.time}
         size="sm"
         value={draft.mode}
-        onChange={vm.setMode}
-        options={vm.timeOptions}
+        onChange={viewModel.setMode}
+        options={viewModel.timeOptions}
       />
       <div className="mt-3">
         {draft.mode === 'timer' ? (
           <div>
             <label htmlFor={timeId} className="block text-sm text-ink-soft">
-              {t.form.startedAt}
+              {messages.form.startedAt}
             </label>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <TimeInput
-                {...fieldA11y(vm, 'time', true)}
+                {...fieldA11y(viewModel, 'time', true)}
                 className="w-40"
                 value={draft.start}
-                onChange={(start) => vm.update({ start })}
+                onChange={(start) => viewModel.update({ start })}
               />
-              <Button type="button" variant="outline" onClick={vm.startNow}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={viewModel.startNow}
+              >
                 <Clock aria-hidden className="size-4" />
-                {t.form.now}
+                {messages.form.now}
               </Button>
             </div>
             <p id={`${timeId}-hint`} className="mt-1.5 text-sm text-ink-soft">
-              {t.form.timerHint}
+              {messages.form.timerHint}
             </p>
           </div>
         ) : draft.mode === 'range' ? (
           <div className="flex flex-wrap items-end gap-3">
             <div>
               <label htmlFor={timeId} className="block text-sm text-ink-soft">
-                {t.form.start}
+                {messages.form.start}
               </label>
               <TimeInput
-                {...fieldA11y(vm, 'time')}
+                {...fieldA11y(viewModel, 'time')}
                 className="mt-1 w-40"
                 value={draft.start}
-                onChange={(start) => vm.update({ start })}
+                onChange={(start) => viewModel.update({ start })}
               />
             </div>
             <div>
               <label
-                htmlFor={vm.fieldId('end')}
+                htmlFor={viewModel.fieldId('end')}
                 className="block text-sm text-ink-soft"
               >
-                {t.form.end}
+                {messages.form.end}
               </label>
               <TimeInput
-                {...fieldA11y(vm, 'time')}
-                id={vm.fieldId('end')}
+                {...fieldA11y(viewModel, 'time')}
+                id={viewModel.fieldId('end')}
                 className="mt-1 w-40"
                 value={draft.end}
-                onChange={(end) => vm.update({ end })}
+                onChange={(end) => viewModel.update({ end })}
               />
             </div>
             <p
@@ -86,32 +90,36 @@ export function TimeSection({ vm }: TimeSectionProps) {
         ) : (
           <div>
             <label htmlFor={timeId} className="sr-only">
-              {t.form.duration}
+              {messages.form.duration}
             </label>
             <div className="flex flex-wrap items-center gap-2">
               <Input
-                {...fieldA11y(vm, 'time', true)}
+                {...fieldA11y(viewModel, 'time', true)}
                 inputMode="text"
                 autoComplete="off"
                 className="w-36"
                 placeholder="1h 15m"
                 value={draft.duration}
-                onChange={(e) => vm.update({ duration: e.target.value })}
+                onChange={(event) =>
+                  viewModel.update({ duration: event.target.value })
+                }
               />
               <div
                 role="group"
-                aria-label={t.form.quick}
+                aria-label={messages.form.quick}
                 className="flex flex-wrap gap-1.5"
               >
-                {QUICK_DURATIONS.map((m) => (
+                {QUICK_DURATIONS.map((quickDuration) => (
                   <button
-                    key={m}
+                    key={quickDuration}
                     type="button"
-                    aria-pressed={minutes === m}
-                    onClick={() => vm.update({ duration: String(m) })}
+                    aria-pressed={minutes === quickDuration}
+                    onClick={() =>
+                      viewModel.update({ duration: String(quickDuration) })
+                    }
                     className={chipClass}
                   >
-                    {format.minutes(m)}
+                    {format.minutes(quickDuration)}
                   </button>
                 ))}
               </div>
@@ -122,20 +130,21 @@ export function TimeSection({ vm }: TimeSectionProps) {
                   = {format.minutes(minutes)}.{' '}
                 </span>
               ) : null}
-              {t.form.durationHint}
+              {messages.form.durationHint}
             </p>
           </div>
         )}
-        <FieldError vm={vm} field="time" />
-        <FieldError vm={vm} field="extension" />
-        {draft.extensionMinutes !== null && !vm.issueText('extension') && (
-          <p className="mt-1.5 text-sm text-ink-soft">
-            {fmt(t.extension.inForm, {
-              time: format.minutes(draft.extensionMinutes),
-              reason: draft.extensionNote ?? '',
-            })}
-          </p>
-        )}
+        <FieldError viewModel={viewModel} field="time" />
+        <FieldError viewModel={viewModel} field="extension" />
+        {draft.extensionMinutes !== null &&
+          !viewModel.issueText('extension') && (
+            <p className="mt-1.5 text-sm text-ink-soft">
+              {fmt(messages.extension.inForm, {
+                time: format.minutes(draft.extensionMinutes),
+                reason: draft.extensionNote ?? '',
+              })}
+            </p>
+          )}
       </div>
     </div>
   )

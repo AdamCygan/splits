@@ -9,63 +9,67 @@ import { appMessages } from '#/i18n/messages/app'
 import type { SectionProps } from './account-section'
 
 /** Potwierdzenia: blokada, wyłączenie 2FA (z powodem) i usunięcie (z adresem konta). */
-export function UserDialogs({ vm }: SectionProps) {
-  const t = useMessages(adminMessages)
+export function UserDialogs({ viewModel }: SectionProps) {
+  const messages = useMessages(adminMessages)
   const app = useMessages(appMessages)
-  const u = vm.user
-  if (!u) return null
-  const name = u.displayName
-  const close = (open: boolean) => !open && vm.closeDialog()
+  const user = viewModel.user
+  if (!user) return null
+  const name = user.displayName
+  const close = (open: boolean) => !open && viewModel.closeDialog()
   return (
     <>
       <ConfirmDialog
-        open={vm.dialog === 'block'}
+        open={viewModel.dialog === 'block'}
         onOpenChange={close}
-        title={fmt(t.confirmBlock.title, { name })}
-        description={t.confirmBlock.text}
-        confirmLabel={t.user.account.block}
+        title={fmt(messages.confirmBlock.title, { name })}
+        description={messages.confirmBlock.text}
+        confirmLabel={messages.user.account.block}
         cancelLabel={app.actions.cancel}
         destructive
-        busy={vm.blocking}
-        onConfirm={vm.block}
+        busy={viewModel.blocking}
+        onConfirm={viewModel.block}
       />
 
-      <Dialog open={vm.dialog === 'twoFactor'} onOpenChange={close}>
+      <Dialog open={viewModel.dialog === 'twoFactor'} onOpenChange={close}>
         <DialogContent
           size="sm"
-          title={fmt(t.user.security.disable2faTitle, { name })}
-          description={t.user.security.disable2faText}
+          title={fmt(messages.user.security.disable2faTitle, { name })}
+          description={messages.user.security.disable2faText}
           closeLabel={app.actions.close}
           footer={
             <>
-              <Button variant="outline" onClick={vm.closeDialog}>
+              <Button variant="outline" onClick={viewModel.closeDialog}>
                 {app.actions.cancel}
               </Button>
               <Button
                 type="submit"
                 form="disable-2fa-form"
                 variant="destructive"
-                disabled={vm.disabling}
-                aria-busy={vm.disabling}
+                disabled={viewModel.disabling}
+                aria-busy={viewModel.disabling}
               >
-                {t.user.security.disable2fa}
+                {messages.user.security.disable2fa}
               </Button>
             </>
           }
         >
-          <form id="disable-2fa-form" noValidate onSubmit={vm.submitTwoFactor}>
+          <form
+            id="disable-2fa-form"
+            noValidate
+            onSubmit={viewModel.submitTwoFactor}
+          >
             <Field
-              label={t.user.security.reason}
-              hint={t.user.security.reasonHint}
-              error={vm.reasonError}
+              label={messages.user.security.reason}
+              hint={messages.user.security.reasonHint}
+              error={viewModel.reasonError}
             >
-              {(a) => (
+              {(fieldProps) => (
                 <Textarea
-                  {...a}
+                  {...fieldProps}
                   rows={3}
                   maxLength={300}
-                  value={vm.reason}
-                  onChange={(e) => vm.setReason(e.target.value)}
+                  value={viewModel.reason}
+                  onChange={(event) => viewModel.setReason(event.target.value)}
                 />
               )}
             </Field>
@@ -73,15 +77,15 @@ export function UserDialogs({ vm }: SectionProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={vm.dialog === 'delete'} onOpenChange={close}>
+      <Dialog open={viewModel.dialog === 'delete'} onOpenChange={close}>
         <DialogContent
           size="sm"
-          title={fmt(t.user.danger.confirmTitle, { name })}
-          description={t.user.danger.confirmText}
+          title={fmt(messages.user.danger.confirmTitle, { name })}
+          description={messages.user.danger.confirmText}
           closeLabel={app.actions.close}
           footer={
             <>
-              <Button variant="outline" onClick={vm.closeDialog}>
+              <Button variant="outline" onClick={viewModel.closeDialog}>
                 {app.actions.cancel}
               </Button>
               <Button
@@ -89,29 +93,36 @@ export function UserDialogs({ vm }: SectionProps) {
                 form="delete-user-form"
                 variant="destructive"
                 disabled={
-                  vm.deleting ||
-                  vm.confirmEmail.trim().toLowerCase() !== u.email.toLowerCase()
+                  viewModel.deleting ||
+                  viewModel.confirmEmail.trim().toLowerCase() !==
+                    user.email.toLowerCase()
                 }
-                aria-busy={vm.deleting}
+                aria-busy={viewModel.deleting}
               >
-                {t.user.danger.button}
+                {messages.user.danger.button}
               </Button>
             </>
           }
         >
-          <form id="delete-user-form" noValidate onSubmit={vm.submitDelete}>
+          <form
+            id="delete-user-form"
+            noValidate
+            onSubmit={viewModel.submitDelete}
+          >
             <Field
-              label={t.user.danger.confirmLabel}
-              hint={u.email}
-              error={vm.confirmError}
+              label={messages.user.danger.confirmLabel}
+              hint={user.email}
+              error={viewModel.confirmError}
             >
-              {(a) => (
+              {(fieldProps) => (
                 <Input
-                  {...a}
+                  {...fieldProps}
                   type="email"
                   autoComplete="off"
-                  value={vm.confirmEmail}
-                  onChange={(e) => vm.setConfirmEmail(e.target.value)}
+                  value={viewModel.confirmEmail}
+                  onChange={(event) =>
+                    viewModel.setConfirmEmail(event.target.value)
+                  }
                 />
               )}
             </Field>

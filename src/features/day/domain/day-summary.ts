@@ -58,93 +58,108 @@ export function daySummary(
     Pick<TaskType, 'id' | 'kind' | 'storyPointsRequirement'>
   >,
 ): DaySummary {
-  const kind = new Map(types.map((x) => [x.id, x.kind]))
-  const isMeeting = (e: TimeEntry) => kind.get(e.taskTypeId) === 'meeting'
+  const kind = new Map(types.map((type) => [type.id, type.kind]))
+  const isMeeting = (timeEntry: TimeEntry) =>
+    kind.get(timeEntry.taskTypeId) === 'meeting'
   const tasks = groupTasks(entries, types).sort(
-    (a, b) => b.minutes - a.minutes || a.title.localeCompare(b.title),
+    (left, right) =>
+      right.minutes - left.minutes || left.title.localeCompare(right.title),
   )
   const sum = (list: ReadonlyArray<Pick<TimeEntry, 'durationMinutes'>>) =>
-    list.reduce((s, e) => s + e.durationMinutes, 0)
+    list.reduce((total, entry) => total + entry.durationMinutes, 0)
   const meetings = entries.filter(isMeeting)
 
-  const timed = (x: Pick<TimeEntry, 'startTime' | 'endTime'>) =>
-    x.startTime !== null && x.endTime !== null
+  const timed = (timeEntry: Pick<TimeEntry, 'startTime' | 'endTime'>) =>
+    timeEntry.startTime !== null && timeEntry.endTime !== null
   const blocks: Array<DayBlock> = [
-    ...entries.filter(timed).map((e) => ({
-      id: e.id,
+    ...entries.filter(timed).map((timeEntry) => ({
+      id: timeEntry.id,
       kind: 'work' as const,
-      start: toMinutes(e.startTime!),
-      end: Math.max(toMinutes(e.endTime!), toMinutes(e.startTime!)),
-      minutes: e.durationMinutes,
-      taskTypeId: e.taskTypeId,
-      title: e.title,
-      taskKey: taskGroupKey(e),
+      start: toMinutes(timeEntry.startTime!),
+      end: Math.max(
+        toMinutes(timeEntry.endTime!),
+        toMinutes(timeEntry.startTime!),
+      ),
+      minutes: timeEntry.durationMinutes,
+      taskTypeId: timeEntry.taskTypeId,
+      title: timeEntry.title,
+      taskKey: taskGroupKey(timeEntry),
     })),
-    ...breaks.filter(timed).map((b) => ({
-      id: b.id,
+    ...breaks.filter(timed).map((workBreak) => ({
+      id: workBreak.id,
       kind: 'break' as const,
-      start: toMinutes(b.startTime!),
-      end: Math.max(toMinutes(b.endTime!), toMinutes(b.startTime!)),
-      minutes: b.durationMinutes,
+      start: toMinutes(workBreak.startTime!),
+      end: Math.max(
+        toMinutes(workBreak.endTime!),
+        toMinutes(workBreak.startTime!),
+      ),
+      minutes: workBreak.durationMinutes,
       taskTypeId: null,
       title: '',
       taskKey: null,
     })),
-  ].sort((a, b) => a.start - b.start || a.end - b.end)
+  ].sort((left, right) => left.start - right.start || left.end - right.end)
 
   // Ciągła praca bez spotkań: sąsiednie sesje (do 5 min odstępu) sklejamy w jeden odcinek.
   let longestFocus = 0
   let run: { start: number; end: number } | null = null
   let switches = 0
   let previousTask: string | null = null
-  for (const b of blocks) {
+  for (const dayBlock of blocks) {
     const focus =
-      b.kind === 'work' && kind.get(b.taskTypeId ?? '') !== 'meeting'
+      dayBlock.kind === 'work' &&
+      kind.get(dayBlock.taskTypeId ?? '') !== 'meeting'
     if (focus) {
       run =
-        run && b.start - run.end <= 5
-          ? { start: run.start, end: Math.max(run.end, b.end) }
-          : { start: b.start, end: b.end }
+        run && dayBlock.start - run.end <= 5
+          ? { start: run.start, end: Math.max(run.end, dayBlock.end) }
+          : { start: dayBlock.start, end: dayBlock.end }
       longestFocus = Math.max(longestFocus, run.end - run.start)
     } else {
       run = null
     }
-    if (b.kind === 'work') {
-      if (previousTask !== null && b.taskKey !== previousTask) switches += 1
-      previousTask = b.taskKey
+    if (dayBlock.kind === 'work') {
+      if (previousTask !== null && dayBlock.taskKey !== previousTask)
+        switches += 1
+      previousTask = dayBlock.taskKey
     }
   }
 
   const perType = new Map<string, number>()
-  for (const e of entries)
+  for (const timeEntry of entries)
     perType.set(
-      e.taskTypeId,
-      (perType.get(e.taskTypeId) ?? 0) + e.durationMinutes,
+      timeEntry.taskTypeId,
+      (perType.get(timeEntry.taskTypeId) ?? 0) + timeEntry.durationMinutes,
     )
   const byType = [...perType]
     .map(([taskTypeId, minutes]) => ({ taskTypeId, minutes }))
-    .sort((a, b) => b.minutes - a.minutes)
+    .sort((left, right) => right.minutes - left.minutes)
 
   return {
     minutes: sum(entries),
     focusMinutes: sum(entries) - sum(meetings),
     meetingMinutes: sum(meetings),
     meetings: meetings.length,
-    overtimeMinutes: entries.reduce((s, e) => s + (e.overtimeMinutes ?? 0), 0),
+    overtimeMinutes: entries.reduce(
+      (accumulator, timeEntry) =>
+        accumulator + (timeEntry.overtimeMinutes ?? 0),
+      0,
+    ),
     extensionMinutes: entries.reduce(
-      (s, e) => s + (e.extensionMinutes ?? 0),
+      (accumulator, timeEntry) =>
+        accumulator + (timeEntry.extensionMinutes ?? 0),
       0,
     ),
     breakMinutes: sum(breaks),
     breaks: breaks.length,
     longestFocus,
     switches,
-    untimedMinutes: sum(entries.filter((e) => !timed(e))),
+    untimedMinutes: sum(entries.filter((timeEntry) => !timed(timeEntry))),
     span:
       blocks.length > 0
         ? {
-            start: Math.min(...blocks.map((b) => b.start)),
-            end: Math.max(...blocks.map((b) => b.end)),
+            start: Math.min(...blocks.map((dayBlock) => dayBlock.start)),
+            end: Math.max(...blocks.map((dayBlock) => dayBlock.end)),
           }
         : null,
     blocks,
@@ -167,7 +182,7 @@ export function timelineAxis(span: MinuteRange) {
     to,
     ticks: Array.from(
       { length: Math.floor(hours / step) + 1 },
-      (_, i) => from + i * step * 60,
+      (_unused, index) => from + index * step * 60,
     ),
     /** Pozycja minuty dnia na osi (0–100%). */
     x: (minute: number) => ((minute - from) / (to - from)) * 100,
@@ -180,7 +195,10 @@ export function timelineAxis(span: MinuteRange) {
 export const blockIndexAt = (
   blocks: ReadonlyArray<MinuteRange>,
   minute: number,
-) => blocks.findIndex((b) => minute >= b.start && minute <= b.end)
+) =>
+  blocks.findIndex(
+    (minuteRange) => minute >= minuteRange.start && minute <= minuteRange.end,
+  )
 
 /** Sesje zadania od najwcześniejszej; wpisy bez godzin na końcu. */
 export const sessionsOfTask = <TEntry extends TimeEntry>(
@@ -188,5 +206,7 @@ export const sessionsOfTask = <TEntry extends TimeEntry>(
   key: string,
 ): Array<TEntry> =>
   entries
-    .filter((e) => taskGroupKey(e) === key)
-    .sort((a, b) => (a.startTime ?? '99').localeCompare(b.startTime ?? '99'))
+    .filter((timeEntry) => taskGroupKey(timeEntry) === key)
+    .sort((left, right) =>
+      (left.startTime ?? '99').localeCompare(right.startTime ?? '99'),
+    )

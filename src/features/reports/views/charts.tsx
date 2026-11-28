@@ -35,7 +35,7 @@ export function ChartCard({
   className,
   children,
 }: ChartCardProps) {
-  const t = useMessages(reportsMessages).charts
+  const messages = useMessages(reportsMessages).charts
   return (
     <Panel
       title={title}
@@ -48,12 +48,12 @@ export function ChartCard({
       {table && (
         <details className="mt-4 text-sm">
           <summary className="cursor-pointer font-medium text-ink-soft hover:text-ink">
-            {t.showTable}
+            {messages.showTable}
           </summary>
           <div
             tabIndex={0}
             role="region"
-            aria-label={fmt(t.scrollRegion, { title })}
+            aria-label={fmt(messages.scrollRegion, { title })}
             className="relative mt-2 overflow-x-auto rounded-sm"
           >
             {table}
@@ -71,14 +71,14 @@ interface LegendProps {
 function Legend({ items }: LegendProps) {
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-ink-soft">
-      {items.map((i) => (
-        <li key={i.key} className="inline-flex items-center gap-1.5">
+      {items.map((item) => (
+        <li key={item.key} className="inline-flex items-center gap-1.5">
           <span
             aria-hidden
             className="size-2.5 rounded-[3px]"
-            style={{ background: i.color }}
+            style={{ background: item.color }}
           />
-          {i.label}
+          {item.label}
         </li>
       ))}
     </ul>
@@ -105,17 +105,17 @@ function Tooltip({ left, title, rows, hint }: TooltipProps) {
     >
       <p className="font-semibold">{title}</p>
       <ul className="mt-1 space-y-0.5">
-        {rows.map((r) => (
-          <li key={r.key} className="flex items-center gap-2">
-            {r.color && (
+        {rows.map((row) => (
+          <li key={row.key} className="flex items-center gap-2">
+            {row.color && (
               <span
                 aria-hidden
                 className="h-0.5 w-3 rounded-full"
-                style={{ background: r.color }}
+                style={{ background: row.color }}
               />
             )}
-            <span className="font-semibold tabular-nums">{r.value}</span>
-            <span className="text-ink-soft">{r.label}</span>
+            <span className="font-semibold tabular-nums">{row.value}</span>
+            <span className="text-ink-soft">{row.label}</span>
           </li>
         ))}
       </ul>
@@ -146,50 +146,58 @@ export function TimeChart({
   className,
   onOpen,
 }: TimeChartProps) {
-  const t = useMessages(reportsMessages).charts
+  const messages = useMessages(reportsMessages).charts
   const format = useFormat()
   const { locale } = useI18n()
   const [active, setActive] = useState<number | null>(null)
   const { unit, buckets } = timeBuckets(entries, from, to)
   const used = stackOrder(
-    types.filter((x) => buckets.some((b) => b.byType[x.id])),
+    types.filter((taskType) =>
+      buckets.some((timeBucket) => timeBucket.byType[taskType.id]),
+    ),
   )
-  const max = Math.max(...buckets.map((b) => b.minutes), 60)
+  const max = Math.max(...buckets.map((timeBucket) => timeBucket.minutes), 60)
   const ticks = hourTicks(max)
   const top = ticks.at(-1)!
-  const label = (b: (typeof buckets)[number]) =>
+  const label = (timeBucket: (typeof buckets)[number]) =>
     unit === 'day'
-      ? format.day(b.from)
-      : fmt(t.week, {
-          from: formatDate(locale, b.from, { day: 'numeric', month: 'short' }),
-          to: formatDate(locale, b.to, { day: 'numeric', month: 'short' }),
+      ? format.day(timeBucket.from)
+      : fmt(messages.week, {
+          from: formatDate(locale, timeBucket.from, {
+            day: 'numeric',
+            month: 'short',
+          }),
+          to: formatDate(locale, timeBucket.to, {
+            day: 'numeric',
+            month: 'short',
+          }),
         })
-  const short = (b: (typeof buckets)[number]) =>
-    formatDate(locale, b.from, {
+  const short = (timeBucket: (typeof buckets)[number]) =>
+    formatDate(locale, timeBucket.from, {
       day: 'numeric',
       month: unit === 'day' ? undefined : 'short',
     })
   const every = Math.ceil(buckets.length / 10)
   const liveId = useId()
   const lastWithData = buckets.reduce(
-    (last, b, i) => (b.minutes > 0 ? i : last),
+    (last, timeBucket, index) => (timeBucket.minutes > 0 ? index : last),
     0,
   )
-  const breakdown = (b: (typeof buckets)[number]) =>
+  const breakdown = (timeBucket: (typeof buckets)[number]) =>
     used
-      .filter((x) => b.byType[x.id])
-      .map((x) => ({
-        key: x.id,
-        color: x.color,
-        label: x.name,
-        value: format.minutes(b.byType[x.id]!),
+      .filter((taskType) => timeBucket.byType[taskType.id])
+      .map((taskType) => ({
+        key: taskType.id,
+        color: taskType.color,
+        label: taskType.name,
+        value: format.minutes(timeBucket.byType[taskType.id]!),
       }))
       .reverse()
-  const describe = (b: (typeof buckets)[number]) =>
-    `${label(b)}: ${format.minutes(b.minutes)}${
-      b.minutes
-        ? `, ${breakdown(b)
-            .map((r) => `${r.label} ${r.value}`)
+  const describe = (timeBucket: (typeof buckets)[number]) =>
+    `${label(timeBucket)}: ${format.minutes(timeBucket.minutes)}${
+      timeBucket.minutes
+        ? `, ${breakdown(timeBucket)
+            .map((row) => `${row.label} ${row.value}`)
             .join(', ')}`
         : ''
     }`
@@ -197,14 +205,14 @@ export function TimeChart({
   return (
     <ChartCard
       className={className}
-      title={unit === 'day' ? t.daily.title : t.daily.titleWeekly}
-      lead={t.daily.lead}
+      title={unit === 'day' ? messages.daily.title : messages.daily.titleWeekly}
+      lead={messages.daily.lead}
       legend={
         <Legend
-          items={used.map((x) => ({
-            key: x.id,
-            label: x.name,
-            color: x.color,
+          items={used.map((taskType) => ({
+            key: taskType.id,
+            label: taskType.name,
+            color: taskType.color,
           }))}
         />
       }
@@ -212,28 +220,33 @@ export function TimeChart({
         <table className="w-full text-left tabular-nums">
           <thead className="text-ink-soft">
             <tr>
-              <th className="py-1 pr-3 font-medium">{t.daily.when}</th>
-              {used.map((x) => (
-                <th key={x.id} className="py-1 pr-3 text-right font-medium">
-                  {x.name}
+              <th className="py-1 pr-3 font-medium">{messages.daily.when}</th>
+              {used.map((taskType) => (
+                <th
+                  key={taskType.id}
+                  className="py-1 pr-3 text-right font-medium"
+                >
+                  {taskType.name}
                 </th>
               ))}
-              <th className="py-1 text-right font-medium">{t.total}</th>
+              <th className="py-1 text-right font-medium">{messages.total}</th>
             </tr>
           </thead>
           <tbody>
-            {buckets.map((b) => (
-              <tr key={b.from} className="border-t border-line">
+            {buckets.map((timeBucket) => (
+              <tr key={timeBucket.from} className="border-t border-line">
                 <th scope="row" className="py-1 pr-3 font-normal">
-                  {label(b)}
+                  {label(timeBucket)}
                 </th>
-                {used.map((x) => (
-                  <td key={x.id} className="py-1 pr-3 text-right">
-                    {b.byType[x.id] ? format.minutes(b.byType[x.id]!) : '–'}
+                {used.map((taskType) => (
+                  <td key={taskType.id} className="py-1 pr-3 text-right">
+                    {timeBucket.byType[taskType.id]
+                      ? format.minutes(timeBucket.byType[taskType.id]!)
+                      : '–'}
                   </td>
                 ))}
                 <td className="py-1 text-right font-semibold">
-                  {format.minutes(b.minutes)}
+                  {format.minutes(timeBucket.minutes)}
                 </td>
               </tr>
             ))}
@@ -246,99 +259,112 @@ export function TimeChart({
           aria-hidden
           className="relative h-48 w-9 shrink-0 text-right text-xs text-ink-soft tabular-nums"
         >
-          {ticks.map((m) => (
+          {ticks.map((tick) => (
             <span
-              key={m}
+              key={tick}
               className="absolute right-0 -translate-y-1/2"
-              style={{ bottom: `${(m / top) * 100}%` }}
+              style={{ bottom: `${(tick / top) * 100}%` }}
             >
-              {m / 60}h
+              {tick / 60}h
             </span>
           ))}
         </div>
         <div className="relative min-w-0 flex-1">
           <div className="relative h-48">
-            {ticks.map((m) => (
+            {ticks.map((tick) => (
               <div
-                key={m}
+                key={tick}
                 aria-hidden
                 className="absolute inset-x-0 border-t border-line"
-                style={{ bottom: `${(m / top) * 100}%` }}
+                style={{ bottom: `${(tick / top) * 100}%` }}
               />
             ))}
             {/* Jeden element do wskazywania: mysz wybiera kolumnę po X, klawiatura strzałkami. */}
             <div
               role="group"
               tabIndex={0}
-              aria-label={onOpen ? t.daily.keysOpen : t.daily.keys}
+              aria-label={
+                onOpen ? messages.daily.keysOpen : messages.daily.keys
+              }
               aria-describedby={liveId}
               className={cn(
                 'absolute inset-0 rounded-sm outline-offset-4',
                 onOpen && 'cursor-pointer',
               )}
-              onClick={(e) => {
+              onClick={(event) => {
                 // Kolumna pod kursorem (także przy dotyku, gdzie nie ma najechania).
-                const box = e.currentTarget.getBoundingClientRect()
-                const i = Math.floor(
-                  ((e.clientX - box.left) / box.width) * buckets.length,
+                const box = event.currentTarget.getBoundingClientRect()
+                const index = Math.floor(
+                  ((event.clientX - box.left) / box.width) * buckets.length,
                 )
-                const b = buckets[Math.min(buckets.length - 1, Math.max(0, i))]
-                if (onOpen && b && b.minutes > 0)
-                  onOpen({ from: b.from, to: b.to, unit })
+                const bucket =
+                  buckets[Math.min(buckets.length - 1, Math.max(0, index))]
+                if (onOpen && bucket && bucket.minutes > 0)
+                  onOpen({ from: bucket.from, to: bucket.to, unit })
               }}
-              onPointerMove={(e) => {
-                const box = e.currentTarget.getBoundingClientRect()
-                const i = Math.floor(
-                  ((e.clientX - box.left) / box.width) * buckets.length,
+              onPointerMove={(event) => {
+                const box = event.currentTarget.getBoundingClientRect()
+                const index = Math.floor(
+                  ((event.clientX - box.left) / box.width) * buckets.length,
                 )
-                setActive(Math.min(buckets.length - 1, Math.max(0, i)))
+                setActive(Math.min(buckets.length - 1, Math.max(0, index)))
               }}
               onPointerLeave={() => setActive(null)}
-              onFocus={() => setActive((v) => v ?? lastWithData)}
+              onFocus={() =>
+                setActive((previousIndex) => previousIndex ?? lastWithData)
+              }
               onBlur={() => setActive(null)}
-              onKeyDown={(e) => {
+              onKeyDown={(event) => {
                 const step =
-                  e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
-                const b = active !== null ? buckets[active] : undefined
-                if ((e.key === 'Enter' || e.key === ' ') && onOpen && b) {
-                  e.preventDefault()
-                  onOpen({ from: b.from, to: b.to, unit })
+                  event.key === 'ArrowRight'
+                    ? 1
+                    : event.key === 'ArrowLeft'
+                      ? -1
+                      : 0
+                const timeBucket = active !== null ? buckets[active] : undefined
+                if (
+                  (event.key === 'Enter' || event.key === ' ') &&
+                  onOpen &&
+                  timeBucket
+                ) {
+                  event.preventDefault()
+                  onOpen({ from: timeBucket.from, to: timeBucket.to, unit })
                   return
                 }
-                if (e.key === 'Home') setActive(0)
-                else if (e.key === 'End') setActive(buckets.length - 1)
+                if (event.key === 'Home') setActive(0)
+                else if (event.key === 'End') setActive(buckets.length - 1)
                 else if (step)
-                  setActive((v) =>
+                  setActive((previousIndex) =>
                     Math.min(
                       buckets.length - 1,
-                      Math.max(0, (v ?? lastWithData) + step),
+                      Math.max(0, (previousIndex ?? lastWithData) + step),
                     ),
                   )
                 else return
-                e.preventDefault()
+                event.preventDefault()
               }}
             >
               <ol
                 aria-hidden
                 className="pointer-events-none absolute inset-0 flex items-end justify-around"
               >
-                {buckets.map((b, i) => (
+                {buckets.map((timeBucket, index) => (
                   <li
-                    key={b.from}
+                    key={timeBucket.from}
                     className={cn(
                       'flex h-full min-w-0 flex-1 justify-center',
-                      active === i && 'bg-muted/70',
+                      active === index && 'bg-muted/70',
                     )}
                   >
                     <span className="flex h-full w-full max-w-6 flex-col-reverse items-stretch px-px">
-                      {used.map((x) =>
-                        b.byType[x.id] ? (
+                      {used.map((taskType) =>
+                        timeBucket.byType[taskType.id] ? (
                           <span
-                            key={x.id}
+                            key={taskType.id}
                             className="block border-t-2 border-surface first:border-t-0 last:rounded-t-[4px]"
                             style={{
-                              height: `${(b.byType[x.id]! / top) * 100}%`,
-                              background: x.color,
+                              height: `${(timeBucket.byType[taskType.id]! / top) * 100}%`,
+                              background: taskType.color,
                             }}
                           />
                         ) : null,
@@ -359,8 +385,8 @@ export function TimeChart({
                 hint={
                   onOpen
                     ? unit === 'day'
-                      ? t.daily.openDay
-                      : t.daily.openWeek
+                      ? messages.daily.openDay
+                      : messages.daily.openWeek
                     : undefined
                 }
               />
@@ -370,9 +396,12 @@ export function TimeChart({
             aria-hidden
             className="mt-1.5 flex justify-around text-xs text-ink-soft tabular-nums"
           >
-            {buckets.map((b, i) => (
-              <span key={b.from} className="min-w-0 flex-1 text-center">
-                {i % every === 0 ? short(b) : ''}
+            {buckets.map((timeBucket, index) => (
+              <span
+                key={timeBucket.from}
+                className="min-w-0 flex-1 text-center"
+              >
+                {index % every === 0 ? short(timeBucket) : ''}
               </span>
             ))}
           </div>
@@ -392,102 +421,104 @@ export interface HourHeatmapProps {
  * Tylko wpisy z godzinami od–do.
  */
 export function HourHeatmap({ entries, className }: HourHeatmapProps) {
-  const t = useMessages(reportsMessages).charts
+  const messages = useMessages(reportsMessages).charts
   const format = useFormat()
   const { locale } = useI18n()
   const map = hourHeatmap(entries)
   const hours = Array.from(
     { length: map.lastHour - map.firstHour + 1 },
-    (_, i) => map.firstHour + i,
+    (_unused, index) => map.firstHour + index,
   )
   // 2026-11-16 to poniedziałek: z niego bierzemy nazwy dni w języku użytkownika.
-  const days = Array.from({ length: 7 }, (_, i) =>
-    formatDate(locale, `2026-11-${16 + i}`, { weekday: 'short' }),
+  const days = Array.from({ length: 7 }, (_unused, index) =>
+    formatDate(locale, `2026-11-${16 + index}`, { weekday: 'short' }),
   )
-  const level = (m: number) =>
-    m === 0 ? 0 : Math.min(4, Math.ceil((m / Math.max(1, map.max)) * 4))
+  const level = (minutes: number) =>
+    minutes === 0
+      ? 0
+      : Math.min(4, Math.ceil((minutes / Math.max(1, map.max)) * 4))
   const SHADES = ['var(--muted)', '18%', '40%', '68%', '100%']
-  const fill = (lvl: number) =>
-    lvl === 0
+  const fill = (intensity: number) =>
+    intensity === 0
       ? SHADES[0]
-      : `color-mix(in oklab, var(--wt-task) ${SHADES[lvl]}, var(--surface))`
+      : `color-mix(in oklab, var(--wt-task) ${SHADES[intensity]}, var(--surface))`
 
   if (map.max === 0)
     return (
       <ChartCard
-        title={t.hours.title}
-        lead={t.hours.lead}
+        title={messages.hours.title}
+        lead={messages.hours.lead}
         className={className}
       >
-        <p className="text-sm text-ink-soft">{t.hours.empty}</p>
+        <p className="text-sm text-ink-soft">{messages.hours.empty}</p>
       </ChartCard>
     )
 
   return (
     <ChartCard
       className={className}
-      title={t.hours.title}
-      lead={t.hours.lead}
+      title={messages.hours.title}
+      lead={messages.hours.lead}
       legend={
         <div className="flex items-center gap-2 text-xs text-ink-soft">
-          {t.hours.less}
-          {[1, 2, 3, 4].map((l) => (
+          {messages.hours.less}
+          {[1, 2, 3, 4].map((limit) => (
             <span
-              key={l}
+              key={limit}
               aria-hidden
               className="size-3 rounded-[3px]"
-              style={{ background: fill(l) }}
+              style={{ background: fill(limit) }}
             />
           ))}
-          {t.hours.more}
+          {messages.hours.more}
         </div>
       }
     >
       <div
         tabIndex={0}
         role="region"
-        aria-label={fmt(t.scrollRegion, { title: t.hours.title })}
+        aria-label={fmt(messages.scrollRegion, { title: messages.hours.title })}
         className="relative overflow-x-auto rounded-sm"
       >
         <table className="w-full border-separate border-spacing-[2px] text-xs">
           <thead>
             <tr>
               <th scope="col" className="w-10">
-                <span className="sr-only">{t.dayColumn}</span>
+                <span className="sr-only">{messages.dayColumn}</span>
               </th>
-              {hours.map((h) => (
+              {hours.map((hour) => (
                 <th
-                  key={h}
+                  key={hour}
                   scope="col"
                   className="font-normal text-ink-soft tabular-nums"
                 >
-                  {h % 2 === 0 || hours.length < 10 ? h : ''}
+                  {hour % 2 === 0 || hours.length < 10 ? hour : ''}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {map.cells.map((row, d) => (
-              <tr key={d}>
+            {map.cells.map((row, index) => (
+              <tr key={index}>
                 <th
                   scope="row"
                   className="pr-1 text-left font-normal text-ink-soft"
                 >
-                  {days[d]}
+                  {days[index]}
                 </th>
-                {hours.map((h) => {
-                  const m = row[h]!
-                  const text = fmt(t.hours.cell, {
-                    day: days[d]!,
-                    hour: `${h}:00–${h + 1}:00`,
-                    time: format.minutes(m),
+                {hours.map((hour) => {
+                  const rowItem = row[hour]!
+                  const text = fmt(messages.hours.cell, {
+                    day: days[index]!,
+                    hour: `${hour}:00–${hour + 1}:00`,
+                    time: format.minutes(rowItem),
                   })
                   return (
                     <td
-                      key={h}
+                      key={hour}
                       title={text}
                       className="h-6 min-w-5 rounded-[3px]"
-                      style={{ background: fill(level(m)) }}
+                      style={{ background: fill(level(rowItem)) }}
                     >
                       <span className="sr-only">{text}</span>
                     </td>
@@ -508,20 +539,26 @@ export interface EstimateChartProps {
 
 /** Trafność estymat: o ile zadania wyszły ponad (w prawo) albo poniżej (w lewo) estymaty. */
 export function EstimateChart({ rows }: EstimateChartProps) {
-  const t = useMessages(reportsMessages).charts
+  const messages = useMessages(reportsMessages).charts
   const format = useFormat()
   const misses = estimateMisses(rows)
   if (misses.length === 0)
     return (
-      <ChartCard title={t.estimates.title} lead={t.estimates.lead}>
-        <p className="text-sm text-ink-soft">{t.estimates.empty}</p>
+      <ChartCard
+        title={messages.estimates.title}
+        lead={messages.estimates.lead}
+      >
+        <p className="text-sm text-ink-soft">{messages.estimates.empty}</p>
       </ChartCard>
     )
-  const scale = Math.max(...misses.map((m) => Math.abs(m.diff)), 1)
+  const scale = Math.max(
+    ...misses.map((estimateMiss) => Math.abs(estimateMiss.diff)),
+    1,
+  )
   return (
     <ChartCard
-      title={t.estimates.title}
-      lead={t.estimates.lead}
+      title={messages.estimates.title}
+      lead={messages.estimates.lead}
       legend={
         <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-soft">
           <li className="inline-flex items-center gap-1.5">
@@ -529,30 +566,32 @@ export function EstimateChart({ rows }: EstimateChartProps) {
               aria-hidden
               className="size-2.5 rounded-[3px] bg-[var(--wt-pair)]"
             />
-            {t.estimates.under}
+            {messages.estimates.under}
           </li>
           <li className="inline-flex items-center gap-1.5">
             <span aria-hidden className="size-2.5 rounded-[3px] bg-wt-review" />
-            {t.estimates.over}
+            {messages.estimates.over}
           </li>
         </ul>
       }
     >
       <ul className="space-y-3">
-        {misses.map((m) => {
-          const width = (Math.abs(m.diff) / scale) * 50
+        {misses.map((estimateMiss) => {
+          const width = (Math.abs(estimateMiss.diff) / scale) * 50
           const value =
-            m.diff === 0
-              ? t.estimates.exact
-              : `${m.diff > 0 ? '+' : '−'}${format.minutes(Math.abs(m.diff))}`
+            estimateMiss.diff === 0
+              ? messages.estimates.exact
+              : `${estimateMiss.diff > 0 ? '+' : '−'}${format.minutes(Math.abs(estimateMiss.diff))}`
           return (
-            <li key={m.key}>
+            <li key={estimateMiss.key}>
               <p className="flex items-baseline justify-between gap-3 text-sm">
-                <span className="truncate font-medium">{m.title}</span>
+                <span className="truncate font-medium">
+                  {estimateMiss.title}
+                </span>
                 <span className="shrink-0 text-ink-soft tabular-nums">
-                  {fmt(t.estimates.row, {
-                    time: format.minutes(m.minutes),
-                    estimate: format.minutes(m.estimate),
+                  {fmt(messages.estimates.row, {
+                    time: format.minutes(estimateMiss.minutes),
+                    estimate: format.minutes(estimateMiss.estimate),
                   })}
                 </span>
               </p>
@@ -566,7 +605,7 @@ export function EstimateChart({ rows }: EstimateChartProps) {
                     aria-hidden
                     className={cn(
                       'absolute top-1/2 h-2.5 -translate-y-1/2',
-                      m.diff > 0
+                      estimateMiss.diff > 0
                         ? 'left-1/2 rounded-r-[4px] bg-wt-review'
                         : 'right-1/2 rounded-l-[4px] bg-[var(--wt-pair)]',
                     )}
@@ -583,7 +622,7 @@ export function EstimateChart({ rows }: EstimateChartProps) {
       </ul>
       {misses.length < 3 && (
         <p className="mt-4 border-t border-line pt-3 text-sm text-ink-soft">
-          {t.estimates.few}
+          {messages.estimates.few}
         </p>
       )}
     </ChartCard>
@@ -604,34 +643,34 @@ export function ColumnChart({
   items,
   color = 'var(--wt-task)',
 }: ColumnChartProps) {
-  const t = useMessages(reportsMessages).charts
-  const max = Math.max(...items.map((i) => i.value), 1)
+  const messages = useMessages(reportsMessages).charts
+  const max = Math.max(...items.map((item) => item.value), 1)
   // Same zera (np. świeże konto): zamiast pustych słupków krótka informacja.
-  if (items.every((i) => i.value === 0))
+  if (items.every((item) => item.value === 0))
     return (
       <ChartCard title={title} lead={lead}>
-        <p className="text-sm text-ink-soft">{t.noData}</p>
+        <p className="text-sm text-ink-soft">{messages.noData}</p>
       </ChartCard>
     )
   return (
     <ChartCard title={title} lead={lead}>
       <ol className="flex h-40 items-end justify-around gap-1 border-b border-line">
-        {items.map((i) => (
+        {items.map((item) => (
           <li
-            key={i.key}
+            key={item.key}
             className="flex h-full min-w-0 flex-1 flex-col items-center justify-end"
           >
             {/* Podpis słupka dla czytników (widoczne podpisy są pod osią, ukryte przed nimi). */}
-            <span className="sr-only">{i.label}: </span>
+            <span className="sr-only">{item.label}: </span>
             <span className="mb-1 text-xs font-semibold tabular-nums">
-              {i.display}
+              {item.display}
             </span>
             <span
               aria-hidden
               className="block w-full max-w-6 rounded-t-[4px]"
               style={{
-                height: `${(i.value / max) * 80}%`,
-                minHeight: i.value > 0 ? 2 : 0,
+                height: `${(item.value / max) * 80}%`,
+                minHeight: item.value > 0 ? 2 : 0,
                 background: color,
               }}
             />
@@ -642,9 +681,9 @@ export function ColumnChart({
         aria-hidden
         className="mt-1.5 flex justify-around gap-1 text-xs text-ink-soft"
       >
-        {items.map((i) => (
-          <span key={i.key} className="min-w-0 flex-1 truncate text-center">
-            {i.label}
+        {items.map((item) => (
+          <span key={item.key} className="min-w-0 flex-1 truncate text-center">
+            {item.label}
           </span>
         ))}
       </div>

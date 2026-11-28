@@ -11,14 +11,14 @@ export type AdminUsersPageProps = UsersPageOptions
 
 /** Panel admina → Użytkownicy (MVVM): liczby, filtry z adresu strony i lista kont. */
 export function AdminUsersPage(props: AdminUsersPageProps) {
-  const t = useMessages(adminMessages)
-  const vm = useUsersPageViewModel(props)
+  const messages = useMessages(adminMessages)
+  const viewModel = useUsersPageViewModel(props)
   return (
     <>
-      <SectionHeader title={t.title} lead={t.lead} />
-      <StatsPanel stats={vm.stats} />
-      <UserFilters vm={vm} />
-      <UsersTable vm={vm} />
+      <SectionHeader title={messages.title} lead={messages.lead} />
+      <StatsPanel stats={viewModel.stats} />
+      <UserFilters viewModel={viewModel} />
+      <UsersTable viewModel={viewModel} />
     </>
   )
 }

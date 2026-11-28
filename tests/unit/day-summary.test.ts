@@ -3,9 +3,9 @@ import type { TimeEntry } from '../../src/features/time-entries/data/dto'
 import type { WorkBreak } from '../../src/features/breaks/data/dto'
 import { daySummary } from '../../src/features/day/domain/day-summary'
 
-let n = 0
-const e = (over: Partial<TimeEntry>): TimeEntry => ({
-  id: `e${++n}`,
+let count = 0
+const makeTimeEntry = (over: Partial<TimeEntry>): TimeEntry => ({
+  id: `e${++count}`,
   finishedAt: null,
   taskTypeId: 'task',
   projectId: null,
@@ -28,12 +28,12 @@ const e = (over: Partial<TimeEntry>): TimeEntry => ({
   createdAt: '2026-11-20T08:00:00Z',
   ...over,
 })
-const brk = (
+const breakEntry = (
   startTime: string,
   endTime: string,
   minutes: number,
 ): WorkBreak => ({
-  id: `b${++n}`,
+  id: `b${++count}`,
   workDate: '2026-11-20',
   startTime,
   endTime,
@@ -49,8 +49,12 @@ const types = [
 
 describe('day summary', () => {
   const entries = [
-    e({ startTime: '09:00', endTime: '10:30', durationMinutes: 90 }),
-    e({
+    makeTimeEntry({
+      startTime: '09:00',
+      endTime: '10:30',
+      durationMinutes: 90,
+    }),
+    makeTimeEntry({
       taskTypeId: 'meet',
       title: 'Daily',
       startTime: '10:30',
@@ -58,23 +62,31 @@ describe('day summary', () => {
       durationMinutes: 15,
       storyPoints: null,
     }),
-    e({ startTime: '10:45', endTime: '12:00', durationMinutes: 75 }),
-    e({
+    makeTimeEntry({
+      startTime: '10:45',
+      endTime: '12:00',
+      durationMinutes: 75,
+    }),
+    makeTimeEntry({
       title: 'PAY-2 Refunds',
       startTime: '12:00',
       endTime: '12:30',
       durationMinutes: 30,
     }),
-    e({
+    makeTimeEntry({
       title: 'PAY-2 Refunds',
       durationMinutes: 20,
       overtimeMinutes: 20,
     }),
   ]
-  const s = daySummary(entries, [brk('12:30', '13:00', 30)], [...types])
+  const summary = daySummary(
+    entries,
+    [breakEntry('12:30', '13:00', 30)],
+    [...types],
+  )
 
   it('Should sum the day and split focus work from meetings', () => {
-    expect(s).toMatchObject({
+    expect(summary).toMatchObject({
       minutes: 230,
       focusMinutes: 215,
       meetingMinutes: 15,
@@ -88,32 +100,38 @@ describe('day summary', () => {
 
   it('Should find the longest stretch without meetings and count task switches', () => {
     // 10:45–12:30: dwie sesje różnych zadań bez przerwy między nimi.
-    expect(s.longestFocus).toBe(105)
+    expect(summary.longestFocus).toBe(105)
     // PAY-1 → Daily → PAY-1 → PAY-2
-    expect(s.switches).toBe(3)
+    expect(summary.switches).toBe(3)
   })
 
   it('Should list tasks longest first and the timeline in order, with breaks', () => {
-    expect(s.tasks.map((r) => [r.title, r.minutes, r.sessions])).toEqual([
+    expect(
+      summary.tasks.map((taskRow) => [
+        taskRow.title,
+        taskRow.minutes,
+        taskRow.sessions,
+      ]),
+    ).toEqual([
       ['PAY-1 Checkout', 165, 2],
       ['PAY-2 Refunds', 50, 2],
       ['Daily', 15, 1],
     ])
-    expect(s.blocks.map((b) => b.kind)).toEqual([
+    expect(summary.blocks.map((dayBlock) => dayBlock.kind)).toEqual([
       'work',
       'work',
       'work',
       'work',
       'break',
     ])
-    expect(s.byType).toEqual([
+    expect(summary.byType).toEqual([
       { taskTypeId: 'task', minutes: 215 },
       { taskTypeId: 'meet', minutes: 15 },
     ])
   })
 
   it('Should have no timeline for a day without set hours', () => {
-    const empty = daySummary([e({})], [], [...types])
+    const empty = daySummary([makeTimeEntry({})], [], [...types])
     expect(empty.span).toBeNull()
     expect(empty.untimedMinutes).toBe(60)
   })

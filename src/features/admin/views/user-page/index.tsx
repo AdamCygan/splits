@@ -22,19 +22,19 @@ export interface AdminUserPageProps {
  * bezpieczeństwo, płatności, historia zmian i usunięcie.
  */
 export function AdminUserPage({ id }: AdminUserPageProps) {
-  const t = useMessages(adminMessages)
-  const vm = useUserPageViewModel(id)
-  const u = vm.user
+  const messages = useMessages(adminMessages)
+  const viewModel = useUserPageViewModel(id)
+  const user = viewModel.user
   const back = (
     <Link
       to="/app/admin"
       className="inline-flex items-center gap-1 text-sm font-medium text-ink-soft hover:text-ink"
     >
       <ChevronLeft aria-hidden className="size-4" />
-      {t.user.back}
+      {messages.user.back}
     </Link>
   )
-  if (vm.pending)
+  if (viewModel.pending)
     return (
       <>
         {back}
@@ -44,11 +44,11 @@ export function AdminUserPage({ id }: AdminUserPageProps) {
         />
       </>
     )
-  if (!u)
+  if (!user)
     return (
       <>
         {back}
-        <p className="mt-6 text-ink-soft">{t.user.notFound}</p>
+        <p className="mt-6 text-ink-soft">{messages.user.notFound}</p>
       </>
     )
   return (
@@ -56,43 +56,47 @@ export function AdminUserPage({ id }: AdminUserPageProps) {
       {back}
       <header className="mt-3 mb-6">
         <h1 className="type-display text-3xl break-words sm:text-4xl">
-          {u.displayName}
+          {user.displayName}
         </h1>
         <p className="mt-1 flex flex-wrap items-center gap-2 text-ink-soft">
-          <span className="break-all">{u.email}</span>
+          <span className="break-all">{user.email}</span>
           <span aria-hidden>·</span>
-          <span>@{u.username}</span>
-          <Badge tone={planTone[u.plan]}>{t.plans[u.plan]}</Badge>
-          {u.isOwner ? (
-            <Badge tone="success">{t.badges.owner}</Badge>
+          <span>@{user.username}</span>
+          <Badge tone={planTone[user.plan]}>{messages.plans[user.plan]}</Badge>
+          {user.isOwner ? (
+            <Badge tone="success">{messages.badges.owner}</Badge>
           ) : (
-            u.role === 'admin' && <Badge tone="info">{t.badges.admin}</Badge>
+            user.role === 'admin' && (
+              <Badge tone="info">{messages.badges.admin}</Badge>
+            )
           )}
-          {u.isDemo && <Badge tone="muted">{t.badges.demo}</Badge>}
-          {u.disabledAt && <Badge tone="warning">{t.badges.blocked}</Badge>}
-          {vm.self && <Badge tone="muted">{t.badges.you}</Badge>}
+          {user.isDemo && <Badge tone="muted">{messages.badges.demo}</Badge>}
+          {user.disabledAt && (
+            <Badge tone="warning">{messages.badges.blocked}</Badge>
+          )}
+          {viewModel.self && <Badge tone="muted">{messages.badges.you}</Badge>}
         </p>
       </header>
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <div className="space-y-6">
-          <AccountSection vm={vm} />
-          <BillingSection vm={vm} />
+          <AccountSection viewModel={viewModel} />
+          <BillingSection viewModel={viewModel} />
         </div>
         <div className="space-y-6">
-          <SecuritySection vm={vm} />
-          {!vm.locked && (
-            <Panel title={t.user.danger.title}>
+          <SecuritySection viewModel={viewModel} />
+          {!viewModel.locked && (
+            <Panel title={messages.user.danger.title}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="max-w-[46ch] text-sm text-ink-soft">
-                  {t.user.danger.text}
+                  {messages.user.danger.text}
                 </p>
                 <Button
                   variant="destructive"
-                  disabled={vm.busy}
-                  onClick={() => vm.openDialog('delete')}
+                  disabled={viewModel.busy}
+                  onClick={() => viewModel.openDialog('delete')}
                 >
-                  {t.user.danger.button}
+                  {messages.user.danger.button}
                 </Button>
               </div>
             </Panel>
@@ -100,9 +104,9 @@ export function AdminUserPage({ id }: AdminUserPageProps) {
         </div>
       </div>
       <div className="mt-6">
-        <HistorySection vm={vm} />
+        <HistorySection viewModel={viewModel} />
       </div>
-      <UserDialogs vm={vm} />
+      <UserDialogs viewModel={viewModel} />
     </>
   )
 }

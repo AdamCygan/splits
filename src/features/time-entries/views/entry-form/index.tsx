@@ -26,9 +26,9 @@ export function EntryForm(props: EntryFormProps) {
   if (!useEntryFormReady()) {
     return (
       <div role="status" className="space-y-3">
-        {[0, 1, 2].map((i) => (
+        {[0, 1, 2].map((index) => (
           <div
-            key={i}
+            key={index}
             aria-hidden
             className="h-11 animate-pulse rounded-lg bg-muted"
           />
@@ -40,59 +40,61 @@ export function EntryForm(props: EntryFormProps) {
 }
 
 function EntryFormView(props: EntryFormProps) {
-  const vm = useEntryFormViewModel(props)
-  const { t } = vm
-  if (!vm.type) return <p className="text-ink-soft">{t.form.noTypes}</p>
+  const viewModel = useEntryFormViewModel(props)
+  const { messages } = viewModel
+  if (!viewModel.type)
+    return <p className="text-ink-soft">{messages.form.noTypes}</p>
   return (
     <>
       <form
         id={props.formId}
         noValidate
-        onSubmit={vm.submit}
-        onKeyDown={vm.onKeyDown}
+        onSubmit={viewModel.submit}
+        onKeyDown={viewModel.onKeyDown}
         className="space-y-6"
       >
-        <TypePicker vm={vm} />
+        <TypePicker viewModel={viewModel} />
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <TaskFields vm={vm} />
-          <TimeSection vm={vm} />
-          <StoryPointsField vm={vm} />
-          <DetailFields vm={vm} focusNotes={props.focusNotes} />
-          <OvertimeSection vm={vm} />
+          <TaskFields viewModel={viewModel} />
+          <TimeSection viewModel={viewModel} />
+          <StoryPointsField viewModel={viewModel} />
+          <DetailFields viewModel={viewModel} focusNotes={props.focusNotes} />
+          <OvertimeSection viewModel={viewModel} />
         </div>
         {!props.hideSubmit && (
           <div className="flex flex-wrap items-center justify-end gap-3 border-t border-line pt-5">
             <span className="hidden text-sm text-ink-soft sm:inline">
-              {t.form.saveHint}
+              {messages.form.saveHint}
             </span>
             <Button
               type="submit"
               size="lg"
-              disabled={vm.pending}
-              aria-busy={vm.pending}
+              disabled={viewModel.pending}
+              aria-busy={viewModel.pending}
             >
-              {vm.startsTimer ? (
+              {viewModel.startsTimer ? (
                 <Timer aria-hidden className="size-4" />
               ) : (
                 <Check aria-hidden className="size-4" />
               )}
-              {vm.pending
-                ? t.form.saving
-                : vm.startsTimer
-                  ? t.form.startTimer
-                  : t.form.save}
+              {viewModel.pending
+                ? messages.form.saving
+                : viewModel.startsTimer
+                  ? messages.form.startTimer
+                  : messages.form.save}
             </Button>
           </div>
         )}
       </form>
       {/* Poza <form>: zdarzenia z portalu i tak płyną drzewem Reacta, więc nie zagnieżdżamy formularzy */}
-      {vm.customFor && (
+      {viewModel.customFor && (
         <CustomDurationDialog
-          type={vm.customFor}
-          onClose={vm.closeCustom}
-          onApply={(m) => {
-            if (vm.customFor) vm.quickLog(vm.customFor, m)
-            vm.closeCustom()
+          type={viewModel.customFor}
+          onClose={viewModel.closeCustom}
+          onApply={(minutes) => {
+            if (viewModel.customFor)
+              viewModel.quickLog(viewModel.customFor, minutes)
+            viewModel.closeCustom()
           }}
         />
       )}

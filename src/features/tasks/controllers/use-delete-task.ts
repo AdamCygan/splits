@@ -15,10 +15,10 @@ export interface DeleteTaskOptions {
 
 /** Usunięcie sesji zadania (z jednego dnia albo wszystkich). */
 export function useDeleteTask({ date, title, onDeleted }: DeleteTaskOptions) {
-  const t = useMessages(entriesMessages).deleteTask
+  const messages = useMessages(entriesMessages).deleteTask
   return useDataMutation((ref: TaskRef) => entriesApi.removeTask(ref, date), {
     invalidate: [entryKeys.all],
-    success: () => fmt(t.deleted, { name: title }),
+    success: () => fmt(messages.deleted, { name: title }),
     onSuccess: onDeleted,
   })
 }

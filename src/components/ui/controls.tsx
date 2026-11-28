@@ -183,7 +183,7 @@ export function CheckboxGroup<T extends string | number>({
                 onChange={() =>
                   onChange(
                     checked
-                      ? value.filter((v) => v !== option.value)
+                      ? value.filter((selected) => selected !== option.value)
                       : [...value, option.value],
                   )
                 }
@@ -224,7 +224,7 @@ interface Swatch {
 export interface ColorPickerProps {
   legend: string
   value: string
-  onChange: (v: string) => void
+  onChange: (value: string) => void
   swatches: ReadonlyArray<Swatch>
 }
 

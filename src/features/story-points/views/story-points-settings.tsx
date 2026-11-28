@@ -28,10 +28,13 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 
 export function StoryPointSettings() {
-  const t = useMessages(settingsMessages)
+  const messages = useMessages(settingsMessages)
   return (
     <div>
-      <SectionHeader title={t.storyPoints.title} lead={t.storyPoints.lead} />
+      <SectionHeader
+        title={messages.storyPoints.title}
+        lead={messages.storyPoints.lead}
+      />
       <QueryView query={scaleQuery} skeletonRows={7}>
         {(scale) => <ScaleEditor scale={scale} />}
       </QueryView>
@@ -44,7 +47,7 @@ interface ScaleEditorProps {
 }
 
 function ScaleEditor({ scale }: ScaleEditorProps) {
-  const t = useMessages(settingsMessages).storyPoints
+  const messages = useMessages(settingsMessages).storyPoints
   const format = useFormat()
   const [rows, setRows] = useState(() => toRows(scale))
   const [submitted, setSubmitted] = useState(false)
@@ -57,10 +60,10 @@ function ScaleEditor({ scale }: ScaleEditorProps) {
   const issues = validateScale(parsed)
   const issuesAt = (index: number) =>
     issues.filter(
-      (i): i is Extract<ScaleIssue, { index: number }> =>
-        'index' in i && i.index === index,
+      (issue): issue is Extract<ScaleIssue, { index: number }> =>
+        'index' in issue && issue.index === index,
     )
-  const globalIssue = issues.find((i) => !('index' in i))
+  const globalIssue = issues.find((issue) => !('index' in issue))
   const dirty =
     JSON.stringify(parsed) !==
     JSON.stringify(
@@ -69,32 +72,36 @@ function ScaleEditor({ scale }: ScaleEditorProps) {
   useUnsavedWarning(dirty)
 
   // Przedziały liczone po posortowaniu (tak jak w raportach).
-  const sortedLimits = [...parsed].sort((a, b) => a.points - b.points)
+  const sortedLimits = [...parsed].sort(
+    (left, right) => left.points - right.points,
+  )
   const rangeLabel = (points: number, maxMinutes: number) => {
-    const i = sortedLimits.findIndex((s) => s.points === points)
-    const min = i > 0 ? sortedLimits[i - 1]!.maxMinutes : 0
-    return i <= 0
-      ? fmt(t.rangeFirst, { max: format.minutes(maxMinutes) })
-      : fmt(t.range, {
+    const index = sortedLimits.findIndex(
+      (sortedLimit) => sortedLimit.points === points,
+    )
+    const min = index > 0 ? sortedLimits[index - 1]!.maxMinutes : 0
+    return index <= 0
+      ? fmt(messages.rangeFirst, { max: format.minutes(maxMinutes) })
+      : fmt(messages.range, {
           min: format.minutes(min),
           max: format.minutes(maxMinutes),
         })
   }
 
   const update = (key: number, patch: Partial<Row>) =>
-    setRows(rows.map((r) => (r.key === key ? { ...r, ...patch } : r)))
+    setRows(rows.map((row) => (row.key === key ? { ...row, ...patch } : row)))
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault()
+  const onSubmit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     setSubmitted(true)
     if (issues.length === 0)
-      save.mutate([...parsed].sort((a, b) => a.points - b.points))
+      save.mutate([...parsed].sort((left, right) => left.points - right.points))
   }
 
   return (
     <form noValidate onSubmit={onSubmit} className="space-y-6">
       {announcer}
-      <SettingsCard title={t.presets}>
+      <SettingsCard title={messages.presets}>
         <div className="flex flex-wrap gap-2">
           {(Object.keys(scalePresets) as Array<keyof typeof scalePresets>).map(
             (name) => (
@@ -104,12 +111,14 @@ function ScaleEditor({ scale }: ScaleEditorProps) {
                 variant="outline"
                 onClick={() => {
                   setRows(toRows(scalePresets[name]))
-                  announce(t.presetApplied)
+                  announce(messages.presetApplied)
                 }}
               >
-                {t.presetNames[name]}
+                {messages.presetNames[name]}
                 <span className="text-ink-soft">
-                  {scalePresets[name].map((s) => s.points).join(' · ')}
+                  {scalePresets[name]
+                    .map((scaleStepDraft) => scaleStepDraft.points)
+                    .join(' · ')}
                 </span>
               </Button>
             ),
@@ -117,31 +126,35 @@ function ScaleEditor({ scale }: ScaleEditorProps) {
         </div>
       </SettingsCard>
 
-      <SettingsCard title={t.title}>
+      <SettingsCard title={messages.title}>
         {submitted && globalIssue && (
           <p role="alert" className="mb-4 text-sm text-destructive">
-            {t.issues[globalIssue.code]}
+            {messages.issues[globalIssue.code]}
           </p>
         )}
         <div
           aria-hidden
           className="hidden grid-cols-[7rem_minmax(0,15rem)_minmax(0,1fr)_2.75rem] gap-x-3 pb-2 text-sm font-medium text-ink-soft sm:grid"
         >
-          <span>{t.columns.points}</span>
-          <span>{t.columns.limit}</span>
-          <span>{t.columns.range}</span>
+          <span>{messages.columns.points}</span>
+          <span>{messages.columns.limit}</span>
+          <span>{messages.columns.range}</span>
         </div>
         {/* Lista zamiast tabeli: na telefonie wiersz zawija się w dwie linie bez poziomego przewijania. */}
         <ol className="divide-y divide-line border-t border-line">
           {rows.map((row, index) => {
             const rowIssues = submitted ? issuesAt(index) : []
             const errorId = `scale-row-${row.key}-error`
-            const p = parsed[index]!
+            const parsedStep = parsed[index]!
             const pointsInvalid = rowIssues.some(
-              (i) => i.code === 'points_range' || i.code === 'duplicate_points',
+              (rowIssue) =>
+                rowIssue.code === 'points_range' ||
+                rowIssue.code === 'duplicate_points',
             )
             const timeInvalid = rowIssues.some(
-              (i) => i.code === 'minutes_range' || i.code === 'not_increasing',
+              (rowIssue) =>
+                rowIssue.code === 'minutes_range' ||
+                rowIssue.code === 'not_increasing',
             )
             const describedBy = rowIssues.length ? errorId : undefined
             return (
@@ -159,11 +172,13 @@ function ScaleEditor({ scale }: ScaleEditorProps) {
                     'w-full',
                     pointsInvalid && 'border-destructive',
                   )}
-                  aria-label={fmt(t.pointsLabel, { n: index + 1 })}
+                  aria-label={fmt(messages.pointsLabel, { n: index + 1 })}
                   aria-invalid={pointsInvalid || undefined}
                   aria-describedby={describedBy}
                   value={row.points}
-                  onChange={(e) => update(row.key, { points: e.target.value })}
+                  onChange={(event) =>
+                    update(row.key, { points: event.target.value })
+                  }
                 />
                 <div className="flex min-w-0 items-center gap-1.5">
                   <Input
@@ -174,11 +189,13 @@ function ScaleEditor({ scale }: ScaleEditorProps) {
                       'w-16 px-2.5',
                       timeInvalid && 'border-destructive',
                     )}
-                    aria-label={fmt(t.hoursLabel, { n: index + 1 })}
+                    aria-label={fmt(messages.hoursLabel, { n: index + 1 })}
                     aria-invalid={timeInvalid || undefined}
                     aria-describedby={describedBy}
                     value={row.hours}
-                    onChange={(e) => update(row.key, { hours: e.target.value })}
+                    onChange={(event) =>
+                      update(row.key, { hours: event.target.value })
+                    }
                   />
                   <span aria-hidden className="text-sm text-ink-soft">
                     h
@@ -193,12 +210,12 @@ function ScaleEditor({ scale }: ScaleEditorProps) {
                       'w-16 px-2.5',
                       timeInvalid && 'border-destructive',
                     )}
-                    aria-label={fmt(t.minutesLabel, { n: index + 1 })}
+                    aria-label={fmt(messages.minutesLabel, { n: index + 1 })}
                     aria-invalid={timeInvalid || undefined}
                     aria-describedby={describedBy}
                     value={row.minutes}
-                    onChange={(e) =>
-                      update(row.key, { minutes: e.target.value })
+                    onChange={(event) =>
+                      update(row.key, { minutes: event.target.value })
                     }
                   />
                   <span aria-hidden className="text-sm text-ink-soft">
@@ -206,8 +223,9 @@ function ScaleEditor({ scale }: ScaleEditorProps) {
                   </span>
                 </div>
                 <p className="col-start-2 row-start-2 text-sm text-ink-soft sm:col-start-3 sm:row-start-1 sm:self-center">
-                  {Number.isFinite(p.points) && p.maxMinutes > 0
-                    ? rangeLabel(p.points, p.maxMinutes)
+                  {Number.isFinite(parsedStep.points) &&
+                  parsedStep.maxMinutes > 0
+                    ? rangeLabel(parsedStep.points, parsedStep.maxMinutes)
                     : '—'}
                 </p>
                 <Button
@@ -216,8 +234,10 @@ function ScaleEditor({ scale }: ScaleEditorProps) {
                   size="icon"
                   className="col-start-3 row-start-1 size-11 sm:col-start-4"
                   disabled={rows.length === 1}
-                  aria-label={fmt(t.remove, { sp: `${row.points} SP` })}
-                  onClick={() => setRows(rows.filter((r) => r.key !== row.key))}
+                  aria-label={fmt(messages.remove, { sp: `${row.points} SP` })}
+                  onClick={() =>
+                    setRows(rows.filter((otherRow) => otherRow.key !== row.key))
+                  }
                 >
                   <X aria-hidden className="size-4" />
                 </Button>
@@ -226,8 +246,10 @@ function ScaleEditor({ scale }: ScaleEditorProps) {
                     id={errorId}
                     className="col-span-full space-y-0.5 text-sm text-destructive"
                   >
-                    {[...new Set(rowIssues.map((i) => i.code))].map((code) => (
-                      <li key={code}>{t.issues[code]}</li>
+                    {[
+                      ...new Set(rowIssues.map((rowIssue) => rowIssue.code)),
+                    ].map((code) => (
+                      <li key={code}>{messages.issues[code]}</li>
                     ))}
                   </ul>
                 )}
@@ -242,7 +264,8 @@ function ScaleEditor({ scale }: ScaleEditorProps) {
           disabled={rows.length >= SCALE_LIMITS.maxSteps}
           onClick={() => {
             const last = parsed.reduce(
-              (m, s) => (s.maxMinutes > m.maxMinutes ? s : m),
+              (largest, step) =>
+                step.maxMinutes > largest.maxMinutes ? step : largest,
               { points: 0, maxMinutes: 0 },
             )
             setRows([
@@ -257,20 +280,26 @@ function ScaleEditor({ scale }: ScaleEditorProps) {
           }}
         >
           <Plus aria-hidden className="size-4" />
-          {t.addRow}
+          {messages.addRow}
         </Button>
       </SettingsCard>
 
-      <SettingsCard title={t.preview}>
+      <SettingsCard title={messages.preview}>
         <ol className="grid grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))] gap-px overflow-hidden rounded-xl border border-line bg-line">
-          {sortedLimits.map((s, i) => (
-            <li key={`${s.points}-${i}`} className="bg-surface px-3 py-3">
+          {sortedLimits.map((sortedLimit, index) => (
+            <li
+              key={`${sortedLimit.points}-${index}`}
+              className="bg-surface px-3 py-3"
+            >
               <p className="type-heading text-2xl">
-                {Number.isFinite(s.points) ? format.number(s.points) : '—'}
+                {Number.isFinite(sortedLimit.points)
+                  ? format.number(sortedLimit.points)
+                  : '—'}
               </p>
               <p className="text-sm text-ink-soft">
-                {Number.isFinite(s.points) && s.maxMinutes > 0
-                  ? rangeLabel(s.points, s.maxMinutes)
+                {Number.isFinite(sortedLimit.points) &&
+                sortedLimit.maxMinutes > 0
+                  ? rangeLabel(sortedLimit.points, sortedLimit.maxMinutes)
                   : '—'}
               </p>
             </li>

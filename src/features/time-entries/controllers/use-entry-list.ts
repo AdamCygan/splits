@@ -29,7 +29,7 @@ export type EntryListDialog =
  * timera. Widoki kart i sesji tylko wywołują `open(...)` i akcje.
  */
 export function useEntryListViewModel(entries: ReadonlyArray<TimeEntry>) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const types = useQuery(taskTypesQuery).data ?? []
   const projects = useQuery(projectsQuery).data ?? []
   const [dialog, setDialog] = useState<EntryListDialog | null>(null)
@@ -37,7 +37,7 @@ export function useEntryListViewModel(entries: ReadonlyArray<TimeEntry>) {
 
   const remove = useDataMutation((id: string) => entriesApi.remove(id), {
     invalidate: [entryKeys.all],
-    success: t.list.deleted,
+    success: messages.list.deleted,
     onSuccess: close,
   })
   const updateNote = useUpdateNote()
@@ -45,13 +45,15 @@ export function useEntryListViewModel(entries: ReadonlyArray<TimeEntry>) {
   const pause = usePauseTimer()
   const resume = useResumeTask()
 
-  const typeOf = (id: string) => types.find((x) => x.id === id)
+  const typeOf = (id: string) => types.find((type) => type.id === id)
   const tasks = dayTaskGroups(entries).map((group) => {
     const type = typeOf(group.latest.taskTypeId)
     return {
       ...group,
       type,
-      project: projects.find((p) => p.id === group.latest.projectId),
+      project: projects.find(
+        (project) => project.id === group.latest.projectId,
+      ),
       taskKey: group.latest.link ? extractTaskKey(group.latest.link) : null,
       isMeeting: type?.kind === 'meeting',
       canNote: type?.descriptionRequirement !== 'hidden',

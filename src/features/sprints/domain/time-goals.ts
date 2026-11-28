@@ -10,21 +10,23 @@ export interface GoalDraft {
 
 export const goalDrafts = (
   goals: ReadonlyArray<SprintTimeGoal>,
-  minutesLabel: (m: number) => string,
+  minutesLabel: (minutes: number) => string,
 ): Array<GoalDraft> =>
-  goals.map((g) => ({
+  goals.map((sprintTimeGoal) => ({
     key: crypto.randomUUID(),
-    taskTypeId: g.taskTypeId,
-    time: minutesLabel(g.minutes),
+    taskTypeId: sprintTimeGoal.taskTypeId,
+    time: minutesLabel(sprintTimeGoal.minutes),
   }))
 
 /** Cele do zapisu albo null, gdy któryś wiersz jest niepoprawny. */
 export function goalsFromDrafts(
   rows: ReadonlyArray<GoalDraft>,
 ): Array<SprintTimeGoal> | null {
-  const goals = rows.map((r) => ({
-    taskTypeId: r.taskTypeId,
-    minutes: parseDuration(r.time) ?? 0,
+  const goals = rows.map((goalDraft) => ({
+    taskTypeId: goalDraft.taskTypeId,
+    minutes: parseDuration(goalDraft.time) ?? 0,
   }))
-  return goals.every((g) => g.taskTypeId && g.minutes > 0) ? goals : null
+  return goals.every((goal) => goal.taskTypeId && goal.minutes > 0)
+    ? goals
+    : null
 }

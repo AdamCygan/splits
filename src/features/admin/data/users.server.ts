@@ -6,7 +6,7 @@ import { cutAccess, restoreAccess } from '#/features/auth/data/access.server'
 
 import { billingEnabled } from '#/features/billing/data/stripe.server'
 
-import { db } from '#/server/db/client'
+import { database } from '#/server/db/client'
 
 import { users } from '#/server/db/schema'
 
@@ -37,7 +37,7 @@ export const patchInput = z
     disabled: z.boolean(),
   })
   .partial()
-  .refine((v) => Object.keys(v).length > 0)
+  .refine((patch) => Object.keys(patch).length > 0)
 
 /** Usunięcie konta tylko po przepisaniu jego adresu e-mail (ochrona przed pomyłką). */
 export const deleteInput = z.object({
@@ -65,9 +65,9 @@ export async function exportUsers(
   filter: z.infer<typeof userFilterInput>,
 ) {
   const result = await findUsers(filter, null)
-  await db.transaction((tx) =>
+  await database.transaction((transaction) =>
     log(
-      tx,
+      transaction,
       admin,
       null,
       'users.exported',
@@ -104,28 +104,40 @@ export async function changeUser(
   user: Awaited<ReturnType<typeof findUser>>,
   input: z.infer<typeof patchInput>,
 ) {
-  const updated = await db.transaction(async (tx) => {
+  const updated = await database.transaction(async (transaction) => {
     const set: Partial<UserRow> = {}
     if (input.plan !== undefined && input.plan !== user.plan) {
       set.plan = input.plan
-      await log(tx, admin, user, 'plan.changed', `${user.plan} → ${input.plan}`)
+      await log(
+        transaction,
+        admin,
+        user,
+        'plan.changed',
+        `${user.plan} → ${input.plan}`,
+      )
     }
     if (input.role !== undefined && input.role !== user.role) {
       set.role = input.role
-      await log(tx, admin, user, 'role.changed', `${user.role} → ${input.role}`)
+      await log(
+        transaction,
+        admin,
+        user,
+        'role.changed',
+        `${user.role} → ${input.role}`,
+      )
     }
     if (input.disabled !== undefined && input.disabled !== !!user.disabledAt) {
       set.disabledAt = input.disabled ? new Date() : null
-      if (input.disabled) await revokeAllSessions(tx, user.id)
+      if (input.disabled) await revokeAllSessions(transaction, user.id)
       await log(
-        tx,
+        transaction,
         admin,
         user,
         input.disabled ? 'user.blocked' : 'user.unblocked',
       )
     }
     if (Object.keys(set).length === 0) return user
-    const [row] = await tx
+    const [row] = await transaction
       .update(users)
       .set(set)
       .where(eq(users.id, user.id))
@@ -142,9 +154,9 @@ export async function revokeUserSessions(
   admin: UserRow,
   user: Awaited<ReturnType<typeof findUser>>,
 ) {
-  await db.transaction(async (tx) => {
-    await revokeAllSessions(tx, user.id)
-    await log(tx, admin, user, 'sessions.revoked')
+  await database.transaction(async (transaction) => {
+    await revokeAllSessions(transaction, user.id)
+    await log(transaction, admin, user, 'sessions.revoked')
   })
   return
 }
@@ -158,9 +170,9 @@ export async function deleteUser(
   user: Awaited<ReturnType<typeof findUser>>,
 ) {
   if (billingEnabled()) await cancelSubscriptionsFor(user.id)
-  await db.transaction(async (tx) => {
-    await log(tx, admin, user, 'user.deleted', `plan ${user.plan}`)
-    await tx.delete(users).where(eq(users.id, user.id))
+  await database.transaction(async (transaction) => {
+    await log(transaction, admin, user, 'user.deleted', `plan ${user.plan}`)
+    await transaction.delete(users).where(eq(users.id, user.id))
   })
   cutAccess(user.id)
   return

@@ -9,7 +9,7 @@ import { useRouter } from '@tanstack/react-router'
 export function useDebouncedFilter(
   apply: (() => void) | null,
   delay: number,
-  deps: ReadonlyArray<unknown>,
+  dependencies: ReadonlyArray<unknown>,
 ) {
   const router = useRouter()
   useEffect(() => {
@@ -20,5 +20,5 @@ export function useDebouncedFilter(
     }, delay)
     return () => clearTimeout(timer)
     // apply zmienia się z każdym renderem; reagujemy tylko na deps.
-  }, deps)
+  }, dependencies)
 }

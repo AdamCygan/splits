@@ -27,22 +27,25 @@ import { safeUrl } from '#/features/time-entries/domain/entries'
 
 export interface TaskRowViewProps {
   item: TaskListItem
-  vm: TasksViewModel
+  viewModel: TasksViewModel
 }
 
 /**
  * Wiersz zadania: stan, tytuł z linkiem, opis (rodzaj, ostatnia praca, sesje), SP, czas
  * z paskiem względem najdłuższego zadania, wycena i akcje („Kontynuuj”, menu „⋯”).
  */
-export function TaskRowView({ item: { row, estimate }, vm }: TaskRowViewProps) {
-  const t = useMessages(panelMessages).tasks
+export function TaskRowView({
+  item: { row, estimate },
+  viewModel,
+}: TaskRowViewProps) {
+  const messages = useMessages(panelMessages).tasks
   const format = useFormat()
-  const type = vm.typeOf(row.taskTypeId)
-  const entry = vm.latestOf(row)
-  const state = vm.statusOf(row)
+  const type = viewModel.typeOf(row.taskTypeId)
+  const entry = viewModel.latestOf(row)
+  const state = viewModel.statusOf(row)
   return (
     <li className="row-hover grid grid-cols-[1.25rem_minmax(0,1fr)] gap-x-3 gap-y-2.5 px-5 py-4 sm:px-6 lg:grid-cols-[1.25rem_minmax(0,1fr)_4.5rem_8.5rem_8.5rem_8.75rem] lg:items-center lg:gap-x-5">
-      <StatusIcon state={state} label={t.state[state]} />
+      <StatusIcon state={state} label={messages.state[state]} />
       <div className="min-w-0">
         <p className="min-w-0 break-words">
           <TaskLink
@@ -68,28 +71,28 @@ export function TaskRowView({ item: { row, estimate }, vm }: TaskRowViewProps) {
                 {linkLabel(row.link, row.taskKey)}
                 <span className="sr-only">
                   {': '}
-                  {fmt(t.open, { name: row.title })}
+                  {fmt(messages.open, { name: row.title })}
                 </span>
               </a>
               <span aria-hidden> · </span>
             </>
           )}
-          {vm.grouping !== 'kind' && (
+          {viewModel.grouping !== 'kind' && (
             <span className="mr-1.5 inline-flex items-center gap-1.5 align-middle">
               <ColorDot color={type?.color ?? 'var(--wt-custom)'} />
               {type?.name}
               <span aria-hidden>·</span>
             </span>
           )}
-          {vm.grouping !== 'day' && (
+          {viewModel.grouping !== 'day' && (
             <>
-              {fmt(t.lastShort, { date: format.day(row.last) })}
+              {fmt(messages.lastShort, { date: format.day(row.last) })}
               <span aria-hidden> · </span>
             </>
           )}
-          {fmt(t.meta, {
-            sessions: format.plural(t.sessions, row.sessions),
-            days: format.plural(t.days, row.days),
+          {fmt(messages.meta, {
+            sessions: format.plural(messages.sessions, row.sessions),
+            days: format.plural(messages.days, row.days),
           })}
         </p>
       </div>
@@ -97,7 +100,7 @@ export function TaskRowView({ item: { row, estimate }, vm }: TaskRowViewProps) {
       {/* Liczby: na wąskim ekranie w jednej linii pod tytułem, na szerokim w kolumnach. */}
       <div className="col-start-2 flex flex-wrap items-center gap-x-5 gap-y-2 lg:contents">
         <p className="text-sm tabular-nums lg:text-right">
-          <span className="sr-only">{t.columns.sp}: </span>
+          <span className="sr-only">{messages.columns.sp}: </span>
           {row.storyPoints === null ? (
             <span className="text-ink-faint">–</span>
           ) : (
@@ -106,14 +109,14 @@ export function TaskRowView({ item: { row, estimate }, vm }: TaskRowViewProps) {
         </p>
         <div className="min-w-32 lg:min-w-0">
           <p className="flex items-baseline justify-between gap-2 tabular-nums">
-            <span className="sr-only">{t.columns.time}: </span>
+            <span className="sr-only">{messages.columns.time}: </span>
             <span className="font-semibold">{format.minutes(row.minutes)}</span>
             {row.overtimeMinutes > 0 && (
               <span
                 className="text-xs text-ink-soft"
                 title={row.overtimeNotes.join('\n')}
               >
-                {fmt(t.summary.overtime, {
+                {fmt(messages.summary.overtime, {
                   time: format.minutes(row.overtimeMinutes),
                 })}
               </span>
@@ -123,7 +126,7 @@ export function TaskRowView({ item: { row, estimate }, vm }: TaskRowViewProps) {
             <span
               className="block h-full rounded-full"
               style={{
-                width: `${Math.max(3, (row.minutes / vm.longest) * 100)}%`,
+                width: `${Math.max(3, (row.minutes / viewModel.longest) * 100)}%`,
                 background: type?.color ?? 'var(--wt-custom)',
               }}
             />
@@ -136,12 +139,12 @@ export function TaskRowView({ item: { row, estimate }, vm }: TaskRowViewProps) {
               <Button
                 size="sm"
                 variant="outline"
-                disabled={vm.resumeBusy || row.running}
-                aria-label={fmt(t.continueLabel, { name: row.title })}
-                onClick={() => vm.resume(entry)}
+                disabled={viewModel.resumeBusy || row.running}
+                aria-label={fmt(messages.continueLabel, { name: row.title })}
+                onClick={() => viewModel.resume(entry)}
               >
                 <Play aria-hidden fill="currentColor" className="size-3.5" />
-                {t.continue}
+                {messages.continue}
               </Button>
             )}
             <DropdownMenu>
@@ -150,7 +153,7 @@ export function TaskRowView({ item: { row, estimate }, vm }: TaskRowViewProps) {
                   size="icon"
                   variant="ghost"
                   className="size-9"
-                  aria-label={fmt(t.moreActions, { name: row.title })}
+                  aria-label={fmt(messages.moreActions, { name: row.title })}
                 >
                   <MoreHorizontal aria-hidden className="size-4" />
                 </Button>
@@ -158,16 +161,16 @@ export function TaskRowView({ item: { row, estimate }, vm }: TaskRowViewProps) {
               <DropdownMenuContent>
                 {state === 'done' && (
                   <DropdownMenuItem
-                    disabled={vm.resumeBusy}
-                    onSelect={() => vm.resume(entry)}
+                    disabled={viewModel.resumeBusy}
+                    onSelect={() => viewModel.resume(entry)}
                   >
                     <Play aria-hidden />
-                    {t.continue}
+                    {messages.continue}
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onSelect={() => vm.summarize(entry)}>
+                <DropdownMenuItem onSelect={() => viewModel.summarize(entry)}>
                   <ScrollText aria-hidden />
-                  {t.summaryButton}
+                  {messages.summaryButton}
                 </DropdownMenuItem>
                 {row.link && (
                   <DropdownMenuItem asChild>
@@ -177,17 +180,17 @@ export function TaskRowView({ item: { row, estimate }, vm }: TaskRowViewProps) {
                       rel="noreferrer noopener"
                     >
                       <ExternalLink aria-hidden />
-                      {t.openLink}
+                      {messages.openLink}
                     </a>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive [&_svg]:text-destructive"
-                  onSelect={() => vm.askDelete(row)}
+                  onSelect={() => viewModel.askDelete(row)}
                 >
                   <Trash2 aria-hidden />
-                  {t.deleteTask}
+                  {messages.deleteTask}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

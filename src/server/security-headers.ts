@@ -39,7 +39,7 @@ export function contentSecurityPolicy({
   const posthog = origin(posthogHost)
   const posthogAssets = posthog ? posthogAssetsOrigin(posthog) : null
   const list = (...values: Array<string | null>) =>
-    values.filter((v): v is string => v !== null).join(' ')
+    values.filter((part): part is string => part !== null).join(' ')
 
   const directives: Record<string, string> = {
     'default-src': "'self'",

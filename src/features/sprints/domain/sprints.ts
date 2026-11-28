@@ -27,15 +27,18 @@ export function startedSprints<TSprint extends Dated>(
   oldest: string | null = null,
 ): Array<TSprint> {
   return sprints
-    .filter((s) => s.startsOn <= today && (!oldest || s.endsOn >= oldest))
-    .sort((a, b) => b.startsOn.localeCompare(a.startsOn))
+    .filter(
+      (sprint) =>
+        sprint.startsOn <= today && (!oldest || sprint.endsOn >= oldest),
+    )
+    .sort((left, right) => right.startsOn.localeCompare(left.startsOn))
 }
 
 /** Sprint, który trwa dziś (albo undefined). */
 export const currentSprint = <TSprint extends Dated>(
   sprints: ReadonlyArray<TSprint>,
   today: string,
-) => sprints.find((s) => sprintPhase(s, today) === 'current')
+) => sprints.find((sprint) => sprintPhase(sprint, today) === 'current')
 
 /** Najbliższy sprint, który się jeszcze nie zaczął. */
 export const upcomingSprint = <TSprint extends Dated>(
@@ -43,12 +46,12 @@ export const upcomingSprint = <TSprint extends Dated>(
   today: string,
 ) =>
   sprints
-    .filter((s) => s.startsOn > today)
-    .sort((a, b) => a.startsOn.localeCompare(b.startsOn))[0]
+    .filter((sprint) => sprint.startsOn > today)
+    .sort((left, right) => left.startsOn.localeCompare(right.startsOn))[0]
 
 /** Czy dwa przedziały dat (włącznie) nachodzą na siebie — to samo co EXCLUDE w bazie. */
-export function rangesOverlap(a: DateSpan, b: DateSpan) {
-  return a.startsOn <= b.endsOn && b.startsOn <= a.endsOn
+export function rangesOverlap(span: DateSpan, other: DateSpan) {
+  return span.startsOn <= other.endsOn && other.startsOn <= span.endsOn
 }
 
 export function sprintName(pattern: string, number: number) {
@@ -85,8 +88,8 @@ export function previewCadence(
   count = 4,
 ) {
   const first = Math.max(1, cadenceNumberAt(cadence, today))
-  return Array.from({ length: count }, (_, i) =>
-    cadenceSprint(cadence, first + i),
+  return Array.from({ length: count }, (_unused, index) =>
+    cadenceSprint(cadence, first + index),
   )
 }
 
@@ -104,10 +107,12 @@ export function missingCadenceSprints(
   if (!cadence.autoCreate) return []
   const last = Math.max(1, cadenceNumberAt(cadence, today)) + ahead
   const out: Array<ReturnType<typeof cadenceSprint>> = []
-  for (let n = 1; n <= last; n++) {
-    const candidate = cadenceSprint(cadence, n)
+  for (let index = 1; index <= last; index++) {
+    const candidate = cadenceSprint(cadence, index)
     const taken = existing.some(
-      (s) => s.number === n || rangesOverlap(s, candidate),
+      (existingSprint) =>
+        existingSprint.number === index ||
+        rangesOverlap(existingSprint, candidate),
     )
     if (!taken) out.push(candidate)
   }
@@ -120,8 +125,10 @@ export function sprintWorkingDays(
 ) {
   const total = diffDays(sprint.startsOn, sprint.endsOn) + 1
   let count = 0
-  for (let i = 0; i < total; i++) {
-    const day = new Date(`${addDays(sprint.startsOn, i)}T00:00:00Z`).getUTCDay()
+  for (let index = 0; index < total; index++) {
+    const day = new Date(
+      `${addDays(sprint.startsOn, index)}T00:00:00Z`,
+    ).getUTCDay()
     if (workingDays.includes(day)) count++
   }
   return count
@@ -138,8 +145,10 @@ export function sprintOverview<TSprint extends Dated>(
   history: number,
 ) {
   const started = startedSprints(sprints, today)
-  const current = started.find((s) => s.endsOn >= today)
-  const past = started.filter((s) => s.endsOn < today).slice(0, history)
+  const current = started.find((sprint) => sprint.endsOn >= today)
+  const past = started
+    .filter((sprint) => sprint.endsOn < today)
+    .slice(0, history)
   const upcoming = upcomingSprint(sprints, today)
   const shown = current ? [current, ...past] : past
   return {
@@ -149,7 +158,10 @@ export function sprintOverview<TSprint extends Dated>(
     shown,
     from: shown.at(-1)?.startsOn ?? today,
     lastDay: [...shown, upcoming]
-      .filter((x) => x !== undefined)
-      .reduce((max, x) => (x.endsOn > max ? x.endsOn : max), today),
+      .filter((sprint) => sprint !== undefined)
+      .reduce(
+        (max, sprint) => (sprint.endsOn > max ? sprint.endsOn : max),
+        today,
+      ),
   }
 }

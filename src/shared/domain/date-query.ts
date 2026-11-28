@@ -7,8 +7,8 @@ import { addDays, isValidDate } from './dates'
  * przepracowanego czasu); null, gdy tekst nie jest datą.
  */
 export function parseDateQuery(raw: string, today: string): string | null {
-  const q = foldText(raw.trim())
-  if (!q) return null
+  const query = foldText(raw.trim())
+  if (!query) return null
   const words: Partial<Record<string, number>> = {
     today: 0,
     dzis: 0,
@@ -17,12 +17,13 @@ export function parseDateQuery(raw: string, today: string): string | null {
     wczoraj: -1,
     przedwczoraj: -2,
   }
-  const offset = words[q]
+  const offset = words[query]
   if (offset !== undefined) return addDays(today, offset)
   let date: string | null = null
-  const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(q)
-  const dotted = /^(\d{1,2})\.(\d{1,2})(?:\.(\d{4}))?\.?$/.exec(q)
-  if (iso) date = `${iso[1]}-${pad(Number(iso[2]))}-${pad(Number(iso[3]))}`
+  const isoDate = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(query)
+  const dotted = /^(\d{1,2})\.(\d{1,2})(?:\.(\d{4}))?\.?$/.exec(query)
+  if (isoDate)
+    date = `${isoDate[1]}-${pad(Number(isoDate[2]))}-${pad(Number(isoDate[3]))}`
   else if (dotted) {
     const year = dotted[3] ?? today.slice(0, 4)
     date = `${year}-${pad(Number(dotted[2]))}-${pad(Number(dotted[1]))}`

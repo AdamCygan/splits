@@ -1,6 +1,6 @@
 import type { Locale } from '#/i18n/config'
 import type { Tx } from '#/server/db/client'
-import * as t from '#/server/db/schema'
+import * as schema from '#/server/db/schema'
 import { owner } from '#/server/db/scope'
 import type { Scope } from '#/server/db/scope'
 import { seedWorkspace } from '#/server/seed-data'
@@ -11,25 +11,25 @@ import { defaultWorkspaceName } from '#/features/workspaces/domain/workspaces'
  * (te same dane, które widział tryb demo).
  */
 export async function createAccountData(
-  tx: Tx,
+  transaction: Tx,
   userId: string,
   locale: Locale,
   timezone: string,
   withSamples = false,
 ) {
-  await tx.insert(t.userSettings).values({
+  await transaction.insert(schema.userSettings).values({
     userId,
     weekStartsOn: 1,
     timezone,
     locale,
     dailyReminderAt: null,
   })
-  const [workspace] = await tx
-    .insert(t.workspaces)
+  const [workspace] = await transaction
+    .insert(schema.workspaces)
     .values({ userId, name: defaultWorkspaceName(locale), color: '#3D3BF3' })
     .returning()
   await seedWorkspaceData(
-    tx,
+    transaction,
     { userId, workspaceId: workspace!.id },
     locale,
     timezone,
@@ -40,57 +40,64 @@ export async function createAccountData(
 
 /** Konfiguracja startowa przestrzeni: ustawienia dnia, skala SP, rodzaje pracy, statusy, kadencja. */
 export async function seedWorkspaceData(
-  tx: Tx,
+  transaction: Tx,
   scope: Scope,
   locale: Locale,
   timezone: string,
   withSamples = false,
 ) {
-  const ws = seedWorkspace(locale, withSamples, timezone)
+  const workspace = seedWorkspace(locale, withSamples, timezone)
   const own = <T extends object>(rows: Array<T>) =>
-    rows.map((r) => ({ ...r, ...owner(scope) }))
+    rows.map((row) => ({ ...row, ...owner(scope) }))
 
-  await tx.insert(t.workspaceSettings).values({
+  await transaction.insert(schema.workspaceSettings).values({
     ...owner(scope),
-    workdayTargetMinutes: ws.settings.workdayTargetMinutes,
-    workingDays: ws.settings.workingDays,
-    timeRoundingMinutes: ws.settings.timeRoundingMinutes,
-    summaryTemplate: ws.settings.summaryTemplate,
-    breakMinutes: ws.settings.breakMinutes,
+    workdayTargetMinutes: workspace.settings.workdayTargetMinutes,
+    workingDays: workspace.settings.workingDays,
+    timeRoundingMinutes: workspace.settings.timeRoundingMinutes,
+    summaryTemplate: workspace.settings.summaryTemplate,
+    breakMinutes: workspace.settings.breakMinutes,
   })
-  await tx.insert(t.storyPointScale).values(own(ws.spScale))
-  await tx.insert(t.taskTypes).values(
-    own(ws.taskTypes).map((x) => ({
-      ...x,
-      archivedAt: x.archivedAt ? new Date(x.archivedAt) : null,
+  await transaction
+    .insert(schema.storyPointScale)
+    .values(own(workspace.spScale))
+  await transaction.insert(schema.taskTypes).values(
+    own(workspace.taskTypes).map((row) => ({
+      ...row,
+      archivedAt: row.archivedAt ? new Date(row.archivedAt) : null,
     })),
   )
-  await tx.insert(t.taskStatuses).values(
-    own(ws.statuses).map((x) => ({
-      ...x,
-      archivedAt: x.archivedAt ? new Date(x.archivedAt) : null,
+  await transaction.insert(schema.taskStatuses).values(
+    own(workspace.statuses).map((row) => ({
+      ...row,
+      archivedAt: row.archivedAt ? new Date(row.archivedAt) : null,
     })),
   )
-  if (ws.cadence)
-    await tx.insert(t.sprintCadences).values({ ...owner(scope), ...ws.cadence })
-  if (ws.projects.length)
-    await tx.insert(t.projects).values(
-      own(ws.projects).map((x) => ({
-        ...x,
-        archivedAt: x.archivedAt ? new Date(x.archivedAt) : null,
+  if (workspace.cadence)
+    await transaction
+      .insert(schema.sprintCadences)
+      .values({ ...owner(scope), ...workspace.cadence })
+  if (workspace.projects.length)
+    await transaction.insert(schema.projects).values(
+      own(workspace.projects).map((row) => ({
+        ...row,
+        archivedAt: row.archivedAt ? new Date(row.archivedAt) : null,
       })),
     )
-  if (ws.tags.length) await tx.insert(t.tags).values(own(ws.tags))
-  if (ws.templates.length)
-    await tx.insert(t.quickTemplates).values(own(ws.templates))
-  const entries = ws.entries ?? []
+  if (workspace.tags.length)
+    await transaction.insert(schema.tags).values(own(workspace.tags))
+  if (workspace.templates.length)
+    await transaction
+      .insert(schema.quickTemplates)
+      .values(own(workspace.templates))
+  const entries = workspace.entries ?? []
   if (entries.length)
-    await tx.insert(t.timeEntries).values(
-      own(entries).map((e) => ({
-        ...e,
-        startedAt: e.startedAt ? new Date(e.startedAt) : null,
-        createdAt: new Date(e.createdAt),
-        finishedAt: e.finishedAt ? new Date(e.finishedAt) : null,
+    await transaction.insert(schema.timeEntries).values(
+      own(entries).map((entry) => ({
+        ...entry,
+        startedAt: entry.startedAt ? new Date(entry.startedAt) : null,
+        createdAt: new Date(entry.createdAt),
+        finishedAt: entry.finishedAt ? new Date(entry.finishedAt) : null,
       })),
     )
 }

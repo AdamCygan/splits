@@ -25,13 +25,13 @@ export function useDayViewModel(date: string) {
   const dayOff = useQuery(daysOffQuery(date, date)).data?.[0]
   const updateNote = useUpdateNote()
   const today = todayIn(settings?.timezone)
-  const list = (entries.data ?? []).filter((e) => !e.running)
+  const list = (entries.data ?? []).filter((entry) => !entry.running)
   const summary = daySummary(
     list,
-    breaks.filter((b) => !b.running),
+    breaks.filter((workBreak) => !workBreak.running),
     types,
   )
-  const typeOf = (id: string | null) => types.find((x) => x.id === id)
+  const typeOf = (id: string | null) => types.find((type) => type.id === id)
 
   return {
     date,
@@ -47,13 +47,16 @@ export function useDayViewModel(date: string) {
     typeOf,
     /** Kolor rodzaju pracy (z zapasowym, gdy rodzaj zniknął). */
     colorOf: (id: string | null) => typeOf(id)?.color ?? 'var(--wt-custom)',
-    projectOf: (id: string | null) => projects.find((p) => p.id === id),
+    projectOf: (id: string | null) =>
+      projects.find((project) => project.id === id),
     sessionsOf: (key: string) => sessionsOfTask(list, key),
     saveNote: (id: string, note: string) =>
       updateNote.mutateAsync({ id, note }),
     /** Odcinek pracy na osi otwiera stronę zadania. */
     openBlock: (block: DayBlock | undefined) => {
-      const row = summary.tasks.find((r) => r.key === block?.taskKey)
+      const row = summary.tasks.find(
+        (taskRow) => taskRow.key === block?.taskKey,
+      )
       if (!block || block.kind !== 'work' || !row) return
       void navigate({
         to: '/app/task',

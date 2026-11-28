@@ -22,39 +22,43 @@ export type { TodayRequest } from '../../controllers/use-today'
  * w `useTodayViewModel`, a lista ma własny `useEntryListViewModel`.
  */
 export function TodayPage(props: TodayProps) {
-  const vm = useTodayViewModel(props)
-  const { t, isToday, workDate } = vm
+  const viewModel = useTodayViewModel(props)
+  const { t: messages, isToday, workDate } = viewModel
   return (
     <div className="mx-auto max-w-6xl">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-ink-soft">{vm.dateLabel}</p>
-          <h1 className="type-display text-4xl sm:text-5xl">{vm.heading}</h1>
+          <p className="text-sm font-medium text-ink-soft">
+            {viewModel.dateLabel}
+          </p>
+          <h1 className="type-display text-4xl sm:text-5xl">
+            {viewModel.heading}
+          </h1>
         </div>
         <div className="flex flex-wrap items-start gap-2 sm:justify-end">
           {isToday && <StartBreakButton date={workDate} />}
           <DayOffButton date={workDate} />
           <DayPicker
             value={workDate}
-            today={vm.today}
-            min={vm.minDate}
-            limited={vm.limited}
-            onChange={vm.changeDate}
+            today={viewModel.today}
+            min={viewModel.minDate}
+            limited={viewModel.limited}
+            onChange={viewModel.changeDate}
           />
         </div>
       </header>
 
       <DayOffBanner date={workDate} />
-      <DayStats vm={vm} />
+      <DayStats viewModel={viewModel} />
 
       <QuickTemplates
         workDate={workDate}
         isToday={isToday}
-        requested={vm.templateRequest}
-        onRequestDone={vm.onRequestDone}
+        requested={viewModel.templateRequest}
+        onRequestDone={viewModel.onRequestDone}
       />
 
-      {isToday && <UnfinishedTasks today={vm.today} />}
+      {isToday && <UnfinishedTasks today={viewModel.today} />}
 
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         <section
@@ -63,17 +67,17 @@ export function TodayPage(props: TodayProps) {
         >
           <header className="border-b border-line px-5 py-4 sm:px-6">
             <h2 id="log-time" className="type-heading text-2xl">
-              {t.form.title}
+              {messages.form.title}
             </h2>
             <p className="mt-1 text-sm text-ink-soft">
               {isToday
-                ? t.form.lead
-                : fmt(t.day.pastLead, { date: vm.dateLabel })}
+                ? messages.form.lead
+                : fmt(messages.day.pastLead, { date: viewModel.dateLabel })}
             </p>
           </header>
           <div className="px-5 py-5 sm:px-6">
-            <TaskSearch isToday={isToday} onUse={vm.useTask} />
-            <EntryForm workDate={workDate} prefill={vm.prefill} />
+            <TaskSearch isToday={isToday} onUse={viewModel.useTask} />
+            <EntryForm workDate={workDate} prefill={viewModel.prefill} />
           </div>
         </section>
 
@@ -84,20 +88,20 @@ export function TodayPage(props: TodayProps) {
           <header className="border-b border-line px-5 py-4 sm:px-6">
             <h2 id="today-entries" className="type-heading text-2xl">
               {isToday
-                ? t.list.title
-                : fmt(t.day.listTitle, { date: vm.shortDate })}
+                ? messages.list.title
+                : fmt(messages.day.listTitle, { date: viewModel.shortDate })}
             </h2>
           </header>
-          {vm.entries.length === 0 ? (
+          {viewModel.entries.length === 0 ? (
             <p className="px-5 py-6 text-ink-soft sm:px-6">
-              {vm.entriesPending
+              {viewModel.entriesPending
                 ? '…'
                 : isToday
-                  ? t.list.empty
-                  : t.day.listEmpty}
+                  ? messages.list.empty
+                  : messages.day.listEmpty}
             </p>
           ) : (
-            <EntryList entries={vm.entries} />
+            <EntryList entries={viewModel.entries} />
           )}
         </section>
       </div>

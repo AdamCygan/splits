@@ -30,17 +30,17 @@ export function FieldLabel({
 }
 
 export interface FieldErrorProps {
-  vm: EntryFormViewModel
+  viewModel: EntryFormViewModel
   field: EntryField
 }
 
 /** Błąd pola (po próbie zapisu), powiązany z polem przez aria-describedby. */
-export function FieldError({ vm, field }: FieldErrorProps) {
-  const text = vm.issueText(field)
+export function FieldError({ viewModel, field }: FieldErrorProps) {
+  const text = viewModel.issueText(field)
   if (!text) return null
   return (
     <p
-      id={`${vm.fieldId(field)}-error`}
+      id={`${viewModel.fieldId(field)}-error`}
       className="mt-1.5 text-sm text-destructive"
     >
       {text}
@@ -50,14 +50,14 @@ export function FieldError({ vm, field }: FieldErrorProps) {
 
 /** Wspólne atrybuty dostępności pola: id, aria-invalid i aria-describedby. */
 export function fieldA11y(
-  vm: EntryFormViewModel,
+  viewModel: EntryFormViewModel,
   field: EntryField,
   hint?: boolean,
 ) {
   return {
-    id: vm.fieldId(field),
-    'aria-invalid': vm.issueText(field) ? true : undefined,
-    'aria-describedby': vm.describedBy(field, hint),
+    id: viewModel.fieldId(field),
+    'aria-invalid': viewModel.issueText(field) ? true : undefined,
+    'aria-describedby': viewModel.describedBy(field, hint),
   }
 }
 

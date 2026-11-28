@@ -58,31 +58,36 @@ export function validateScale(
   if (steps.length === 0) return [{ code: 'empty' }]
   if (steps.length > SCALE_LIMITS.maxSteps) return [{ code: 'too_many' }]
   const issues: Array<ScaleIssue> = []
-  steps.forEach((s, index) => {
+  steps.forEach((scaleStepDraft, index) => {
     if (
       !(
-        s.points >= SCALE_LIMITS.minPoints && s.points <= SCALE_LIMITS.maxPoints
+        scaleStepDraft.points >= SCALE_LIMITS.minPoints &&
+        scaleStepDraft.points <= SCALE_LIMITS.maxPoints
       ) ||
-      Math.round(s.points * 10) !== s.points * 10
+      Math.round(scaleStepDraft.points * 10) !== scaleStepDraft.points * 10
     ) {
       issues.push({ code: 'points_range', index })
     }
     if (!(
-      Number.isInteger(s.maxMinutes) &&
-      s.maxMinutes >= 1 &&
-      s.maxMinutes <= SCALE_LIMITS.maxMinutes
+      Number.isInteger(scaleStepDraft.maxMinutes) &&
+      scaleStepDraft.maxMinutes >= 1 &&
+      scaleStepDraft.maxMinutes <= SCALE_LIMITS.maxMinutes
     )) {
       issues.push({ code: 'minutes_range', index })
     }
-    if (steps.findIndex((o) => o.points === s.points) !== index)
+    if (
+      steps.findIndex(
+        (otherStep) => otherStep.points === scaleStepDraft.points,
+      ) !== index
+    )
       issues.push({ code: 'duplicate_points', index })
   })
   const sorted = [...steps]
-    .map((s, index) => ({ ...s, index }))
-    .sort((a, b) => a.points - b.points)
-  for (let i = 1; i < sorted.length; i++) {
-    if (sorted[i]!.maxMinutes <= sorted[i - 1]!.maxMinutes)
-      issues.push({ code: 'not_increasing', index: sorted[i]!.index })
+    .map((scaleStepDraft, index) => ({ ...scaleStepDraft, index }))
+    .sort((left, right) => left.points - right.points)
+  for (let index = 1; index < sorted.length; index++) {
+    if (sorted[index]!.maxMinutes <= sorted[index - 1]!.maxMinutes)
+      issues.push({ code: 'not_increasing', index: sorted[index]!.index })
   }
   return issues
 }
@@ -90,17 +95,19 @@ export function validateScale(
 export function sortScale<T extends ScaleStepDraft>(
   steps: ReadonlyArray<T>,
 ): Array<T> {
-  return [...steps].sort((a, b) => a.points - b.points)
+  return [...steps].sort((left, right) => left.points - right.points)
 }
 
 /** Przedział czasu dla wartości SP: od limitu poprzedniej wartości do własnego limitu. */
 export function rangeFor(steps: ReadonlyArray<ScaleStepDraft>, points: number) {
   const sorted = sortScale(steps)
-  const i = sorted.findIndex((s) => s.points === points)
-  if (i < 0) return null
+  const index = sorted.findIndex(
+    (scaleStepDraft) => scaleStepDraft.points === points,
+  )
+  if (index < 0) return null
   return {
-    min: i === 0 ? 0 : sorted[i - 1]!.maxMinutes,
-    max: sorted[i]!.maxMinutes,
+    min: index === 0 ? 0 : sorted[index - 1]!.maxMinutes,
+    max: sorted[index]!.maxMinutes,
   }
 }
 
@@ -109,7 +116,11 @@ export function suggestPoints(
   steps: ReadonlyArray<ScaleStepDraft>,
   minutes: number,
 ) {
-  return sortScale(steps).find((s) => minutes <= s.maxMinutes)?.points ?? null
+  return (
+    sortScale(steps).find(
+      (scaleStepDraft) => minutes <= scaleStepDraft.maxMinutes,
+    )?.points ?? null
+  )
 }
 
 /**
@@ -123,7 +134,7 @@ export function taskBudget(
 ): number | null {
   if (estimateMinutes !== null) return estimateMinutes
   if (storyPoints === null) return null
-  return scale.find((s) => s.points === storyPoints)?.maxMinutes ?? null
+  return scale.find((step) => step.points === storyPoints)?.maxMinutes ?? null
 }
 
 /**

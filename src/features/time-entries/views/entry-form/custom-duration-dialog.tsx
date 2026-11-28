@@ -24,7 +24,7 @@ export function CustomDurationDialog({
   onClose,
   onApply,
 }: CustomDurationDialogProps) {
-  const t = useMessages(entriesMessages)
+  const messages = useMessages(entriesMessages)
   const app = useMessages(appMessages)
   const format = useFormat()
   const id = useId()
@@ -37,8 +37,8 @@ export function CustomDurationDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         size="sm"
-        title={`${t.form.custom.title}: ${type.name}`}
-        description={t.form.custom.description}
+        title={`${messages.form.custom.title}: ${type.name}`}
+        description={messages.form.custom.description}
         closeLabel={app.actions.close}
         footer={
           <>
@@ -46,7 +46,7 @@ export function CustomDurationDialog({
               {app.actions.cancel}
             </Button>
             <Button type="submit" form={`${id}-form`}>
-              {t.form.custom.apply}
+              {messages.form.custom.apply}
             </Button>
           </>
         }
@@ -54,15 +54,15 @@ export function CustomDurationDialog({
         <form
           id={`${id}-form`}
           noValidate
-          onSubmit={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
+          onSubmit={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
             setSubmitted(true)
             if (valid) onApply(minutes)
           }}
         >
           <label htmlFor={`${id}-input`} className="block text-sm font-medium">
-            {t.form.custom.label}
+            {messages.form.custom.label}
           </label>
           <Input
             id={`${id}-input`}
@@ -73,7 +73,7 @@ export function CustomDurationDialog({
             aria-invalid={submitted && !valid ? true : undefined}
             aria-describedby={`${id}-status`}
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(event) => setValue(event.target.value)}
           />
           <p
             id={`${id}-status`}
@@ -84,7 +84,7 @@ export function CustomDurationDialog({
             )}
           >
             {submitted && !valid
-              ? t.form.custom.error
+              ? messages.form.custom.error
               : valid
                 ? `= ${format.minutes(minutes)}`
                 : ''}

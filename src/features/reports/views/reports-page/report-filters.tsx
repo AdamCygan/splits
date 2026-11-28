@@ -11,75 +11,83 @@ import { reportsMessages } from '#/i18n/messages/reports'
 import type { ReportsViewModel } from '../../controllers/use-reports'
 
 export interface ReportFiltersProps {
-  vm: ReportsViewModel
+  viewModel: ReportsViewModel
 }
 
 /** Okres (sprinty i kalendarz, własne daty), rodzaj pracy i eksport CSV. */
-export function ReportFilters({ vm }: ReportFiltersProps) {
-  const t = useMessages(reportsMessages)
+export function ReportFilters({ viewModel }: ReportFiltersProps) {
+  const messages = useMessages(reportsMessages)
   return (
     <section
-      aria-label={t.filters}
+      aria-label={messages.filters}
       className="mb-6 flex flex-wrap items-end gap-4 rounded-2xl border border-line bg-surface p-4 sm:p-5"
     >
-      <Field label={t.period} className="w-full sm:w-72">
-        {(a) => (
+      <Field label={messages.period} className="w-full sm:w-72">
+        {(fieldProps) => (
           <Select
-            {...a}
-            value={vm.period}
-            onChange={(e) => vm.choosePeriod(e.target.value as ReportPeriod)}
+            {...fieldProps}
+            value={viewModel.period}
+            onChange={(event) =>
+              viewModel.choosePeriod(event.target.value as ReportPeriod)
+            }
           >
-            {vm.recent.length > 0 && (
-              <optgroup label={t.sprintsGroup}>
-                {vm.recent.map((s) => (
-                  <option key={s.id} value={`sprint:${s.id}`}>
-                    {s.id === vm.current?.id
-                      ? fmt(t.currentSprint, { name: s.name })
-                      : s.name}
+            {viewModel.recent.length > 0 && (
+              <optgroup label={messages.sprintsGroup}>
+                {viewModel.recent.map((sprint) => (
+                  <option key={sprint.id} value={`sprint:${sprint.id}`}>
+                    {sprint.id === viewModel.current?.id
+                      ? fmt(messages.currentSprint, { name: sprint.name })
+                      : sprint.name}
                   </option>
                 ))}
               </optgroup>
             )}
-            <optgroup label={t.calendarGroup}>
-              {REPORT_PRESETS.map((p) => (
-                <option key={p} value={p}>
-                  {t.presets[p]}
+            <optgroup label={messages.calendarGroup}>
+              {REPORT_PRESETS.map((reportPreset) => (
+                <option key={reportPreset} value={reportPreset}>
+                  {messages.presets[reportPreset]}
                 </option>
               ))}
-              <option value="custom">{t.presets.custom}</option>
+              <option value="custom">{messages.presets.custom}</option>
             </optgroup>
           </Select>
         )}
       </Field>
 
-      {vm.period === 'custom' && (
+      {viewModel.period === 'custom' && (
         <>
           <Field
-            label={t.from}
+            label={messages.from}
             className="w-[calc(50%-0.5rem)] sm:w-44"
-            error={vm.customValid ? null : t.rangeError}
+            error={viewModel.customValid ? null : messages.rangeError}
           >
-            {(a) => (
+            {(fieldProps) => (
               <Input
-                {...a}
+                {...fieldProps}
                 type="date"
-                value={vm.custom.from}
-                max={vm.custom.to}
-                onChange={(e) =>
-                  vm.setCustom({ ...vm.custom, from: e.target.value })
+                value={viewModel.custom.from}
+                max={viewModel.custom.to}
+                onChange={(event) =>
+                  viewModel.setCustom({
+                    ...viewModel.custom,
+                    from: event.target.value,
+                  })
                 }
               />
             )}
           </Field>
-          <Field label={t.to} className="w-[calc(50%-0.5rem)] sm:w-44">
-            {(a) => (
+          <Field label={messages.to} className="w-[calc(50%-0.5rem)] sm:w-44">
+            {(fieldProps) => (
               <Input
-                {...a}
+                {...fieldProps}
                 type="date"
-                value={vm.custom.to}
-                min={vm.custom.from}
-                onChange={(e) =>
-                  vm.setCustom({ ...vm.custom, to: e.target.value })
+                value={viewModel.custom.to}
+                min={viewModel.custom.from}
+                onChange={(event) =>
+                  viewModel.setCustom({
+                    ...viewModel.custom,
+                    to: event.target.value,
+                  })
                 }
               />
             )}
@@ -87,17 +95,17 @@ export function ReportFilters({ vm }: ReportFiltersProps) {
         </>
       )}
 
-      <Field label={t.type} className="w-full sm:w-60">
-        {(a) => (
+      <Field label={messages.type} className="w-full sm:w-60">
+        {(fieldProps) => (
           <Select
-            {...a}
-            value={vm.typeId}
-            onChange={(e) => vm.setTypeId(e.target.value)}
+            {...fieldProps}
+            value={viewModel.typeId}
+            onChange={(event) => viewModel.setTypeId(event.target.value)}
           >
-            <option value="">{t.allTypes}</option>
-            {vm.activeTypes.map((x) => (
-              <option key={x.id} value={x.id}>
-                {x.name}
+            <option value="">{messages.allTypes}</option>
+            {viewModel.activeTypes.map((archivable) => (
+              <option key={archivable.id} value={archivable.id}>
+                {archivable.name}
               </option>
             ))}
           </Select>
@@ -105,22 +113,22 @@ export function ReportFilters({ vm }: ReportFiltersProps) {
       </Field>
 
       <div className="sm:ml-auto">
-        {vm.isFree ? (
+        {viewModel.isFree ? (
           <Link
             to="/app/settings/plan"
             className={buttonVariants({ variant: 'outline' })}
           >
             <Download aria-hidden className="size-4" />
-            {t.exportPro}
+            {messages.exportPro}
           </Link>
         ) : (
           <Button
             variant="outline"
-            onClick={vm.exportCsv}
-            disabled={vm.sorted.length === 0}
+            onClick={viewModel.exportCsv}
+            disabled={viewModel.sorted.length === 0}
           >
             <Download aria-hidden className="size-4" />
-            {t.exportCsv}
+            {messages.exportCsv}
           </Button>
         )}
       </div>

@@ -1,8 +1,8 @@
 import { inScope, owner } from '#/server/db/scope'
 import type { Scope } from '#/server/db/scope'
 import { asc } from 'drizzle-orm'
-import { db } from '#/server/db/client'
-import * as t from '#/server/db/schema'
+import { database } from '#/server/db/client'
+import * as schema from '#/server/db/schema'
 import { toScaleStep } from './mappers.server'
 
 export interface ScaleStepInput {
@@ -12,11 +12,11 @@ export interface ScaleStepInput {
 
 /** Skala story pointów konta, od najmniejszej wartości. */
 export async function getScale(scope: Scope) {
-  const rows = await db
+  const rows = await database
     .select()
-    .from(t.storyPointScale)
-    .where(inScope(t.storyPointScale, scope))
-    .orderBy(asc(t.storyPointScale.points))
+    .from(schema.storyPointScale)
+    .where(inScope(schema.storyPointScale, scope))
+    .orderBy(asc(schema.storyPointScale.points))
   return rows.map(toScaleStep)
 }
 
@@ -25,12 +25,16 @@ export async function replaceScale(
   scope: Scope,
   steps: ReadonlyArray<ScaleStepInput>,
 ) {
-  const rows = await db.transaction(async (tx) => {
-    await tx.delete(t.storyPointScale).where(inScope(t.storyPointScale, scope))
-    return tx
-      .insert(t.storyPointScale)
-      .values(steps.map((s) => ({ ...s, ...owner(scope) })))
+  const rows = await database.transaction(async (transaction) => {
+    await transaction
+      .delete(schema.storyPointScale)
+      .where(inScope(schema.storyPointScale, scope))
+    return transaction
+      .insert(schema.storyPointScale)
+      .values(
+        steps.map((scaleStepInput) => ({ ...scaleStepInput, ...owner(scope) })),
+      )
       .returning()
   })
-  return rows.sort((a, b) => a.points - b.points).map(toScaleStep)
+  return rows.sort((left, right) => left.points - right.points).map(toScaleStep)
 }

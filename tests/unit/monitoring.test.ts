@@ -8,7 +8,7 @@ import {
 
 const DSN = 'https://abc123@o42.ingest.de.sentry.io/7'
 
-afterEach(() => setMonitoringForTests({ fetch: fetch, dsn: undefined }))
+afterEach(() => setMonitoringForTests({ fetch, dsn: undefined }))
 
 describe('monitoring (Sentry envelope)', () => {
   it('Should read the EU ingest endpoint and key from the DSN', () => {

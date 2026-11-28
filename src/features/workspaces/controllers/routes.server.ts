@@ -24,8 +24,8 @@ import {
 } from '../data/repository.server'
 
 /** Ciasteczko bieżącej przestrzeni: tylko dla serwera, ważne rok (każda przeglądarka osobno). */
-const remember = (c: Parameters<typeof setCookie>[0], id: string) =>
-  setCookie(c, WORKSPACE_COOKIE, id, {
+const remember = (context: Parameters<typeof setCookie>[0], id: string) =>
+  setCookie(context, WORKSPACE_COOKIE, id, {
     path: '/',
     httpOnly: true,
     sameSite: 'Lax',
@@ -34,47 +34,59 @@ const remember = (c: Parameters<typeof setCookie>[0], id: string) =>
   })
 
 export const workspaceRoutes = new Hono<AppEnv>()
-  .get('/', async (c) => c.json(await getWorkspaceState(scopeOf(c))))
-  .post('/', async (c) => {
-    const input = await body(c, workspaceCreateInput)
-    return c.json(await createWorkspace(c.get('userId'), input), 201)
-  })
-  /** Przełączenie: następne żądania tej przeglądarki dotyczą wybranej przestrzeni. */
-  .put('/current', async (c) => {
-    const { id } = await body(c, currentInput)
-    await assertOwnWorkspace(c.get('userId'), id)
-    remember(c, id)
-    return c.json(
-      await getWorkspaceState({ userId: c.get('userId'), workspaceId: id }),
+  .get('/', async (context) =>
+    context.json(await getWorkspaceState(scopeOf(context))),
+  )
+  .post('/', async (context) => {
+    const input = await body(context, workspaceCreateInput)
+    return context.json(
+      await createWorkspace(context.get('userId'), input),
+      201,
     )
   })
-  .put('/order', async (c) => {
-    const { ids } = await body(c, idsInput)
-    return c.json(await reorderWorkspaces(c.get('userId'), ids))
+  /** Przełączenie: następne żądania tej przeglądarki dotyczą wybranej przestrzeni. */
+  .put('/current', async (context) => {
+    const { id } = await body(context, currentInput)
+    await assertOwnWorkspace(context.get('userId'), id)
+    remember(context, id)
+    return context.json(
+      await getWorkspaceState({
+        userId: context.get('userId'),
+        workspaceId: id,
+      }),
+    )
   })
-  .put('/prefs', async (c) => {
-    const input = await body(c, prefsInput)
-    await updatePrefs(c.get('userId'), input)
-    return c.json(await getWorkspaceState(scopeOf(c)))
+  .put('/order', async (context) => {
+    const { ids } = await body(context, idsInput)
+    return context.json(await reorderWorkspaces(context.get('userId'), ids))
   })
-  .put('/:id', async (c) => {
-    const input = await body(c, workspaceInput)
-    return c.json(
-      await updateWorkspace(c.get('userId'), c.req.param('id'), input),
+  .put('/prefs', async (context) => {
+    const input = await body(context, prefsInput)
+    await updatePrefs(context.get('userId'), input)
+    return context.json(await getWorkspaceState(scopeOf(context)))
+  })
+  .put('/:id', async (context) => {
+    const input = await body(context, workspaceInput)
+    return context.json(
+      await updateWorkspace(
+        context.get('userId'),
+        context.req.param('id'),
+        input,
+      ),
     )
   })
   /** Kopiuje wybrane rzeczy z innej przestrzeni do tej (łączy z tym, co już jest). */
-  .post('/:id/copy', async (c) => {
-    const input = await body(c, workspaceCopyInput)
+  .post('/:id/copy', async (context) => {
+    const input = await body(context, workspaceCopyInput)
     await copyToWorkspace(
-      c.get('userId'),
-      c.req.param('id'),
+      context.get('userId'),
+      context.req.param('id'),
       input.from,
       input.copy,
     )
-    return c.body(null, 204)
+    return context.body(null, 204)
   })
-  .delete('/:id', async (c) => {
-    await deleteWorkspace(c.get('userId'), c.req.param('id'))
-    return c.body(null, 204)
+  .delete('/:id', async (context) => {
+    await deleteWorkspace(context.get('userId'), context.req.param('id'))
+    return context.body(null, 204)
   })

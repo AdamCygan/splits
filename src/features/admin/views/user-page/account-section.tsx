@@ -9,31 +9,33 @@ import { PLANS } from '../../domain/filters'
 import type { UserPageViewModel } from '../../controllers/use-user-page'
 
 export interface SectionProps {
-  vm: UserPageViewModel
+  viewModel: UserPageViewModel
 }
 
 /** Dane konta i liczniki, plan, rola administratora i blokada. */
-export function AccountSection({ vm }: SectionProps) {
-  const t = useMessages(adminMessages)
-  const a = t.user.account
+export function AccountSection({ viewModel }: SectionProps) {
+  const messages = useMessages(adminMessages)
+  const account = messages.user.account
   const format = useFormat()
   const { locale } = useI18n()
-  const u = vm.user
-  if (!u) return null
+  const user = viewModel.user
+  if (!user) return null
   const day = (value: string | null) =>
-    value ? formatDate(locale, new Date(value)) : t.never
+    value ? formatDate(locale, new Date(value)) : messages.never
   return (
-    <Panel title={a.title}>
+    <Panel title={account.title}>
       <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-[0.9375rem] sm:grid-cols-3">
         {(
           [
-            [a.joined, day(u.createdAt)],
-            [a.lastLogin, day(u.lastLoginAt)],
-            [a.lastActive, day(u.lastActiveAt)],
-            [a.entries, format.number(u.entries, 0)],
+            [account.joined, day(user.createdAt)],
+            [account.lastLogin, day(user.lastLoginAt)],
+            [account.lastActive, day(user.lastActiveAt)],
+            [account.entries, format.number(user.entries, 0)],
             [
-              a.lastEntry,
-              u.lastEntryOn ? formatDate(locale, u.lastEntryOn) : t.never,
+              account.lastEntry,
+              user.lastEntryOn
+                ? formatDate(locale, user.lastEntryOn)
+                : messages.never,
             ],
           ] as const
         ).map(([label, value]) => (
@@ -44,41 +46,43 @@ export function AccountSection({ vm }: SectionProps) {
         ))}
       </dl>
 
-      {vm.locked && (
+      {viewModel.locked && (
         <p className="mt-5 rounded-lg border border-line bg-muted/50 px-3.5 py-3 text-sm">
-          {u.isOwner && !vm.self ? a.owner : a.self}
+          {user.isOwner && !viewModel.self ? account.owner : account.self}
         </p>
       )}
-      {u.isDemo && (
+      {user.isDemo && (
         <p className="mt-5 rounded-lg border border-line bg-muted/50 px-3.5 py-3 text-sm">
-          {a.demo}
+          {account.demo}
         </p>
       )}
 
-      {!u.isDemo && (
+      {!user.isDemo && (
         <div className="mt-5 border-t border-line pt-5">
-          <Field label={a.plan} hint={a.planHint}>
+          <Field label={account.plan} hint={account.planHint}>
             {(control) => (
               <div className="flex max-w-md gap-2">
                 <div className="flex-1">
                   <Select
                     {...control}
-                    value={vm.plan}
-                    onChange={(e) => vm.setPlan(e.target.value as PlanCode)}
+                    value={viewModel.plan}
+                    onChange={(event) =>
+                      viewModel.setPlan(event.target.value as PlanCode)
+                    }
                   >
-                    {PLANS.map((p) => (
-                      <option key={p} value={p}>
-                        {t.plans[p]}
+                    {PLANS.map((plan) => (
+                      <option key={plan} value={plan}>
+                        {messages.plans[plan]}
                       </option>
                     ))}
                   </Select>
                 </div>
                 <Button
                   className="h-11"
-                  disabled={vm.busy || !vm.planChanged}
-                  onClick={vm.savePlan}
+                  disabled={viewModel.busy || !viewModel.planChanged}
+                  onClick={viewModel.savePlan}
                 >
-                  {a.savePlan}
+                  {account.savePlan}
                 </Button>
               </div>
             )}
@@ -86,40 +90,44 @@ export function AccountSection({ vm }: SectionProps) {
         </div>
       )}
 
-      {!u.isDemo && !vm.locked && (
+      {!user.isDemo && !viewModel.locked && (
         <div className="mt-5 border-t border-line pt-5">
           <Switch
-            label={a.role}
-            description={a.roleHint}
-            checked={u.role === 'admin'}
-            disabled={vm.busy}
-            onCheckedChange={vm.setRole}
+            label={account.role}
+            description={account.roleHint}
+            checked={user.role === 'admin'}
+            disabled={viewModel.busy}
+            onCheckedChange={viewModel.setRole}
           />
         </div>
       )}
 
-      {!vm.locked && (
+      {!viewModel.locked && (
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
           <p className="max-w-[46ch] text-sm text-ink-soft">
-            {u.disabledAt ? (
+            {user.disabledAt ? (
               <Badge tone="warning">
-                {fmt(a.blockedSince, { date: day(u.disabledAt) })}
+                {fmt(account.blockedSince, { date: day(user.disabledAt) })}
               </Badge>
             ) : (
-              a.blockHint
+              account.blockHint
             )}
           </p>
-          {u.disabledAt ? (
-            <Button variant="outline" disabled={vm.busy} onClick={vm.unblock}>
-              {a.unblock}
+          {user.disabledAt ? (
+            <Button
+              variant="outline"
+              disabled={viewModel.busy}
+              onClick={viewModel.unblock}
+            >
+              {account.unblock}
             </Button>
           ) : (
             <Button
               variant="outline"
-              disabled={vm.busy}
-              onClick={() => vm.openDialog('block')}
+              disabled={viewModel.busy}
+              onClick={() => viewModel.openDialog('block')}
             >
-              {a.block}
+              {account.block}
             </Button>
           )}
         </div>

@@ -31,13 +31,13 @@ interface FeedbackDialogProps {
 }
 
 function FeedbackDialog({ initialKind, onClose }: FeedbackDialogProps) {
-  const t = useMessages(feedbackMessages).dialog
+  const messages = useMessages(feedbackMessages).dialog
   const app = useMessages(appMessages)
   const isDemo = useCurrentUser()?.isDemo === true
   const form = useFeedbackForm({ initialKind, onSent: onClose })
 
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
+  const submit = (formEvent: FormEvent) => {
+    formEvent.preventDefault()
     form.submit()
   }
 
@@ -45,8 +45,8 @@ function FeedbackDialog({ initialKind, onClose }: FeedbackDialogProps) {
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         size="md"
-        title={t.title}
-        description={isDemo ? t.demo : t.lead}
+        title={messages.title}
+        description={isDemo ? messages.demo : messages.lead}
         closeLabel={app.actions.close}
         footer={
           <>
@@ -59,7 +59,7 @@ function FeedbackDialog({ initialKind, onClose }: FeedbackDialogProps) {
               disabled={form.sending}
               aria-busy={form.sending}
             >
-              {t.send}
+              {messages.send}
             </Button>
           </>
         }
@@ -71,7 +71,9 @@ function FeedbackDialog({ initialKind, onClose }: FeedbackDialogProps) {
           className="space-y-5"
         >
           <fieldset>
-            <legend className="mb-2 text-sm font-medium">{t.kind}</legend>
+            <legend className="mb-2 text-sm font-medium">
+              {messages.kind}
+            </legend>
             <div className="grid gap-2 sm:grid-cols-3">
               {FEEDBACK_KINDS.map((kind) => {
                 const Icon = KIND_ICONS[kind]
@@ -79,7 +81,7 @@ function FeedbackDialog({ initialKind, onClose }: FeedbackDialogProps) {
                 return (
                   <label
                     key={kind}
-                    title={t.kindHints[kind]}
+                    title={messages.kindHints[kind]}
                     className={cn(
                       'flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 transition-colors',
                       'has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring',
@@ -97,33 +99,35 @@ function FeedbackDialog({ initialKind, onClose }: FeedbackDialogProps) {
                       className="sr-only"
                     />
                     <Icon aria-hidden className="size-4 shrink-0" />
-                    <span className="text-sm font-medium">{t.kinds[kind]}</span>
+                    <span className="text-sm font-medium">
+                      {messages.kinds[kind]}
+                    </span>
                   </label>
                 )
               })}
             </div>
             <p className="mt-2 text-sm text-ink-soft">
-              {t.kindHints[form.kind]}
+              {messages.kindHints[form.kind]}
             </p>
           </fieldset>
 
-          <Field label={t.message} error={form.error}>
-            {(a) => (
+          <Field label={messages.message} error={form.error}>
+            {(fieldProps) => (
               <Textarea
-                {...a}
+                {...fieldProps}
                 rows={6}
                 maxLength={4000}
                 autoFocus
-                placeholder={t.placeholder[form.kind]}
+                placeholder={messages.placeholder[form.kind]}
                 value={form.message}
-                onChange={(e) => form.setMessage(e.target.value)}
+                onChange={(event) => form.setMessage(event.target.value)}
               />
             )}
           </Field>
 
           <Switch
-            label={t.context}
-            description={fmt(t.contextHint, {
+            label={messages.context}
+            description={fmt(messages.contextHint, {
               page: form.page,
               browser: form.browser,
             })}

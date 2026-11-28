@@ -27,16 +27,16 @@ export const time = z.string().regex(TIME_RE)
 
 export const requirement = z.enum(['hidden', 'optional', 'required'])
 
-export const sp = z.number().positive().max(100)
+export const storyPoints = z.number().positive().max(100)
 
 export const locale = z.enum(locales)
 
 export const timezone = z
   .string()
   .max(64)
-  .refine((tz) => {
+  .refine((timeZone) => {
     try {
-      new Intl.DateTimeFormat('en', { timeZone: tz })
+      new Intl.DateTimeFormat('en', { timeZone })
       return true
     } catch {
       return false
@@ -64,10 +64,10 @@ export const dateQuery = z.object({ date: day })
 
 /** Ciało żądania JSON zwalidowane schematem; błąd = 400 z nazwą pierwszego złego pola. */
 export async function body<T extends z.ZodType>(
-  c: Context,
+  context: Context,
   schema: T,
 ): Promise<z.infer<T>> {
-  const text = await readBody(c.req.raw)
+  const text = await readBody(context.req.raw)
   return parse(schema, parseJson(text))
 }
 

@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { encryptSecret, newTotpSecret } from '#/features/auth/data/totp.server'
-import { db } from './db/client'
+import { database } from './db/client'
 import { subscriptions, users } from './db/schema'
 import { outbox } from './email'
 import type { AppEnv } from './http/context'
@@ -35,11 +35,11 @@ const sampleInput = z.object({
  * konto z przykładowymi danymi i podgląd e-maili, które wysłałby serwer.
  */
 export const testRoutes = new Hono<AppEnv>()
-  .post('/sample-account', async (c) => {
-    const input = await body(c, sampleInput)
+  .post('/sample-account', async (context) => {
+    const input = await body(context, sampleInput)
     const id = randomUUID().slice(0, 8)
-    const session = await db.transaction(async (tx) => {
-      const user = await createAccount(tx, {
+    const session = await database.transaction(async (transaction) => {
+      const user = await createAccount(transaction, {
         username: `sample-${id}`,
         email: `sample-${id}@example.com`,
         displayName: input.locale === 'pl' ? 'Konto testowe' : 'Sample account',
@@ -50,7 +50,7 @@ export const testRoutes = new Hono<AppEnv>()
         withSamples: true,
       })
       if (input.role === 'admin' || input.twoFactor)
-        await tx
+        await transaction
           .update(users)
           .set({
             role: input.role,
@@ -64,8 +64,11 @@ export const testRoutes = new Hono<AppEnv>()
           })
           .where(eq(users.id, user.id))
       if (input.subscription) {
-        await tx.update(users).set({ plan: 'pro' }).where(eq(users.id, user.id))
-        await tx.insert(subscriptions).values({
+        await transaction
+          .update(users)
+          .set({ plan: 'pro' })
+          .where(eq(users.id, user.id))
+        await transaction.insert(subscriptions).values({
           id: `sub_test_${id}`,
           userId: user.id,
           stripeCustomerId: `cus_test_${id}`,
@@ -76,24 +79,24 @@ export const testRoutes = new Hono<AppEnv>()
         })
       }
       return openSession(
-        tx,
+        transaction,
         {
           ...user,
           role: input.role,
           plan: input.subscription ? 'pro' : user.plan,
         },
-        requestMeta(c),
+        requestMeta(context),
       )
     })
-    return c.json(respondWithSession(c, session), 201)
+    return context.json(respondWithSession(context, session), 201)
   })
 
   /** E-maile wysłane na adres (od najstarszego): test „klika” link albo przepisuje kod. */
-  .get('/outbox', (c) => {
-    const to = c.req.query('to') ?? ''
-    return c.json(
+  .get('/outbox', (context) => {
+    const to = context.req.query('to') ?? ''
+    return context.json(
       outbox
-        .filter((m) => m.to.toLowerCase() === to.toLowerCase())
+        .filter((email) => email.to.toLowerCase() === to.toLowerCase())
         .map(({ subject, text }) => ({ subject, text })),
     )
   })

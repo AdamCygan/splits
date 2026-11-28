@@ -20,8 +20,8 @@ import type { TaskPageProps } from '../../controllers/use-task'
  * coś odrywało od niego pracę i co to było, notatki, a pod spodem edycja zadania i sesji.
  */
 export function TaskPage(props: TaskPageProps) {
-  const t = useMessages(taskViewMessages)
-  const vm = useTaskViewModel(props)
+  const messages = useMessages(taskViewMessages)
+  const viewModel = useTaskViewModel(props)
   const { task } = props
   const back = (
     <Link
@@ -29,11 +29,11 @@ export function TaskPage(props: TaskPageProps) {
       className="inline-flex items-center gap-1 text-sm font-medium text-ink-soft hover:text-ink"
     >
       <ChevronLeft aria-hidden className="size-4" />
-      {t.back}
+      {messages.back}
     </Link>
   )
 
-  if (vm.pending)
+  if (viewModel.pending)
     return (
       <div className="mx-auto max-w-6xl">
         {back}
@@ -43,48 +43,48 @@ export function TaskPage(props: TaskPageProps) {
         />
       </div>
     )
-  if (!vm.insights || !vm.latest)
+  if (!viewModel.insights || !viewModel.latest)
     return (
       <div className="mx-auto max-w-6xl">
         {back}
         <h1 className="type-display mt-2 text-4xl">{task.title}</h1>
-        <p className="mt-4 text-ink-soft">{t.notFound}</p>
+        <p className="mt-4 text-ink-soft">{messages.notFound}</p>
       </div>
     )
 
   return (
     <div className="mx-auto max-w-6xl">
       {back}
-      <TaskHeader vm={vm} />
-      <TaskStats vm={vm} />
+      <TaskHeader viewModel={viewModel} />
+      <TaskStats viewModel={viewModel} />
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div className="space-y-6">
-          <TaskTimeline vm={vm} />
-          <TaskNotes vm={vm} />
+          <TaskTimeline viewModel={viewModel} />
+          <TaskNotes viewModel={viewModel} />
         </div>
         <div className="space-y-6">
-          <Interrupted vm={vm} />
+          <Interrupted viewModel={viewModel} />
           <div className="rounded-2xl border border-line bg-surface px-5 py-5 sm:px-6">
             <TaskDetails
               key={`${task.taskTypeId}|${task.link ?? ''}|${task.title}`}
-              entries={vm.sessions}
-              type={vm.type}
-              onSaved={vm.saved}
+              entries={viewModel.sessions}
+              type={viewModel.type}
+              onSaved={viewModel.saved}
             />
           </div>
         </div>
       </div>
 
       <div className="mt-6 rounded-2xl border border-line bg-surface px-5 py-5 sm:px-6">
-        <Sessions entries={vm.sessions} />
+        <Sessions entries={viewModel.sessions} />
       </div>
 
-      {vm.summarizing && (
+      {viewModel.summarizing && (
         <SummaryDialog
-          entry={vm.latest}
-          type={vm.type}
-          onClose={vm.closeSummary}
+          entry={viewModel.latest}
+          type={viewModel.type}
+          onClose={viewModel.closeSummary}
         />
       )}
     </div>

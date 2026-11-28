@@ -16,9 +16,9 @@ export function createLocalStore<T extends string>(
 
   const read = (): T => {
     try {
-      const v = localStorage.getItem(key)
-      return v !== null && (values as ReadonlyArray<string>).includes(v)
-        ? (v as T)
+      const item = localStorage.getItem(key)
+      return item !== null && (values as ReadonlyArray<string>).includes(item)
+        ? (item as T)
         : fallback
     } catch {
       return memory
@@ -33,7 +33,7 @@ export function createLocalStore<T extends string>(
     } catch {
       // Bez localStorage zostaje wartość w pamięci.
     }
-    listeners.forEach((l) => l())
+    listeners.forEach((listener) => listener())
   }
 
   const subscribe = (listener: () => void) => {
