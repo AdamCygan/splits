@@ -91,12 +91,12 @@ async function ensurePrice(productId: string, interval: BillingInterval) {
   const lookupKey = LOOKUP_KEYS[interval]
   const amount = PRO_PRICES[interval] * 100
   const current = await findPrice(lookupKey)
-  if (
+  const isUpToDate =
     current?.active &&
     current.unit_amount === amount &&
     current.tax_behavior === 'inclusive' &&
     productOf(current) === productId
-  ) {
+  if (isUpToDate) {
     console.log(
       `✓ Cena ${lookupKey} już jest: ${current.id} (${amountUsd(amount, interval)})`,
     )
@@ -221,7 +221,8 @@ async function ensurePortal(
 }
 
 async function ensureWebhook() {
-  if (!appUrl.startsWith('https://')) {
+  const isInsecureUrl = !appUrl.startsWith('https://')
+  if (isInsecureUrl) {
     console.log(
       '• Webhook pominięty (APP_URL nie jest https). Lokalnie użyj Stripe CLI:\n' +
         '  stripe listen --forward-to localhost:3000/api/v1/stripe/webhook',

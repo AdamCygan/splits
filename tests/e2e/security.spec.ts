@@ -21,8 +21,10 @@ const appPages = [
 function watchViolations(page: Page) {
   const found: Array<string> = []
   page.on('console', (message) => {
-    if (/Content Security Policy|csp-violation/i.test(message.text()))
-      found.push(message.text())
+    const isCspViolation = /Content Security Policy|csp-violation/i.test(
+      message.text(),
+    )
+    if (isCspViolation) found.push(message.text())
   })
   void page.addInitScript(() => {
     document.addEventListener('securitypolicyviolation', (event) => {

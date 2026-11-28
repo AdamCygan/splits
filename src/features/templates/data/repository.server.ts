@@ -41,23 +41,23 @@ export async function checkTemplate(
   input: TemplateRefs,
   exceptId?: string,
 ) {
-  if (!(await ownTaskType(transaction, scope, input.taskTypeId)))
-    throw new ApiError('type.unknown', 400, 'taskTypeId')
-  if (
-    input.projectId &&
-    !(await ownProject(transaction, scope, input.projectId))
-  )
-    throw invalid('projectId')
-  if (input.hotkey !== null) {
+  const isForeignType = !(await ownTaskType(
+    transaction,
+    scope,
+    input.taskTypeId,
+  ))
+  if (isForeignType) throw new ApiError('type.unknown', 400, 'taskTypeId')
+  const isForeignProject =
+    input.projectId && !(await ownProject(transaction, scope, input.projectId))
+  if (isForeignProject) throw invalid('projectId')
+  const hasHotkey = input.hotkey !== null
+  if (hasHotkey) {
     const all = await listTemplates(transaction, scope)
-    if (
-      all.some(
-        (otherTemplate) =>
-          otherTemplate.id !== exceptId &&
-          otherTemplate.hotkey === input.hotkey,
-      )
+    const isHotkeyTaken = all.some(
+      (otherTemplate) =>
+        otherTemplate.id !== exceptId && otherTemplate.hotkey === input.hotkey,
     )
-      throw conflict('hotkey_taken', 'hotkey')
+    if (isHotkeyTaken) throw conflict('hotkey_taken', 'hotkey')
   }
 }
 

@@ -28,7 +28,8 @@ export function createLocalStore<T extends string>(
   const set = (value: T) => {
     memory = value
     try {
-      if (value === fallback) localStorage.removeItem(key)
+      const isDefault = value === fallback
+      if (isDefault) localStorage.removeItem(key)
       else localStorage.setItem(key, value)
     } catch {
       // Bez localStorage zostaje wartość w pamięci.

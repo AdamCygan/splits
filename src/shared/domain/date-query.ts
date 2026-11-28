@@ -18,7 +18,8 @@ export function parseDateQuery(raw: string, today: string): string | null {
     przedwczoraj: -2,
   }
   const offset = words[query]
-  if (offset !== undefined) return addDays(today, offset)
+  const hasOffset = offset !== undefined
+  if (hasOffset) return addDays(today, offset)
   let date: string | null = null
   const isoDate = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(query)
   const dotted = /^(\d{1,2})\.(\d{1,2})(?:\.(\d{4}))?\.?$/.exec(query)
@@ -28,9 +29,10 @@ export function parseDateQuery(raw: string, today: string): string | null {
     const year = dotted[3] ?? today.slice(0, 4)
     date = `${year}-${pad(Number(dotted[2]))}-${pad(Number(dotted[1]))}`
     // 20.12 w styczniu to grudzień zeszłego roku, nie przyszłość.
-    if (!dotted[3] && isValidDate(date) && date > today)
-      date = `${Number(year) - 1}${date.slice(4)}`
+    const isFutureDayOfMonth = !dotted[3] && isValidDate(date) && date > today
+    if (isFutureDayOfMonth) date = `${Number(year) - 1}${date.slice(4)}`
   }
-  if (!date || !isValidDate(date) || date > today) return null
+  const isInvalidDate = !date || !isValidDate(date) || date > today
+  if (isInvalidDate) return null
   return date
 }

@@ -112,6 +112,9 @@ export function DayTimeline({ viewModel }: DayTimelineProps) {
                 : event.key === 'ArrowLeft'
                   ? -1
                   : 0
+            const isHomeKey = event.key === 'Home'
+            const isEndKey = event.key === 'End'
+            const isOpenKey = event.key === 'Enter' || event.key === ' '
             if (move)
               setActive((previousIndex) =>
                 Math.min(
@@ -119,10 +122,9 @@ export function DayTimeline({ viewModel }: DayTimelineProps) {
                   Math.max(0, (previousIndex ?? -1) + move),
                 ),
               )
-            else if (event.key === 'Home') setActive(0)
-            else if (event.key === 'End') setActive(blocks.length - 1)
-            else if (event.key === 'Enter' || event.key === ' ')
-              viewModel.openBlock(current)
+            else if (isHomeKey) setActive(0)
+            else if (isEndKey) setActive(blocks.length - 1)
+            else if (isOpenKey) viewModel.openBlock(current)
             else return
             event.preventDefault()
           }}

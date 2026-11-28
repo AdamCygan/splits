@@ -57,7 +57,8 @@ export function useDayViewModel(date: string) {
       const row = summary.tasks.find(
         (taskRow) => taskRow.key === block?.taskKey,
       )
-      if (!block || block.kind !== 'work' || !row) return
+      const isNotWorkBlock = !block || block.kind !== 'work' || !row
+      if (isNotWorkBlock) return
       void navigate({
         to: '/app/task',
         search: {

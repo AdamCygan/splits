@@ -66,7 +66,8 @@ export const fromMinutes = (minutes: number) => {
 
 /** Czas między godzinami w obrębie dnia; null, gdy koniec nie jest po początku. */
 export function minutesBetween(start: string, end: string): number | null {
-  if (!TIME_RE.test(start) || !TIME_RE.test(end)) return null
+  const isInvalidTime = !TIME_RE.test(start) || !TIME_RE.test(end)
+  if (isInvalidTime) return null
   const diff = toMinutes(end) - toMinutes(start)
   return diff > 0 ? diff : null
 }
@@ -78,13 +79,15 @@ export function minutesBetween(start: string, end: string): number | null {
 export function parseDuration(raw: string): number | null {
   const text = raw.trim().toLowerCase().replace(',', '.')
   if (!text) return null
-  if (/^\d+$/.test(text)) return Number(text)
+  const isPlainMinutes = /^\d+$/.test(text)
+  if (isPlainMinutes) return Number(text)
   const clock = text.match(/^(\d{1,2}):([0-5]\d)$/)
   if (clock) return Number(clock[1]) * 60 + Number(clock[2])
   const parts = text.match(
     /^(?:(\d+(?:\.\d+)?)\s*(?:h|godz|hours?)\s*)?(?:(\d+)\s*(?:m|min|minutes?)?)?$/,
   )
-  if (!parts || (!parts[1] && !parts[2])) return null
+  const isUnparsable = !parts || (!parts[1] && !parts[2])
+  if (isUnparsable) return null
   const minutes = Math.round(Number(parts[1] ?? 0) * 60 + Number(parts[2] ?? 0))
   return minutes > 0 ? minutes : null
 }
@@ -92,115 +95,172 @@ export function parseDuration(raw: string): number | null {
 const needs = (requirement: FieldRequirement, value: string | null) =>
   requirement === 'required' && !value?.trim()
 
+type EntryTypeRules = Pick<
+  TaskType,
+  'linkRequirement' | 'descriptionRequirement' | 'storyPointsRequirement'
+>
+
 /**
  * Walidacja wpisu dla danego typu pracy. Te same reguły stosuje formularz,
- * źródło demo i API (FluentValidation + CHECK w bazie).
+ * źródło demo i API (FluentValidation + CHECK w bazie). Każde pole ma własną
+ * funkcję; kolejność błędów odpowiada kolejności pól w formularzu.
  */
 export function validateEntry(
   input: TimeEntryInput,
-  type: Pick<
-    TaskType,
-    'linkRequirement' | 'descriptionRequirement' | 'storyPointsRequirement'
-  >,
+  type: EntryTypeRules,
 ): Array<EntryIssue> {
-  const issues: Array<EntryIssue> = []
+  return [
+    titleIssue(input),
+    linkIssue(input, type),
+    noteIssue(input, type),
+    timeIssue(input),
+    storyPointsIssue(input, type),
+    workDateIssue(input),
+    ...overtimeIssues(input),
+    estimateIssue(input),
+    ...extensionIssues(input),
+  ].filter((issue): issue is EntryIssue => issue !== null)
+}
+
+function titleIssue(input: TimeEntryInput): EntryIssue | null {
   const title = input.title.trim()
-  if (!title) issues.push({ field: 'title', code: 'required' })
-  else if (title.length > ENTRY_LIMITS.title)
-    issues.push({ field: 'title', code: 'too_long' })
+  if (!title) return { field: 'title', code: 'required' }
+  const isTitleTooLong = title.length > ENTRY_LIMITS.title
+  return isTitleTooLong ? { field: 'title', code: 'too_long' } : null
+}
 
-  if (needs(type.linkRequirement, input.link))
-    issues.push({ field: 'link', code: 'required' })
-  else if (input.link?.trim()) {
-    if (input.link.length > ENTRY_LIMITS.link)
-      issues.push({ field: 'link', code: 'too_long' })
-    else if (!URL_RE.test(input.link.trim()))
-      issues.push({ field: 'link', code: 'invalid_url' })
-  }
+function linkIssue(
+  input: TimeEntryInput,
+  type: EntryTypeRules,
+): EntryIssue | null {
+  const isMissingLink = needs(type.linkRequirement, input.link)
+  if (isMissingLink) return { field: 'link', code: 'required' }
+  const link = input.link?.trim() ?? ''
+  if (!link) return null
+  const isLinkTooLong = (input.link?.length ?? 0) > ENTRY_LIMITS.link
+  if (isLinkTooLong) return { field: 'link', code: 'too_long' }
+  const isInvalidLink = !URL_RE.test(link)
+  return isInvalidLink ? { field: 'link', code: 'invalid_url' } : null
+}
 
-  if (needs(type.descriptionRequirement, input.note))
-    issues.push({ field: 'note', code: 'required' })
-  else if ((input.note?.length ?? 0) > ENTRY_LIMITS.note)
-    issues.push({ field: 'note', code: 'too_long' })
+function noteIssue(
+  input: TimeEntryInput,
+  type: EntryTypeRules,
+): EntryIssue | null {
+  const isMissingNote = needs(type.descriptionRequirement, input.note)
+  if (isMissingNote) return { field: 'note', code: 'required' }
+  const isNoteTooLong = (input.note?.length ?? 0) > ENTRY_LIMITS.note
+  return isNoteTooLong ? { field: 'note', code: 'too_long' } : null
+}
 
+function timeIssue(input: TimeEntryInput): EntryIssue | null {
+  const { startTime, endTime, durationMinutes } = input
+  // Timer: jest godzina startu, nie ma końca; czas liczy się do zatrzymania.
   if (input.running) {
-    // Timer: jest godzina startu, nie ma końca; czas liczy się do zatrzymania.
-    if (
-      !input.startTime ||
-      !TIME_RE.test(input.startTime) ||
-      input.endTime !== null
-    )
-      issues.push({ field: 'time', code: 'invalid' })
-  } else if (input.startTime !== null || input.endTime !== null) {
+    const isInvalidTimer =
+      !startTime || !TIME_RE.test(startTime) || endTime !== null
+    return isInvalidTimer ? { field: 'time', code: 'invalid' } : null
+  }
+  const hasTimeRange = startTime !== null || endTime !== null
+  if (hasTimeRange) {
     const span =
-      input.startTime && input.endTime
-        ? minutesBetween(input.startTime, input.endTime)
-        : null
-    if (span === null) issues.push({ field: 'time', code: 'time_order' })
-    else if (span !== input.durationMinutes)
-      issues.push({ field: 'time', code: 'invalid' })
-  } else if (
-    !Number.isInteger(input.durationMinutes) ||
-    input.durationMinutes < 1 ||
-    input.durationMinutes > ENTRY_LIMITS.maxMinutes
-  ) {
-    issues.push({ field: 'time', code: 'duration_range' })
+      startTime && endTime ? minutesBetween(startTime, endTime) : null
+    const isInvalidRange = span === null
+    if (isInvalidRange) return { field: 'time', code: 'time_order' }
+    const isDurationMismatch = span !== durationMinutes
+    return isDurationMismatch ? { field: 'time', code: 'invalid' } : null
   }
+  const isInvalidDuration =
+    !Number.isInteger(durationMinutes) ||
+    durationMinutes < 1 ||
+    durationMinutes > ENTRY_LIMITS.maxMinutes
+  return isInvalidDuration ? { field: 'time', code: 'duration_range' } : null
+}
 
-  const storyPoints = input.storyPoints
-  if (type.storyPointsRequirement === 'hidden') {
-    if (storyPoints !== null)
-      issues.push({ field: 'storyPoints', code: 'invalid' })
-  } else if (storyPoints === null) {
-    if (type.storyPointsRequirement === 'required')
-      issues.push({ field: 'storyPoints', code: 'required' })
-  } else if (!(storyPoints > 0 && storyPoints <= 100)) {
-    issues.push({ field: 'storyPoints', code: 'invalid' })
+function storyPointsIssue(
+  input: TimeEntryInput,
+  type: EntryTypeRules,
+): EntryIssue | null {
+  const { storyPoints } = input
+  const hidesStoryPoints = type.storyPointsRequirement === 'hidden'
+  if (hidesStoryPoints) {
+    const hasStoryPoints = storyPoints !== null
+    return hasStoryPoints ? { field: 'storyPoints', code: 'invalid' } : null
   }
-  if (!isValidDate(input.workDate))
-    issues.push({ field: 'workDate', code: 'invalid' })
+  const isUnestimated = storyPoints === null
+  if (isUnestimated) {
+    const requiresStoryPoints = type.storyPointsRequirement === 'required'
+    return requiresStoryPoints
+      ? { field: 'storyPoints', code: 'required' }
+      : null
+  }
+  const isOutOfRange = !(storyPoints > 0 && storyPoints <= 100)
+  return isOutOfRange ? { field: 'storyPoints', code: 'invalid' } : null
+}
 
-  // Nadgodziny: część czasu wpisu, zawsze z opisem; działający timer jeszcze nie ma czasu.
+function workDateIssue(input: TimeEntryInput): EntryIssue | null {
+  const isInvalidDate = !isValidDate(input.workDate)
+  return isInvalidDate ? { field: 'workDate', code: 'invalid' } : null
+}
+
+/** Nadgodziny: część czasu wpisu, zawsze z opisem; działający timer jeszcze nie ma czasu. */
+function overtimeIssues(input: TimeEntryInput): Array<EntryIssue | null> {
   const overtime = input.overtimeMinutes
-  if (overtime !== null) {
-    if (input.running) issues.push({ field: 'overtime', code: 'running' })
-    else if (!Number.isInteger(overtime) || overtime < 1)
-      issues.push({ field: 'overtime', code: 'invalid' })
-    else if (overtime > input.durationMinutes)
-      issues.push({ field: 'overtime', code: 'over_duration' })
-    const note = input.overtimeNote?.trim() ?? ''
-    if (!note) issues.push({ field: 'overtimeNote', code: 'required' })
-    else if (note.length > ENTRY_LIMITS.overtimeNote)
-      issues.push({ field: 'overtimeNote', code: 'too_long' })
-  } else if (input.overtimeNote?.trim()) {
-    issues.push({ field: 'overtime', code: 'required' })
-  }
+  const note = input.overtimeNote?.trim() ?? ''
+  const hasNoOvertime = overtime === null
+  if (hasNoOvertime)
+    return [note ? { field: 'overtime', code: 'required' } : null]
+  return [
+    partIssue('overtime', overtime, input),
+    noteForPartIssue('overtimeNote', note, ENTRY_LIMITS.overtimeNote),
+  ]
+}
 
+function estimateIssue(input: TimeEntryInput): EntryIssue | null {
   const estimate = input.estimateMinutes ?? null
-  if (
-    estimate !== null &&
-    (!Number.isInteger(estimate) ||
-      estimate < 1 ||
-      estimate > ENTRY_LIMITS.maxEstimate)
-  )
-    issues.push({ field: 'estimate', code: 'invalid' })
+  const hasNoEstimate = estimate === null
+  if (hasNoEstimate) return null
+  const isInvalidEstimate =
+    !Number.isInteger(estimate) ||
+    estimate < 1 ||
+    estimate > ENTRY_LIMITS.maxEstimate
+  return isInvalidEstimate ? { field: 'estimate', code: 'invalid' } : null
+}
 
-  // Przedłużenie (np. spotkania): część czasu wpisu ponad plan, zawsze z powodem.
+/** Przedłużenie (np. spotkania): część czasu wpisu ponad plan, zawsze z powodem. */
+function extensionIssues(input: TimeEntryInput): Array<EntryIssue | null> {
   const extension = input.extensionMinutes ?? null
-  if (extension !== null) {
-    if (input.running) issues.push({ field: 'extension', code: 'running' })
-    else if (!Number.isInteger(extension) || extension < 1)
-      issues.push({ field: 'extension', code: 'invalid' })
-    else if (extension > input.durationMinutes)
-      issues.push({ field: 'extension', code: 'over_duration' })
-    const note = input.extensionNote?.trim() ?? ''
-    if (!note) issues.push({ field: 'extensionNote', code: 'required' })
-    else if (note.length > ENTRY_LIMITS.extensionNote)
-      issues.push({ field: 'extensionNote', code: 'too_long' })
-  } else if (input.extensionNote?.trim()) {
-    issues.push({ field: 'extension', code: 'required' })
-  }
-  return issues
+  const note = input.extensionNote?.trim() ?? ''
+  const hasNoExtension = extension === null
+  if (hasNoExtension)
+    return [note ? { field: 'extension', code: 'required' } : null]
+  return [
+    partIssue('extension', extension, input),
+    noteForPartIssue('extensionNote', note, ENTRY_LIMITS.extensionNote),
+  ]
+}
+
+/** Nadgodziny i przedłużenie: dodatnia liczba minut, nie więcej niż cały wpis. */
+function partIssue(
+  field: 'overtime' | 'extension',
+  minutes: number,
+  input: TimeEntryInput,
+): EntryIssue | null {
+  if (input.running) return { field, code: 'running' }
+  const isInvalidMinutes = !Number.isInteger(minutes) || minutes < 1
+  if (isInvalidMinutes) return { field, code: 'invalid' }
+  const isLongerThanEntry = minutes > input.durationMinutes
+  return isLongerThanEntry ? { field, code: 'over_duration' } : null
+}
+
+function noteForPartIssue(
+  field: 'overtimeNote' | 'extensionNote',
+  note: string,
+  limit: number,
+): EntryIssue | null {
+  if (!note) return { field, code: 'required' }
+  const isNoteTooLong = note.length > limit
+  return isNoteTooLong ? { field, code: 'too_long' } : null
 }
 
 /** Start timera nie może być w przyszłości (porównanie w obrębie dnia, 'HH:MM'). */
@@ -237,7 +297,9 @@ export function stoppedValues(
   now: Date = new Date(),
 ) {
   const start = entry.startTime ?? nowTime
-  if (today === entry.workDate && toMinutes(nowTime) > toMinutes(start)) {
+  const isStartInFuture =
+    today === entry.workDate && toMinutes(nowTime) > toMinutes(start)
+  if (isStartInFuture) {
     return {
       running: false,
       startTime: start,
@@ -245,7 +307,8 @@ export function stoppedValues(
       durationMinutes: toMinutes(nowTime) - toMinutes(start),
     }
   }
-  if (today === entry.workDate && toMinutes(start) < 24 * 60 - 1) {
+  const canEndLater = today === entry.workDate && toMinutes(start) < 24 * 60 - 1
+  if (canEndLater) {
     const end = fromMinutes(toMinutes(start) + 1)
     return {
       running: false,

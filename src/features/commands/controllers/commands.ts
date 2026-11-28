@@ -182,7 +182,8 @@ export const queryWords = (typed: string) =>
 
 /** Czy polecenie pasuje do zapytania: każde słowo w nazwie, podpowiedzi albo synonimach. */
 export function matchesWords(command: Command, words: ReadonlyArray<string>) {
-  if (words.length === 0) return !command.onlyWhenSearching
+  const hasNoWords = words.length === 0
+  if (hasNoWords) return !command.onlyWhenSearching
   const hay = foldText(
     `${command.label} ${command.hint ?? ''} ${command.keywords ?? ''}`,
   )
@@ -408,7 +409,9 @@ export function buildCommands(context: PaletteContext): Array<Command> {
   })
   // Przestrzenie: przełączenie na inną i nowa przestrzeń.
   for (const paletteWorkspace of context.workspaces.items) {
-    if (paletteWorkspace.id === context.workspaces.currentId) continue
+    const isCurrentWorkspace =
+      paletteWorkspace.id === context.workspaces.currentId
+    if (isCurrentWorkspace) continue
     list.push({
       id: `ws-${paletteWorkspace.id}`,
       group: 'actions',

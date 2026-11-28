@@ -33,7 +33,8 @@ export function log(
 }
 
 export async function findUser(id: string) {
-  if (!z.uuid().safeParse(id).success) throw notFound()
+  const isInvalidId = !z.uuid().safeParse(id).success
+  if (isInvalidId) throw notFound()
   const [user] = await database.select().from(users).where(eq(users.id, id))
   if (!user) throw notFound()
   return user

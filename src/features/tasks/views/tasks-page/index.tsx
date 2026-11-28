@@ -166,7 +166,8 @@ function TaskList({ viewModel }: TaskListProps) {
         ))}
       </div>
     )
-  if (viewModel.visible.length === 0)
+  const hasNoVisibleTasks = viewModel.visible.length === 0
+  if (hasNoVisibleTasks)
     return (
       <div className="rounded-2xl border border-line bg-surface px-5 py-8 sm:px-6">
         <p className="text-ink-soft">

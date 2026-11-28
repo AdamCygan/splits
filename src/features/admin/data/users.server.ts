@@ -106,7 +106,8 @@ export async function changeUser(
 ) {
   const updated = await database.transaction(async (transaction) => {
     const set: Partial<UserRow> = {}
-    if (input.plan !== undefined && input.plan !== user.plan) {
+    const changesPlan = input.plan !== undefined && input.plan !== user.plan
+    if (changesPlan) {
       set.plan = input.plan
       await log(
         transaction,
@@ -116,7 +117,8 @@ export async function changeUser(
         `${user.plan} → ${input.plan}`,
       )
     }
-    if (input.role !== undefined && input.role !== user.role) {
+    const changesRole = input.role !== undefined && input.role !== user.role
+    if (changesRole) {
       set.role = input.role
       await log(
         transaction,
@@ -126,7 +128,9 @@ export async function changeUser(
         `${user.role} → ${input.role}`,
       )
     }
-    if (input.disabled !== undefined && input.disabled !== !!user.disabledAt) {
+    const changesDisabled =
+      input.disabled !== undefined && input.disabled !== !!user.disabledAt
+    if (changesDisabled) {
       set.disabledAt = input.disabled ? new Date() : null
       if (input.disabled) await revokeAllSessions(transaction, user.id)
       await log(
@@ -136,7 +140,8 @@ export async function changeUser(
         input.disabled ? 'user.blocked' : 'user.unblocked',
       )
     }
-    if (Object.keys(set).length === 0) return user
+    const hasNoChanges = Object.keys(set).length === 0
+    if (hasNoChanges) return user
     const [row] = await transaction
       .update(users)
       .set(set)
@@ -144,8 +149,10 @@ export async function changeUser(
       .returning()
     return row!
   })
-  if (input.disabled === true) cutAccess(user.id)
-  if (input.disabled === false) restoreAccess(user.id)
+  const isDisabling = input.disabled === true
+  if (isDisabling) cutAccess(user.id)
+  const isEnabling = input.disabled === false
+  if (isEnabling) restoreAccess(user.id)
   return await describeOne(updated)
 }
 
@@ -169,7 +176,8 @@ export async function deleteUser(
   admin: UserRow,
   user: Awaited<ReturnType<typeof findUser>>,
 ) {
-  if (billingEnabled()) await cancelSubscriptionsFor(user.id)
+  const isBillingEnabled = billingEnabled()
+  if (isBillingEnabled) await cancelSubscriptionsFor(user.id)
   await database.transaction(async (transaction) => {
     await log(transaction, admin, user, 'user.deleted', `plan ${user.plan}`)
     await transaction.delete(users).where(eq(users.id, user.id))

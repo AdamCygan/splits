@@ -13,12 +13,15 @@ export const requireAdmin: MiddlewareHandler<AppEnv> = async (
   next,
 ) => {
   const user = await findUser(context.get('userId')).catch((error: unknown) => {
-    if (error instanceof ApiError) return null
+    const isApiError = error instanceof ApiError
+    if (isApiError) return null
     throw error
   })
-  if (!user || user.role !== 'admin' || user.disabledAt)
-    throw new ApiError('auth.forbidden', 403)
-  if (serverEnv.adminRequire2fa && !user.totpEnabledAt)
+  const isNotActiveAdmin = !user || user.role !== 'admin' || user.disabledAt
+  if (isNotActiveAdmin) throw new ApiError('auth.forbidden', 403)
+  const isMissingRequiredTwoFactor =
+    serverEnv.adminRequire2fa && !user.totpEnabledAt
+  if (isMissingRequiredTwoFactor)
     throw new ApiError('admin.two_factor_required', 403)
   context.set('admin', user)
   await next()

@@ -34,7 +34,8 @@ export function toggleWrap(
   const markerLength = marker.length
   const before = value.slice(start - markerLength, start)
   const after = value.slice(end, end + markerLength)
-  if (before === marker && after === marker) {
+  const isWrapped = before === marker && after === marker
+  if (isWrapped) {
     return {
       value:
         value.slice(0, start - markerLength) +
@@ -45,11 +46,11 @@ export function toggleWrap(
     }
   }
   const selected = value.slice(start, end)
-  if (
+  const isSelectionWrapped =
     selected.length >= 2 * markerLength &&
     selected.startsWith(marker) &&
     selected.endsWith(marker)
-  ) {
+  if (isSelectionWrapped) {
     const inner = selected.slice(markerLength, -markerLength)
     return {
       value: value.slice(0, start) + inner + value.slice(end),
@@ -93,7 +94,8 @@ export function toggleLinePrefix(
   const allHave = filled.length > 0 && filled.every(has)
   let count = 0
   const next = lines.map((line) => {
-    if (line.trim() === '' && lines.length > 1) return line
+    const isEmptyItem = line.trim() === '' && lines.length > 1
+    if (isEmptyItem) return line
     const match = LIST_PREFIX.exec(line)
     const indent = match?.[1] ?? /^\s*/.exec(line)![0]
     const body = line.slice(match ? match[0].length : indent.length)
@@ -104,7 +106,9 @@ export function toggleLinePrefix(
   const replaced = next.join('\n')
   const value =
     textState.value.slice(0, from) + replaced + textState.value.slice(to)
-  if (textState.start === textState.end && lines.length === 1) {
+  const isCaretOnSingleLine =
+    textState.start === textState.end && lines.length === 1
+  if (isCaretOnSingleLine) {
     // Kursor zostaje w tym samym miejscu tekstu linii.
     const shift = replaced.length - (to - from)
     const position = Math.max(from, textState.start + shift)
@@ -119,7 +123,8 @@ export function insertCodeBlock(
   language = '',
 ): TextState {
   const { value, start, end } = textState
-  if (start === end) {
+  const isCollapsed = start === end
+  if (isCollapsed) {
     const atLineStart = start === 0 || value[start - 1] === '\n'
     const lead = atLineStart ? '' : '\n'
     const fence = `${lead}\`\`\`${language}\n`
@@ -149,21 +154,24 @@ const CONTINUE = /^(\s*)([-*+] \[[ xX]\] |[-*+] |(\d+)([.)]) )/
  */
 export function continueList(textState: TextState): TextState | null {
   const { value, start, end } = textState
-  if (start !== end) return null
+  const hasSelection = start !== end
+  if (hasSelection) return null
   const from = value.lastIndexOf('\n', start - 1) + 1
   const line = value.slice(from, start)
   const match = CONTINUE.exec(line)
   if (!match) return null
   // Wewnątrz bloku kodu Enter zostaje zwykłym Enterem.
   const fences = value.slice(0, from).match(/^```/gm)?.length ?? 0
-  if (fences % 2 === 1) return null
+  const isInsideFence = fences % 2 === 1
+  if (isInsideFence) return null
   const [whole, indent, marker, number, delim] = match
-  if (
+  const isAtLineEnd =
     line.length === whole.length &&
     value.slice(start).split('\n')[0]!.trim() === ''
-  ) {
+  if (isAtLineEnd) {
     // Pusta pozycja zagnieżdżona: wraca poziom wyżej (jak w edytorach tekstu).
-    if (indent!.length > 0) return indentList(textState, -1)
+    const isIndented = indent!.length > 0
+    if (isIndented) return indentList(textState, -1)
     // Pusta pozycja: koniec listy. Zostaje pusta linia, żeby dalszy tekst nie dokleił się
     // do ostatniej pozycji (w Markdown linia tuż pod listą jest jej częścią).
     const blank = from > 0 && value[from - 2] !== '\n' ? '\n' : ''
@@ -204,7 +212,8 @@ export function indentList(
   const before = value.slice(0, from).split('\n')
   before.pop() // pusty fragment po ostatnim \n (albo cały tekst przed pierwszą linią)
   const lines = value.slice(from, to).split('\n')
-  if (!lines.some((line) => LIST_ITEM.test(line))) return null
+  const hasNoListItems = !lines.some((line) => LIST_ITEM.test(line))
+  if (hasNoListItems) return null
 
   // Poprzednie pozycje listy (z już zmienionymi liniami zaznaczenia), najbliższe najpierw.
   const previous = (upTo: Array<string>) => {
@@ -212,8 +221,9 @@ export function indentList(
     for (let index = upTo.length - 1; index >= 0; index--) {
       const line = upTo[index]!
       const match = LIST_ITEM.exec(line)
+      const isPlainLine = line.trim() !== '' && !/^\s/.test(line)
       if (match) items.push({ indent: match[1]!.length, marker: match[2]! })
-      else if (line.trim() !== '' && !/^\s/.test(line)) break
+      else if (isPlainLine) break
     }
     return items
   }
@@ -229,20 +239,25 @@ export function indentList(
     const indent = match[1]!.length
     const items = previous([...before, ...done])
     let next = indent
-    if (direction === 1) {
+    const isIndenting = direction === 1
+    const isNested = indent > 0
+    if (isIndenting) {
       // Schodzi pod poprzednią pozycję z tego samego poziomu; pierwsza pozycja zostaje.
       const sibling = items.find((item) => item.indent <= indent)
-      if (sibling && sibling.indent === indent)
-        next = indent + markerWidth(sibling.marker)
-    } else if (indent > 0) {
+      const isSibling = sibling && sibling.indent === indent
+      if (isSibling) next = indent + markerWidth(sibling.marker)
+    } else if (isNested) {
       next = items.find((item) => item.indent < indent)?.indent ?? 0
     }
-    if (key === 0) caretShift = next - indent
+    const isFirstLine = key === 0
+    if (isFirstLine) caretShift = next - indent
     done.push(' '.repeat(next) + line.slice(indent))
   }
   const replaced = done.join('\n')
   const result = value.slice(0, from) + replaced + value.slice(to)
-  if (textState.start === textState.end && lines.length === 1) {
+  const isCaretOnSingleLine =
+    textState.start === textState.end && lines.length === 1
+  if (isCaretOnSingleLine) {
     const position = Math.max(from, textState.start + caretShift)
     return { value: result, start: position, end: position }
   }

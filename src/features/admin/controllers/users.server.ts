@@ -43,13 +43,16 @@ export const userRoutes = new Hono<AppEnv>()
     const user = await findUser(context.req.param('id'))
     const input = await body(context, patchInput)
     const self = user.id === admin.id
-    if (self && (input.role !== undefined || input.disabled !== undefined))
-      throw new ApiError('admin.self', 400)
-    if (user.isDemo && (input.plan !== undefined || input.role !== undefined))
-      throw invalid()
+    const changesOwnAccess =
+      self && (input.role !== undefined || input.disabled !== undefined)
+    if (changesOwnAccess) throw new ApiError('admin.self', 400)
+    const changesDemoAccount =
+      user.isDemo && (input.plan !== undefined || input.role !== undefined)
+    if (changesDemoAccount) throw invalid()
     // Właściciela (ADMIN_EMAILS) nie da się zdegradować ani zablokować z panelu.
-    if (isOwner(user) && (input.role === 'client' || input.disabled === true))
-      throw new ApiError('admin.owner', 400)
+    const demotesOwner =
+      isOwner(user) && (input.role === 'client' || input.disabled === true)
+    if (demotesOwner) throw new ApiError('admin.owner', 400)
     return context.json(await changeUser(admin, user, input))
   })
 
@@ -68,10 +71,14 @@ export const userRoutes = new Hono<AppEnv>()
   .delete('/users/:id', async (context) => {
     const admin = context.get('admin')!
     const user = await findUser(context.req.param('id'))
-    if (user.id === admin.id) throw new ApiError('admin.self', 400)
-    if (isOwner(user)) throw new ApiError('admin.owner', 400)
+    const isSelf = user.id === admin.id
+    if (isSelf) throw new ApiError('admin.self', 400)
+    const isOwnerAccount = isOwner(user)
+    if (isOwnerAccount) throw new ApiError('admin.owner', 400)
     const input = await body(context, deleteInput)
-    if (input.confirmEmail.toLowerCase() !== user.email.toLowerCase())
+    const isEmailMismatch =
+      input.confirmEmail.toLowerCase() !== user.email.toLowerCase()
+    if (isEmailMismatch)
       throw new ApiError('admin.confirm_email', 400, 'confirmEmail')
     await deleteUser(admin, user)
     return context.body(null, 204)

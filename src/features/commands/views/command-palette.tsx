@@ -32,7 +32,8 @@ export function CommandPalette() {
             viewModel.onOpened()
           }}
           onCloseAutoFocus={(event) => {
-            if (viewModel.keepFocusAfterClose()) event.preventDefault()
+            const keepsFocus = viewModel.keepFocusAfterClose()
+            if (keepsFocus) event.preventDefault()
           }}
           className="fixed top-[10dvh] left-1/2 z-50 flex max-h-[76dvh] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_24px_80px_-20px_rgba(20,22,43,0.45)] outline-none data-[state=open]:animate-[dialog-in_160ms_cubic-bezier(0.2,0.7,0.2,1)]"
         >
@@ -40,7 +41,10 @@ export function CommandPalette() {
             {viewModel.messages.menu.commands}
           </DialogPrimitive.Title>
           {viewModel.help ? (
-            <ShortcutsHelp modifierKey={viewModel.modifierKey} onBack={viewModel.hideHelp} />
+            <ShortcutsHelp
+              modifierKey={viewModel.modifierKey}
+              onBack={viewModel.hideHelp}
+            />
           ) : (
             <>
               <SearchField viewModel={viewModel} />
@@ -110,7 +114,8 @@ function Results({ viewModel }: ResultsProps) {
         const items = viewModel.results
           .map((command, index) => ({ command, index }))
           .filter(({ command }) => command.group === group)
-        if (items.length === 0) return null
+        const isEmptyGroup = items.length === 0
+        if (isEmptyGroup) return null
         const groupId = `${viewModel.listId}-${group}`
         return (
           <li key={group} role="presentation">

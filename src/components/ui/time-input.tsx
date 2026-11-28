@@ -82,12 +82,15 @@ export function TimeInput({
             commit(event.target.value)
           }}
           onBlur={(event) => {
-            if (draft !== null) commit(draft)
+            const hasDraft = draft !== null
+            if (hasDraft) commit(draft)
             setDraft(null)
             props.onBlur?.(event)
           }}
           onKeyDown={(event) => {
-            if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+            const isStepKey =
+              event.key === 'ArrowUp' || event.key === 'ArrowDown'
+            if (isStepKey) {
               event.preventDefault()
               const step =
                 (event.shiftKey ? 60 : 5) * (event.key === 'ArrowUp' ? 1 : -1)

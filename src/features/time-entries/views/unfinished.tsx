@@ -30,7 +30,8 @@ export function UnfinishedTasks({ today }: UnfinishedTasksProps) {
   const finish = useFinishTask()
   const busy = resume.isPending || finish.isPending
 
-  if (tasks.length === 0) return null
+  const hasNoTasks = tasks.length === 0
+  if (hasNoTasks) return null
   return (
     <section
       aria-labelledby="unfinished-tasks"

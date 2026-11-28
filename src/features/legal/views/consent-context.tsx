@@ -39,12 +39,14 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   useEffect(() => {
-    if (consent === 'analytics') initAnalytics()
+    const allowsAnalytics = consent === 'analytics'
+    if (allowsAnalytics) initAnalytics()
   }, [consent])
 
   const save = useCallback((value: Consent) => {
     persistConsent(value)
-    if (value === 'necessary') disableAnalytics()
+    const isNecessaryOnly = value === 'necessary'
+    if (isNecessaryOnly) disableAnalytics()
     setConsent(value)
     setSettingsOpen(false)
   }, [])

@@ -1,6 +1,7 @@
 /** Udział `part` w `total` w pełnych procentach (0, gdy `total` ≤ 0). `cap` przycina do 100. */
 export function percentOf(part: number, total: number, limit = false) {
-  if (total <= 0) return 0
+  const isEmptyTotal = total <= 0
+  if (isEmptyTotal) return 0
   const value = Math.round((part / total) * 100)
   return limit ? Math.min(100, value) : value
 }

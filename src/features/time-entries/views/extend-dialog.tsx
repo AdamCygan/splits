@@ -53,7 +53,8 @@ export function ExtendDialog({ entry, onClose }: ExtendDialogProps) {
   const submit = (formEvent: FormEvent) => {
     formEvent.preventDefault()
     setSubmitted(true)
-    if (amountError || reasonError || minutes === null) return
+    const isInvalid = amountError || reasonError || minutes === null
+    if (isInvalid) return
     save.mutate(withExtension(entry, minutes, reason.trim()))
   }
 

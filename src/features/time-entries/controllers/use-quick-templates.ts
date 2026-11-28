@@ -63,7 +63,8 @@ export function useQuickTemplatesViewModel({
         now: nowTimeIn(timeZone),
         at,
       })
-      if (plan.kind === 'entry') return entriesApi.create(plan.input)
+      const logsEntry = plan.kind === 'entry'
+      if (logsEntry) return entriesApi.create(plan.input)
       const result = await entriesApi.start(plan.input)
       return result.ok ? { ...result, value: result.value.started } : result
     },
@@ -87,13 +88,16 @@ export function useQuickTemplatesViewModel({
       projects,
       isToday,
     )
-    if (templateNeedsDialog(needs, Boolean(at))) setPicking({ template, at })
+    const needsDialog = templateNeedsDialog(needs, Boolean(at))
+    if (needsDialog) setPicking({ template, at })
     else apply.mutate({ template, at, ...defaultChoice(template) })
   }
 
   // Wybór z palety: raz, gdy szablony i typy są już wczytane.
   useEffect(() => {
-    if (!requested || templates.length === 0 || types.length === 0) return
+    const isNotReady =
+      !requested || templates.length === 0 || types.length === 0
+    if (isNotReady) return
     const template = templates.find(
       (quickTemplate) => quickTemplate.id === requested,
     )
@@ -104,13 +108,12 @@ export function useQuickTemplatesViewModel({
   // Alt+1…9: szablon z tym skrótem.
   useEffect(() => {
     const onKey = (keyboardEvent: KeyboardEvent) => {
-      if (
+      const isNotTemplateShortcut =
         !keyboardEvent.altKey ||
         keyboardEvent.ctrlKey ||
         keyboardEvent.metaKey ||
         !/^Digit[1-9]$/.test(keyboardEvent.code)
-      )
-        return
+      if (isNotTemplateShortcut) return
       const template = templates.find(
         (quickTemplate) =>
           quickTemplate.hotkey === Number(keyboardEvent.code.slice(5)),

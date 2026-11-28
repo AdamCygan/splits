@@ -65,23 +65,25 @@ export function highlightCodeLine(line: string, language = ''): Array<Part> {
   while (index < line.length) {
     const rest = line.slice(index)
     const previous = line[index - 1] ?? ' '
-    if (rest.startsWith('//') || rest.startsWith('/*')) {
+    const isComment = rest.startsWith('//') || rest.startsWith('/*')
+    if (isComment) {
       const close = rest.startsWith('/*') ? rest.indexOf('*/', 2) : -1
       push(close === -1 ? rest : rest.slice(0, close + 2), 'comment')
       continue
     }
-    if (
+    const isLineComment =
       (hash && rest.startsWith('#')) ||
       (sqlDash && rest.startsWith('-- ')) ||
       (lang === '' &&
         rest.startsWith('#') &&
         line.slice(0, index).trim() === '')
-    ) {
+    if (isLineComment) {
       push(rest, 'comment')
       continue
     }
     const quote = rest[0]
-    if (quote === '"' || quote === "'" || quote === '`') {
+    const isQuote = quote === '"' || quote === "'" || quote === '`'
+    if (isQuote) {
       let position = 1
       while (position < rest.length && rest[position] !== quote)
         position += rest[position] === '\\' ? 2 : 1
@@ -89,20 +91,21 @@ export function highlightCodeLine(line: string, language = ''): Array<Part> {
       continue
     }
     const number = /^(?:0x[\da-f]+|\d[\d_]*(?:\.\d+)?)/i.exec(rest)
-    if (number && !/[\w$]/.test(previous)) {
+    const isNumber = number && !/[\w$]/.test(previous)
+    if (isNumber) {
       push(number[0], 'number')
       continue
     }
     const word = /^[A-Za-z_$][\w$]*/.exec(rest)
-    if (word && !/[\w$]/.test(previous)) {
+    const isWord = word && !/[\w$]/.test(previous)
+    if (isWord) {
       const firstCharacter = word[0]
-      if (
+      const isKeyword =
         KEYWORDS.has(firstCharacter) ||
         (lang === 'sql' && KEYWORDS.has(firstCharacter.toLowerCase()))
-      )
-        push(firstCharacter, 'keyword')
-      else if (/^[A-Z][a-z0-9]+[A-Za-z0-9]*$/.test(firstCharacter))
-        push(firstCharacter, 'type')
+      const isTypeName = /^[A-Z][a-z0-9]+[A-Za-z0-9]*$/.test(firstCharacter)
+      if (isKeyword) push(firstCharacter, 'keyword')
+      else if (isTypeName) push(firstCharacter, 'type')
       else {
         plain += firstCharacter
         index += firstCharacter.length
@@ -140,31 +143,39 @@ const INLINE =
 function inline(text: string, base?: InlineKind): Array<Part> {
   const parts: Array<Part> = []
   let last = 0
-  const add = (messages: string, kind?: InlineKind) => {
-    if (messages) parts.push({ text: messages, kind: kind ?? base })
+  const add = (fragment: string, kind?: InlineKind) => {
+    if (fragment) parts.push({ text: fragment, kind: kind ?? base })
   }
-  for (const part of text.matchAll(INLINE)) {
-    add(text.slice(last, part.index))
-    const whole = part[0]
-    if (part[1]) {
-      add(part[1], 'marker')
-      add(whole.slice(part[1].length, whole.length - part[1].length), 'code')
-      add(part[1], 'marker')
-    } else if (part[3] !== undefined || part[4] !== undefined) {
+  for (const match of text.matchAll(INLINE)) {
+    add(text.slice(last, match.index))
+    const [whole, backticks] = match
+    const isBold = match[3] !== undefined || match[4] !== undefined
+    const isItalic = match[5] !== undefined || match[6] !== undefined
+    const linkLabel = match[7]
+    const linkTarget = match[8]
+    const isLink = linkLabel !== undefined
+    if (backticks) {
+      add(backticks, 'marker')
+      add(
+        whole.slice(backticks.length, whole.length - backticks.length),
+        'code',
+      )
+      add(backticks, 'marker')
+    } else if (isBold) {
       const mark = whole.slice(0, 2)
       add(mark, 'marker')
       add(whole.slice(2, -2), 'bold')
       add(mark, 'marker')
-    } else if (part[5] !== undefined || part[6] !== undefined) {
+    } else if (isItalic) {
       add(whole[0]!, 'marker')
       add(whole.slice(1, -1), 'italic')
       add(whole.at(-1)!, 'marker')
-    } else if (part[7] !== undefined) {
+    } else if (isLink) {
       add('[', 'marker')
-      add(part[7], 'link')
-      add(`](${part[8]})`, 'marker')
+      add(linkLabel, 'link')
+      add(`](${linkTarget})`, 'marker')
     } else add(whole, 'link')
-    last = part.index + whole.length
+    last = match.index + whole.length
   }
   add(text.slice(last))
   return parts
@@ -180,11 +191,9 @@ export function markdownLines(text: string): Array<MarkdownLine> {
   for (const line of text.split('\n')) {
     const open = /^(\s*)(`{3,}|~{3,})\s*([\w+#.-]*)/.exec(line)
     if (fence) {
-      if (
-        open &&
-        open[2]!.startsWith(fence.marker) &&
-        line.trim() === open[2]
-      ) {
+      const closesFence =
+        open && open[2]!.startsWith(fence.marker) && line.trim() === open[2]
+      if (closesFence) {
         out.push({ kind: 'fence', parts: [{ text: line, kind: 'marker' }] })
         fence = null
       } else

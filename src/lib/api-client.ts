@@ -61,7 +61,8 @@ export async function apiRequest<T>(
     retryOnUnauthorized = true,
   } = options
   const headers: Record<string, string> = {}
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  const hasBody = body !== undefined
+  if (hasBody) headers['Content-Type'] = 'application/json'
   const token = getAccessToken()
   if (token) headers.Authorization = `Bearer ${token}`
 
@@ -89,8 +90,11 @@ export async function apiRequest<T>(
       ? undefined
       : await response.json().catch(() => undefined)
 
-  if (response.status === 401 && retryOnUnauthorized && unauthorizedHandler) {
-    if (await unauthorizedHandler()) {
+  const refresh = retryOnUnauthorized ? unauthorizedHandler : null
+  const shouldRefresh = response.status === 401 && refresh
+  if (shouldRefresh) {
+    const isRefreshed = await refresh()
+    if (isRefreshed) {
       return apiRequest(path, { ...options, retryOnUnauthorized: false })
     }
   }

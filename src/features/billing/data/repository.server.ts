@@ -68,7 +68,8 @@ export async function syncSubscription(
 
   const item = subscription.items.data[0]
   const plan = item ? planForPrice(item.price) : null
-  if (!item || !plan) return null
+  const isUnknownItem = !item || !plan
+  if (isUnknownItem) return null
   const values = {
     userId,
     stripeCustomerId: customerId,
@@ -101,7 +102,8 @@ export async function recomputePlan(transaction: Tx, userId: string) {
     .select({ plan: users.plan })
     .from(users)
     .where(eq(users.id, userId))
-  if (!user || user.plan === 'lifetime') return
+  const isLifetimeOrMissing = !user || user.plan === 'lifetime'
+  if (isLifetimeOrMissing) return
   const active = await transaction
     .select({ plan: subscriptions.plan })
     .from(subscriptions)
@@ -114,7 +116,8 @@ export async function recomputePlan(transaction: Tx, userId: string) {
   const plan = active.some((subscription) => subscription.plan === 'pro')
     ? 'pro'
     : 'free'
-  if (plan !== user.plan)
+  const isPlanChange = plan !== user.plan
+  if (isPlanChange)
     await transaction.update(users).set({ plan }).where(eq(users.id, userId))
 }
 
@@ -157,7 +160,8 @@ export const syncInput = z.object({ sessionId: z.string().regex(/^cs_[\w]+$/) })
 
 /** Faktury klienta Stripe (ostatnie 24); bez płatności albo bez klienta pusta lista. */
 export async function listInvoices(customerId: string | null) {
-  if (!billingEnabled() || !customerId) return []
+  const cannotListInvoices = !billingEnabled() || !customerId
+  if (cannotListInvoices) return []
   const list = await stripe()
     .invoices.list({ customer: customerId, limit: 24 })
     .catch((error: unknown) => {
@@ -179,7 +183,8 @@ export async function listInvoices(customerId: string | null) {
 /** Karta klienta w panelu Stripe (tryb testowy dla kluczy sk_test/rk_test). */
 export function stripeCustomerUrl(customerId: string | null) {
   const key = serverEnv.stripe?.secretKey
-  if (!key || !customerId) return null
+  const isNotConfigured = !key || !customerId
+  if (isNotConfigured) return null
   const test = /^(sk|rk)_test_/.test(key)
   return `https://dashboard.stripe.com/${test ? 'test/' : ''}customers/${customerId}`
 }
@@ -189,7 +194,8 @@ export function stripeCustomerUrl(customerId: string | null) {
  * obciążenie przychodzi przy zapłacie i przy każdym zwrocie, więc zapis jest idempotentny.
  */
 export async function recordCharge(charge: Stripe.Charge) {
-  if (charge.status !== 'succeeded') return
+  const isNotSucceeded = charge.status !== 'succeeded'
+  if (isNotSucceeded) return
   const customerId =
     typeof charge.customer === 'string'
       ? charge.customer
@@ -231,9 +237,10 @@ export const SUBSCRIPTION_EVENTS = new Set([
  * dobrej woli) niczego nie zmienia.
  */
 export async function endAfterRefund(charge: Stripe.Charge) {
-  if (!charge.refunded || !charge.customer) return
-  const customerId =
-    typeof charge.customer === 'string' ? charge.customer : charge.customer.id
+  const { customer } = charge
+  const isNotRefunded = !charge.refunded || !customer
+  if (isNotRefunded) return
+  const customerId = typeof customer === 'string' ? customer : customer.id
   const rows = await database
     .select({ id: subscriptions.id })
     .from(subscriptions)
@@ -309,17 +316,16 @@ export async function openCheckout(
   interval: z.infer<typeof checkoutInput>['interval'],
 ) {
   assertNotDemo(user)
-  if (!billingEnabled()) throw new ApiError('billing.unavailable', 503)
+  const isBillingDisabled = !billingEnabled()
+  if (isBillingDisabled) throw new ApiError('billing.unavailable', 503)
   // Administrator ma Pro bez opłat, a Lifetime na zawsze: kupowanie nie ma sensu.
-  if (user.plan === 'lifetime' || user.plan === plan || user.role === 'admin')
-    throw new ApiError('billing.already_subscribed', 409)
+  const alreadyHasPlan =
+    user.plan === 'lifetime' || user.plan === plan || user.role === 'admin'
+  if (alreadyHasPlan) throw new ApiError('billing.already_subscribed', 409)
   const subscription = await latestSubscription(user.id)
-  if (
-    subscription &&
-    isActive(subscription.status) &&
-    subscription.plan === plan
-  )
-    throw new ApiError('billing.already_subscribed', 409)
+  const isAlreadySubscribed =
+    subscription && isActive(subscription.status) && subscription.plan === plan
+  if (isAlreadySubscribed) throw new ApiError('billing.already_subscribed', 409)
 
   const [settings] = await database
     .select({ locale: userSettings.locale })
@@ -366,8 +372,8 @@ export async function syncCheckout(
     .catch(() => {
       throw new ApiError('billing.failed', 502)
     })
-  if (session.client_reference_id !== userId)
-    throw new ApiError('not_found', 404)
+  const isForeignSession = session.client_reference_id !== userId
+  if (isForeignSession) throw new ApiError('not_found', 404)
   const subId =
     typeof session.subscription === 'string'
       ? session.subscription
@@ -410,36 +416,47 @@ export async function handleStripeEvent(event: Stripe.Event) {
     .values({ id: event.id, type: event.type })
     .onConflictDoNothing()
     .returning({ id: stripeEvents.id })
-  if (fresh.length === 0) return false
+  const isDuplicate = fresh.length === 0
+  if (isDuplicate) return false
 
   try {
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object
-      const subId =
-        typeof session.subscription === 'string'
-          ? session.subscription
-          : session.subscription?.id
-      if (session.mode === 'subscription' && subId) {
-        const subscription = await stripe().subscriptions.retrieve(subId)
-        await database.transaction((transaction) =>
-          syncSubscription(
-            transaction,
-            subscription,
-            session.client_reference_id,
-          ),
-        )
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object
+        const subId =
+          typeof session.subscription === 'string'
+            ? session.subscription
+            : session.subscription?.id
+        const isSubscriptionCheckout = session.mode === 'subscription' && subId
+        if (isSubscriptionCheckout) {
+          const subscription = await stripe().subscriptions.retrieve(subId)
+          await database.transaction((transaction) =>
+            syncSubscription(
+              transaction,
+              subscription,
+              session.client_reference_id,
+            ),
+          )
+        }
+        break
       }
-    } else if (event.type === 'charge.succeeded') {
-      await recordCharge(event.data.object)
-    } else if (event.type === 'charge.refunded') {
-      await recordCharge(event.data.object)
-      await endAfterRefund(event.data.object)
-    } else if (SUBSCRIPTION_EVENTS.has(event.type)) {
-      const { id } = event.data.object as Stripe.Subscription
-      const subscription = await stripe().subscriptions.retrieve(id)
-      await database.transaction((transaction) =>
-        syncSubscription(transaction, subscription),
-      )
+      case 'charge.succeeded':
+        await recordCharge(event.data.object)
+        break
+      case 'charge.refunded':
+        await recordCharge(event.data.object)
+        await endAfterRefund(event.data.object)
+        break
+      default: {
+        const isSubscriptionEvent = SUBSCRIPTION_EVENTS.has(event.type)
+        if (isSubscriptionEvent) {
+          const { id } = event.data.object as Stripe.Subscription
+          const subscription = await stripe().subscriptions.retrieve(id)
+          await database.transaction((transaction) =>
+            syncSubscription(transaction, subscription),
+          )
+        }
+      }
     }
   } catch (error) {
     // Zdarzenie nie zostało obsłużone: usuwamy znacznik, żeby ponowienie Stripe je przetworzyło.

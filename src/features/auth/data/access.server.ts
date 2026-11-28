@@ -18,8 +18,10 @@ export function restoreAccess(userId: string) {
 
 export function isCutOff(userId: string) {
   const until = cutOff.get(userId)
-  if (until === undefined) return false
-  if (until > Date.now()) return true
+  const hasNoCutOff = until === undefined
+  if (hasNoCutOff) return false
+  const isStillCutOff = until > Date.now()
+  if (isStillCutOff) return true
   cutOff.delete(userId)
   return false
 }

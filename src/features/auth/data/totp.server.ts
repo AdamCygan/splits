@@ -28,7 +28,8 @@ export function base32Encode(bytes: Buffer): string {
       bits -= 5
     }
   }
-  if (bits > 0) out += ALPHABET[(value << (5 - bits)) & 31]
+  const hasRemainingBits = bits > 0
+  if (hasRemainingBits) out += ALPHABET[(value << (5 - bits)) & 31]
   return out
 }
 
@@ -39,10 +40,12 @@ export function base32Decode(text: string): Buffer {
   const out: Array<number> = []
   for (const char of clean) {
     const index = ALPHABET.indexOf(char)
-    if (index === -1) throw new Error('invalid base32')
+    const isUnknownCharacter = index === -1
+    if (isUnknownCharacter) throw new Error('invalid base32')
     value = (value << 5) | index
     bits += 5
-    if (bits >= 8) {
+    const hasFullByte = bits >= 8
+    if (hasFullByte) {
       out.push((value >>> (bits - 8)) & 255)
       bits -= 8
     }
@@ -76,12 +79,15 @@ export function verifyTotp(
   now = Date.now(),
 ): number | null {
   const clean = code.replace(/\s/g, '')
-  if (!/^\d{6}$/.test(clean)) return null
+  const isMalformedCode = !/^\d{6}$/.test(clean)
+  if (isMalformedCode) return null
   const step = currentStep(now)
   for (const candidate of [step - 1, step, step + 1]) {
-    if (lastStep !== null && candidate <= lastStep) continue
+    const isReusedStep = lastStep !== null && candidate <= lastStep
+    if (isReusedStep) continue
     const expected = Buffer.from(totpAt(secret, candidate))
-    if (timingSafeEqual(expected, Buffer.from(clean))) return candidate
+    const isMatch = timingSafeEqual(expected, Buffer.from(clean))
+    if (isMatch) return candidate
   }
   return null
 }

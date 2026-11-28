@@ -13,7 +13,8 @@ import type { TextState } from '../../src/shared/domain/markdown'
 /** `|` oznacza kursor, `«` i `»` zaznaczenie. */
 function state(marked: string): TextState {
   const caret = marked.indexOf('|')
-  if (caret !== -1) {
+  const hasCaret = caret !== -1
+  if (hasCaret) {
     const value = marked.replace('|', '')
     return { value, start: caret, end: caret }
   }
@@ -23,7 +24,8 @@ function state(marked: string): TextState {
 }
 function show(textState: TextState | null): string | null {
   if (!textState) return null
-  if (textState.start === textState.end)
+  const isCollapsed = textState.start === textState.end
+  if (isCollapsed)
     return (
       textState.value.slice(0, textState.start) +
       '|' +

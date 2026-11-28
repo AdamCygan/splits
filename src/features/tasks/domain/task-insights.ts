@@ -66,7 +66,8 @@ export function taskInsights(
   sessions: ReadonlyArray<TimeEntry>,
   sameDays: ReadonlyArray<TimeEntry>,
 ): TaskInsights | null {
-  if (sessions.length === 0) return null
+  const hasNoSessions = sessions.length === 0
+  if (hasNoSessions) return null
   const ids = new Set(sessions.map((timeEntry) => timeEntry.id))
   const sorted = [...sessions].sort((left, right) =>
     (left.workDate + (left.startTime ?? '99:99')).localeCompare(
@@ -103,7 +104,8 @@ export function taskInsights(
     for (let index = 1; index < timed.length; index++) {
       const previous = timed[index - 1]!.at!
       const next = timed[index]!.at!
-      if (next.start <= previous.end) continue
+      const overlapsPrevious = next.start <= previous.end
+      if (overlapsPrevious) continue
       const between = sameDays
         .filter(
           (timeEntry) => timeEntry.workDate === date && !ids.has(timeEntry.id),

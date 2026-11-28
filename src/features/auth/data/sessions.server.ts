@@ -36,7 +36,8 @@ export function activeSessions(
       (left, right) => left.createdAt.getTime() - right.createdAt.getTime(),
     )
     const latest = sorted.at(-1)!
-    if (latest.revokedAt || latest.expiresAt <= now) continue
+    const isEnded = latest.revokedAt || latest.expiresAt <= now
+    if (isEnded) continue
     result.push({
       id,
       userAgent: latest.userAgent,

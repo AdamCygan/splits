@@ -64,8 +64,8 @@ export function nextAdminSort(
   current: AdminSortState,
   sort: AdminUserSort,
 ): AdminSortState {
-  if (current.sort === sort)
-    return { sort, dir: current.dir === 'asc' ? 'desc' : 'asc' }
+  const isSameSort = current.sort === sort
+  if (isSameSort) return { sort, dir: current.dir === 'asc' ? 'desc' : 'asc' }
   return { sort, dir: sort === 'name' || sort === 'email' ? 'asc' : 'desc' }
 }
 

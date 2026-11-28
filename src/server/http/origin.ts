@@ -18,7 +18,8 @@ export function sameOrigin({
   requestUrl,
   appUrl,
 }: RequestOrigin) {
-  if (fetchSite === 'cross-site') return false
+  const isCrossSite = fetchSite === 'cross-site'
+  if (isCrossSite) return false
   if (!origin) return true
   return (
     origin === new URL(requestUrl).origin || origin === new URL(appUrl).origin

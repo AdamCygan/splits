@@ -12,7 +12,8 @@ export function useFreeUsage() {
   const templates = useQuery(templatesQuery).data
   const statuses = useQuery(statusesQuery).data
   const types = useQuery(taskTypesQuery).data
-  if (!projects || !templates || !statuses || !types) return null
+  const isLoading = !projects || !templates || !statuses || !types
+  if (isLoading) return null
   return freeUsage({
     projects: splitArchived(projects).active.length,
     quickTemplates: templates.length,

@@ -52,8 +52,10 @@ export async function resolveWorkspace(
     .from(schema.workspaces)
     .where(eq(schema.workspaces.userId, userId))
     .orderBy(asc(schema.workspaces.sortOrder), asc(schema.workspaces.createdAt))
-  if (requested && rows.some((row) => row.id === requested)) return requested
-  if (rows[0]) return rows[0].id
+  const isRequestedOwn = requested && rows.some((row) => row.id === requested)
+  if (isRequestedOwn) return requested
+  const [firstRow] = rows
+  if (firstRow) return firstRow.id
   // Konto usunięte przed chwilą (token jeszcze ważny): sesja już nie istnieje.
   const [user] = await database
     .select({ id: schema.users.id })
@@ -150,8 +152,9 @@ export async function createWorkspace(
   const row = await database.transaction(async (transaction) => {
     const user = await currentUser(userId)
     const existing = await workspacesOf(transaction, userId)
-    if (!hasProAccess(user) && existing.length >= FREE_LIMITS.workspaces)
-      throw new ApiError('plan.limit_workspaces', 403)
+    const isOverFreeLimit =
+      !hasProAccess(user) && existing.length >= FREE_LIMITS.workspaces
+    if (isOverFreeLimit) throw new ApiError('plan.limit_workspaces', 403)
     await assertNameFree(transaction, userId, input.name)
     const source = input.copyFrom
       ? await ownWorkspace(transaction, userId, input.copyFrom)
@@ -168,7 +171,8 @@ export async function createWorkspace(
     const { locale, timezone } = await accountLocale(transaction, userId)
     const to = { userId, workspaceId: created!.id }
     await seedWorkspaceData(transaction, to, locale, timezone)
-    if (source && input.copy.length)
+    const copiesSetup = source && input.copy.length
+    if (copiesSetup)
       await copyInto(
         transaction,
         { userId, workspaceId: source.id },
@@ -226,7 +230,8 @@ export async function deleteWorkspace(userId: string, id: string) {
   await database.transaction(async (transaction) => {
     await ownWorkspace(transaction, userId, id)
     const all = await workspacesOf(transaction, userId)
-    if (all.length <= 1) throw new ApiError('workspace.last', 409)
+    const isLastWorkspace = all.length <= 1
+    if (isLastWorkspace) throw new ApiError('workspace.last', 409)
     await transaction
       .delete(schema.workspaces)
       .where(eq(schema.workspaces.id, id))
@@ -240,7 +245,8 @@ export async function copyToWorkspace(
   from: string,
   kinds: ReadonlyArray<CopyKind>,
 ) {
-  if (id === from) throw new ApiError('validation.invalid', 400, 'from')
+  const isMovedWorkspace = id === from
+  if (isMovedWorkspace) throw new ApiError('validation.invalid', 400, 'from')
   await database.transaction(async (transaction) => {
     await ownWorkspace(transaction, userId, id)
     await ownWorkspace(transaction, userId, from)
@@ -286,7 +292,8 @@ export async function applyTargets(
   scope: Scope,
   applyTo: ApplyTarget | undefined,
 ): Promise<Array<Scope>> {
-  if (applyTo !== 'all') return [scope]
+  const isSingleWorkspace = applyTo !== 'all'
+  if (isSingleWorkspace) return [scope]
   const rows = await workspacesOf(transaction, scope.userId)
   return [
     scope,

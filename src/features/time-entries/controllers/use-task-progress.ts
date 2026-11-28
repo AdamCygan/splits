@@ -32,12 +32,14 @@ export function useTaskProgress(entry: TimeEntry | undefined) {
     queryFn: () => unwrap(entriesApi.forTask(ref!)),
     enabled: !!ref,
   }).data
-  if (!entry || !sessions) return null
+  const isLoading = !entry || !sessions
+  if (isLoading) return null
   const all = [...sessions, ...(entry.running ? [entry] : [])]
   const storyPoints = maxPoints(all)
   const estimate = maxEstimate(all)
   const budget = taskBudget(storyPoints, estimate, scale)
-  if (storyPoints === null || budget === null) return null
+  const hasNoBudget = storyPoints === null || budget === null
+  if (hasNoBudget) return null
   const worked =
     sessions.reduce((sum, session) => sum + session.durationMinutes, 0) +
     runningMinutes(entry)

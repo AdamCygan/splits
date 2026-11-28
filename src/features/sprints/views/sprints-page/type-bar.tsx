@@ -11,7 +11,8 @@ export interface TypeBarProps {
 /** Pasek „na co poszedł czas”: segmenty w kolorach rodzajów pracy (ozdobny, treść obok). */
 export function TypeBar({ rows, types, className }: TypeBarProps) {
   const total = rows.reduce((sum, typeRow) => sum + typeRow.minutes, 0)
-  if (total === 0)
+  const isEmpty = total === 0
+  if (isEmpty)
     return (
       <div aria-hidden className={cn('rounded-full bg-muted', className)} />
     )

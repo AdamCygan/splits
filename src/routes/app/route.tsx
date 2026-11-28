@@ -63,7 +63,8 @@ export const Route = createFileRoute('/app')({
   beforeLoad: async ({ location }) => {
     // Import dynamiczny: moduł sesji (z Zod) nie trafia do bundla strony głównej.
     const { ensureSession } = await import('#/features/auth/data/session')
-    if (!(await ensureSession())) {
+    const isSignedOut = !(await ensureSession())
+    if (isSignedOut) {
       throw redirect({ to: '/login', search: { redirect: location.href } })
     }
   },

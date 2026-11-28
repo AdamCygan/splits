@@ -52,10 +52,13 @@ export async function assertProjectUnique(
         exceptId ? ne(schema.projects.id, exceptId) : undefined,
       ),
     )
-  if (others.some((other) => lowerName(other.name) === lowerName(input.name)))
-    throw conflict('name_taken', 'name')
-  if (input.key && others.some((other) => other.key === input.key))
-    throw conflict('key_taken', 'key')
+  const isNameTaken = others.some(
+    (other) => lowerName(other.name) === lowerName(input.name),
+  )
+  if (isNameTaken) throw conflict('name_taken', 'name')
+  const isKeyTaken =
+    input.key && others.some((other) => other.key === input.key)
+  if (isKeyTaken) throw conflict('key_taken', 'key')
 }
 
 const freeProjectSlot = (transaction: Tx, scope: Scope) =>
@@ -96,7 +99,8 @@ export async function updateProject(
   input: ProjectInput,
 ) {
   const row = await database.transaction(async (transaction) => {
-    if (!(await ownProject(transaction, scope, id))) throw notFound()
+    const isForeignProject = !(await ownProject(transaction, scope, id))
+    if (isForeignProject) throw notFound()
     await assertProjectUnique(transaction, scope, input, id)
     const [updated] = await transaction
       .update(schema.projects)
@@ -121,8 +125,8 @@ export async function setProjectArchived(
       .from(schema.projects)
       .where(mine)
     if (!project) throw notFound()
-    if (!archived && project.archivedAt)
-      await freeProjectSlot(transaction, scope)
+    const isRestoring = !archived && project.archivedAt
+    if (isRestoring) await freeProjectSlot(transaction, scope)
     const [updated] = await transaction
       .update(schema.projects)
       .set({ archivedAt: archived ? new Date() : null })

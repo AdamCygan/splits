@@ -88,7 +88,9 @@ export function useCommandPaletteViewModel() {
 
   useEffect(() => {
     const onKey = (event: globalThis.KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      const isPaletteShortcut =
+        (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k'
+      if (isPaletteShortcut) {
         event.preventDefault()
         setOpen((currentOpen) => !currentOpen)
       }
@@ -236,29 +238,35 @@ export function useCommandPaletteViewModel() {
   }
   const run = (command: Command | undefined, alternative = false) => {
     if (!command) return
-    if (command.id === 'shortcuts') {
+    const isShortcutsCommand = command.id === 'shortcuts'
+    if (isShortcutsCommand) {
       setHelp(true)
       return
     }
     ranRef.current = true
     close()
-    if (alternative && command.alt) command.alt()
+    const alternativeRun = alternative ? command.alt : undefined
+    if (alternativeRun) alternativeRun()
     else command.run()
   }
 
   /** Strzałki przesuwają aktywną opcję, Enter ją uruchamia (Ctrl/⌘+Enter: druga akcja). */
   const onInputKeyDown = (keyboardEvent: KeyboardEvent<HTMLInputElement>) => {
-    if (keyboardEvent.key === 'ArrowDown') {
-      keyboardEvent.preventDefault()
-      setActive((currentActive) =>
-        Math.min(results.length - 1, currentActive + 1),
-      )
-    } else if (keyboardEvent.key === 'ArrowUp') {
-      keyboardEvent.preventDefault()
-      setActive((currentActive) => Math.max(0, currentActive - 1))
-    } else if (keyboardEvent.key === 'Enter') {
-      keyboardEvent.preventDefault()
-      run(results.at(active), keyboardEvent.ctrlKey || keyboardEvent.metaKey)
+    switch (keyboardEvent.key) {
+      case 'ArrowDown':
+        keyboardEvent.preventDefault()
+        setActive((currentActive) =>
+          Math.min(results.length - 1, currentActive + 1),
+        )
+        break
+      case 'ArrowUp':
+        keyboardEvent.preventDefault()
+        setActive((currentActive) => Math.max(0, currentActive - 1))
+        break
+      case 'Enter':
+        keyboardEvent.preventDefault()
+        run(results.at(active), keyboardEvent.ctrlKey || keyboardEvent.metaKey)
+        break
     }
   }
 

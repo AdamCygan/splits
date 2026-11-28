@@ -134,7 +134,8 @@ test.describe('command palette', () => {
     const open = page
       .getByRole('button', { name: /^Search/ })
       .locator('visible=true')
-    if ((await open.count()) === 0) {
+    const isClosed = (await open.count()) === 0
+    if (isClosed) {
       await page
         .getByRole('button', { name: /^Account menu/ })
         .locator('visible=true')

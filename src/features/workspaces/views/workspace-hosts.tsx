@@ -111,8 +111,10 @@ function ApplyDialog() {
   const messages = useMessages(workspacesMessages)
   const app = useMessages(appMessages)
   const dialog = useApplyDialog()
-  if (!dialog.open || !dialog.kind) return null
-  const thing = messages.kinds[dialog.kind]
+  const { kind } = dialog
+  const isClosed = !dialog.open || !kind
+  if (isClosed) return null
+  const thing = messages.kinds[kind]
   const options = [
     {
       value: 'this' as const,

@@ -94,7 +94,8 @@ function ScaleEditor({ scale }: ScaleEditorProps) {
   const onSubmit = (formEvent: FormEvent) => {
     formEvent.preventDefault()
     setSubmitted(true)
-    if (issues.length === 0)
+    const isValid = issues.length === 0
+    if (isValid)
       save.mutate([...parsed].sort((left, right) => left.points - right.points))
   }
 

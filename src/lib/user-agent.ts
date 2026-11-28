@@ -25,6 +25,7 @@ export function describeDevice(
           : /Linux/.test(userAgent)
             ? 'Linux'
             : null
-  if (!browser && !operatingSystem) return null
+  const isUnknown = !browser && !operatingSystem
+  if (isUnknown) return null
   return { browser: browser ?? '?', operatingSystem: operatingSystem ?? '?' }
 }

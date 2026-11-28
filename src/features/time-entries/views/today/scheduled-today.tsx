@@ -27,7 +27,8 @@ export function ScheduledToday({ viewModel }: ScheduledTodayProps) {
   const dayOff = useQuery(daysOffQuery(viewModel.workDate, viewModel.workDate))
     .data?.[0]
   const meetings = scheduledOn(viewModel.templates, viewModel.workDate)
-  if (meetings.length === 0 || dayOff) return null
+  const hasNothingScheduled = meetings.length === 0 || dayOff
+  if (hasNothingScheduled) return null
   const now = viewModel.isToday ? nowTimeIn(timeZone) : '24:00'
   const rows = meetings.map((scheduledMeeting) => ({
     ...scheduledMeeting,

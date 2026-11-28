@@ -58,7 +58,8 @@ export async function assertNotLastInCategory(
         ne(schema.taskStatuses.id, status.id),
       ),
     )
-  if ((row?.n ?? 0) === 0) throw conflict('status.last_in_category')
+  const isUnused = (row?.n ?? 0) === 0
+  if (isUnused) throw conflict('status.last_in_category')
 }
 
 const freeStatusSlot = (transaction: Tx, scope: Scope) =>
@@ -79,13 +80,11 @@ export async function createStatus(scope: Scope, input: TaskStatusInput) {
   const row = await database.transaction(async (transaction) => {
     await freeStatusSlot(transaction, scope)
     const all = await listStatuses(transaction, scope)
-    if (
-      all.some(
-        (existingStatus) =>
-          lowerName(existingStatus.name) === lowerName(input.name),
-      )
+    const isNameTaken = all.some(
+      (existingStatus) =>
+        lowerName(existingStatus.name) === lowerName(input.name),
     )
-      throw conflict('name_taken', 'name')
+    if (isNameTaken) throw conflict('name_taken', 'name')
     const [created] = await transaction
       .insert(schema.taskStatuses)
       .values({ ...input, ...owner(scope), sortOrder: all.length })
@@ -113,15 +112,15 @@ export async function updateStatus(
   const row = await database.transaction(async (transaction) => {
     const status = await ownStatus(transaction, scope, id)
     const all = await listStatuses(transaction, scope)
-    if (
-      all.some(
-        (existingStatus) =>
-          existingStatus.id !== id &&
-          lowerName(existingStatus.name) === lowerName(input.name),
-      )
+    const isNameTaken = all.some(
+      (existingStatus) =>
+        existingStatus.id !== id &&
+        lowerName(existingStatus.name) === lowerName(input.name),
     )
-      throw conflict('name_taken', 'name')
-    if (status.category !== input.category && !status.archivedAt)
+    if (isNameTaken) throw conflict('name_taken', 'name')
+    const changesActiveCategory =
+      status.category !== input.category && !status.archivedAt
+    if (changesActiveCategory)
       await assertNotLastInCategory(transaction, status)
     const [updated] = await transaction
       .update(schema.taskStatuses)

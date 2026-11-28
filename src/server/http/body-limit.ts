@@ -13,7 +13,8 @@ const tooLarge = () => new ApiError('validation.too_large', 413)
  */
 export const limitBody: MiddlewareHandler = async (context, next) => {
   const length = Number(context.req.header('content-length') ?? 0)
-  if (length > MAX_BODY_BYTES) throw tooLarge()
+  const isTooLarge = length > MAX_BODY_BYTES
+  if (isTooLarge) throw tooLarge()
   await next()
 }
 
@@ -30,7 +31,8 @@ export async function readBody(
     const { done, value } = await reader.read()
     if (done) break
     size += value.byteLength
-    if (size > maxBytes) {
+    const isTooLarge = size > maxBytes
+    if (isTooLarge) {
       await reader.cancel()
       throw tooLarge()
     }

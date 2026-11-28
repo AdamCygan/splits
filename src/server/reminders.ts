@@ -49,7 +49,8 @@ export async function runReminders(now = new Date()) {
   for (const { user, settings } of rows) {
     const zone = settings.timezone
     const today = todayIn(zone, now)
-    if (settings.reminderSentOn === today) continue
+    const wasSentToday = settings.reminderSentOn === today
+    if (wasSentToday) continue
     const days = await database
       .select({
         workspaceId: workspaceSettings.workspaceId,
@@ -61,10 +62,12 @@ export async function runReminders(now = new Date()) {
     const working = days.filter((day) =>
       day.workingDays.includes(weekday(today)),
     )
-    if (working.length === 0) continue
+    const hasNoWorkspaces = working.length === 0
+    if (hasNoWorkspaces) continue
     const late =
       minutesOf(nowTimeIn(zone, now)) - minutesOf(settings.dailyReminderAt!)
-    if (late < 0 || late > LATE_LIMIT_MINUTES) continue
+    const isOutsideWindow = late < 0 || late > LATE_LIMIT_MINUTES
+    if (isOutsideWindow) continue
     // Od tej chwili ten dzień jest załatwiony, niezależnie od tego, czy e-mail jest potrzebny.
     const [claimed] = await database
       .update(userSettings)
@@ -88,7 +91,8 @@ export async function runReminders(now = new Date()) {
     const target = working
       .filter((dueUser) => !off.has(dueUser.workspaceId))
       .reduce((sum, dueUser) => sum + dueUser.target, 0)
-    if (target === 0) continue
+    const hasNoTarget = target === 0
+    if (hasNoTarget) continue
     const [{ logged } = { logged: 0 }] = await database
       .select({
         logged: sql<number>`coalesce(sum(${timeEntries.durationMinutes}), 0)::int`,
@@ -97,7 +101,8 @@ export async function runReminders(now = new Date()) {
       .where(
         and(eq(timeEntries.userId, user.id), eq(timeEntries.workDate, today)),
       )
-    if (logged >= target) continue
+    const isTargetMet = logged >= target
+    if (isTargetMet) continue
     const locale = settings.locale === 'pl' ? 'pl' : 'en'
     await sendEmail(
       accountEmail('reminder', locale, user.email, {

@@ -5,8 +5,8 @@
 import { existsSync } from 'node:fs'
 
 // Lokalnie (pnpm dev) zmienne serwera czytamy z .env; istniejące zmienne środowiska mają pierwszeństwo.
-if (process.env.NODE_ENV !== 'production' && existsSync('.env'))
-  process.loadEnvFile('.env')
+const loadsDotEnv = process.env.NODE_ENV !== 'production' && existsSync('.env')
+if (loadsDotEnv) process.loadEnvFile('.env')
 
 const environment = process.env
 const isProduction = environment.NODE_ENV === 'production'
@@ -27,8 +27,8 @@ const jwtSecret = required(
   'JWT_SECRET',
   'dev-only-secret-change-me-0123456789abcdef',
 )
-if (isProduction && jwtSecret.length < 32)
-  throw new Error('JWT_SECRET musi mieć co najmniej 32 znaki.')
+const isWeakSecret = isProduction && jwtSecret.length < 32
+if (isWeakSecret) throw new Error('JWT_SECRET musi mieć co najmniej 32 znaki.')
 
 export const serverEnv = {
   isProduction,

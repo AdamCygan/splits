@@ -36,8 +36,10 @@ export function feedbackMessageError(
   message: string,
 ): FeedbackMessageError | null {
   const length = message.trim().length
-  if (length < FEEDBACK_MESSAGE.min) return 'tooShort'
-  if (length > FEEDBACK_MESSAGE.max) return 'tooLong'
+  const isTooShort = length < FEEDBACK_MESSAGE.min
+  if (isTooShort) return 'tooShort'
+  const isTooLong = length > FEEDBACK_MESSAGE.max
+  if (isTooLong) return 'tooLong'
   return null
 }
 

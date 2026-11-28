@@ -15,7 +15,8 @@ export interface AccountNoticesProps {
 export function AccountNotices({ user }: AccountNoticesProps) {
   const messages = useMessages(panelMessages).notices
   const viewModel = useAccountNoticesViewModel(user)
-  if (viewModel.notices.length === 0) return null
+  const hasNoNotices = viewModel.notices.length === 0
+  if (hasNoNotices) return null
   return (
     <section aria-label={messages.label}>
       {viewModel.notices.map((notice) =>

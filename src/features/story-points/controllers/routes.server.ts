@@ -12,8 +12,8 @@ export const scaleRoutes = new Hono<AppEnv>()
   .get('/', async (context) => context.json(await getScale(scopeOf(context))))
   .put('/', async (context) => {
     const { steps } = await body(context, scaleInput)
-    if (validateScale(steps).length > 0)
-      throw new ApiError('scale.invalid', 400)
+    const hasScaleErrors = validateScale(steps).length > 0
+    if (hasScaleErrors) throw new ApiError('scale.invalid', 400)
     return context.json(
       await inTargets(scopeOf(context), applyOf(context), (scope) =>
         replaceScale(scope, steps),

@@ -65,7 +65,12 @@ export function TaskSearch({ isToday, onUse }: TaskSearchProps) {
     setQuery('')
   }
   const onKeyDown = (keyboardEvent: KeyboardEvent<HTMLInputElement>) => {
-    if (keyboardEvent.key === 'ArrowDown' || keyboardEvent.key === 'ArrowUp') {
+    const isArrowKey =
+      keyboardEvent.key === 'ArrowDown' || keyboardEvent.key === 'ArrowUp'
+    const activeResult = expanded ? results[active] : undefined
+    const picksResult = keyboardEvent.key === 'Enter' && activeResult
+    const isEscape = keyboardEvent.key === 'Escape'
+    if (isArrowKey) {
       keyboardEvent.preventDefault()
       setOpen(true)
       const step = keyboardEvent.key === 'ArrowDown' ? 1 : -1
@@ -74,10 +79,10 @@ export function TaskSearch({ isToday, onUse }: TaskSearchProps) {
           ? (currentActive + step + results.length) % results.length
           : 0,
       )
-    } else if (keyboardEvent.key === 'Enter' && expanded && results[active]) {
+    } else if (picksResult) {
       keyboardEvent.preventDefault()
-      choose(results[active])
-    } else if (keyboardEvent.key === 'Escape') {
+      choose(activeResult)
+    } else if (isEscape) {
       if (expanded) setOpen(false)
       else setQuery('')
     }

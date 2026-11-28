@@ -57,7 +57,8 @@ export function averageMinutesPerSp(
     (stat) => stat.minutesPerSp !== null && stat.storyPoints > 0,
   )
   const points = withSp.reduce((sum, sprint) => sum + sprint.storyPoints, 0)
-  if (points === 0) return null
+  const hasNoPoints = points === 0
+  if (hasNoPoints) return null
   return Math.round(
     withSp.reduce(
       (sum, sprint) => sum + sprint.minutesPerSp! * sprint.storyPoints,
@@ -95,7 +96,8 @@ export function estimateOf(
   source: 'estimate' | 'scale'
 } | null {
   const own = row.estimateMinutes ?? null
-  if (own !== null) {
+  const hasOwnStats = own !== null
+  if (hasOwnStats) {
     const min = Math.floor(own * 0.8)
     const status: EstimateStatus =
       row.minutes > own ? 'over' : row.minutes < min ? 'under' : 'within'
@@ -107,8 +109,10 @@ export function estimateOf(
       source: 'estimate',
     }
   }
-  if (row.storyPoints === null) return null
-  const range = rangeFor(scale, row.storyPoints)
+  const { storyPoints } = row
+  const isUnestimated = storyPoints === null
+  if (isUnestimated) return null
+  const range = rangeFor(scale, storyPoints)
   if (!range) return null
   const status: EstimateStatus =
     row.minutes > range.max

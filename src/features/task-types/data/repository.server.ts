@@ -36,22 +36,20 @@ async function activeCustomTypes(transaction: Tx, scope: Scope) {
 
 export async function assertTypeSlot(transaction: Tx, scope: Scope) {
   const user = await currentUser(scope.userId)
-  if (
+  const isOverFreeLimit =
     !hasProAccess(user) &&
     (await activeCustomTypes(transaction, scope)) >= FREE_LIMITS.customWorkTypes
-  )
-    throw new ApiError('plan.limit_custom_types', 403)
+  if (isOverFreeLimit) throw new ApiError('plan.limit_custom_types', 403)
 }
 
 /** Typ bez SP nie ma wartości domyślnej, a typ z wymaganymi SP musi ją mieć. */
 export function cleanType(input: TaskTypeInput): TaskTypeInput {
-  if (input.storyPointsRequirement === 'hidden')
-    return { ...input, defaultStoryPoints: null }
-  if (
+  const hidesStoryPoints = input.storyPointsRequirement === 'hidden'
+  if (hidesStoryPoints) return { ...input, defaultStoryPoints: null }
+  const lacksRequiredDefault =
     input.storyPointsRequirement === 'required' &&
     input.defaultStoryPoints === null
-  )
-    throw invalid('defaultStoryPoints')
+  if (lacksRequiredDefault) throw invalid('defaultStoryPoints')
   return { ...input, linkLabel: input.linkLabel || 'Link' }
 }
 
@@ -114,7 +112,8 @@ export async function updateTaskType(
   input: TaskTypeInput,
 ) {
   const row = await database.transaction(async (transaction) => {
-    if (!(await ownTaskType(transaction, scope, id))) throw notFound()
+    const isForeignType = !(await ownTaskType(transaction, scope, id))
+    if (isForeignType) throw notFound()
     await assertUniqueTypeName(transaction, scope, input.name, id)
     const [updated] = await transaction
       .update(schema.taskTypes)
@@ -135,9 +134,10 @@ export async function setTaskTypeArchived(
   const row = await database.transaction(async (transaction) => {
     const type = await ownTaskType(transaction, scope, id)
     if (!type) throw notFound()
-    if (type.isSystem && archived) throw conflict('type.system_archive')
-    if (!archived && !type.isSystem && type.archivedAt)
-      await assertTypeSlot(transaction, scope)
+    const archivesSystemType = type.isSystem && archived
+    if (archivesSystemType) throw conflict('type.system_archive')
+    const restoresCustomType = !archived && !type.isSystem && type.archivedAt
+    if (restoresCustomType) await assertTypeSlot(transaction, scope)
     const [updated] = await transaction
       .update(schema.taskTypes)
       .set({ archivedAt: archived ? new Date() : null })

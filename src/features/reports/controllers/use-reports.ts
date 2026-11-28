@@ -174,7 +174,8 @@ export function useReportsViewModel({
     closeEdit: () => setEditing(null),
     /** Słupek wykresu: dzień otwiera widok dnia, tydzień/miesiąc zawęża raport. */
     openBucket: (chartBucket: ChartBucket) => {
-      if (chartBucket.unit === 'day')
+      const isDayBucket = chartBucket.unit === 'day'
+      if (isDayBucket)
         void navigate({ to: '/app/day', search: { date: chartBucket.from } })
       else {
         setCustom({ from: chartBucket.from, to: chartBucket.to })

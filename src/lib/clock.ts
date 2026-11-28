@@ -15,7 +15,8 @@ export const useClockPref = store.use
 
 /** Czy pokazywać 12-godzinny zegar (AM/PM) dla danego języka. */
 export function uses12h(tag: string, preference: ClockPref = readClock()) {
-  if (preference !== 'auto') return preference === 'h12'
+  const isExplicit = preference !== 'auto'
+  if (isExplicit) return preference === 'h12'
   return (
     new Intl.DateTimeFormat(tag, { hour: 'numeric' }).resolvedOptions()
       .hourCycle === 'h12'
@@ -57,12 +58,16 @@ export function parseTime(raw: string): string | null {
   let hours = Number(match[1])
   const min = match[2] === undefined ? 0 : Number(match[2])
   const suffix = match[3]
-  if (min > 59) return null
+  const isInvalidMinutes = min > 59
+  if (isInvalidMinutes) return null
   if (suffix) {
-    if (hours < 1 || hours > 12) return null
-    if (suffix.startsWith('a')) hours = hours === 12 ? 0 : hours
+    const isInvalidTwelveHour = hours < 1 || hours > 12
+    if (isInvalidTwelveHour) return null
+    const isMorning = suffix.startsWith('a')
+    if (isMorning) hours = hours === 12 ? 0 : hours
     else hours = hours === 12 ? 12 : hours + 12
   }
-  if (hours > 23) return null
+  const isInvalidHour = hours > 23
+  if (isInvalidHour) return null
   return `${pad(hours)}:${pad(min)}`
 }

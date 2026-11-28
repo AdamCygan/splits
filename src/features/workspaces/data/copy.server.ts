@@ -20,14 +20,22 @@ export async function copyInto(
   kinds: ReadonlyArray<CopyKind>,
 ) {
   const has = (copyKind: CopyKind) => kinds.includes(copyKind)
-  if (has('workTypes')) await copyTaskTypes(transaction, from, to)
-  if (has('statuses')) await copyStatuses(transaction, from, to)
-  if (has('tags')) await copyTags(transaction, from, to)
-  if (has('storyPoints')) await copyScale(transaction, from, to)
-  if (has('workday')) await copyWorkday(transaction, from, to)
-  if (has('templates')) await copyTemplates(transaction, from, to)
-  if (has('daysOff')) await copyDaysOff(transaction, from, to)
-  if (has('sprints')) await copySprints(transaction, from, to)
+  const copiesWorkTypes = has('workTypes')
+  if (copiesWorkTypes) await copyTaskTypes(transaction, from, to)
+  const copiesStatuses = has('statuses')
+  if (copiesStatuses) await copyStatuses(transaction, from, to)
+  const copiesTags = has('tags')
+  if (copiesTags) await copyTags(transaction, from, to)
+  const copiesStoryPoints = has('storyPoints')
+  if (copiesStoryPoints) await copyScale(transaction, from, to)
+  const copiesWorkday = has('workday')
+  if (copiesWorkday) await copyWorkday(transaction, from, to)
+  const copiesTemplates = has('templates')
+  if (copiesTemplates) await copyTemplates(transaction, from, to)
+  const copiesDaysOff = has('daysOff')
+  if (copiesDaysOff) await copyDaysOff(transaction, from, to)
+  const copiesSprints = has('sprints')
+  if (copiesSprints) await copySprints(transaction, from, to)
 }
 
 interface Named {
@@ -117,7 +125,8 @@ async function copyStatuses(transaction: Tx, from: Scope, to: Scope) {
       .where(inScope(schema.taskStatuses, to)),
   ])
   // Status domyślny jest jeden na przestrzeń: przejmuje go odpowiednik domyślnego ze źródła.
-  if (source.some((sourceRow) => sourceRow.isDefault))
+  const hasDefault = source.some((sourceRow) => sourceRow.isDefault)
+  if (hasDefault)
     await transaction
       .update(schema.taskStatuses)
       .set({ isDefault: false })
@@ -250,7 +259,8 @@ async function copyTemplates(transaction: Tx, from: Scope, to: Scope) {
       sourceRows.hotkey !== null && !hotkeys.has(sourceRows.hotkey)
         ? sourceRows.hotkey
         : null
-    if (hotkey !== null) hotkeys.add(hotkey)
+    const hasHotkey = hotkey !== null
+    if (hasHotkey) hotkeys.add(hotkey)
     await transaction
       .insert(schema.quickTemplates)
       .values({ ...data, hotkey, sortOrder: order++, ...owner(to) })
@@ -262,7 +272,8 @@ async function copyDaysOff(transaction: Tx, from: Scope, to: Scope) {
     .select()
     .from(schema.daysOff)
     .where(inScope(schema.daysOff, from))
-  if (source.length === 0) return
+  const hasNoSource = source.length === 0
+  if (hasNoSource) return
   await transaction
     .insert(schema.daysOff)
     .values(

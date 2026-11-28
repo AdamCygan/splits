@@ -229,17 +229,22 @@ export function EntryFormDemo() {
   const onKeyDown = (keyboardEvent: KeyboardEvent<HTMLDivElement>) => {
     const keys: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1 }
     let next: number | null = null
-    if (keyboardEvent.key in keys)
+    const isNavigationKey = keyboardEvent.key in keys
+    if (isNavigationKey)
       next =
         (active + (keys[keyboardEvent.key] ?? 0) + forms.length) % forms.length
-    if (keyboardEvent.key === 'Home') next = 0
-    if (keyboardEvent.key === 'End') next = forms.length - 1
-    if (next === null) return
+    const isHomeKey = keyboardEvent.key === 'Home'
+    if (isHomeKey) next = 0
+    const isEndKey = keyboardEvent.key === 'End'
+    if (isEndKey) next = forms.length - 1
+    const target = next
+    const isUnhandledKey = target === null
+    if (isUnhandledKey) return
     keyboardEvent.preventDefault()
-    setActive(next)
+    setActive(target)
     keyboardEvent.currentTarget
       .querySelectorAll<HTMLButtonElement>('[role="tab"]')
-      [next]?.focus()
+      [target]?.focus()
   }
 
   return (

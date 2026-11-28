@@ -49,7 +49,8 @@ export const testRoutes = new Hono<AppEnv>()
         timezone: input.timezone ?? 'UTC',
         withSamples: true,
       })
-      if (input.role === 'admin' || input.twoFactor)
+      const needsTwoFactor = input.role === 'admin' || input.twoFactor
+      if (needsTwoFactor)
         await transaction
           .update(users)
           .set({

@@ -11,7 +11,8 @@ import { site } from '#/config/site'
 export const Route = createFileRoute('/app/admin')({
   beforeLoad: async () => {
     const { getCurrentUser } = await import('#/features/auth/data/session')
-    if (getCurrentUser()?.role !== 'admin') throw redirect({ to: '/app' })
+    const isNotAdmin = getCurrentUser()?.role !== 'admin'
+    if (isNotAdmin) throw redirect({ to: '/app' })
   },
   head: () => ({
     meta: [{ title: `${adminMessages[getLocale()].seoTitle} | ${site.name}` }],

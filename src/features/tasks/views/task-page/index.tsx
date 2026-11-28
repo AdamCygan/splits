@@ -43,7 +43,9 @@ export function TaskPage(props: TaskPageProps) {
         />
       </div>
     )
-  if (!viewModel.insights || !viewModel.latest)
+  const { latest } = viewModel
+  const isLoading = !viewModel.insights || !latest
+  if (isLoading)
     return (
       <div className="mx-auto max-w-6xl">
         {back}
@@ -82,7 +84,7 @@ export function TaskPage(props: TaskPageProps) {
 
       {viewModel.summarizing && (
         <SummaryDialog
-          entry={viewModel.latest}
+          entry={latest}
           type={viewModel.type}
           onClose={viewModel.closeSummary}
         />

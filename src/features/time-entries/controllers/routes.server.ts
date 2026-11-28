@@ -41,12 +41,14 @@ import {
 export const entryRoutes = new Hono<AppEnv>()
   .get('/', async (context) => {
     const scope = scopeOf(context)
-    if (context.req.query('date')) {
+    const hasDateQuery = context.req.query('date')
+    if (hasDateQuery) {
       const { date } = parse(dateQuery, context.req.query())
       return context.json(await listEntriesOn(scope, date))
     }
     const range = parse(rangeQuery, context.req.query())
-    if (range.to < range.from) throw invalid('to')
+    const isReversedRange = range.to < range.from
+    if (isReversedRange) throw invalid('to')
     return context.json(await listEntriesInRange(scope, range.from, range.to))
   })
 
@@ -75,7 +77,8 @@ export const entryRoutes = new Hono<AppEnv>()
   .get('/search', async (context) => {
     const scope = scopeOf(context)
     const query = (context.req.query('q') ?? '').trim().slice(0, 200)
-    if (query.length < 2) return context.json([])
+    const isQueryTooShort = query.length < 2
+    if (isQueryTooShort) return context.json([])
     const pattern = likePattern(query)
     return context.json(await searchTasks(scope, pattern))
   })
@@ -169,7 +172,8 @@ export const entryRoutes = new Hono<AppEnv>()
     const scope = scopeOf(context)
     const input = await body(context, noteInput)
     const note = input.note?.trim() ? input.note : null
-    if ((note?.length ?? 0) > ENTRY_LIMITS.note) throw invalid('note')
+    const isNoteTooLong = (note?.length ?? 0) > ENTRY_LIMITS.note
+    if (isNoteTooLong) throw invalid('note')
     return context.json(await updateNote(scope, context.req.param('id'), note))
   })
 

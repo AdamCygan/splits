@@ -60,7 +60,8 @@ export function noteSnippet(note: string, words: ReadonlyArray<string>) {
     .map((word) => lower.indexOf(word))
     .filter((word) => word >= 0)
     .sort((left, right) => left - right)[0]
-  if (at === undefined) return null
+  const isUnknownTask = at === undefined
+  if (isUnknownTask) return null
   const start = Math.max(0, at - 40)
   const end = Math.min(text.length, at + 80)
   return `${start > 0 ? '…' : ''}${text.slice(start, end).trim()}${end < text.length ? '…' : ''}`
@@ -82,7 +83,8 @@ export function rankSearchResults(
   limit = 12,
 ): Array<RankedSearchResult> {
   const words = searchWords(query)
-  if (words.length === 0) return []
+  const hasNoWords = words.length === 0
+  if (hasNoWords) return []
   const notesOf = (timeEntry: TimeEntry) =>
     [timeEntry.note, timeEntry.overtimeNote, timeEntry.extensionNote]
       .filter(Boolean)
@@ -95,7 +97,8 @@ export function rankSearchResults(
     const link = (task.latest.link ?? '').toLocaleLowerCase()
     const notes = task.sessions.map(notesOf).join('\n').toLocaleLowerCase()
     const haystack = `${title}\n${link}\n${notes}`
-    if (!words.every((word) => haystack.includes(word))) continue
+    const missesAnyWord = !words.every((word) => haystack.includes(word))
+    if (missesAnyWord) continue
     const inTitle = words.every((word) => title.includes(word))
     const inHead = words.every(
       (word) => title.includes(word) || link.includes(word),

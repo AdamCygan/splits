@@ -103,7 +103,8 @@ export async function promoteOwner(
   transaction: Tx,
   user: typeof users.$inferSelect,
 ) {
-  if (user.role === 'admin' || !isOwner(user)) return user
+  const needsNoPromotion = user.role === 'admin' || !isOwner(user)
+  if (needsNoPromotion) return user
   const [promoted] = await transaction
     .update(users)
     .set({ role: 'admin' })
@@ -217,7 +218,8 @@ export async function uniqueUsername(transaction: Tx, email: string) {
   for (let index = 0; index < 20; index++) {
     const candidate =
       index === 0 ? stem : `${stem}${Math.floor(Math.random() * 9000) + 1000}`
-    if (!USERNAME_RE.test(candidate)) continue
+    const isInvalidUsername = !USERNAME_RE.test(candidate)
+    if (isInvalidUsername) continue
     const [taken] = await transaction
       .select({ id: users.id })
       .from(users)
@@ -282,8 +284,9 @@ export async function signInWithGoogle(
       )[0]
       // Konto z niepotwierdzonym adresem mógł założyć ktoś obcy, znając tylko e-mail:
       // właściciel adresu (Google to potwierdził) przejmuje je bez cudzego hasła, 2FA i sesji.
-      if (user && !user.emailVerifiedAt) {
-        await revokeAllSessions(transaction, user.id)
+      const unverifiedUser = user?.emailVerifiedAt ? undefined : user
+      if (unverifiedUser) {
+        await revokeAllSessions(transaction, unverifiedUser.id)
         ;[user] = await transaction
           .update(users)
           .set({
@@ -293,7 +296,7 @@ export async function signInWithGoogle(
             recoveryCodes: [],
             emailVerifiedAt: new Date(),
           })
-          .where(eq(users.id, user.id))
+          .where(eq(users.id, unverifiedUser.id))
           .returning()
       }
       user ??= await createAccount(transaction, {
@@ -348,7 +351,8 @@ export async function refreshSession(
       .select()
       .from(users)
       .where(eq(users.id, rotated.userId))
-    if (!found || found.disabledAt) return null
+    const isMissingOrDisabled = !found || found.disabledAt
+    if (isMissingOrDisabled) return null
     const user = await promoteOwner(transaction, found)
     const access = await signAccessToken(user.id)
     return {
@@ -393,11 +397,13 @@ export async function createDemoAccount(
   meta: ReturnType<typeof requestMeta>,
   input: z.infer<typeof demoInput>,
 ) {
-  const live = async () =>
+  const hasFreeSlot = async () =>
     (await database.$count(users, eq(users.isDemo, true))) < DEMO_MAX_ACCOUNTS
-  if (!(await live())) {
+  const isDemoFull = !(await hasFreeSlot())
+  if (isDemoFull) {
     await runMaintenance()
-    if (!(await live())) throw new ApiError('demo.unavailable', 503)
+    const isStillFull = !(await hasFreeSlot())
+    if (isStillFull) throw new ApiError('demo.unavailable', 503)
   }
   const id = randomUUID().replace(/-/g, '').slice(0, 10)
   const session = await database.transaction(async (transaction) => {
@@ -425,9 +431,14 @@ export async function loginWithPassword(
     await burnPasswordCheck(input.password)
     throw new ApiError('auth.invalid_credentials', 401)
   }
-  if (user.lockoutUntil && user.lockoutUntil.getTime() > Date.now())
-    throw new ApiError('auth.too_many_attempts', 429)
-  if (!(await verifyPassword(input.password, user.passwordHash))) {
+  const isLockedOut =
+    user.lockoutUntil && user.lockoutUntil.getTime() > Date.now()
+  if (isLockedOut) throw new ApiError('auth.too_many_attempts', 429)
+  const isWrongPassword = !(await verifyPassword(
+    input.password,
+    user.passwordHash,
+  ))
+  if (isWrongPassword) {
     const failed = user.failedLoginCount + 1
     await database
       .update(users)
@@ -486,7 +497,12 @@ export async function loginWithSecondFactor(
       .where(eq(users.id, userId))
     if (!user?.totpEnabledAt) throw new ApiError('auth.mfa_expired', 401)
     if (user.disabledAt) throw new ApiError('auth.account_disabled', 403)
-    if (!(await useSecondFactor(transaction, user, input.code)))
+    const isWrongSecondFactor = !(await useSecondFactor(
+      transaction,
+      user,
+      input.code,
+    ))
+    if (isWrongSecondFactor)
       throw new ApiError('auth.invalid_code', 400, 'code')
     const [fresh] = await transaction
       .update(users)
@@ -520,7 +536,8 @@ export async function confirmEmail(token: z.infer<typeof tokenInput>['token']) {
       .from(users)
       .where(eq(users.id, row.userId))
     if (!user) return null
-    if (row.purpose === 'email_verification') {
+    const isEmailVerification = row.purpose === 'email_verification'
+    if (isEmailVerification) {
       // Link do starego adresu po zmianie e-maila nie potwierdza nowego.
       await transaction
         .update(users)
@@ -561,7 +578,8 @@ export async function requestPasswordReset(
 ) {
   const user = await findUserByLogin(database, email)
   // Zawsze 204: odpowiedź nie zdradza, czy konto z tym adresem istnieje.
-  if (user && lower(user.email) === lower(email)) {
+  const isSameEmail = user && lower(user.email) === lower(email)
+  if (isSameEmail) {
     const token = randomToken()
     await database.insert(authTokens).values({
       userId: user.id,
@@ -622,7 +640,8 @@ export async function resetPassword(input: z.infer<typeof resetInput>) {
     return owner ?? true
   })
   if (!done) throw new ApiError('auth.reset_invalid', 400, 'token')
-  if (typeof done === 'object') await notify(done, 'passwordChanged')
+  const hasUserToNotify = typeof done === 'object'
+  if (hasUserToNotify) await notify(done, 'passwordChanged')
   return
 }
 

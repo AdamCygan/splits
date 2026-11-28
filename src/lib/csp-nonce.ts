@@ -17,6 +17,7 @@ export function registerNonceStore(store: NonceStore) {
 }
 
 export function currentNonce(): string | undefined {
-  if (typeof window !== 'undefined') return undefined
+  const isBrowser = typeof window !== 'undefined'
+  if (isBrowser) return undefined
   return (globalThis as WithNonceStore)[KEY]?.getStore()
 }

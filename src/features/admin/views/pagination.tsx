@@ -12,7 +12,8 @@ export interface PaginationProps {
 /** Poprzednia / następna strona z numerem bieżącej (ukryte przy jednej stronie). */
 export function Pagination({ page, pages, onPage }: PaginationProps) {
   const messages = useMessages(adminMessages)
-  if (pages <= 1) return null
+  const isSinglePage = pages <= 1
+  if (isSinglePage) return null
   return (
     <nav aria-label={messages.pagination} className="flex items-center gap-2">
       <Button

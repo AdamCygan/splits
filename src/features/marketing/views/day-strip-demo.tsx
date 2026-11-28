@@ -147,14 +147,16 @@ export function DayStripDemo() {
         (byKind.get(demoEntry.kind) ?? 0) + demoEntry.duration,
       )
       const key = demoEntry.taskKey ?? demoEntry.id
-      if (!counted.has(key)) {
+      const isNotCounted = !counted.has(key)
+      if (isNotCounted) {
         counted.add(key)
         points += demoEntry.storyPoints
       }
     }
     if (timerRunning) {
       byKind.set('task', (byKind.get('task') ?? 0) + runningMinutes)
-      if (!counted.has(TIMER_TASK.taskKey)) points += TIMER_TASK.storyPoints
+      const isTimerNotCounted = !counted.has(TIMER_TASK.taskKey)
+      if (isTimerNotCounted) points += TIMER_TASK.storyPoints
     }
     const total = [...byKind.values()].reduce(
       (totalItem, minutes) => totalItem + minutes,
@@ -164,7 +166,8 @@ export function DayStripDemo() {
   }, [entries, timerRunning, runningMinutes])
 
   const addTemplate = (template: (typeof templates)[number]) => {
-    if (freeMinutes < template.duration) return
+    const isOutOfTime = freeMinutes < template.duration
+    if (isOutOfTime) return
     setEntries((previous) => [
       ...previous,
       {

@@ -75,7 +75,8 @@ function CurrentSprintBody({ viewModel }: CurrentSprintBodyProps) {
   const format = useFormat()
   const { locale } = useI18n()
   const { current, currentStats: stats, day, upcoming } = viewModel
-  if (!current || !stats || !day) return null
+  const isMissingData = !current || !stats || !day
+  if (isMissingData) return null
   const available = viewModel.availability(current)
   const dayOf = fmt(messages.dayOf, day)
   return (

@@ -314,7 +314,8 @@ function SprintList() {
           const visible = showPast
             ? sprints
             : sprints.filter((sprint) => sprintPhase(sprint, today) !== 'past')
-          if (sprints.length === 0)
+          const hasNoSprints = sprints.length === 0
+          if (hasNoSprints)
             return <p className="text-ink-soft">{messages.empty}</p>
           return (
             <div className="space-y-4">

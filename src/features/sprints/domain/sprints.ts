@@ -7,8 +7,10 @@ export function sprintPhase(
   sprint: Pick<Sprint, 'startsOn' | 'endsOn'>,
   today: string,
 ): SprintPhase {
-  if (today < sprint.startsOn) return 'upcoming'
-  if (today > sprint.endsOn) return 'past'
+  const isUpcoming = today < sprint.startsOn
+  if (isUpcoming) return 'upcoming'
+  const isPast = today > sprint.endsOn
+  if (isPast) return 'past'
   return 'current'
 }
 
@@ -77,7 +79,8 @@ export function cadenceSprint(cadence: SprintCadence, number: number) {
 /** Numer sprintu kadencji obejmującego dany dzień (0 = przed kotwicą). */
 export function cadenceNumberAt(cadence: SprintCadence, day: string): number {
   const offset = diffDays(cadence.anchorDate, day)
-  if (offset < 0) return 0
+  const isBeforeFirst = offset < 0
+  if (isBeforeFirst) return 0
   return Math.floor(offset / cadence.lengthDays) + 1
 }
 
@@ -129,7 +132,8 @@ export function sprintWorkingDays(
     const day = new Date(
       `${addDays(sprint.startsOn, index)}T00:00:00Z`,
     ).getUTCDay()
-    if (workingDays.includes(day)) count++
+    const isWorkingDay = workingDays.includes(day)
+    if (isWorkingDay) count++
   }
   return count
 }

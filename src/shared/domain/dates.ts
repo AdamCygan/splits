@@ -24,7 +24,8 @@ export function diffDays(from: string, to: string): number {
 }
 
 export function isValidDate(value: string): boolean {
-  if (!DATE_RE.test(value)) return false
+  const isMalformed = !DATE_RE.test(value)
+  if (isMalformed) return false
   return toIsoDate(parseDate(value)) === value
 }
 

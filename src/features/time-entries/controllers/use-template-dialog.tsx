@@ -90,7 +90,8 @@ export function UseTemplateDialog({
   const submit = (formEvent: FormEvent) => {
     formEvent.preventDefault()
     setSubmitted(true)
-    if (linkError || noteError || durationError) return
+    const hasErrors = linkError || noteError || durationError
+    if (hasErrors) return
     onSubmit({
       projectId: projectId || null,
       link: needs.link ? link.trim() : null,

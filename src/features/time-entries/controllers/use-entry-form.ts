@@ -113,7 +113,9 @@ export function useEntryFormViewModel({
 
   // Zmiana dnia na przeszły w trakcie wypełniania: timer przechodzi na „czas trwania”.
   useEffect(() => {
-    if (!timerAllowed && !editing && draft.mode === 'timer')
+    const isTimerNotAllowed =
+      !timerAllowed && !editing && draft.mode === 'timer'
+    if (isTimerNotAllowed)
       setDraft((currentDraft) => ({ ...currentDraft, mode: 'duration' }))
   }, [timerAllowed, editing, draft.mode])
 
@@ -184,11 +186,11 @@ export function useEntryFormViewModel({
     : null
   const issues: Array<EntryIssue> =
     type && input ? validateEntry(input, type) : []
-  if (
+  const startsInFuture =
     draft.mode === 'timer' &&
     !issues.some((entryIssue) => entryIssue.field === 'time') &&
     isFutureStart(draft.start, nowTime())
-  ) {
+  if (startsInFuture) {
     issues.push({ field: 'time', code: 'future' })
   }
   const minutes = draftMinutes(draft)
@@ -233,7 +235,8 @@ export function useEntryFormViewModel({
     formEvent.preventDefault()
     setSubmitted(true)
     if (!input) return
-    if (issues.length > 0) {
+    const hasIssues = issues.length > 0
+    if (hasIssues) {
       document.getElementById(fieldId(issues[0]!.field))?.focus()
       return
     }
@@ -243,10 +246,10 @@ export function useEntryFormViewModel({
 
   /** Ctrl/⌘+Enter zapisuje z dowolnego pola. */
   const onKeyDown = (keyboardEvent: KeyboardEvent<HTMLFormElement>) => {
-    if (
+    const isSaveShortcut =
       keyboardEvent.key === 'Enter' &&
       (keyboardEvent.ctrlKey || keyboardEvent.metaKey)
-    ) {
+    if (isSaveShortcut) {
       keyboardEvent.preventDefault()
       keyboardEvent.currentTarget.requestSubmit()
     }

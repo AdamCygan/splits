@@ -45,19 +45,15 @@ export function client() {
       const [pair] = line.split(';')
       const [name, ...rest] = pair!.split('=')
       const value = rest.join('=')
-      if (/Max-Age=0|Expires=Thu, 01 Jan 1970/i.test(line) || value === '')
-        cookies.delete(name!)
+      const isCleared =
+        /Max-Age=0|Expires=Thu, 01 Jan 1970/i.test(line) || value === ''
+      if (isCleared) cookies.delete(name!)
       else cookies.set(name!, value)
     }
     const text = await response.text()
     const parsed = (text ? JSON.parse(text) : undefined) as T
-    if (
-      parsed &&
-      typeof parsed === 'object' &&
-      'accessToken' in parsed &&
-      typeof parsed.accessToken === 'string'
-    )
-      token = parsed.accessToken
+    const accessToken = readAccessToken(parsed)
+    if (accessToken) token = accessToken
     return { status: response.status, body: parsed, headers: response.headers }
   }
 
@@ -103,8 +99,8 @@ export async function registered(
     locale,
     timezone: 'Europe/Warsaw',
   })
-  if (response.status !== 201)
-    throw new Error(`register failed ${response.status}`)
+  const isNotCreated = response.status !== 201
+  if (isNotCreated) throw new Error(`register failed ${response.status}`)
   // Jak prawdziwy użytkownik: link z e-maila potwierdza adres (zakupy tego wymagają).
   if (verify)
     await apiClient.post('/auth/email/confirm', {
@@ -156,9 +152,18 @@ export async function sample() {
   const response = await apiClient.post('/test/sample-account', {
     timezone: 'Europe/Warsaw',
   })
-  if (response.status !== 201)
-    throw new Error(`sample failed ${response.status}`)
+  const isNotCreated = response.status !== 201
+  if (isNotCreated) throw new Error(`sample failed ${response.status}`)
   return apiClient
 }
 
 export { inSequence, numbered } from '../support/sequence'
+
+/** Token z odpowiedzi logowania albo odświeżenia (inne odpowiedzi go nie mają). */
+function readAccessToken(parsed: unknown) {
+  const isObject = typeof parsed === 'object' && parsed !== null
+  if (!isObject) return null
+  const accessToken: unknown = Reflect.get(parsed, 'accessToken')
+  const isToken = typeof accessToken === 'string'
+  return isToken ? accessToken : null
+}

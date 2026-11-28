@@ -118,9 +118,11 @@ export function daySummary(
     } else {
       run = null
     }
-    if (dayBlock.kind === 'work') {
-      if (previousTask !== null && dayBlock.taskKey !== previousTask)
-        switches += 1
+    const isWorkBlock = dayBlock.kind === 'work'
+    if (isWorkBlock) {
+      const isTaskSwitch =
+        previousTask !== null && dayBlock.taskKey !== previousTask
+      if (isTaskSwitch) switches += 1
       previousTask = dayBlock.taskKey
     }
   }

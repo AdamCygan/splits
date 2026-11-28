@@ -12,7 +12,8 @@ interface Env {
 
 function url(name: string, value: unknown, fallback?: string): string {
   const raw = typeof value === 'string' && value !== '' ? value : fallback
-  if (raw === undefined) throw new Error(`Brak zmiennej środowiskowej ${name}.`)
+  const isMissing = raw === undefined
+  if (isMissing) throw new Error(`Brak zmiennej środowiskowej ${name}.`)
   try {
     return new URL(raw).toString().replace(/\/$/, '')
   } catch {

@@ -32,11 +32,13 @@ function finalize(
 ): Response {
   const headers = new Headers(response.headers)
   for (const [name, value] of Object.entries(PAGE_SECURITY_HEADERS)) {
-    if (!headers.has(name)) headers.set(name, value)
+    const isMissingHeader = !headers.has(name)
+    if (isMissingHeader) headers.set(name, value)
   }
 
   const type = headers.get('content-type') ?? ''
-  if (enforceCsp && type.startsWith('text/html'))
+  const enforcesCsp = enforceCsp && type.startsWith('text/html')
+  if (enforcesCsp)
     headers.set(
       'Content-Security-Policy',
       contentSecurityPolicy({
@@ -57,7 +59,8 @@ function finalize(
     COMPRESSIBLE.test(type) &&
     request.method !== 'HEAD'
 
-  if (!canCompress || body === null) {
+  const skipsCompression = !canCompress || body === null
+  if (skipsCompression) {
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,

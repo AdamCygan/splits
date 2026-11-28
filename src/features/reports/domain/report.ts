@@ -82,9 +82,11 @@ export function spForType(
     Pick<TaskType, 'storyPointsRequirement' | 'defaultStoryPoints'> | undefined,
   value: number | null | undefined,
 ): number | null {
-  if (!type || type.storyPointsRequirement === 'hidden') return null
+  const ignoresStoryPoints = !type || type.storyPointsRequirement === 'hidden'
+  if (ignoresStoryPoints) return null
   const points = value ?? type.defaultStoryPoints
-  if (points !== null) return points
+  const hasPoints = points !== null
+  if (hasPoints) return points
   return type.storyPointsRequirement === 'required' ? 1 : null
 }
 
@@ -198,7 +200,8 @@ export function byType(
     row.minutes += taskRow.minutes
     row.storyPoints += taskRow.storyPoints ?? 0
     row.tasks += 1
-    if (taskRow.storyPoints === null) row.withoutSp += 1
+    const isUnestimated = taskRow.storyPoints === null
+    if (isUnestimated) row.withoutSp += 1
     map.set(taskRow.taskTypeId, row)
   }
   const order = (id: string) => {
@@ -356,7 +359,8 @@ export function reportRange(options: ReportRangeOptions): {
 
 /** Zakres jest poprawny, gdy obie daty istnieją, `from` ≤ `to` i nie przekracza roku. */
 export function isValidRange(range: ReportRange) {
-  if (!isValidDate(range.from) || !isValidDate(range.to)) return false
+  const isInvalidRange = !isValidDate(range.from) || !isValidDate(range.to)
+  if (isInvalidRange) return false
   const days = diffDays(range.from, range.to)
   return days >= 0 && days <= 366
 }

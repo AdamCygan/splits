@@ -33,7 +33,8 @@ export function groupDaysOff(
         { length: diffDays(last.to, day.date) - 1 },
         (_unused, index) => addDays(last.to, index + 1),
       ).every((part) => !workingDays.includes(weekday(part)))
-    if (last && joins) {
+    const extendsLast = last && joins
+    if (extendsLast) {
       last.to = day.date
       last.days++
     } else out.push({ ...day, from: day.date, to: day.date, days: 1 })

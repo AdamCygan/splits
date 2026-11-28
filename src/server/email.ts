@@ -22,7 +22,8 @@ export async function sendEmail(email: Email) {
     else {
       console.info(`[email] ${email.to}: ${email.subject}\n${email.text}`)
       outbox.push(email)
-      if (outbox.length > 200) outbox.shift()
+      const isOutboxFull = outbox.length > 200
+      if (isOutboxFull) outbox.shift()
     }
     return
   }

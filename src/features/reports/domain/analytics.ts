@@ -95,10 +95,12 @@ export function hourHeatmap(
 } {
   const cells = Array.from({ length: 7 }, () => Array<number>(24).fill(0))
   for (const part of entries) {
-    if (!part.startTime || !part.endTime) continue
+    const { startTime, endTime } = part
+    const hasNoTimes = !startTime || !endTime
+    if (hasNoTimes) continue
     const day = (weekday(part.workDate) + 6) % 7
-    const start = toMinutes(part.startTime)
-    const end = toMinutes(part.endTime)
+    const start = toMinutes(startTime)
+    const end = toMinutes(endTime)
     for (
       let index = Math.floor(start / 60);
       index * 60 < end && index < 24;
@@ -106,7 +108,8 @@ export function hourHeatmap(
     ) {
       const overlap =
         Math.min(end, (index + 1) * 60) - Math.max(start, index * 60)
-      if (overlap > 0) cells[day]![index]! += overlap
+      const overlaps = overlap > 0
+      if (overlaps) cells[day]![index]! += overlap
     }
   }
   const used = cells.flatMap((row) =>

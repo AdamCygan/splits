@@ -63,7 +63,8 @@ export function nowRounded(at: Date = new Date()) {
 
 /** SP zaznaczone na start dla typu pracy; '' = bez SP. */
 export function spDefault(type: TaskType | undefined) {
-  if (!type || type.storyPointsRequirement === 'hidden') return ''
+  const ignoresStoryPoints = !type || type.storyPointsRequirement === 'hidden'
+  if (ignoresStoryPoints) return ''
   return type.defaultStoryPoints === null ? '' : String(type.defaultStoryPoints)
 }
 
@@ -140,7 +141,8 @@ export function copyDraft(source: TimeEntry): Draft {
 
 /** Minuty z bieżącego trybu czasu (null = jeszcze nie da się policzyć). */
 export function draftMinutes(draft: Draft) {
-  if (draft.mode === 'timer') return null
+  const isTimerMode = draft.mode === 'timer'
+  if (isTimerMode) return null
   return draft.mode === 'range'
     ? minutesBetween(draft.start, draft.end)
     : parseDuration(draft.duration)
@@ -153,8 +155,8 @@ export function draftMinutes(draft: Draft) {
 export function overtimeOf(
   draft: Draft,
 ): Pick<TimeEntryInput, 'overtimeMinutes' | 'overtimeNote'> {
-  if (!draft.overtime || draft.mode === 'timer')
-    return { overtimeMinutes: null, overtimeNote: null }
+  const skipsOvertime = !draft.overtime || draft.mode === 'timer'
+  if (skipsOvertime) return { overtimeMinutes: null, overtimeNote: null }
   const minutes = draft.overtimeDuration.trim()
     ? (parseDuration(draft.overtimeDuration) ?? -1)
     : (draftMinutes(draft) ?? -1)
@@ -353,11 +355,10 @@ export function scaleWithValue(
   scale: ReadonlyArray<SpScaleStep>,
   points: number | null,
 ): Array<SpScaleStep> {
-  if (
+  const isKnownPoints =
     points === null ||
     scale.some((spScaleStep) => spScaleStep.points === points)
-  )
-    return [...scale]
+  if (isKnownPoints) return [...scale]
   return [...scale, { id: 'current', points, maxMinutes: 0 }].sort(
     (left, right) => left.points - right.points,
   )

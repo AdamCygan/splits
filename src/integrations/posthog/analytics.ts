@@ -14,8 +14,9 @@ let started = false
 const queue: Array<(posthog: PostHog) => void> = []
 
 export function initAnalytics() {
-  if (started || typeof window === 'undefined' || !environment.VITE_POSTHOG_KEY)
-    return
+  const cannotStart =
+    started || typeof window === 'undefined' || !environment.VITE_POSTHOG_KEY
+  if (cannotStart) return
   started = true
 
   const load = async () => {
@@ -26,12 +27,14 @@ export function initAnalytics() {
       capture_pageview: 'history_change',
       defaults: '2025-11-30',
     })
-    if (posthog.has_opted_out_capturing()) posthog.opt_in_capturing()
+    const hasOptedOut = posthog.has_opted_out_capturing()
+    if (hasOptedOut) posthog.opt_in_capturing()
     client = posthog
     queue.splice(0).forEach((callback) => callback(posthog))
   }
 
-  if ('requestIdleCallback' in window) {
+  const hasIdleCallback = 'requestIdleCallback' in window
+  if (hasIdleCallback) {
     window.requestIdleCallback(() => void load(), { timeout: 4000 })
   } else {
     setTimeout(() => void load(), 2000)
@@ -61,15 +64,18 @@ export function disableAnalytics() {
   queue.length = 0
   started = false
   client = null
-  if (typeof document !== 'undefined') {
+  const hasDocument = typeof document !== 'undefined'
+  if (hasDocument) {
     for (const part of document.cookie.split('; ')) {
       const name = part.split('=')[0] ?? ''
-      if (name.startsWith('ph_'))
-        document.cookie = `${name}=; Path=/; Max-Age=0`
+      const isPosthogCookie = name.startsWith('ph_')
+      if (isPosthogCookie) document.cookie = `${name}=; Path=/; Max-Age=0`
     }
     try {
-      for (const key of Object.keys(window.localStorage))
-        if (key.startsWith('ph_')) window.localStorage.removeItem(key)
+      for (const key of Object.keys(window.localStorage)) {
+        const isPosthogKey = key.startsWith('ph_')
+        if (isPosthogKey) window.localStorage.removeItem(key)
+      }
     } catch {
       /* storage zablokowany: nic do usunięcia */
     }

@@ -104,7 +104,8 @@ export function templatePlan(
       },
     }
   }
-  if (duration === null)
+  const hasNoDuration = duration === null
+  if (hasNoDuration)
     return { kind: 'timer', input: { ...base, startTime: options.now } }
   return {
     kind: 'entry',

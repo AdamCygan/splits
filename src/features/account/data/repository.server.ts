@@ -282,8 +282,8 @@ export async function requestEmailChange(
     const user = await currentUser(userId)
     assertNotDemo(user)
     await confirmIdentity(transaction, user, input)
-    if (email.toLowerCase() === user.email.toLowerCase())
-      throw new ApiError('auth.email_same', 400, 'email')
+    const isSameEmail = email.toLowerCase() === user.email.toLowerCase()
+    if (isSameEmail) throw new ApiError('auth.email_same', 400, 'email')
     const [taken] = await transaction
       .select({ id: users.id })
       .from(users)
@@ -344,13 +344,14 @@ export async function enableTwoFactorRequest(
   const user = await database.transaction(async (transaction) => {
     const account = await currentUser(userId)
     assertNotDemo(account)
-    if (
+    const isWrongPassword =
       account.passwordHash &&
       !(await verifyPassword(input.password ?? '', account.passwordHash))
-    )
+    if (isWrongPassword)
       throw new ApiError('auth.wrong_password', 400, 'password')
     const step = verifyTotp(input.secret, input.code, null)
-    if (step === null) throw new ApiError('auth.invalid_code', 400, 'code')
+    const isInvalidCode = step === null
+    if (isInvalidCode) throw new ApiError('auth.invalid_code', 400, 'code')
     await transaction
       .update(users)
       .set({
@@ -387,10 +388,10 @@ export async function changePasswordRequest(
   const user = await currentUser(userId)
   assertNotDemo(user)
   // Konto założone przez Google nie ma hasła: pierwsze hasło ustawia się bez obecnego.
-  if (
+  const isWrongPassword =
     user.passwordHash &&
     !(await verifyPassword(input.currentPassword, user.passwordHash))
-  )
+  if (isWrongPassword)
     throw new ApiError('auth.wrong_password', 400, 'currentPassword')
   const passwordHash = await hashPassword(input.newPassword)
   await database.transaction(async (transaction) => {
@@ -413,7 +414,8 @@ export async function deleteAccountRequest(
     consumeDeletionCode(transaction, userId, input.code),
   )
   // Najpierw koniec płatności, potem ON DELETE CASCADE usuwa wszystkie dane konta.
-  if (billingEnabled()) await cancelSubscriptionsFor(userId)
+  const isBillingEnabled = billingEnabled()
+  if (isBillingEnabled) await cancelSubscriptionsFor(userId)
   await database.delete(users).where(eq(users.id, userId))
   await notify(user, 'accountDeleted')
   cutAccess(userId)

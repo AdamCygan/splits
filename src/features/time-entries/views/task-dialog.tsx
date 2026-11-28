@@ -182,7 +182,8 @@ export function TaskDetails({ entries, type, onSaved }: TaskDetailsProps) {
   const submit = (formEvent: FormEvent) => {
     formEvent.preventDefault()
     setSubmitted(true)
-    if (Object.values(errors).some(Boolean)) return
+    const hasErrors = Object.values(errors).some(Boolean)
+    if (hasErrors) return
     save.mutate({
       title: draft.title.trim(),
       link: draft.link.trim() || null,

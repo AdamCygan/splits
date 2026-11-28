@@ -53,8 +53,8 @@ export function useRegister({ next, interval }: RegisterOptions) {
       if (!result.ok) {
         const fieldErrors = fieldErrorsOf(result.error)
         setServerErrors(fieldErrors)
-        if (Object.keys(fieldErrors).length === 0)
-          setFormError(errorText(result.error))
+        const isValid = Object.keys(fieldErrors).length === 0
+        if (isValid) setFormError(errorText(result.error))
         return
       }
       startSession(result.value)

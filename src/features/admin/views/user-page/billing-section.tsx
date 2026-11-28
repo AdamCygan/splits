@@ -14,7 +14,8 @@ export function BillingSection({ viewModel }: SectionProps) {
   const messages = useMessages(adminMessages).user.billing
   const { locale } = useI18n()
   const user = viewModel.user
-  if (!user || user.isDemo) return null
+  const hasNoBilling = !user || user.isDemo
+  if (hasNoBilling) return null
   const subscription = user.subscription
   const day = (value: string) => formatDate(locale, new Date(value))
   return (

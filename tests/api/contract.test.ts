@@ -25,7 +25,8 @@ globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const response = await api.request(url.toString(), { ...init, headers })
   for (const line of response.headers.getSetCookie()) {
     const [name, cookie = ''] = line.split(';')[0]!.split('=')
-    if (/Max-Age=0/i.test(line) || !cookie) jar.delete(name!)
+    const isCleared = /Max-Age=0/i.test(line) || !cookie
+    if (isCleared) jar.delete(name!)
     else jar.set(name!, cookie)
   }
   return response

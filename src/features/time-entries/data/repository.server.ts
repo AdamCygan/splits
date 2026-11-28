@@ -112,21 +112,19 @@ export async function check(
 ) {
   const type = await ownTaskType(transaction, scope, input.taskTypeId)
   if (!type) throw new ApiError('type.unknown', 400, 'taskTypeId')
-  if (
-    input.projectId &&
-    !(await ownProject(transaction, scope, input.projectId))
-  )
-    throw invalid('projectId')
+  const isForeignProject =
+    input.projectId && !(await ownProject(transaction, scope, input.projectId))
+  if (isForeignProject) throw invalid('projectId')
   const issue = validateEntry(input, type)[0]
   if (issue) throw invalid(issue.field)
   // Wpisy dopisuje się za dziś i za dni, które minęły; przyszłość nie ma jeszcze przepracowanego czasu.
-  if (input.workDate > todayIn(timezone)) throw invalid('workDate')
-  if (
+  const isFutureDate = input.workDate > todayIn(timezone)
+  if (isFutureDate) throw invalid('workDate')
+  const startsInFuture =
     input.running &&
     input.startTime &&
     isFutureStart(input.startTime, nowTimeIn(timezone))
-  )
-    throw invalid('time')
+  if (startsInFuture) throw invalid('time')
 }
 
 export const mine = (scope: Scope) => inScope(schema.timeEntries, scope)
@@ -142,15 +140,17 @@ export async function checkNewEntryDate(
   timezone: string,
 ) {
   const today = todayIn(timezone)
-  if (input.running && input.workDate !== today) throw invalid('workDate')
+  const runsOnOtherDay = input.running && input.workDate !== today
+  if (runsOnOtherDay) throw invalid('workDate')
   const oldest = addDays(today, -(FREE_LIMITS.historyDays - 1))
-  if (input.workDate >= oldest) return
+  const isWithinHistory = input.workDate >= oldest
+  if (isWithinHistory) return
   const [user] = await transaction
     .select({ plan: schema.users.plan, role: schema.users.role })
     .from(schema.users)
     .where(eq(schema.users.id, scope.userId))
-  if (!hasProAccess(user))
-    throw new ApiError('plan.limit_history', 403, 'workDate')
+  const isFreePlan = !hasProAccess(user)
+  if (isFreePlan) throw new ApiError('plan.limit_history', 403, 'workDate')
 }
 
 /** Wpisy tego samego zadania — to samo co sameTask(): ten sam link, a bez linku typ i tytuł. */
@@ -189,7 +189,8 @@ export async function stopRunning(
       ),
     )
     .for('update')
-  if (!running || running.id === exceptId) return null
+  const isFree = !running || running.id === exceptId
+  if (isFree) return null
   return stop(transaction, running, timezone, true)
 }
 
@@ -244,10 +245,12 @@ export function timerStart(
   previous: Row | null,
   timezone: string,
 ) {
-  if (!input.running || !input.startTime) return null
-  if (previous?.running && previous.startTime === input.startTime)
-    return previous.startedAt
-  return new Date(startedAtFor(input.startTime, nowTimeIn(timezone)))
+  const { startTime } = input
+  const isNotTimer = !input.running || !startTime
+  if (isNotTimer) return null
+  const isSameTimer = previous?.running && previous.startTime === startTime
+  if (isSameTimer) return previous.startedAt
+  return new Date(startedAtFor(startTime, nowTimeIn(timezone)))
 }
 
 export async function ownEntry(transaction: Tx, scope: Scope, id: string) {
@@ -321,7 +324,8 @@ export async function pausedOn(transaction: Tx, scope: Scope, date: string) {
   return rows
     .filter((row) => {
       const key = taskGroupKey(row)
-      if (seen.has(key)) return false
+      const isDuplicate = seen.has(key)
+      if (isDuplicate) return false
       seen.add(key)
       return true
     })
@@ -399,7 +403,8 @@ export async function searchAll(scope: Scope, query: string) {
   const words = searchWords(query).filter(
     (searchWord) => searchWord.length >= 2,
   )
-  if (words.length === 0) return []
+  const hasNoWords = words.length === 0
+  if (hasNoWords) return []
   const anyField = (word: string) => {
     const pattern = likePattern(word)
     return or(
@@ -422,7 +427,8 @@ export async function searchAll(scope: Scope, query: string) {
     .where(and(mine(scope), or(...words.map(anyField))))
     .orderBy(desc(schema.timeEntries.workDate))
     .limit(400)
-  if (hits.length === 0) return []
+  const hasNoHits = hits.length === 0
+  if (hasNoHits) return []
   // Wszystkie sesje trafionych zadań (po tytule albo linku), żeby policzyć czas i sesje.
   const titles = [...new Set(hits.map((hit) => hit.title))].slice(0, 100)
   const links = [
@@ -490,7 +496,8 @@ export async function getUnfinishedTasks(scope: Scope) {
         ),
       ),
     )
-  if (recent.length === 0) return []
+  const hasNoRecent = recent.length === 0
+  if (hasNoRecent) return []
   // Całe zadania (także sesje sprzed okna), żeby suma czasu i znacznik „zakończone” były pełne.
   const rows = await database
     .select()
@@ -520,7 +527,8 @@ export async function finishTask(
   const updated = await database.transaction((transaction) =>
     setFinished(transaction, scope, input.ref, input.finished),
   )
-  if (updated === 0) throw notFound()
+  const isNotFound = updated === 0
+  if (isNotFound) throw notFound()
   return { updated }
 }
 
@@ -639,7 +647,8 @@ export async function deleteTask(
       ),
     )
     .returning({ id: schema.timeEntries.id })
-  if (deleted.length === 0) throw notFound()
+  const isNotFound = deleted.length === 0
+  if (isNotFound) throw notFound()
   return { deleted: deleted.length }
 }
 
@@ -653,7 +662,8 @@ export async function updateTask(
       .select()
       .from(schema.timeEntries)
       .where(and(mine(scope), sameTaskAs(input.ref)))
-    if (found.length === 0) throw notFound()
+    const isNotFound = found.length === 0
+    if (isNotFound) throw notFound()
     const changes = {
       title: input.title,
       link: input.link,
@@ -705,7 +715,8 @@ export async function updateNote(
         .select({ req: schema.taskTypes.descriptionRequirement })
         .from(schema.taskTypes)
         .where(eq(schema.taskTypes.id, entry.taskTypeId))
-      if (type?.req === 'required') throw invalid('note')
+      const requiresStoryPoints = type?.req === 'required'
+      if (requiresStoryPoints) throw invalid('note')
     }
     const [updated] = await transaction
       .update(schema.timeEntries)
@@ -775,7 +786,8 @@ export async function listEntriesInRange(
   )
   const from =
     !hasProAccess(user) && requestedFrom < oldest ? oldest : requestedFrom
-  if (to < from) return []
+  const isReversedRange = to < from
+  if (isReversedRange) return []
   const rows = await database
     .select()
     .from(schema.timeEntries)

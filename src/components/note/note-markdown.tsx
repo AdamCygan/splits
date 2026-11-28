@@ -184,7 +184,8 @@ function ListItem({
   const tree = node as unknown as HastNode & {
     position?: { start: { offset?: number } }
   }
-  if (!className?.includes('task-list-item')) return <li>{children}</li>
+  const isNotTaskItem = !className?.includes('task-list-item')
+  if (isNotTaskItem) return <li>{children}</li>
   const box = tree.children?.find((child) => child.tagName === 'input')
   const checked = Boolean(box?.properties?.checked)
   const offset = tree.position?.start.offset
@@ -193,7 +194,8 @@ function ListItem({
     onTaskToggle && offset !== undefined
       ? () => {
           const next = toggleTaskAt(text, offset)
-          if (next !== null) onTaskToggle(next)
+          const hasNextState = next !== null
+          if (hasNextState) onTaskToggle(next)
         }
       : undefined
   return (

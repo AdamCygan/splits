@@ -141,11 +141,58 @@ const domainImports = [
   },
 ]
 
+/**
+ * Warunek ifa to jedna nazwana wartość (`if (isExpired)`, `if (!user)`, `if (draft.dirty)`);
+ * porównania, wywołania i złożenia trafiają najpierw do stałej o opisowej nazwie.
+ */
+const descriptiveIfCondition = {
+  meta: {
+    type: 'suggestion',
+    messages: {
+      named:
+        'Put the if condition in a descriptively named const first, e.g. `const isExpired = …; if (isExpired)`.',
+    },
+    schema: [],
+  },
+  create(context) {
+    /** @param {any} node */
+    const isNamed = (node) => {
+      switch (node.type) {
+        case 'Identifier':
+        case 'ThisExpression':
+          return true
+        case 'MemberExpression':
+          return !node.computed && isNamed(node.object)
+        case 'ChainExpression':
+        case 'TSNonNullExpression':
+          return isNamed(node.expression)
+        case 'UnaryExpression':
+          return node.operator === '!' && isNamed(node.argument)
+        default:
+          return false
+      }
+    }
+    return {
+      /** @param {any} node */
+      IfStatement(node) {
+        if (!isNamed(node.test))
+          context.report({ node: node.test, messageId: 'named' })
+      },
+    }
+  },
+}
+
 export default [
   ...tanstackConfig,
   {
     plugins: { security },
     rules: securityRules,
+  },
+  {
+    plugins: {
+      local: { rules: { 'descriptive-if-condition': descriptiveIfCondition } },
+    },
+    rules: { 'local/descriptive-if-condition': 'error' },
   },
   {
     rules: {

@@ -28,12 +28,11 @@ function SettingsLayout() {
     const active = navRef.current?.querySelector<HTMLElement>(
       '[data-status="active"]',
     )
-    if (
+    const fitsWithoutScroll =
       !active ||
       !navRef.current ||
       navRef.current.scrollWidth <= navRef.current.clientWidth
-    )
-      return
+    if (fitsWithoutScroll) return
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     active.scrollIntoView({
       block: 'nearest',

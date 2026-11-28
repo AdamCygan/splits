@@ -41,7 +41,8 @@ function subscribe(listener: () => void) {
   const off = store.subscribe(listener)
   const media = window.matchMedia('(prefers-color-scheme: dark)')
   const onSystem = () => {
-    if (readTheme() === 'system') applyTheme()
+    const followsSystem = readTheme() === 'system'
+    if (followsSystem) applyTheme()
     listener()
   }
   media.addEventListener('change', onSystem)

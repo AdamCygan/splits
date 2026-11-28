@@ -65,7 +65,8 @@ export function NoteEditor({
   useLayoutEffect(() => {
     const selection = pending.current
     const element = ref.current
-    if (!selection || !element || element.value !== value) return
+    const isSelectionStale = !selection || !element || element.value !== value
+    if (isSelectionStale) return
     pending.current = null
     element.setSelectionRange(selection.start, selection.end)
   }, [value])
@@ -101,7 +102,8 @@ export function NoteEditor({
         ? commonPrefix === old.length - commonSuffix ||
           document.execCommand('delete')
         : document.execCommand('insertText', false, insert)
-    if (ok && element.value === next.value) {
+    const isApplied = ok && element.value === next.value
+    if (isApplied) {
       element.setSelectionRange(next.start, next.end)
     } else {
       pending.current = { start: next.start, end: next.end }
@@ -189,8 +191,9 @@ export function NoteEditor({
 
   function onKeyDown(keyboardEvent: KeyboardEvent<HTMLTextAreaElement>) {
     textarea.onKeyDown?.(keyboardEvent)
-    if (keyboardEvent.defaultPrevented || keyboardEvent.nativeEvent.isComposing)
-      return
+    const isHandledElsewhere =
+      keyboardEvent.defaultPrevented || keyboardEvent.nativeEvent.isComposing
+    if (isHandledElsewhere) return
     const element = keyboardEvent.currentTarget
     const state = {
       value: element.value,
@@ -198,12 +201,12 @@ export function NoteEditor({
       end: element.selectionEnd,
     }
     // Tab w liście zmienia poziom pozycji; poza listą przenosi fokus jak zwykle.
-    if (
+    const isPlainTab =
       keyboardEvent.key === 'Tab' &&
       !keyboardEvent.altKey &&
       !keyboardEvent.ctrlKey &&
       !keyboardEvent.metaKey
-    ) {
+    if (isPlainTab) {
       const next = indentList(state, keyboardEvent.shiftKey ? -1 : 1)
       if (next) {
         keyboardEvent.preventDefault()
@@ -211,13 +214,13 @@ export function NoteEditor({
       }
       return
     }
-    if (
+    const isPlainEnter =
       keyboardEvent.key === 'Enter' &&
       !keyboardEvent.shiftKey &&
       !keyboardEvent.altKey &&
       !keyboardEvent.ctrlKey &&
       !keyboardEvent.metaKey
-    ) {
+    if (isPlainEnter) {
       const next = continueList(state)
       if (next) {
         keyboardEvent.preventDefault()
@@ -225,11 +228,11 @@ export function NoteEditor({
       }
       return
     }
-    if (
+    const isFormattingShortcut =
       (keyboardEvent.ctrlKey || keyboardEvent.metaKey) &&
       !keyboardEvent.altKey &&
       !keyboardEvent.shiftKey
-    ) {
+    if (isFormattingShortcut) {
       const action = actions.find(
         (editorAction) =>
           editorAction.keys?.toLowerCase() === keyboardEvent.key.toLowerCase(),

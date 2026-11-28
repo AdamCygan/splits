@@ -19,7 +19,8 @@ export function parseDsn(dsn: string | null): Dsn | null {
   try {
     const url = new URL(dsn)
     const projectId = url.pathname.replace(/^\/|\/$/g, '')
-    if (!url.username || !projectId) return null
+    const isInvalidDsn = !url.username || !projectId
+    if (isInvalidDsn) return null
     return {
       endpoint: `${url.protocol}//${url.host}/api/${projectId}/envelope/`,
       publicKey: url.username,
@@ -47,7 +48,8 @@ const POSITION_RE = /:(\d+):(\d+)$/
  */
 function parseFrame(line: string): Frame | null {
   const text = line.trim()
-  if (!text.startsWith('at ')) return null
+  const isNotFrame = !text.startsWith('at ')
+  if (isNotFrame) return null
   const rest = text.slice(3)
   const open = rest.endsWith(')') ? rest.lastIndexOf(' (') : -1
   const location = open >= 0 ? rest.slice(open + 2, -1) : rest

@@ -171,7 +171,8 @@ function ProjectDialog({ project, onClose }: ProjectDialogProps) {
   const onSubmit = (formEvent: FormEvent) => {
     formEvent.preventDefault()
     setSubmitted(true)
-    if (nameOk && keyOk)
+    const isValid = nameOk && keyOk
+    if (isValid)
       save.mutate({
         name: draft.name.trim(),
         key: draft.key || null,

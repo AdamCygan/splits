@@ -48,15 +48,16 @@ export async function updateSettings(
   workspaceIds: ReadonlyArray<string> = [scope.workspaceId],
 ) {
   return database.transaction(async (transaction) => {
-    if (input.dailyReminderAt !== null) {
+    const setsReminder = input.dailyReminderAt !== null
+    if (setsReminder) {
       const [current] = await transaction
         .select({ at: schema.userSettings.dailyReminderAt })
         .from(schema.userSettings)
         .where(eq(schema.userSettings.userId, scope.userId))
-      if (
+      const needsProForReminder =
         current?.at !== input.dailyReminderAt &&
         !hasProAccess(await currentUser(scope.userId))
-      )
+      if (needsProForReminder)
         throw new ApiError('plan.pro_feature', 403, 'dailyReminderAt')
     }
     await transaction

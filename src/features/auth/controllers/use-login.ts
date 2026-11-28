@@ -29,7 +29,8 @@ export function useLogin(redirectTo?: string) {
         return
       }
       // Drugi krok (kod 2FA) dojdzie razem z ustawieniami bezpieczeństwa.
-      if ('mfaRequired' in result.value) {
+      const needsSecondFactor = 'mfaRequired' in result.value
+      if (needsSecondFactor) {
         setFormError(messages.login.twoFactorUnavailable)
         return
       }

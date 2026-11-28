@@ -39,11 +39,10 @@ export function useDataMutation<TVars, TData>(
       options.onSuccess?.(result, variables)
     },
     onError: (error) => {
-      if (
+      const hasFieldErrors =
         error instanceof ApiError &&
         Object.keys(error.details.fieldErrors).length > 0
-      )
-        return
+      if (hasFieldErrors) return
       toast.error(
         error instanceof ApiError ? errorText(error.details) : String(error),
       )
@@ -56,7 +55,8 @@ export function mutationFieldError(
   error: unknown,
   field: string,
 ): string | null {
-  if (!(error instanceof ApiError)) return null
+  const isUnexpected = !(error instanceof ApiError)
+  if (isUnexpected) return null
   const entry = Object.entries(error.details.fieldErrors).find(
     ([key]) => key.toLowerCase() === field.toLowerCase(),
   )

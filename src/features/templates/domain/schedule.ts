@@ -26,11 +26,10 @@ export function scheduledOn(
       const slot = template.schedule.find(
         (scheduleSlot) => scheduleSlot.day === day,
       )
-      if (!slot || template.defaultDurationMinutes === null) return []
-      const end = Math.min(
-        toMinutes(slot.time) + template.defaultDurationMinutes,
-        23 * 60 + 59,
-      )
+      const duration = template.defaultDurationMinutes
+      const cannotSchedule = !slot || duration === null
+      if (cannotSchedule) return []
+      const end = Math.min(toMinutes(slot.time) + duration, 23 * 60 + 59)
       return [{ template, start: slot.time, end: fromMinutes(end) }]
     })
     .sort((left, right) => left.start.localeCompare(right.start))
@@ -73,11 +72,13 @@ export function scheduleRuns(
   for (const day of order) {
     const time = byDay.get(day)
     const last = runs.at(-1)
-    if (time === undefined) {
+    const hasNoTime = time === undefined
+    if (hasNoTime) {
       previous = null
       continue
     }
-    if (last && previous === last.to && last.time === time) last.to = day
+    const extendsLastRun = last && previous === last.to && last.time === time
+    if (extendsLastRun) last.to = day
     else runs.push({ from: day, to: day, time })
     previous = day
   }

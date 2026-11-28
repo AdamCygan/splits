@@ -23,7 +23,8 @@ export type { EntryFormProps } from '../../controllers/use-entry-form'
  */
 export function EntryForm(props: EntryFormProps) {
   // Szkic startuje z domyślnymi wartościami typu, więc czekamy na typy, skalę i projekty.
-  if (!useEntryFormReady()) {
+  const isNotReady = !useEntryFormReady()
+  if (isNotReady) {
     return (
       <div role="status" className="space-y-3">
         {[0, 1, 2].map((index) => (

@@ -43,13 +43,15 @@ export async function createFeedback(userId: string, input: FeedbackBody) {
 
 async function notifyOwners(userId: string, row: typeof feedback.$inferSelect) {
   const owners = [...serverEnv.adminEmails]
-  if (owners.length === 0) return
+  const hasNoOwners = owners.length === 0
+  if (hasNoOwners) return
   const [author] = await database
     .select({ email: users.email, plan: users.plan, isDemo: users.isDemo })
     .from(users)
     .where(eq(users.id, userId))
   // Konta demo to anonimowi goście: ich zgłoszenia widać w panelu, ale bez maili.
-  if (!author || author.isDemo) return
+  const isAnonymousOrDemo = !author || author.isDemo
+  if (isAnonymousOrDemo) return
   const ownerLocales = await database
     .select({ id: users.id, email: users.email })
     .from(users)
@@ -157,7 +159,8 @@ export async function updateFeedback(
         })
         .where(eq(feedback.id, id))
         .returning()
-      if (change.status && change.status !== found.row.status)
+      const changesStatus = change.status && change.status !== found.row.status
+      if (changesStatus)
         await log(
           transaction,
           admin,
@@ -165,7 +168,8 @@ export async function updateFeedback(
           'feedback.updated',
           change.status,
         )
-      if (replyChanged && change.reply)
+      const sendsReply = replyChanged && change.reply
+      if (sendsReply)
         await log(transaction, admin, found.user, 'feedback.replied')
       return {
         row: updated!,

@@ -67,7 +67,9 @@ export function useTodayViewModel({
   const requestedLog = request?.log
   const requestedMode = request?.mode
   useEffect(() => {
-    if (requestedLog === undefined && requestedMode === undefined) return
+    const hasNoRequest =
+      requestedLog === undefined && requestedMode === undefined
+    if (hasNoRequest) return
     nextPrefill({ title: requestedLog, mode: requestedMode })
     onRequestDone?.()
     // Tylko przy nowym poleceniu z adresu.

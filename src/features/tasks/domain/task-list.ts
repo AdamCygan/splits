@@ -32,7 +32,8 @@ export function groupTaskList<T extends { row: TaskRow }>(
   items: ReadonlyArray<T>,
   by: TaskGrouping,
 ): Array<TaskGroup<T>> {
-  if (by === 'none')
+  const isUngrouped = by === 'none'
+  if (isUngrouped)
     return [
       {
         key: 'all',

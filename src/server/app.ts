@@ -49,7 +49,8 @@ function detectLocale(
   cookie: string | undefined,
   header: string | undefined,
 ): Locale {
-  if (isLocale(cookie)) return cookie
+  const hasLocaleCookie = isLocale(cookie)
+  if (hasLocaleCookie) return cookie
   return header?.toLowerCase().startsWith('pl') ? 'pl' : 'en'
 }
 
@@ -64,7 +65,8 @@ if (serverEnv.isProduction) startMaintenance()
 // Produkcja z placeholderami w danych firmy: głośne ostrzeżenie w logach i w Sentry (pnpm check:launch).
 if (serverEnv.isProduction) {
   const problems = launchProblems()
-  if (problems.length > 0) {
+  const hasProblems = problems.length > 0
+  if (hasProblems) {
     console.warn(
       `[launch] Do uzupełnienia przed startem:\n - ${problems.join('\n - ')}`,
     )
@@ -111,7 +113,8 @@ api.use('/auth/*', async (context, next) => {
     requestUrl: context.req.url,
     appUrl: serverEnv.appUrl,
   })
-  if (context.req.method !== 'GET' && !allowed) throw new HTTPException(403)
+  const isBlockedWrite = context.req.method !== 'GET' && !allowed
+  if (isBlockedWrite) throw new HTTPException(403)
   await next()
 })
 
@@ -121,7 +124,8 @@ const requireAuth: MiddlewareHandler<AppEnv> = async (context, next) => {
   const token = header?.startsWith('Bearer ') ? header.slice(7) : null
   const userId = token ? await verifyAccessToken(token) : null
   // Konto zablokowane albo usunięte przed chwilą: token jeszcze ważny, ale dostęp już odcięty.
-  if (!userId || isCutOff(userId)) throw new ApiError('auth.no_session', 401)
+  const isAnonymousOrCutOff = !userId || isCutOff(userId)
+  if (isAnonymousOrCutOff) throw new ApiError('auth.no_session', 401)
   context.set('userId', userId)
   await next()
 }
@@ -213,7 +217,8 @@ api.onError(async (error, context) => {
   }
   if (known) {
     // Znane błędy 5xx (np. Stripe niedostępny) też chcemy widzieć, jako ostrzeżenia.
-    if (known.status >= 500)
+    const isServerError = known.status >= 500
+    if (isServerError)
       await reportError(error, {
         ...where,
         level: 'warning',
@@ -230,7 +235,8 @@ api.onError(async (error, context) => {
       known.status,
     )
   }
-  if (error instanceof HTTPException) {
+  const isHttpException = error instanceof HTTPException
+  if (isHttpException) {
     return context.json(
       problem(locale, 'validation.invalid', error.status, [], traceId),
       error.status,

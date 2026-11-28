@@ -17,39 +17,38 @@ function Inline({ text }: InlineProps) {
   const parts: Array<ReactNode> = []
   const pattern = /\*\*(.+?)\*\*|\[(.+?)\]\((.+?)\)/g
   let last = 0
-  let regExpExecArray: RegExpExecArray | null
-  while ((regExpExecArray = pattern.exec(text))) {
-    if (regExpExecArray.index > last)
-      parts.push(text.slice(last, regExpExecArray.index))
-    if (regExpExecArray[1])
-      parts.push(
-        <strong key={regExpExecArray.index}>{regExpExecArray[1]}</strong>,
-      )
-    else if (regExpExecArray[3]?.startsWith('/'))
+  for (const match of text.matchAll(pattern)) {
+    const [whole, boldText, linkLabel, linkTarget] = match
+    const hasTextBefore = match.index > last
+    const isInternalLink = linkTarget?.startsWith('/')
+    if (hasTextBefore) parts.push(text.slice(last, match.index))
+    if (boldText) parts.push(<strong key={match.index}>{boldText}</strong>)
+    else if (isInternalLink)
       parts.push(
         <Link
-          key={regExpExecArray.index}
-          to={regExpExecArray[3]}
+          key={match.index}
+          to={linkTarget}
           className="font-medium underline underline-offset-4"
         >
-          {regExpExecArray[2]}
+          {linkLabel}
         </Link>,
       )
     else
       parts.push(
         <a
-          key={regExpExecArray.index}
-          href={regExpExecArray[3]}
+          key={match.index}
+          href={linkTarget}
           rel="noopener noreferrer"
           target="_blank"
           className="font-medium underline underline-offset-4"
         >
-          {regExpExecArray[2]}
+          {linkLabel}
         </a>,
       )
-    last = pattern.lastIndex
+    last = match.index + whole.length
   }
-  if (last < text.length) parts.push(text.slice(last))
+  const hasTextAfter = last < text.length
+  if (hasTextAfter) parts.push(text.slice(last))
   return <>{parts}</>
 }
 
@@ -59,14 +58,16 @@ interface BlockProps {
 }
 
 function Block({ block, date }: BlockProps) {
-  const fill = (messages: string) => fillLegal(messages, date)
-  if (typeof block === 'string')
+  const fill = (template: string) => fillLegal(template, date)
+  const isParagraph = typeof block === 'string'
+  if (isParagraph)
     return (
       <p>
         <Inline text={fill(block)} />
       </p>
     )
-  if ('ul' in block)
+  const isBulletList = 'ul' in block
+  if (isBulletList)
     return (
       <ul className="list-disc space-y-1.5 pl-5">
         {block.ul.map((item) => (
@@ -76,7 +77,8 @@ function Block({ block, date }: BlockProps) {
         ))}
       </ul>
     )
-  if ('ol' in block)
+  const isNumberedList = 'ol' in block
+  if (isNumberedList)
     return (
       <ol className="list-decimal space-y-1.5 pl-5">
         {block.ol.map((item) => (

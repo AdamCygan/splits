@@ -29,9 +29,12 @@ export function sameTask(
   entry: Pick<TimeEntry, 'link' | 'title' | 'taskTypeId'>,
   otherEntry: Pick<TimeEntry, 'link' | 'title' | 'taskTypeId'>,
 ) {
-  if (entry.link && otherEntry.link)
-    return entry.link.trim() === otherEntry.link.trim()
-  if (entry.link || otherEntry.link) return false
+  const { link } = entry
+  const otherLink = otherEntry.link
+  const bothHaveLinks = link && otherLink
+  if (bothHaveLinks) return link.trim() === otherLink.trim()
+  const onlyOneHasLink = link || otherLink
+  if (onlyOneHasLink) return false
   return (
     entry.taskTypeId === otherEntry.taskTypeId &&
     entry.title.trim().toLocaleLowerCase() ===

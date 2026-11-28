@@ -48,7 +48,8 @@ export async function priceFor(interval: BillingInterval): Promise<string> {
   const override = priceOverride(interval)
   if (override) return override
   const cached = priceCache.get(interval)
-  if (cached && Date.now() - cached.at < 10 * 60_000) return cached.id
+  const isCacheFresh = cached && Date.now() - cached.at < 10 * 60_000
+  if (isCacheFresh) return cached.id
   const prices = await stripe()
     .prices.list({
       lookup_keys: [PRICE_LOOKUP_KEYS[interval]],
@@ -75,26 +76,30 @@ type PriceInfo = Pick<Stripe.Price, 'id' | 'lookup_key'> & {
  */
 export function planForPrice(price: PriceInfo) {
   const keys = [...Object.values(PRICE_LOOKUP_KEYS), ...LEGACY_PRO_KEYS]
-  if (price.lookup_key && keys.includes(price.lookup_key)) return 'pro' as const
-  if (price.metadata?.plan === 'pro') return 'pro' as const
+  const isKnownKey = price.lookup_key && keys.includes(price.lookup_key)
+  if (isKnownKey) return 'pro' as const
+  const isProPrice = price.metadata?.plan === 'pro'
+  if (isProPrice) return 'pro' as const
   const overrides = [
     serverEnv.stripe?.priceProMonthly,
     serverEnv.stripe?.priceProYearly,
   ]
-  if (overrides.includes(price.id)) return 'pro' as const
+  const isOverride = overrides.includes(price.id)
+  if (isOverride) return 'pro' as const
   return null
 }
 
 /** Interwał płatności ceny (miesięczny albo roczny); inne interwały nie występują. */
 export function intervalOfPrice(price: PriceInfo): BillingInterval | null {
   const interval = price.recurring?.interval
-  if (isBillingInterval(interval)) return interval
+  const isKnownInterval = isBillingInterval(interval)
+  if (isKnownInterval) return interval
   // Bez danych o okresie: rozpoznaj po lookup key (stare ceny były tylko roczne).
-  if (price.lookup_key === PRICE_LOOKUP_KEYS.month) return 'month'
-  if (
+  const isMonthlyKey = price.lookup_key === PRICE_LOOKUP_KEYS.month
+  if (isMonthlyKey) return 'month'
+  const isYearlyKey =
     price.lookup_key === PRICE_LOOKUP_KEYS.year ||
     LEGACY_PRO_KEYS.includes(price.lookup_key ?? '')
-  )
-    return 'year'
+  if (isYearlyKey) return 'year'
   return null
 }

@@ -101,12 +101,14 @@ interface FreeLimitNoteProps {
 function FreeLimitNote({ viewModel }: FreeLimitNoteProps) {
   const messages = useMessages(reportsMessages)
   const { locale } = useI18n()
-  if (!viewModel.clamped || !viewModel.oldest) return null
+  const { oldest } = viewModel
+  const hasNoHistoryLimit = !viewModel.clamped || !oldest
+  if (hasNoHistoryLimit) return null
   return (
     <p className="mb-6 rounded-xl border border-line bg-muted/50 px-4 py-3 text-sm">
       {fmt(messages.freeLimit, {
         days: FREE_LIMITS.historyDays,
-        date: formatDate(locale, viewModel.oldest, {
+        date: formatDate(locale, oldest, {
           day: 'numeric',
           month: 'long',
         }),

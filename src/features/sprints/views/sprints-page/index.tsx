@@ -59,7 +59,8 @@ interface SprintTrendProps {
 function SprintTrend({ viewModel }: SprintTrendProps) {
   const charts = useMessages(reportsMessages).charts
   const format = useFormat()
-  if (viewModel.stats.length < 2) return null
+  const hasTooFewSprints = viewModel.stats.length < 2
+  if (hasTooFewSprints) return null
   const oldestFirst = [...viewModel.stats].reverse()
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-2">

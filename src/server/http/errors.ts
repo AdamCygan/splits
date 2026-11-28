@@ -48,23 +48,27 @@ export function fromDatabaseError(error: unknown): ApiError | null {
   const postgres =
     (error as { cause?: { code?: string; constraint?: string } }).cause ??
     (error as { code?: string; constraint?: string })
-  if (postgres.code === '23505') {
+  const isUniqueViolation = postgres.code === '23505'
+  if (isUniqueViolation) {
     const character = postgres.constraint ?? ''
-    if (character.includes('username'))
-      return conflict('auth.username_taken', 'username')
-    if (character.includes('email'))
-      return conflict('auth.email_taken', 'email')
-    if (character.includes('hotkey')) return conflict('hotkey_taken', 'hotkey')
-    if (character === 'projects_key_key') return conflict('key_taken', 'key')
-    if (character.includes('name')) return conflict('name_taken', 'name')
+    const isUsernameTaken = character.includes('username')
+    if (isUsernameTaken) return conflict('auth.username_taken', 'username')
+    const isEmailTaken = character.includes('email')
+    if (isEmailTaken) return conflict('auth.email_taken', 'email')
+    const isHotkeyTaken = character.includes('hotkey')
+    if (isHotkeyTaken) return conflict('hotkey_taken', 'hotkey')
+    const isProjectKeyTaken = character === 'projects_key_key'
+    if (isProjectKeyTaken) return conflict('key_taken', 'key')
+    const isNameTaken = character.includes('name')
+    if (isNameTaken) return conflict('name_taken', 'name')
     return conflict('validation.invalid')
   }
-  if (
+  const isInvalidValue =
     postgres.code === '23514' ||
     postgres.code === '22P02' ||
     postgres.code === '22007'
-  )
-    return invalid()
-  if (postgres.code === '23503') return new ApiError('validation.invalid', 400)
+  if (isInvalidValue) return invalid()
+  const isMissingReference = postgres.code === '23503'
+  if (isMissingReference) return new ApiError('validation.invalid', 400)
   return null
 }

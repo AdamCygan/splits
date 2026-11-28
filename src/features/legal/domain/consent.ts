@@ -11,6 +11,7 @@ export type Consent = 'necessary' | 'analytics'
 /** Wartość ciasteczka („v1:analytics”) → zgoda; inna wersja albo śmieci = brak zgody. */
 export const parseConsent = (raw: string | undefined): Consent | null => {
   const [version, value] = (raw ?? '').split(':')
-  if (version !== CONSENT_VERSION) return null
+  const isOutdated = version !== CONSENT_VERSION
+  if (isOutdated) return null
   return value === 'analytics' || value === 'necessary' ? value : null
 }

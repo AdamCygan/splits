@@ -14,7 +14,8 @@ export function clampWorkDate(
   today: string,
   minDate: string | null,
 ) {
-  if (!date || date > today) return today
+  const isUnknownOrFuture = !date || date > today
+  if (isUnknownOrFuture) return today
   return minDate !== null && date < minDate ? minDate : date
 }
 

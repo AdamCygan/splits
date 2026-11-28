@@ -16,7 +16,8 @@ export function useDebouncedFilter(
     if (!apply) return
     const path = router.latestLocation.pathname
     const timer = setTimeout(() => {
-      if (router.latestLocation.pathname === path) apply()
+      const isSamePage = router.latestLocation.pathname === path
+      if (isSamePage) apply()
     }, delay)
     return () => clearTimeout(timer)
     // apply zmienia się z każdym renderem; reagujemy tylko na deps.

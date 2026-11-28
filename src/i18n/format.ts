@@ -56,11 +56,14 @@ export function formatMinutes(locale: Locale, total: number): string {
   const rounded = Math.round(total)
   const hours = Math.floor(rounded / 60)
   const minutes = rounded % 60
-  if (locale === 'pl') {
-    if (hours === 0) return `${minutes} min`
+  const isPolish = locale === 'pl'
+  if (isPolish) {
+    const isUnderHour = hours === 0
+    if (isUnderHour) return `${minutes} min`
     return minutes === 0 ? `${hours} h` : `${hours} h ${minutes} min`
   }
-  if (hours === 0) return `${minutes}m`
+  const isUnderHour = hours === 0
+  if (isUnderHour) return `${minutes}m`
   return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`
 }
 

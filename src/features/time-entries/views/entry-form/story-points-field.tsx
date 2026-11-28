@@ -13,16 +13,10 @@ export interface StoryPointsFieldProps {
 
 /** Story pointy ze skali; typ pracy decyduje, czy są wymagane, opcjonalne, czy ukryte. */
 export function StoryPointsField({ viewModel }: StoryPointsFieldProps) {
-  const {
-    messages,
-    format,
-    userId,
-    type,
-    chosenSp,
-    suggestedSp,
-  } = viewModel
+  const { messages, format, userId, type, chosenSp, suggestedSp } = viewModel
   const requirement = type?.storyPointsRequirement
-  if (!requirement || requirement === 'hidden') return null
+  const isHidden = !requirement || requirement === 'hidden'
+  if (isHidden) return null
   const optional = requirement === 'optional'
   const fieldId = viewModel.fieldId('storyPoints')
   return (

@@ -21,14 +21,16 @@ export function ConfirmEmailPage({ token }: ConfirmEmailPageProps) {
   const viewModel = useConfirmEmailViewModel(token)
   const { state } = viewModel
 
-  if (state.status === 'checking')
+  const isChecking = state.status === 'checking'
+  if (isChecking)
     return (
       <div role="status" aria-live="polite">
         <h1 className="type-display text-5xl">{messages.checking}</h1>
       </div>
     )
 
-  if (state.status === 'verified' || state.status === 'changed')
+  const isConfirmed = state.status === 'verified' || state.status === 'changed'
+  if (isConfirmed)
     return (
       <div role="status">
         <CircleCheck aria-hidden className="mb-4 size-10 text-ok" />

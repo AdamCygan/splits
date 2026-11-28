@@ -201,8 +201,9 @@ test.describe('focus is not hidden under sticky bars', () => {
       await page.keyboard.press('Tab')
       return page.evaluate(() => {
         const element = document.activeElement
-        if (!(element instanceof HTMLElement) || element === document.body)
-          return null
+        const isNotFocusable =
+          !(element instanceof HTMLElement) || element === document.body
+        if (isNotFocusable) return null
         // Ukryte pole (np. checkbox w etykiecie) sprawdzamy po widocznej etykiecie.
         const label =
           element.closest('label') ??
@@ -214,8 +215,9 @@ test.describe('focus is not hidden under sticky bars', () => {
             ? label
             : element
         const boundingClientRect = target.getBoundingClientRect()
-        if (boundingClientRect.width === 0 || boundingClientRect.height === 0)
-          return null
+        const isHidden =
+          boundingClientRect.width === 0 || boundingClientRect.height === 0
+        if (isHidden) return null
         const centerX = boundingClientRect.left + boundingClientRect.width / 2
         const centerY = boundingClientRect.top + boundingClientRect.height / 2
         const top = document.elementFromPoint(centerX, centerY)

@@ -50,7 +50,8 @@ export const supportRoutes = new Hono<AppEnv>()
     const admin = context.get('admin')!
     const user = await findUser(context.req.param('id'))
     const input = await body(context, twoFactorInput)
-    if (user.id === admin.id) throw new ApiError('admin.self', 400)
+    const isSelf = user.id === admin.id
+    if (isSelf) throw new ApiError('admin.self', 400)
     if (!user.totpEnabledAt) throw notFound()
     await disableUserTwoFactor(admin, user, input)
     return context.body(null, 204)

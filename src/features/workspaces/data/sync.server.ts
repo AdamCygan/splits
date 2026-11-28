@@ -44,7 +44,8 @@ async function bestEffort(operation: () => Promise<unknown>) {
   try {
     await operation()
   } catch (error) {
-    if (!isRuleError(error)) throw error
+    const isUnexpected = !isRuleError(error)
+    if (isUnexpected) throw error
   }
 }
 
@@ -144,7 +145,8 @@ export async function mirrored<T>(
   operation: () => Promise<T>,
   idOf: (result: T) => string = () => id!,
 ) {
-  if (apply !== 'all') return operation()
+  const isSingleWorkspace = apply !== 'all'
+  if (isSingleWorkspace) return operation()
   const before = id ? await snapshot(kind, scope, id) : null
   const result = await operation()
   const targets = (await applyTargets(database, scope, 'all')).slice(1)
@@ -165,7 +167,8 @@ export async function removedEverywhere(
   id: string,
   operation: (target: Scope, id: string) => Promise<unknown>,
 ): Promise<void> {
-  if (apply !== 'all') {
+  const isSingleWorkspace = apply !== 'all'
+  if (isSingleWorkspace) {
     await operation(scope, id)
     return
   }
@@ -185,7 +188,8 @@ async function counterpart(
   target: Scope,
   before: Snapshot,
 ): Promise<{ id: string } | null> {
-  if (kind === 'sprints') {
+  const isSprints = kind === 'sprints'
+  if (isSprints) {
     const rows = await transaction
       .select()
       .from(schema.sprints)
@@ -271,7 +275,8 @@ async function mirrorInto(
         sortOrder: _sortOrder,
         ...data
       } = sourceStatus
-      if (match && data.archivedAt) {
+      const restoresMatch = match && data.archivedAt
+      if (restoresMatch) {
         // Archiwizacja nie może zostawić grupy bez aktywnego statusu.
         const [left] = await transaction
           .select({ n: sql<number>`count(*)::int` })
@@ -284,7 +289,8 @@ async function mirrorInto(
               ne(schema.taskStatuses.id, match.id),
             ),
           )
-        if ((left?.n ?? 0) === 0) return
+        const isUnused = (left?.n ?? 0) === 0
+        if (isUnused) return
       }
       if (data.isDefault)
         await transaction

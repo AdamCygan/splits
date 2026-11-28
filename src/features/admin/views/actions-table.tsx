@@ -92,12 +92,14 @@ interface ActionTargetProps {
 function ActionTarget({ action }: ActionTargetProps) {
   const messages = useMessages(adminMessages).log
   if (!action.targetEmail) return <>{messages.manyAccounts}</>
-  if (!action.targetUserId || action.action === 'user.deleted')
+  const { targetUserId } = action
+  const hasNoUserLink = !targetUserId || action.action === 'user.deleted'
+  if (hasNoUserLink)
     return <>{fmt(messages.deletedAccount, { email: action.targetEmail })}</>
   return (
     <Link
       to="/app/admin/users/$id"
-      params={{ id: action.targetUserId }}
+      params={{ id: targetUserId }}
       className="underline-offset-4 hover:underline"
     >
       {action.targetEmail}

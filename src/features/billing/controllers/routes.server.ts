@@ -34,8 +34,8 @@ export const billingRoutes = new Hono<AppEnv>()
   .post('/checkout', async (context) => {
     const user = await currentUser(context.get('userId'))
     // Płatność tylko z potwierdzonym adresem: na niego idą faktury i e-maile o odnowieniu.
-    if (!user.emailVerifiedAt && !user.isDemo)
-      throw new ApiError('auth.email_unverified', 403)
+    const needsVerifiedEmail = !user.emailVerifiedAt && !user.isDemo
+    if (needsVerifiedEmail) throw new ApiError('auth.email_unverified', 403)
     const { plan, interval } = await body(context, checkoutInput)
     return context.json(await openCheckout(user, plan, interval))
   })
@@ -65,7 +65,8 @@ export const stripeWebhookRoutes = new Hono<AppEnv>().post(
   async (context) => {
     const secret = serverEnv.stripe?.webhookSecret
     const signature = context.req.header('stripe-signature')
-    if (!secret || !signature) throw new ApiError('validation.invalid', 400)
+    const isUnsigned = !secret || !signature
+    if (isUnsigned) throw new ApiError('validation.invalid', 400)
     const payload = await context.req.text()
     let event: Stripe.Event
     try {

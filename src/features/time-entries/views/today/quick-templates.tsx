@@ -8,7 +8,8 @@ export function QuickTemplates(
 ) {
   const viewModel = useQuickTemplatesViewModel(props)
   const { t: messages, format } = viewModel
-  if (viewModel.templates.length === 0) return null
+  const hasNoTemplates = viewModel.templates.length === 0
+  if (hasNoTemplates) return null
   return (
     <>
       <ScheduledToday viewModel={viewModel} />

@@ -299,8 +299,8 @@ export function TimeChart({
                 )
                 const bucket =
                   buckets[Math.min(buckets.length - 1, Math.max(0, index))]
-                if (onOpen && bucket && bucket.minutes > 0)
-                  onOpen({ from: bucket.from, to: bucket.to, unit })
+                const canOpen = onOpen && bucket && bucket.minutes > 0
+                if (canOpen) onOpen({ from: bucket.from, to: bucket.to, unit })
               }}
               onPointerMove={(event) => {
                 const box = event.currentTarget.getBoundingClientRect()
@@ -322,17 +322,19 @@ export function TimeChart({
                       ? -1
                       : 0
                 const timeBucket = active !== null ? buckets[active] : undefined
-                if (
+                const opensBucket =
                   (event.key === 'Enter' || event.key === ' ') &&
                   onOpen &&
                   timeBucket
-                ) {
+                if (opensBucket) {
                   event.preventDefault()
                   onOpen({ from: timeBucket.from, to: timeBucket.to, unit })
                   return
                 }
-                if (event.key === 'Home') setActive(0)
-                else if (event.key === 'End') setActive(buckets.length - 1)
+                const isHomeKey = event.key === 'Home'
+                const isEndKey = event.key === 'End'
+                if (isHomeKey) setActive(0)
+                else if (isEndKey) setActive(buckets.length - 1)
                 else if (step)
                   setActive((previousIndex) =>
                     Math.min(
@@ -443,7 +445,8 @@ export function HourHeatmap({ entries, className }: HourHeatmapProps) {
       ? SHADES[0]
       : `color-mix(in oklab, var(--wt-task) ${SHADES[intensity]}, var(--surface))`
 
-  if (map.max === 0)
+  const isEmpty = map.max === 0
+  if (isEmpty)
     return (
       <ChartCard
         title={messages.hours.title}
@@ -542,7 +545,8 @@ export function EstimateChart({ rows }: EstimateChartProps) {
   const messages = useMessages(reportsMessages).charts
   const format = useFormat()
   const misses = estimateMisses(rows)
-  if (misses.length === 0)
+  const hasNoMisses = misses.length === 0
+  if (hasNoMisses)
     return (
       <ChartCard
         title={messages.estimates.title}
@@ -646,7 +650,8 @@ export function ColumnChart({
   const messages = useMessages(reportsMessages).charts
   const max = Math.max(...items.map((item) => item.value), 1)
   // Same zera (np. świeże konto): zamiast pustych słupków krótka informacja.
-  if (items.every((item) => item.value === 0))
+  const isAllZero = items.every((item) => item.value === 0)
+  if (isAllZero)
     return (
       <ChartCard title={title} lead={lead}>
         <p className="text-sm text-ink-soft">{messages.noData}</p>

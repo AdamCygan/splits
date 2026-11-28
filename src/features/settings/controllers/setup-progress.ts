@@ -30,14 +30,17 @@ function snapshot(): Array<SetupStep> {
   } catch {
     /* zablokowany storage */
   }
-  if (cache && cache.key === key() && cache.raw === raw) return cache.value
+  const cached = cache
+  const isCached = cached && cached.key === key() && cached.raw === raw
+  if (isCached) return cached.value
   cache = { key: key(), raw, value: read() }
   return cache.value
 }
 
 export function markSetupStep(step: SetupStep) {
   const steps = read()
-  if (steps.includes(step)) return
+  const isDone = steps.includes(step)
+  if (isDone) return
   try {
     window.localStorage.setItem(key(), JSON.stringify([...steps, step]))
   } catch {

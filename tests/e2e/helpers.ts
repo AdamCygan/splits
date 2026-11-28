@@ -142,12 +142,14 @@ export async function expectNoA11yViolations(page: Page) {
 /** Na telefonie filtry zadań są zwinięte pod przyciskiem „Filters”: rozwija go, jeśli jest. */
 export async function openTaskFilters(page: Page) {
   const toggle = page.getByRole('button', { name: /^Filters/ })
-  if (await toggle.isVisible()) await toggle.click()
+  const isToggleVisible = await toggle.isVisible()
+  if (isToggleVisible) await toggle.click()
 }
 
 /** Tytuł przypadku jak w it.each: `%s` = wartość, `$pole` = pole obiektu. */
 function caseTitle<TCase>(title: string, item: TCase) {
-  if (typeof item === 'object' && item !== null)
+  const isObject = typeof item === 'object' && item !== null
+  if (isObject)
     return title.replace(/\$(\w+)/g, (_unused, key: string) =>
       String((item as Record<string, unknown>)[key]),
     )

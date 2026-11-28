@@ -49,7 +49,8 @@ export async function verifyPassword(
 ): Promise<boolean> {
   const [algorithm, cost, blockSize, parallelization, salt, hash] =
     stored.split('$')
-  if (algorithm !== 'scrypt' || !salt || !hash) return false
+  const isMalformedHash = algorithm !== 'scrypt' || !salt || !hash
+  if (isMalformedHash) return false
   const expected = Buffer.from(hash, 'base64url')
   const key = await scrypt(password, Buffer.from(salt, 'base64url'), {
     N: Number(cost),

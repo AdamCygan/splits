@@ -39,7 +39,8 @@ export function CookieBanner() {
       aria-labelledby="cookie-title"
       aria-describedby="cookie-text"
       onKeyDown={(event) => {
-        if (event.key === 'Escape' && consent !== null) closeSettings()
+        const shouldClose = event.key === 'Escape' && consent !== null
+        if (shouldClose) closeSettings()
       }}
       className="fixed inset-x-3 bottom-3 z-[70] max-w-md rounded-2xl border border-line bg-surface p-5 text-ink shadow-[0_24px_60px_-20px_rgba(20,22,43,0.45)] outline-none sm:inset-x-auto sm:left-4 sm:bottom-4"
     >

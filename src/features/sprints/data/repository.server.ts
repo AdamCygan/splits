@@ -68,14 +68,15 @@ async function assertOwnTypes(
   scope: Scope,
   goals: ReadonlyArray<{ taskTypeId: string }>,
 ) {
-  if (goals.length === 0) return
+  const hasNoGoals = goals.length === 0
+  if (hasNoGoals) return
   const own = await transaction
     .select({ id: schema.taskTypes.id })
     .from(schema.taskTypes)
     .where(inScope(schema.taskTypes, scope))
   const ids = new Set(own.map((ownedSprint) => ownedSprint.id))
-  if (goals.some((goal) => !ids.has(goal.taskTypeId)))
-    throw new ApiError('validation.invalid', 400, 'timeGoals')
+  const hasForeignType = goals.some((goal) => !ids.has(goal.taskTypeId))
+  if (hasForeignType) throw new ApiError('validation.invalid', 400, 'timeGoals')
 }
 
 async function assertNoOverlap(
@@ -84,8 +85,8 @@ async function assertNoOverlap(
   range: DateSpan,
   exceptId?: string,
 ) {
-  if (range.endsOn < range.startsOn)
-    throw new ApiError('sprint.dates', 400, 'endsOn')
+  const isReversedRange = range.endsOn < range.startsOn
+  if (isReversedRange) throw new ApiError('sprint.dates', 400, 'endsOn')
   const others = await transaction
     .select()
     .from(schema.sprints)
@@ -95,8 +96,8 @@ async function assertNoOverlap(
         exceptId ? ne(schema.sprints.id, exceptId) : undefined,
       ),
     )
-  if (others.some((other) => rangesOverlap(other, range)))
-    throw conflict('sprint.overlap', 'startsOn')
+  const overlapsOther = others.some((other) => rangesOverlap(other, range))
+  if (overlapsOther) throw conflict('sprint.overlap', 'startsOn')
 }
 
 export type CadenceInput = z.infer<typeof cadenceInput>
@@ -195,11 +196,9 @@ export async function removeSprint(scope: Scope, id: string) {
       .from(schema.sprints)
       .where(and(eq(schema.sprints.id, id), inScope(schema.sprints, scope)))
     if (!sprint) throw notFound()
-    if (
-      sprint.fromCadence &&
-      (await getCadence(transaction, scope))?.autoCreate
-    )
-      throw conflict('sprint.cadence_delete')
+    const isAutoCreated =
+      sprint.fromCadence && (await getCadence(transaction, scope))?.autoCreate
+    if (isAutoCreated) throw conflict('sprint.cadence_delete')
     await transaction.delete(schema.sprints).where(eq(schema.sprints.id, id))
   })
 }

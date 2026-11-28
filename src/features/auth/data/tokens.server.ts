@@ -107,10 +107,10 @@ export async function rotateRefreshToken(
         ),
       )
       .limit(1)
-    if (
+    const isWithinGrace =
       successor &&
       Date.now() - row.revokedAt.getTime() <= REFRESH_REUSE_GRACE_MS
-    ) {
+    if (isWithinGrace) {
       const next = await issueRefreshToken(
         transaction,
         row.userId,
@@ -122,7 +122,8 @@ export async function rotateRefreshToken(
     await revokeFamily(transaction, row.familyId)
     return { ok: false }
   }
-  if (row.expiresAt.getTime() < Date.now()) return { ok: false }
+  const isExpired = row.expiresAt.getTime() < Date.now()
+  if (isExpired) return { ok: false }
   await transaction
     .update(refreshTokens)
     .set({ revokedAt: new Date() })

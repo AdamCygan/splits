@@ -13,11 +13,13 @@ export function RouteAnnouncer() {
   useEffect(() => {
     return router.subscribe('onResolved', ({ toLocation, pathChanged }) => {
       const path = toLocation.pathname
-      if (lastPath.current === null) {
+      const isFirstRender = lastPath.current === null
+      if (isFirstRender) {
         lastPath.current = path
         return
       }
-      if (!pathChanged || lastPath.current === path) return
+      const isSamePage = !pathChanged || lastPath.current === path
+      if (isSamePage) return
       lastPath.current = path
       // Tytuł ustawia HeadContent; dajemy mu jedną klatkę.
       requestAnimationFrame(() => {
@@ -29,8 +31,8 @@ export function RouteAnnouncer() {
           focused instanceof HTMLElement &&
           main?.contains(focused) &&
           focused.matches('input, textarea, select')
-        if (!toLocation.hash && !fieldFocused)
-          main?.focus({ preventScroll: true })
+        const shouldFocusMain = !toLocation.hash && !fieldFocused
+        if (shouldFocusMain) main?.focus({ preventScroll: true })
       })
     })
   }, [router])

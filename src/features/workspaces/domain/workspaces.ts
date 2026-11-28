@@ -50,7 +50,8 @@ export function resolveApply(
   kind: ApplyKind,
   workspaceCount: number,
 ): ApplyTarget | null {
-  if (workspaceCount <= 1) return 'this'
+  const isSingleWorkspace = workspaceCount <= 1
+  if (isSingleWorkspace) return 'this'
   const preference = applyPreference(prefs, kind)
   return preference === 'ask' ? null : preference
 }
@@ -124,10 +125,12 @@ export function uniqueName(name: string, taken: ReadonlyArray<string>) {
     taken.map((existingName) => existingName.trim().toLowerCase()),
   )
   const base = name.trim().slice(0, WORKSPACE_NAME_MAX)
-  if (!used.has(base.toLowerCase())) return base
+  const isBaseFree = !used.has(base.toLowerCase())
+  if (isBaseFree) return base
   for (let index = 2; ; index++) {
     const suffix = ` (${index})`
     const candidate = base.slice(0, WORKSPACE_NAME_MAX - suffix.length) + suffix
-    if (!used.has(candidate.toLowerCase())) return candidate
+    const isCandidateFree = !used.has(candidate.toLowerCase())
+    if (isCandidateFree) return candidate
   }
 }

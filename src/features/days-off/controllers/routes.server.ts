@@ -27,9 +27,11 @@ export const dayOffRoutes = new Hono<AppEnv>()
    */
   .put('/', async (context) => {
     const input = await body(context, dayOffInput)
-    if (input.to < input.from) throw invalid('to')
+    const isReversedRange = input.to < input.from
+    if (isReversedRange) throw invalid('to')
     const length = diffDays(input.from, input.to) + 1
-    if (length > MAX_RANGE_DAYS) throw invalid('to')
+    const isTooLong = length > MAX_RANGE_DAYS
+    if (isTooLong) throw invalid('to')
     return context.json(
       await inTargets(scopeOf(context), applyOf(context), (scope) =>
         setDaysOff(scope, input, length),
@@ -40,7 +42,8 @@ export const dayOffRoutes = new Hono<AppEnv>()
   /** Usuwa dni wolne z zakresu (?from=&to=), np. cały urlop albo jeden dzień. */
   .delete('/', async (context) => {
     const { from, to } = parse(rangeQuery, context.req.query())
-    if (to < from) throw invalid('to')
+    const isReversedRange = to < from
+    if (isReversedRange) throw invalid('to')
     await inTargets(scopeOf(context), applyOf(context), (scope) =>
       removeDaysOff(scope, from, to),
     )

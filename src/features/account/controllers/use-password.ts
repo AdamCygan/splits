@@ -52,7 +52,9 @@ export function usePasswordViewModel(hasPassword: boolean) {
     submit: (formEvent: FormEvent) => {
       formEvent.preventDefault()
       setSubmitted(true)
-      if ((draft.current || !hasPassword) && !errors.next && !errors.confirm)
+      const canSubmit =
+        (draft.current || !hasPassword) && !errors.next && !errors.confirm
+      if (canSubmit)
         save.mutate({ currentPassword: draft.current, newPassword: draft.next })
     },
   }

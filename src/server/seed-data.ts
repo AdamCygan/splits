@@ -572,7 +572,8 @@ function sampleEntries(
     for (let left = count; left > 0;) {
       date = addDays(date, -1)
       const day = parseDate(date).getUTCDay()
-      if (day !== 0 && day !== 6) left -= 1
+      const isWeekday = day !== 0 && day !== 6
+      if (isWeekday) left -= 1
     }
     return date
   }

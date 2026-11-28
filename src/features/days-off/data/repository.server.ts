@@ -49,7 +49,8 @@ export async function setDaysOff(
       length === 1
         ? dates
         : dates.filter((date) => working.includes(weekday(date)))
-    if (picked.length === 0) return []
+    const hasNoDays = picked.length === 0
+    if (hasNoDays) return []
     return transaction
       .insert(schema.daysOff)
       .values(

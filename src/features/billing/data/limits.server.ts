@@ -16,6 +16,6 @@ export async function assertFreeSlot(
   code: FreeLimitCode,
 ) {
   const user = await currentUser(userId)
-  if (!hasProAccess(user) && (await count()) >= limit)
-    throw new ApiError(code, 403)
+  const isOverFreeLimit = !hasProAccess(user) && (await count()) >= limit
+  if (isOverFreeLimit) throw new ApiError(code, 403)
 }

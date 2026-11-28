@@ -166,14 +166,17 @@ export async function addBreak(
 ) {
   const row = await database.transaction(async (transaction) => {
     const timezone = await userTimezone(transaction, scope)
-    if (input.workDate > todayIn(timezone)) throw invalid('workDate')
+    const isFutureDate = input.workDate > todayIn(timezone)
+    if (isFutureDate) throw invalid('workDate')
     let minutes = input.durationMinutes
-    if (input.startTime || input.endTime) {
+    const hasTimes = input.startTime || input.endTime
+    if (hasTimes) {
       const between =
         input.startTime && input.endTime
           ? minutesBetween(input.startTime, input.endTime)
           : null
-      if (between === null || between < 1) throw invalid('endTime')
+      const isInvalidSpan = between === null || between < 1
+      if (isInvalidSpan) throw invalid('endTime')
       minutes = between
     }
     const [created] = await transaction

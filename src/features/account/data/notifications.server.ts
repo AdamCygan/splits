@@ -107,7 +107,8 @@ export async function useSecondFactor(
     code,
     user.totpLastStep,
   )
-  if (step !== null) {
+  const isValidCode = step !== null
+  if (isValidCode) {
     await transaction
       .update(users)
       .set({ totpLastStep: step })
@@ -115,10 +116,10 @@ export async function useSecondFactor(
     return true
   }
   const hash = hashRecoveryCode(code)
-  if (
+  const isRecoveryCode =
     code.replace(/[^a-f0-9]/gi, '').length === 10 &&
     user.recoveryCodes.includes(hash)
-  ) {
+  if (isRecoveryCode) {
     await transaction
       .update(users)
       .set({
@@ -146,16 +147,15 @@ export async function confirmIdentity(
   user: UserRow,
   input: IdentityProof,
 ) {
-  if (
+  const isWrongPassword =
     user.passwordHash &&
     !(await verifyPassword(input.password ?? '', user.passwordHash))
-  )
+  if (isWrongPassword)
     throw new ApiError('auth.wrong_password', 400, 'password')
-  if (
+  const isWrongSecondFactor =
     user.totpEnabledAt &&
     !(await useSecondFactor(transaction, user, input.code ?? ''))
-  )
-    throw new ApiError('auth.invalid_code', 400, 'code')
+  if (isWrongSecondFactor) throw new ApiError('auth.invalid_code', 400, 'code')
 }
 
 export const DELETE_CODE_MINUTES = 15

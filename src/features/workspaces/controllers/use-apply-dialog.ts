@@ -25,8 +25,8 @@ export function useApplyDialog() {
 
   const finish = (target: ApplyTarget | null) => {
     if (!request) return
-    if (target && remember)
-      savePrefs.mutate({ apply: { [request.kind]: target } })
+    const remembersChoice = target && remember
+    if (remembersChoice) savePrefs.mutate({ apply: { [request.kind]: target } })
     request.resolve(target)
     setRequest(null)
   }

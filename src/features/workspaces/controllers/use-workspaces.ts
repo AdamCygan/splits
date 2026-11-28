@@ -104,7 +104,8 @@ export function useSwitchWorkspace() {
     async (workspace: Workspace) => {
       markPicked(today)
       const current = client.getQueryData<WorkspaceState>(workspaceKeys.state)
-      if (current?.current === workspace.id) return true
+      const wasCurrent = current?.current === workspace.id
+      if (wasCurrent) return true
       const result = await workspacesApi.setCurrent(workspace.id)
       if (!result.ok) {
         toast.error(errorText(result.error))
@@ -120,7 +121,8 @@ export function useSwitchWorkspace() {
 }
 
 function broadcast(id: string) {
-  if (typeof BroadcastChannel === 'undefined') return
+  const lacksBroadcast = typeof BroadcastChannel === 'undefined'
+  if (lacksBroadcast) return
   const channel = new BroadcastChannel(CHANNEL)
   channel.postMessage({ id })
   channel.close()
@@ -133,7 +135,8 @@ function broadcast(id: string) {
 export function useWorkspaceTabsSync() {
   const client = useQueryClient()
   useEffect(() => {
-    if (typeof BroadcastChannel === 'undefined') return
+    const lacksBroadcast = typeof BroadcastChannel === 'undefined'
+    if (lacksBroadcast) return
     const channel = new BroadcastChannel(CHANNEL)
     channel.onmessage = () => {
       void unwrap(workspacesApi.state()).then((state) =>
@@ -150,13 +153,12 @@ export function useWorkspaceShortcuts() {
   const switchTo = useSwitchWorkspace()
   useEffect(() => {
     const onKey = (keyboardEvent: KeyboardEvent) => {
-      if (
+      const isNotSwitchShortcut =
         !keyboardEvent.altKey ||
         !keyboardEvent.shiftKey ||
         keyboardEvent.ctrlKey ||
         keyboardEvent.metaKey
-      )
-        return
+      if (isNotSwitchShortcut) return
       const match = /^Digit([1-9])$/.exec(keyboardEvent.code)
       if (!match) return
       const target = workspaceForDigit(items, Number(match[1]))
@@ -256,7 +258,8 @@ export function useWorkspaceActions() {
         fmt(messages.deleted, { name: workspace.name }),
       onSuccess: (_result, workspace) => {
         // Usunięta była bieżąca: serwer wraca do pierwszej, więc ładujemy ją od nowa.
-        if (workspace.id === current?.id)
+        const deletedCurrent = workspace.id === current?.id
+        if (deletedCurrent)
           void unwrap(workspacesApi.state()).then((state) =>
             loadWorkspace(client, state),
           )
@@ -277,7 +280,8 @@ export function useWorkspaceActions() {
         fmt(messages.copied, { name: workspaceCopy.to.name }),
       onSuccess: (_result, workspaceCopy) => {
         // Kopia do bieżącej przestrzeni: odświeżamy jej dane.
-        if (workspaceCopy.to.id === current?.id) {
+        const copiedToCurrent = workspaceCopy.to.id === current?.id
+        if (copiedToCurrent) {
           const state = client.getQueryData<WorkspaceState>(workspaceKeys.state)
           if (state) void loadWorkspace(client, state)
         }
@@ -288,7 +292,8 @@ export function useWorkspaceActions() {
     const ids = items.map((item) => item.id)
     const from = ids.indexOf(id)
     const to = from + delta
-    if (from < 0 || to < 0 || to >= ids.length) return
+    const isOutOfRange = from < 0 || to < 0 || to >= ids.length
+    if (isOutOfRange) return
     ids.splice(to, 0, ...ids.splice(from, 1))
     reorder.mutate(ids)
   }
@@ -305,7 +310,8 @@ export function useRunningElsewhere() {
   const elsewhere = useQuery(runningElsewhereQuery).data ?? null
   const runningHere = useQuery(runningQuery).data
   const workspace = items.find((item) => item.id === elsewhere?.workspaceId)
-  if (!elsewhere || !workspace || runningHere) return null
+  const hasNoNotice = !elsewhere || !workspace || runningHere
+  if (hasNoNotice) return null
   return {
     workspace,
     entry: elsewhere.entry,

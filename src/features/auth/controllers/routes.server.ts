@@ -191,14 +191,13 @@ export const authRoutes = new Hono<AppEnv>()
     for (const name of ['g_state', 'g_verifier', 'g_redirect', 'g_tz'])
       deleteCookie(context, name, { path: GOOGLE_COOKIE_PATH, secure })
     const code = context.req.query('code')
-    if (
+    const isInvalidCallback =
       !google ||
       !code ||
       !state ||
       !verifier ||
       context.req.query('state') !== state
-    )
-      return fail()
+    if (isInvalidCallback) return fail()
 
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -228,12 +227,14 @@ export const authRoutes = new Hono<AppEnv>()
     } catch {
       return fail()
     }
-    if (!claims.email || claims.email_verified !== true) return fail()
+    const { email } = claims
+    const isUnverifiedEmail = !email || claims.email_verified !== true
+    if (isUnverifiedEmail) return fail()
     const localeCookie = getCookie(context, 'app_locale')
     const locale: Locale = isLocale(localeCookie)
       ? localeCookie
       : context.get('locale')
-    const verified = { ...claims, email: claims.email }
+    const verified = { ...claims, email }
 
     const outcome = await signInWithGoogle(
       verified,

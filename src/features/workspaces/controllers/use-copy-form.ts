@@ -27,7 +27,8 @@ export function useCopyForm({ target, onDone }: CopyFormOptions) {
     pending: copy.isPending,
     canSubmit: from !== '' && kinds.length > 0,
     submit: () => {
-      if (!from || kinds.length === 0) return
+      const hasNothingToCopy = !from || kinds.length === 0
+      if (hasNothingToCopy) return
       copy.mutate({ to: target, from, kinds }, { onSuccess: onDone })
     },
   }
