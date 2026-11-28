@@ -1,4 +1,4 @@
-import { getStats } from './../data/stats.server'
+import { getStats } from '../data/stats.server'
 import { Hono } from 'hono'
 import type { AppEnv } from '#/server/http/context'
 

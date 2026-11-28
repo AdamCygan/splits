@@ -1,20 +1,18 @@
-import { db } from '#/server/db/client'
-import { users } from '#/server/db/schema'
+import type { MiddlewareHandler } from 'hono'
 import { serverEnv } from '#/server/env'
 import type { AppEnv } from '#/server/http/context'
 import { ApiError } from '#/server/http/errors'
-import { eq } from 'drizzle-orm'
-import type { MiddlewareHandler } from 'hono'
+import { findUser } from '../data/shared.server'
 
 /**
  * Dostęp tylko dla roli „admin”, sprawdzanej w bazie przy każdym żądaniu (odebranie roli
  * działa od razu). Przy ADMIN_REQUIRE_2FA=true admin musi mieć logowanie dwuetapowe.
  */
 export const requireAdmin: MiddlewareHandler<AppEnv> = async (c, next) => {
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, c.get('userId')))
+  const user = await findUser(c.get('userId')).catch((error: unknown) => {
+    if (error instanceof ApiError) return null
+    throw error
+  })
   if (!user || user.role !== 'admin' || user.disabledAt)
     throw new ApiError('auth.forbidden', 403)
   if (serverEnv.adminRequire2fa && !user.totpEnabledAt)

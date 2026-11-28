@@ -15,7 +15,7 @@ import {
   revokeOwnSession,
   sendDeleteCode,
   currentUser,
-} from './../data/repository.server'
+} from '../data/repository.server'
 import { Hono } from 'hono'
 import { getCookie } from 'hono/cookie'
 import { REFRESH_COOKIE } from '#/features/auth/data/tokens.server'
@@ -31,7 +31,7 @@ import {
   totpEnableInput,
 } from '../data/inputs.server'
 import { rateLimit } from '#/server/http/rate-limit'
-import { clearRefreshCookie } from '#/features/auth/controllers/routes.server'
+import { clearRefreshCookie } from '#/features/auth/controllers/http.server'
 import { toUser } from '#/features/auth/data/mappers.server'
 import { securityStatus } from '../data/notifications.server'
 

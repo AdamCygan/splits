@@ -5,7 +5,7 @@ import {
   endBreak,
   addBreak,
   removeBreak,
-} from './../data/repository.server'
+} from '../data/repository.server'
 import { Hono } from 'hono'
 import type { AppEnv } from '#/server/http/context'
 import { body, dateQuery, parse } from '#/server/http/inputs'

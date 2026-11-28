@@ -163,6 +163,24 @@ export default [
     },
   },
   {
+    // Trasy (controllers/*.server.ts) nie piszą zapytań: baza i transakcje są w data/.
+    files: ['src/features/*/controllers/**/*.server.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: String.raw`^(drizzle-orm|#/server/db/.*)$`,
+              message:
+                'Controllers do not query the database: add a function in data/*.server.ts.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['src/features/*/domain/**', 'src/shared/domain/**'],
     rules: { 'no-restricted-imports': ['error', { patterns: domainImports }] },
   },

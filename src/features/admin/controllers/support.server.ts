@@ -5,7 +5,7 @@ import {
   disableUserTwoFactor,
   listUserInvoices,
   twoFactorInput,
-} from './../data/support.server'
+} from '../data/support.server'
 import { Hono } from 'hono'
 import type { AppEnv } from '#/server/http/context'
 import { ApiError, invalid, notFound } from '#/server/http/errors'

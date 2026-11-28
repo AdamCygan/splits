@@ -188,3 +188,6 @@ export async function removeSprint(userId: string, id: string) {
     await tx.delete(t.sprints).where(eq(t.sprints.id, id))
   })
 }
+
+/** Kadencja sprintów konta (null, gdy wyłączona). */
+export const getCadenceFor = (userId: string) => getCadence(db, userId)

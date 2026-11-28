@@ -19,7 +19,7 @@ import {
   updateNote,
   updateEntry,
   deleteEntry,
-} from './../data/repository.server'
+} from '../data/repository.server'
 import { Hono } from 'hono'
 import type { TimeEntryInput } from '#/features/time-entries/data/dto'
 import { ENTRY_LIMITS } from '#/features/time-entries/domain/entries'

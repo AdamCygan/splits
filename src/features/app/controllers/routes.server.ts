@@ -1,4 +1,4 @@
-import { getBootstrap } from './../data/repository.server'
+import { getBootstrap } from '../data/repository.server'
 import { Hono } from 'hono'
 import type { AppEnv } from '#/server/http/context'
 

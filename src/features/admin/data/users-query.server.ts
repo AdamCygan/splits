@@ -22,7 +22,7 @@ import {
 import { db } from '#/server/db/client'
 import { subscriptions, timeEntries, users } from '#/server/db/schema'
 import { iso } from '#/server/http/json'
-import { isOwner } from '#/features/auth/controllers/routes.server'
+import { isOwner } from '#/features/auth/data/repository.server'
 import { ACTIVE_SUBSCRIPTION, DAY } from './shared.server'
 import type { UserRow } from './shared.server'
 

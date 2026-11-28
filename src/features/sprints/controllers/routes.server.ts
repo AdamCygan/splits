@@ -1,11 +1,10 @@
 import { Hono } from 'hono'
-import { db } from '#/server/db/client'
 import type { AppEnv } from '#/server/http/context'
 import { body } from '#/server/http/inputs'
 import { cadenceInput, sprintInput } from '../data/inputs.server'
 import {
   createSprint,
-  getCadence,
+  getCadenceFor,
   getSprints,
   removeCadence,
   removeSprint,
@@ -14,7 +13,7 @@ import {
 } from '../data/repository.server'
 
 export const sprintRoutes = new Hono<AppEnv>()
-  .get('/cadence', async (c) => c.json(await getCadence(db, c.get('userId'))))
+  .get('/cadence', async (c) => c.json(await getCadenceFor(c.get('userId'))))
   .put('/cadence', async (c) => {
     const input = await body(c, cadenceInput)
     return c.json(await saveCadence(c.get('userId'), input))

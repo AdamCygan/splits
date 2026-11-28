@@ -10,7 +10,7 @@ import {
   openPortal,
   checkoutInput,
   syncInput,
-} from './../data/repository.server'
+} from '../data/repository.server'
 import { Hono } from 'hono'
 import type { AppEnv } from '#/server/http/context'
 import { ApiError } from '#/server/http/errors'

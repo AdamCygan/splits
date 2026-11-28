@@ -9,9 +9,13 @@ import { outbox } from './email'
 import type { AppEnv } from './http/context'
 import { body, timezone } from './http/inputs'
 import {
+  requestMeta,
+  respondWithSession,
+} from '#/features/auth/controllers/http.server'
+import {
   createAccount,
-  sessionFor,
-} from '#/features/auth/controllers/routes.server'
+  openSession,
+} from '#/features/auth/data/repository.server'
 
 const sampleInput = z.object({
   locale: z.enum(['en', 'pl']).default('en'),
@@ -71,13 +75,17 @@ export const testRoutes = new Hono<AppEnv>()
           currentPeriodEnd: new Date(Date.now() + 30 * 86_400_000),
         })
       }
-      return sessionFor(c, tx, {
-        ...user,
-        role: input.role,
-        plan: input.subscription ? 'pro' : user.plan,
-      })
+      return openSession(
+        tx,
+        {
+          ...user,
+          role: input.role,
+          plan: input.subscription ? 'pro' : user.plan,
+        },
+        requestMeta(c),
+      )
     })
-    return c.json(session, 201)
+    return c.json(respondWithSession(c, session), 201)
   })
 
   /** E-maile wysłane na adres (od najstarszego): test „klika” link albo przepisuje kod. */

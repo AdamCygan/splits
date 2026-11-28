@@ -8,12 +8,12 @@ import {
   listInput,
   patchInput,
   deleteInput,
-} from './../data/users.server'
+} from '../data/users.server'
 import { Hono } from 'hono'
 import type { AppEnv } from '#/server/http/context'
 import { ApiError, invalid } from '#/server/http/errors'
 import { body, parse } from '#/server/http/inputs'
-import { isOwner } from '#/features/auth/controllers/routes.server'
+import { isOwner } from '#/features/auth/data/repository.server'
 import { findUser } from '../data/shared.server'
 import { userFilterInput } from '../data/users-query.server'
 
