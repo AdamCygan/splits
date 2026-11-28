@@ -14,6 +14,8 @@ export const ADMIN_ACTION_KINDS = [
   'invoices.viewed',
   'users.exported',
   'user.deleted',
+  'feedback.updated',
+  'feedback.replied',
 ] as const
 
 export type AdminActionKind = (typeof ADMIN_ACTION_KINDS)[number]

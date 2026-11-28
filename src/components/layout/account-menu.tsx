@@ -1,5 +1,11 @@
 import { Link } from '@tanstack/react-router'
-import { ChevronsUpDown, LogOut, Search, UserRound } from 'lucide-react'
+import {
+  ChevronsUpDown,
+  LogOut,
+  MessageSquarePlus,
+  Search,
+  UserRound,
+} from 'lucide-react'
 import type { ReactNode } from 'react'
 import {
   DropdownMenu,
@@ -63,6 +69,9 @@ export interface AccountMenuProps {
   user: User
   onSignOut: () => void
   onOpenCommands?: () => void
+  /** „Zgłoś problem albo pomysł” (okno zgłoszenia). */
+  onFeedback?: () => void
+  feedbackLabel?: string
   compact?: boolean
 }
 
@@ -74,6 +83,8 @@ export function AccountMenu({
   user,
   onSignOut,
   onOpenCommands,
+  onFeedback,
+  feedbackLabel,
   compact = false,
 }: AccountMenuProps) {
   const t = useMessages(appMessages)
@@ -141,6 +152,12 @@ export function AccountMenu({
             <kbd className="rounded border border-line px-1.5 text-[0.6875rem] text-ink-soft">
               {shortcutLabel()}
             </kbd>
+          </DropdownMenuItem>
+        )}
+        {onFeedback && feedbackLabel && (
+          <DropdownMenuItem onSelect={onFeedback}>
+            <MessageSquarePlus aria-hidden />
+            {feedbackLabel}
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />

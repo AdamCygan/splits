@@ -13,6 +13,7 @@ import { settingsMessages } from '#/i18n/messages/settings'
 const ctx = (patch: Partial<PaletteContext> = {}): PaletteContext => ({
   text: appMessages.en,
   settingsText: settingsMessages.en,
+  feedbackLabel: 'Report a problem or idea',
   locale: 'en',
   today: '2026-11-26',
   isPro: false,

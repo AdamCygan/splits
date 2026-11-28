@@ -12,6 +12,7 @@ import {
   Languages,
   ListTodo,
   LogOut,
+  MessageSquarePlus,
   Moon,
   Pause,
   Play,
@@ -40,6 +41,7 @@ import type { settingsMessages } from '#/i18n/messages/settings'
 import { clockPrefs } from '#/lib/clock'
 import type { ClockPref } from '#/lib/clock'
 import type { Theme } from '#/lib/theme'
+import { openFeedback } from '#/features/feedback/controllers/open-feedback'
 
 /**
  * Model palety poleceń (M w MVVM): jakie polecenia istnieją, jak pasują do wpisanego
@@ -97,6 +99,8 @@ export const KW = {
   timer:
     'start timer track now stopwatch clock in uruchom timer wlacz timer stoper licz czas start',
   pause: 'pause stop timer break wstrzymaj pauza',
+  feedback:
+    'report bug problem idea feedback suggestion help support contact zgłoś błąd problem pomysł sugestia pomoc kontakt',
   stop: 'stop timer finish end zatrzymaj zakoncz',
   resume: 'resume continue wznow kontynuuj',
   breakStart: 'break coffee lunch rest przerwa kawa obiad odpoczynek',
@@ -123,6 +127,8 @@ type SettingsText = (typeof settingsMessages)['en']
 export interface PaletteContext {
   text: AppText
   settingsText: SettingsText
+  /** Podpis polecenia „Zgłoś problem albo pomysł”. */
+  feedbackLabel: string
   locale: Locale
   today: string
   isPro: boolean
@@ -374,6 +380,15 @@ export function buildCommands(ctx: PaletteContext): Array<Command> {
     keywords: KW.dayOff,
     onlyWhenSearching: true,
     run: go('/app/settings/days-off'),
+  })
+  list.push({
+    id: 'feedback',
+    group: 'actions',
+    label: ctx.feedbackLabel,
+    icon: MessageSquarePlus,
+    keywords: KW.feedback,
+    onlyWhenSearching: true,
+    run: () => openFeedback(),
   })
   if (!ctx.isPro)
     list.push({

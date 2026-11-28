@@ -38,6 +38,7 @@ import { limitBody } from './http/body-limit'
 import { startMaintenance } from './maintenance'
 import { installProcessHandlers, reportError } from './monitoring'
 import { launchProblems } from '#/config/launch-check'
+import { feedbackRoutes } from '#/features/feedback/controllers/routes.server'
 
 const VERSION = '1.0.0'
 
@@ -134,6 +135,7 @@ const protectedRoutes = {
   '/quick-templates': templateRoutes,
   '/billing': billingRoutes,
   '/bootstrap': bootstrapRoutes,
+  '/feedback': feedbackRoutes,
   '/admin': adminRoutes,
 } as const
 

@@ -38,10 +38,12 @@ import { Route as AppTaskRouteImport } from './routes/app/task'
 import { Route as AppTasksRouteImport } from './routes/app/tasks'
 import { Route as ApiV1SplatRouteImport } from './routes/api/v1/$'
 import { Route as AppAdminIndexRouteImport } from './routes/app/admin/index'
+import { Route as AppAdminFeedbackRouteImport } from './routes/app/admin/feedback'
 import { Route as AppAdminLogRouteImport } from './routes/app/admin/log'
 import { Route as AppSettingsIndexRouteImport } from './routes/app/settings/index'
 import { Route as AppSettingsAccountRouteImport } from './routes/app/settings/account'
 import { Route as AppSettingsDaysOffRouteImport } from './routes/app/settings/days-off'
+import { Route as AppSettingsHelpRouteImport } from './routes/app/settings/help'
 import { Route as AppSettingsPlanRouteImport } from './routes/app/settings/plan'
 import { Route as AppSettingsProjectsRouteImport } from './routes/app/settings/projects'
 import { Route as AppSettingsSprintsRouteImport } from './routes/app/settings/sprints'
@@ -197,6 +199,11 @@ const AppAdminIndexRoute = AppAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppAdminRouteRoute,
 } as any)
+const AppAdminFeedbackRoute = AppAdminFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
+  getParentRoute: () => AppAdminRouteRoute,
+} as any)
 const AppAdminLogRoute = AppAdminLogRouteImport.update({
   id: '/log',
   path: '/log',
@@ -215,6 +222,11 @@ const AppSettingsAccountRoute = AppSettingsAccountRouteImport.update({
 const AppSettingsDaysOffRoute = AppSettingsDaysOffRouteImport.update({
   id: '/days-off',
   path: '/days-off',
+  getParentRoute: () => AppSettingsRouteRoute,
+} as any)
+const AppSettingsHelpRoute = AppSettingsHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
   getParentRoute: () => AppSettingsRouteRoute,
 } as any)
 const AppSettingsPlanRoute = AppSettingsPlanRouteImport.update({
@@ -295,9 +307,11 @@ export interface FileRoutesByFullPath {
   '/app/tasks': typeof AppTasksRoute
   '/app/': typeof AppIndexRoute
   '/api/v1/$': typeof ApiV1SplatRoute
+  '/app/admin/feedback': typeof AppAdminFeedbackRoute
   '/app/admin/log': typeof AppAdminLogRoute
   '/app/settings/account': typeof AppSettingsAccountRoute
   '/app/settings/days-off': typeof AppSettingsDaysOffRoute
+  '/app/settings/help': typeof AppSettingsHelpRoute
   '/app/settings/plan': typeof AppSettingsPlanRoute
   '/app/settings/projects': typeof AppSettingsProjectsRoute
   '/app/settings/sprints': typeof AppSettingsSprintsRoute
@@ -335,9 +349,11 @@ export interface FileRoutesByTo {
   '/app/tasks': typeof AppTasksRoute
   '/app': typeof AppIndexRoute
   '/api/v1/$': typeof ApiV1SplatRoute
+  '/app/admin/feedback': typeof AppAdminFeedbackRoute
   '/app/admin/log': typeof AppAdminLogRoute
   '/app/settings/account': typeof AppSettingsAccountRoute
   '/app/settings/days-off': typeof AppSettingsDaysOffRoute
+  '/app/settings/help': typeof AppSettingsHelpRoute
   '/app/settings/plan': typeof AppSettingsPlanRoute
   '/app/settings/projects': typeof AppSettingsProjectsRoute
   '/app/settings/sprints': typeof AppSettingsSprintsRoute
@@ -381,9 +397,11 @@ export interface FileRoutesById {
   '/_marketing/': typeof MarketingIndexRoute
   '/app/': typeof AppIndexRoute
   '/api/v1/$': typeof ApiV1SplatRoute
+  '/app/admin/feedback': typeof AppAdminFeedbackRoute
   '/app/admin/log': typeof AppAdminLogRoute
   '/app/settings/account': typeof AppSettingsAccountRoute
   '/app/settings/days-off': typeof AppSettingsDaysOffRoute
+  '/app/settings/help': typeof AppSettingsHelpRoute
   '/app/settings/plan': typeof AppSettingsPlanRoute
   '/app/settings/projects': typeof AppSettingsProjectsRoute
   '/app/settings/sprints': typeof AppSettingsSprintsRoute
@@ -426,9 +444,11 @@ export interface FileRouteTypes {
     | '/app/tasks'
     | '/app/'
     | '/api/v1/$'
+    | '/app/admin/feedback'
     | '/app/admin/log'
     | '/app/settings/account'
     | '/app/settings/days-off'
+    | '/app/settings/help'
     | '/app/settings/plan'
     | '/app/settings/projects'
     | '/app/settings/sprints'
@@ -466,9 +486,11 @@ export interface FileRouteTypes {
     | '/app/tasks'
     | '/app'
     | '/api/v1/$'
+    | '/app/admin/feedback'
     | '/app/admin/log'
     | '/app/settings/account'
     | '/app/settings/days-off'
+    | '/app/settings/help'
     | '/app/settings/plan'
     | '/app/settings/projects'
     | '/app/settings/sprints'
@@ -511,9 +533,11 @@ export interface FileRouteTypes {
     | '/_marketing/'
     | '/app/'
     | '/api/v1/$'
+    | '/app/admin/feedback'
     | '/app/admin/log'
     | '/app/settings/account'
     | '/app/settings/days-off'
+    | '/app/settings/help'
     | '/app/settings/plan'
     | '/app/settings/projects'
     | '/app/settings/sprints'
@@ -744,6 +768,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminIndexRouteImport
       parentRoute: typeof AppAdminRouteRoute
     }
+    '/app/admin/feedback': {
+      id: '/app/admin/feedback'
+      path: '/feedback'
+      fullPath: '/app/admin/feedback'
+      preLoaderRoute: typeof AppAdminFeedbackRouteImport
+      parentRoute: typeof AppAdminRouteRoute
+    }
     '/app/admin/log': {
       id: '/app/admin/log'
       path: '/log'
@@ -770,6 +801,13 @@ declare module '@tanstack/react-router' {
       path: '/days-off'
       fullPath: '/app/settings/days-off'
       preLoaderRoute: typeof AppSettingsDaysOffRouteImport
+      parentRoute: typeof AppSettingsRouteRoute
+    }
+    '/app/settings/help': {
+      id: '/app/settings/help'
+      path: '/help'
+      fullPath: '/app/settings/help'
+      preLoaderRoute: typeof AppSettingsHelpRouteImport
       parentRoute: typeof AppSettingsRouteRoute
     }
     '/app/settings/plan': {
@@ -846,12 +884,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppAdminRouteRouteChildren {
+  AppAdminFeedbackRoute: typeof AppAdminFeedbackRoute
   AppAdminLogRoute: typeof AppAdminLogRoute
   AppAdminIndexRoute: typeof AppAdminIndexRoute
   AppAdminUsersIdRoute: typeof AppAdminUsersIdRoute
 }
 
 const AppAdminRouteRouteChildren: AppAdminRouteRouteChildren = {
+  AppAdminFeedbackRoute: AppAdminFeedbackRoute,
   AppAdminLogRoute: AppAdminLogRoute,
   AppAdminIndexRoute: AppAdminIndexRoute,
   AppAdminUsersIdRoute: AppAdminUsersIdRoute,
@@ -864,6 +904,7 @@ const AppAdminRouteRouteWithChildren = AppAdminRouteRoute._addFileChildren(
 interface AppSettingsRouteRouteChildren {
   AppSettingsAccountRoute: typeof AppSettingsAccountRoute
   AppSettingsDaysOffRoute: typeof AppSettingsDaysOffRoute
+  AppSettingsHelpRoute: typeof AppSettingsHelpRoute
   AppSettingsPlanRoute: typeof AppSettingsPlanRoute
   AppSettingsProjectsRoute: typeof AppSettingsProjectsRoute
   AppSettingsSprintsRoute: typeof AppSettingsSprintsRoute
@@ -879,6 +920,7 @@ interface AppSettingsRouteRouteChildren {
 const AppSettingsRouteRouteChildren: AppSettingsRouteRouteChildren = {
   AppSettingsAccountRoute: AppSettingsAccountRoute,
   AppSettingsDaysOffRoute: AppSettingsDaysOffRoute,
+  AppSettingsHelpRoute: AppSettingsHelpRoute,
   AppSettingsPlanRoute: AppSettingsPlanRoute,
   AppSettingsProjectsRoute: AppSettingsProjectsRoute,
   AppSettingsSprintsRoute: AppSettingsSprintsRoute,

@@ -45,6 +45,7 @@ import {
 } from './commands'
 import type { Command, PaletteContext } from './commands'
 import { OPEN_EVENT } from '../domain/open'
+import { feedbackMessages } from '#/i18n/messages/feedback'
 
 /** Aktywna opcja zapamiętana razem z listą wyników, do której należy. */
 interface Selection {
@@ -62,6 +63,7 @@ type IndexUpdate = number | ((index: number) => number)
 export function useCommandPaletteViewModel() {
   const t = useMessages(appMessages)
   const settingsText = useMessages(settingsMessages)
+  const feedbackText = useMessages(feedbackMessages)
   const format = useFormat()
   const { locale, setLocale } = useI18n()
   const navigate = useNavigate()
@@ -133,6 +135,7 @@ export function useCommandPaletteViewModel() {
   const ctx: PaletteContext = {
     text: t,
     settingsText,
+    feedbackLabel: feedbackText.open,
     locale,
     today,
     isPro: hasProAccess(user),

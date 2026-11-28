@@ -11,6 +11,7 @@ import {
   CalendarRange,
   Clock,
   ListTodo,
+  MessageSquarePlus,
   Search,
   Settings,
   ShieldCheck,
@@ -41,6 +42,9 @@ import { TimerBar } from '#/features/time-entries/views/timer'
 import { useClockPref } from '#/lib/clock'
 import { applyTheme } from '#/lib/theme'
 import { QueryProvider } from '#/integrations/tanstack-query/query-provider'
+import { openFeedback } from '#/features/feedback/controllers/open-feedback'
+import { FeedbackDialogHost } from '#/features/feedback/views/feedback-dialog'
+import { feedbackMessages } from '#/i18n/messages/feedback'
 
 /**
  * Panel aplikacji (/app/*). Renderowany tylko w przeglądarce (ssr: false):
@@ -85,6 +89,7 @@ function AppLayout() {
     <QueryProvider>
       <AppShell />
       <CommandPalette />
+      <FeedbackDialogHost />
       <Toaster
         position="bottom-right"
         closeButton
@@ -128,6 +133,7 @@ function AppShell() {
   const t = useMessages(appMessages)
   const common = useMessages(commonMessages)
   const admin = useMessages(adminMessages)
+  const feedback = useMessages(feedbackMessages)
   // Konto, konfiguracja i dzisiejszy dzień jednym żądaniem, zanim ekrany zaczną pytać osobno.
   const boot = useBootstrap()
 
@@ -225,6 +231,14 @@ function AppShell() {
           </nav>
           {user && (
             <div className="mt-auto border-t border-line pt-3">
+              <button
+                type="button"
+                onClick={() => openFeedback()}
+                className="mb-2 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-ink-soft hover:bg-muted hover:text-ink"
+              >
+                <MessageSquarePlus aria-hidden className="size-4" />
+                {feedback.open}
+              </button>
               <AccountMenu
                 user={user}
                 onSignOut={() => void handleSignOut()}
@@ -263,6 +277,8 @@ function AppShell() {
                   compact
                   onSignOut={() => void handleSignOut()}
                   onOpenCommands={openCommandPalette}
+                  onFeedback={() => openFeedback()}
+                  feedbackLabel={feedback.open}
                 />
               )}
             </div>

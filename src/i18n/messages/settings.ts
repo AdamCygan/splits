@@ -25,6 +25,7 @@ const en = {
     account: { title: 'Account', text: 'Profile, language, data' },
     security: { title: 'Security', text: 'Email, password, two-step login' },
     plan: { title: 'Plan', text: 'Free or Pro, billed monthly or yearly' },
+    help: { title: 'Help', text: 'Report a problem, ideas, replies' },
   },
   overview: {
     welcome: 'Welcome to Timeblame',
@@ -639,6 +640,7 @@ const pl: SettingsMessages = {
       title: 'Plan',
       text: 'Free albo Pro, płatne co miesiąc lub co rok',
     },
+    help: { title: 'Pomoc', text: 'Zgłoś problem, pomysły, odpowiedzi' },
   },
   overview: {
     welcome: 'Witaj w Timeblame',

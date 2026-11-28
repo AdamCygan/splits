@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { AppEnv } from '#/server/http/context'
+import { adminFeedbackRoutes } from '#/features/feedback/controllers/routes.server'
 import { actionRoutes } from './actions.server'
 import { requireAdmin } from './require-admin.server'
 import { statsRoutes } from './stats.server'
@@ -17,3 +18,4 @@ export const adminRoutes = new Hono<AppEnv>()
   .route('/', userRoutes)
   .route('/', supportRoutes)
   .route('/', actionRoutes)
+  .route('/', adminFeedbackRoutes)

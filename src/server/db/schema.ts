@@ -634,3 +634,43 @@ export const payments = pgTable(
   },
   (t) => [index('payments_paid_idx').on(t.paidAt)],
 )
+
+/**
+ * Zgłoszenia z aplikacji („Zgłoś problem / pomysł”). Treść pisze użytkownik; strona i przeglądarka
+ * pomagają odtworzyć błąd. Odpowiedź administratora widzi użytkownik (i dostaje ją mailem),
+ * notatka wewnętrzna jest tylko dla adminów.
+ */
+export const feedback = pgTable(
+  'feedback',
+  {
+    id: id(),
+    userId: userId(),
+    kind: text('kind').notNull(),
+    message: text('message').notNull(),
+    page: text('page'),
+    userAgent: text('user_agent'),
+    status: text('status').notNull().default('new'),
+    reply: text('reply'),
+    note: text('note'),
+    repliedAt: timestamp('replied_at', { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index('feedback_status_created_idx').on(t.status, t.createdAt),
+    index('feedback_user_idx').on(t.userId, t.createdAt),
+    check('feedback_kind', sql`${t.kind} in ('bug', 'idea', 'question')`),
+    check(
+      'feedback_status',
+      sql`${t.status} in ('new', 'in_progress', 'done', 'dismissed')`,
+    ),
+    check(
+      'feedback_message',
+      sql`char_length(${t.message}) between 5 and 4000`,
+    ),
+    check(
+      'feedback_reply',
+      sql`${t.reply} is null or char_length(${t.reply}) between 1 and 4000`,
+    ),
+  ],
+)

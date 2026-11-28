@@ -6,6 +6,7 @@ import {
   Flag,
   LayoutGrid,
   Layers,
+  LifeBuoy,
   ListChecks,
   Ruler,
   ScrollText,
@@ -97,6 +98,13 @@ export const settingsSections = [
     key: 'plan',
     group: 'account',
     icon: CreditCard,
+    exact: false,
+  },
+  {
+    to: '/app/settings/help',
+    key: 'help',
+    group: 'account',
+    icon: LifeBuoy,
     exact: false,
   },
 ] as const

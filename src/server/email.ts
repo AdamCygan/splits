@@ -75,6 +75,8 @@ type Kind =
   | 'accountDeleted'
   | 'reminder'
   | 'deleteCode'
+  | 'feedbackReply'
+  | 'feedbackNew'
 
 const accountTexts: Record<
   Locale,
@@ -125,6 +127,16 @@ const accountTexts: Record<
       subject: 'Your code to delete your Timeblame account',
       body: (v) =>
         `Hi ${v.name},\n\nYour code to delete your Timeblame account is:\n\n${v.code}\n\nIt works for ${v.minutes} minutes. Deleting removes all your time entries and settings for good.\n\nIf you didn’t ask for this, ignore this email: your account stays as it is.\n\nTimeblame`,
+    },
+    feedbackReply: {
+      subject: 'Reply to your Timeblame report',
+      body: (v) =>
+        `Hi ${v.name},\n\nYou wrote to us:\n\n> ${v.message}\n\nOur reply:\n\n${v.reply}\n\nYou’ll find all your reports and replies in Settings → Help: ${v.link}\n\nTimeblame`,
+    },
+    feedbackNew: {
+      subject: 'New report in Timeblame: {kind}',
+      body: (v) =>
+        `${v.email} (${v.plan}) sent a report (${v.kind}) from ${v.page}:\n\n${v.message}\n\nOpen the inbox: ${v.link}`,
     },
     reminder: {
       subject: 'Log today’s work in Timeblame',
@@ -178,6 +190,16 @@ const accountTexts: Record<
       body: (v) =>
         `Cześć ${v.name},\n\nTwój kod do usunięcia konta w Timeblame:\n\n${v.code}\n\nDziała przez ${v.minutes} minut. Usunięcie kasuje na zawsze wszystkie wpisy czasu i ustawienia.\n\nJeśli to nie Ty, zignoruj tę wiadomość: konto zostaje bez zmian.\n\nTimeblame`,
     },
+    feedbackReply: {
+      subject: 'Odpowiedź na Twoje zgłoszenie w Timeblame',
+      body: (v) =>
+        `Cześć ${v.name},\n\nNapisałeś do nas:\n\n> ${v.message}\n\nNasza odpowiedź:\n\n${v.reply}\n\nWszystkie zgłoszenia i odpowiedzi znajdziesz w Ustawienia → Pomoc: ${v.link}\n\nTimeblame`,
+    },
+    feedbackNew: {
+      subject: 'Nowe zgłoszenie w Timeblame: {kind}',
+      body: (v) =>
+        `${v.email} (${v.plan}) wysłał zgłoszenie (${v.kind}) ze strony ${v.page}:\n\n${v.message}\n\nSkrzynka zgłoszeń: ${v.link}`,
+    },
     reminder: {
       subject: 'Wpisz dzisiejszą pracę w Timeblame',
       body: (v) =>
@@ -194,5 +216,12 @@ export function accountEmail(
   vars: Record<string, string>,
 ): Email {
   const text = accountTexts[locale][kind]
-  return { to, subject: text.subject, text: text.body(vars) }
+  return {
+    to,
+    subject: text.subject.replace(
+      /\{(\w+)\}/g,
+      (_, key: string) => vars[key] ?? '',
+    ),
+    text: text.body(vars),
+  }
 }

@@ -238,6 +238,8 @@ const en = {
       'invoices.viewed': 'Invoices viewed',
       'users.exported': 'User list exported',
       'user.deleted': 'Account deleted',
+      'feedback.updated': 'Report status changed',
+      'feedback.replied': 'Reply to a report',
     } as Record<AdminActionKind, string>,
   },
 }
@@ -500,6 +502,8 @@ const pl: AdminMessages = {
       'invoices.viewed': 'Wgląd w faktury',
       'users.exported': 'Eksport listy kont',
       'user.deleted': 'Usunięcie konta',
+      'feedback.updated': 'Zmiana stanu zgłoszenia',
+      'feedback.replied': 'Odpowiedź na zgłoszenie',
     },
   },
 }
