@@ -62,6 +62,9 @@ test.describe('admin panel', () => {
     })
     await page.goto('/app/admin')
     await page.getByLabel('Search users').fill(other.email)
+    // Wyszukiwanie trafia do adresu z opóźnieniem: klik dopiero po przefiltrowaniu listy,
+    // inaczej spóźniona zmiana adresu cofnęłaby przejście na stronę konta.
+    await expect(page).toHaveURL(/[?&]q=/)
     await page
       .getByRole('row')
       .filter({ hasText: other.email })
