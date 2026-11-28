@@ -24,8 +24,10 @@ export const legal = {
   /** Podmioty przetwarzające dane (dostosuj do faktycznie używanych usług). */
   processors: {
     /** Region usługi sprawdzisz w Railway: Service → Settings → Regions. */
-    hosting: 'Railway Corporation (USA), serwery w regionie [region z Railway, np. EU West – Amsterdam]',
-    database: 'Railway Corporation (PostgreSQL w tym samym regionie co aplikacja)',
+    hosting:
+      'Railway Corporation (USA), serwery w regionie [region z Railway, np. EU West – Amsterdam]',
+    database:
+      'Railway Corporation (PostgreSQL w tym samym regionie co aplikacja)',
     email: 'Resend (USA)',
   },
   /** Ile dni kopie zapasowe przechowują dane po usunięciu konta. */
