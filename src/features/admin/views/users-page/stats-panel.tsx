@@ -4,6 +4,7 @@ import type { AdminStats } from '#/features/admin/data/dto'
 import { useFormat, useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
 import { adminMessages } from '#/i18n/messages/admin'
+import { conversionRate } from '#/features/admin/domain/admin'
 
 export interface StatsPanelProps {
   stats: AdminStats | undefined
@@ -24,6 +25,7 @@ export function StatsPanel({ stats }: StatsPanelProps) {
     stats.revenue.length
       ? stats.revenue.map((r) => format.money(r[key], r.currency)).join(' + ')
       : t.noRevenue
+  const conversion = conversionRate(stats.pro + stats.lifetime, stats.users)
   const refunded = stats.revenue
     .filter((r) => r.refunded365 > 0)
     .map((r) => format.money(r.refunded365, r.currency))
@@ -68,6 +70,28 @@ export function StatsPanel({ stats }: StatsPanelProps) {
             </Link>
           )}
         </StatTile>
+        <StatTile
+          label={t.mrr}
+          value={format.money(stats.mrr, 'usd')}
+          hint={fmt(t.mrrHint, {
+            monthly: stats.subscriptions.monthly,
+            yearly: stats.subscriptions.yearly,
+          })}
+        />
+        <StatTile
+          label={t.conversion}
+          value={`${format.number(conversion, 1)}%`}
+          hint={fmt(t.conversionHint, {
+            paid: stats.pro + stats.lifetime,
+            users: stats.users,
+          })}
+        />
+        <StatTile
+          label={t.cancelling}
+          value={format.number(stats.subscriptions.cancelling, 0)}
+          hint={t.cancellingHint}
+          warn={stats.subscriptions.cancelling > 0}
+        />
         <StatTile label={t.demo} value={format.number(stats.demo, 0)} />
       </StatGrid>
       <Signups rows={stats.signups} />

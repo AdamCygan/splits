@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  conversionRate,
+  monthlyRecurring,
   adminUsersCsv,
   isPaymentProblem,
   nextAdminSort,
@@ -155,4 +157,26 @@ describe('admin filters in the address', () => {
       expect(pageCount(total, size)).toBe(pages)
     },
   )
+})
+
+describe('revenue numbers', () => {
+  it.each<[number, number, number]>([
+    [0, 0, 0],
+    [10, 0, 6000],
+    [0, 12, 6000],
+    [3, 1, 2300],
+  ])(
+    'Should count %i monthly and %i yearly subscriptions as %i cents a month',
+    (monthly, yearly, cents) => {
+      expect(monthlyRecurring(monthly, yearly)).toBe(cents)
+    },
+  )
+
+  it.each<[number, number, number]>([
+    [0, 0, 0],
+    [1, 3, 33.3],
+    [25, 1000, 2.5],
+  ])('Should show %i paying of %i accounts as %d%%', (paid, users, rate) => {
+    expect(conversionRate(paid, users)).toBe(rate)
+  })
 })

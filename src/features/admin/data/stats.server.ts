@@ -7,6 +7,7 @@ import { db } from '#/server/db/client'
 import { payments, subscriptions, timeEntries, users } from '#/server/db/schema'
 
 import { ACTIVE_SUBSCRIPTION, DAY } from './shared.server'
+import { monthlyRecurring } from '../domain/admin'
 
 export async function getStats() {
   const since = (days: number) => new Date(Date.now() - days * DAY)
@@ -27,6 +28,7 @@ export async function getStats() {
     [problems],
     revenue,
     signups,
+    [billing],
   ] = await Promise.all([
     db
       .select({
@@ -70,6 +72,15 @@ export async function getStats() {
       .where(and(real, gte(users.createdAt, since(13))))
       .groupBy(sql`1`)
       .orderBy(sql`1`),
+    // Pro płacone teraz (aktywne i w okresie próbnym), z podziałem na okres i rezygnacje.
+    db
+      .select({
+        monthly: sql<number>`count(*) filter (where ${subscriptions.interval} = 'month')::int`,
+        yearly: sql<number>`count(*) filter (where ${subscriptions.interval} is distinct from 'month')::int`,
+        cancelling: sql<number>`count(*) filter (where ${subscriptions.cancelAtPeriodEnd})::int`,
+      })
+      .from(subscriptions)
+      .where(inArray(subscriptions.status, ['active', 'trialing'])),
   ])
   return {
     ...totals!,
@@ -80,5 +91,12 @@ export async function getStats() {
     paymentProblems: problems?.n ?? 0,
     revenue,
     signups,
+    subscriptions: {
+      monthly: billing?.monthly ?? 0,
+      yearly: billing?.yearly ?? 0,
+      cancelling: billing?.cancelling ?? 0,
+    },
+    /** Miesięczny przychód z aktywnych subskrypcji Pro (centy USD, z VAT, bez rabatów). */
+    mrr: monthlyRecurring(billing?.monthly ?? 0, billing?.yearly ?? 0),
   }
 }

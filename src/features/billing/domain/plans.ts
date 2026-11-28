@@ -76,3 +76,37 @@ export function formatPrice(amount: number, tag: string) {
     maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
   }).format(amount)
 }
+
+/** Ile czego konto Free ma teraz (aktywne projekty, szablony, statusy, własne rodzaje pracy). */
+export interface FreeUsageCounts {
+  projects: number
+  quickTemplates: number
+  statuses: number
+  customWorkTypes: number
+}
+
+export type FreeUsageKey = keyof FreeUsageCounts
+
+export interface FreeUsageRow {
+  key: FreeUsageKey
+  used: number
+  limit: number
+  /** Limit wyczerpany: dodanie kolejnego wymaga Pro. */
+  full: boolean
+}
+
+const USAGE_KEYS: ReadonlyArray<FreeUsageKey> = [
+  'projects',
+  'quickTemplates',
+  'statuses',
+  'customWorkTypes',
+]
+
+/** Wykorzystanie limitów planu Free, w stałej kolejności (do paska na stronie planu). */
+export const freeUsage = (counts: FreeUsageCounts): Array<FreeUsageRow> =>
+  USAGE_KEYS.map((key) => ({
+    key,
+    used: counts[key],
+    limit: FREE_LIMITS[key],
+    full: counts[key] >= FREE_LIMITS[key],
+  }))

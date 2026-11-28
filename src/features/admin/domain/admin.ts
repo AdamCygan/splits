@@ -1,3 +1,4 @@
+import { PRO_PRICES } from '#/features/billing/domain/plans'
 import { toCsv } from '#/shared/domain/csv'
 
 /** Rodzaje wpisów w dzienniku zmian panelu admina (filtr i opisy w panelu). */
@@ -19,6 +20,19 @@ export const ADMIN_ACTION_KINDS = [
 ] as const
 
 export type AdminActionKind = (typeof ADMIN_ACTION_KINDS)[number]
+
+/**
+ * Miesięczny przychód cykliczny (MRR) w centach USD: subskrypcje miesięczne po pełnej cenie,
+ * roczne rozłożone na 12 miesięcy. Cena katalogowa z VAT, bez rabatów i zwrotów.
+ */
+export const monthlyRecurring = (monthly: number, yearly: number) =>
+  Math.round(
+    monthly * PRO_PRICES.month * 100 + (yearly * PRO_PRICES.year * 100) / 12,
+  )
+
+/** Odsetek płacących kont (0–100, jedno miejsce po przecinku); 0 bez kont. */
+export const conversionRate = (paid: number, users: number) =>
+  users > 0 ? Math.round((paid / users) * 1000) / 10 : 0
 
 /** Statusy Stripe z nieudaną płatnością, przy których subskrypcja jeszcze trwa. */
 export const PAYMENT_PROBLEM_STATUSES = ['past_due', 'unpaid'] as const

@@ -105,6 +105,23 @@ const en = {
       'The Free plan uses the built-in work types. You can still change how each one works.',
     reminders: 'Daily email reminders are part of Pro.',
   },
+  usage: {
+    title: 'Your Free plan',
+    lead: 'What you use now. Pro removes every limit.',
+    rows: {
+      projects: 'Projects',
+      quickTemplates: 'Quick templates',
+      statuses: 'Statuses',
+      customWorkTypes: 'Your own work types',
+    },
+    count: '{used} of {limit}',
+    none: 'Pro only',
+    history: 'History and reports',
+    historyValue: 'Last {days} days',
+    reminders: 'Daily email reminders',
+    csv: 'CSV export',
+    proOnly: 'Pro only',
+  },
 }
 
 export type BillingMessages = typeof en
@@ -212,6 +229,23 @@ const pl: BillingMessages = {
     workTypes:
       'Plan Free korzysta z wbudowanych typów pracy. Nadal możesz zmieniać, jak każdy z nich działa.',
     reminders: 'Codzienne przypomnienia e-mail są w planie Pro.',
+  },
+  usage: {
+    title: 'Twój plan Free',
+    lead: 'Z czego korzystasz teraz. Pro zdejmuje wszystkie limity.',
+    rows: {
+      projects: 'Projekty',
+      quickTemplates: 'Szybkie szablony',
+      statuses: 'Statusy',
+      customWorkTypes: 'Własne rodzaje pracy',
+    },
+    count: '{used} z {limit}',
+    none: 'Tylko w Pro',
+    history: 'Historia i raporty',
+    historyValue: 'Ostatnie {days} dni',
+    reminders: 'Codzienne przypomnienia e-mail',
+    csv: 'Eksport do CSV',
+    proOnly: 'Tylko w Pro',
   },
 }
 

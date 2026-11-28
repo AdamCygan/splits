@@ -5,10 +5,13 @@ import { Button, buttonVariants } from '#/components/ui/button'
 import { Badge } from '#/components/ui/controls'
 import { InvoicesCard } from '#/features/billing/views/invoices'
 import {
+  FREE_LIMITS,
   PRO_PRICES,
   formatPrice,
   planById,
 } from '#/features/billing/domain/plans'
+import { ProgressBar } from '#/components/ui/progress-bar'
+import { useFreeUsage } from '../controllers/use-free-usage'
 import { billingQuery } from '#/features/billing/data/queries'
 import { useI18n, useMessages } from '#/i18n/context'
 import { fmt, formatDate } from '#/i18n/format'
@@ -159,6 +162,8 @@ function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
         )}
       </SettingsCard>
 
+      {isFree && <FreeUsageCard />}
+
       {isFree && (
         <SettingsCard title={t.upgradeTitle} lead={t.upgradeLead}>
           <div className="flex flex-wrap gap-3">
@@ -205,5 +210,55 @@ function PlanDetails({ planId, admin = false }: PlanDetailsProps) {
         <ArrowRight aria-hidden className="size-4" />
       </Link>
     </>
+  )
+}
+
+/** Ile z limitów Free jest już zajęte; wyczerpane limity wyróżnione. */
+function FreeUsageCard() {
+  const u = useMessages(billingMessages).usage
+  const rows = useFreeUsage()
+  return (
+    <SettingsCard title={u.title} lead={u.lead}>
+      <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+        {rows?.map((row) => (
+          <div key={row.key}>
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-sm">{u.rows[row.key]}</dt>
+              <dd
+                className={cn(
+                  'text-sm font-medium tabular-nums',
+                  row.full && 'font-semibold',
+                )}
+              >
+                {row.limit === 0
+                  ? u.none
+                  : fmt(u.count, { used: row.used, limit: row.limit })}
+              </dd>
+            </div>
+            {row.limit > 0 && (
+              <ProgressBar
+                className="mt-2"
+                value={(row.used / row.limit) * 100}
+                tone={row.full ? 'warn' : 'ink'}
+              />
+            )}
+          </div>
+        ))}
+        <div className="flex items-baseline justify-between gap-3">
+          <dt className="text-sm">{u.history}</dt>
+          <dd className="text-sm font-medium">
+            {fmt(u.historyValue, { days: FREE_LIMITS.historyDays })}
+          </dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-3">
+          <dt className="text-sm">{u.reminders}</dt>
+          <dd className="text-sm font-medium">{u.proOnly}</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-3">
+          <dt className="text-sm">{u.csv}</dt>
+          <dd className="text-sm font-medium">{u.proOnly}</dd>
+        </div>
+      </dl>
+    </SettingsCard>
   )
 }

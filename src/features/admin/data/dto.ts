@@ -125,6 +125,14 @@ export const adminStatsSchema = z.object({
     }),
   ),
   signups: z.array(z.object({ day: dateSchema, count: z.number().int() })),
+  subscriptions: z
+    .object({
+      monthly: z.number().int(),
+      yearly: z.number().int(),
+      cancelling: z.number().int(),
+    })
+    .default({ monthly: 0, yearly: 0, cancelling: 0 }),
+  mrr: z.number().int().default(0),
 })
 
 export const adminActionSchema = z.object({

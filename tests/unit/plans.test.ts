@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   FREE_LIMITS,
+  freeUsage,
   PRO_PRICES,
   hasProAccess,
   isBillingInterval,
@@ -62,5 +63,23 @@ describe('renewal date', () => {
     expect(ymd(renewalDate(interval, new Date(`${from}T12:00:00`)))).toBe(
       expected,
     )
+  })
+})
+
+describe('free plan usage', () => {
+  it('Should show how much of each Free limit is used', () => {
+    expect(
+      freeUsage({
+        projects: 1,
+        quickTemplates: 1,
+        statuses: 4,
+        customWorkTypes: 0,
+      }),
+    ).toEqual([
+      { key: 'projects', used: 1, limit: 1, full: true },
+      { key: 'quickTemplates', used: 1, limit: 2, full: false },
+      { key: 'statuses', used: 4, limit: 4, full: true },
+      { key: 'customWorkTypes', used: 0, limit: 0, full: true },
+    ])
   })
 })
