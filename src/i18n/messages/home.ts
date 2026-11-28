@@ -4,7 +4,7 @@ import type { Dictionary } from '../context'
 const en = {
   nav: { demo: 'Live demo', start: 'Start free' },
   hero: {
-    title: 'git blame for your time.',
+    title: 'Where did the sprint go?',
     lead: 'Timeblame splits every sprint into tasks, code review, pairing and meetings, so you see where the hours went and what a story point really costs.',
     primary: 'Start free',
     demo: 'Try the live demo',
@@ -94,7 +94,6 @@ const en = {
   pricing: {
     title: 'Free to try. $6 a month when you want it all.',
     lead: 'Free gives you a taste with no time limit. Pro removes every limit, monthly or yearly with 2 months free, and you get a full refund within 14 days.',
-    demo: 'Not sure yet? Try the live demo first',
   },
   final: {
     title: 'Start your next sprint with the full picture.',
@@ -109,7 +108,7 @@ export type HomeMessages = typeof en
 const pl: HomeMessages = {
   nav: { demo: 'Demo na żywo', start: 'Zacznij za darmo' },
   hero: {
-    title: 'git blame dla Twojego czasu.',
+    title: 'Gdzie się podział ten sprint?',
     lead: 'Timeblame rozbija każdy sprint na taski, code review, pairing i spotkania, więc widzisz, gdzie poszły godziny i ile naprawdę kosztuje story point.',
     primary: 'Zacznij za darmo',
     demo: 'Wypróbuj demo',
@@ -199,7 +198,6 @@ const pl: HomeMessages = {
   pricing: {
     title: 'Wypróbuj za darmo. 6 $ miesięcznie, gdy chcesz wszystko.',
     lead: 'Free to przedsmak bez limitu czasu. Pro zdejmuje wszystkie limity, miesięcznie albo rocznie z 2 miesiącami gratis, a pełny zwrot dostajesz w ciągu 14 dni.',
-    demo: 'Jeszcze się wahasz? Najpierw wypróbuj demo',
   },
   final: {
     title: 'Zacznij kolejny sprint z pełnym obrazem.',

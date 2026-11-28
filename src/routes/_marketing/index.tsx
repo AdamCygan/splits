@@ -252,15 +252,6 @@ function LandingPage() {
               {t.pricing.lead}
             </p>
             <PricingSection />
-            <p className="mt-8 text-center">
-              <Link
-                to="/demo"
-                preload={false}
-                className="inline-flex min-h-6 items-center rounded-sm font-semibold underline underline-offset-4"
-              >
-                {t.pricing.demo}
-              </Link>
-            </p>
           </div>
         </section>
       </Suspense>
