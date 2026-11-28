@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import type { AppEnv } from '#/server/http/context'
 import { actionRoutes } from './actions.server'
-import { requireAdmin } from '../data/shared.server'
+import { requireAdmin } from './require-admin.server'
 import { statsRoutes } from './stats.server'
 import { supportRoutes } from './support.server'
 import { userRoutes } from './users.server'
