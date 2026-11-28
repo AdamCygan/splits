@@ -1,5 +1,6 @@
 /**
- * Schemat bazy (PostgreSQL 16+). Model per użytkownik: każdy rekord domenowy ma user_id.
+ * Schemat bazy (PostgreSQL 16+). Każdy rekord domenowy ma user_id, a dane pracy także
+ * workspace_id: przestrzeń (np. pracodawca) oddziela projekty, sprinty, ustawienia i wpisy.
  * Migracje SQL generuje drizzle-kit (`pnpm db:generate`) do katalogu drizzle/.
  * Reguły (długości, formaty) są też w src/domain/* i walidacji API.
  */
@@ -29,6 +30,13 @@ const userId = () =>
   uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' })
+/** Przestrzeń (np. pracodawca albo klient): dane w niej są oddzielone od innych przestrzeni konta. */
+const workspaceId = () =>
+  uuid('workspace_id')
+    .notNull()
+    .references(() => workspaces.id, { onDelete: 'cascade' })
+/** Ten sam element w kilku przestrzeniach (kopia albo zmiana „we wszystkich”) ma ten sam sync_id. */
+const syncId = () => uuid('sync_id').notNull().defaultRandom()
 const createdAt = () =>
   timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 const updatedAt = () =>
@@ -174,6 +182,58 @@ export const userSettings = pgTable(
     userId: uuid('user_id')
       .primaryKey()
       .references(() => users.id, { onDelete: 'cascade' }),
+    weekStartsOn: smallint('week_starts_on').notNull().default(1),
+    timezone: text('timezone').notNull().default('UTC'),
+    locale: text('locale').notNull().default('en'),
+    /** 'HH:MM' albo null = przypomnienie wyłączone. */
+    dailyReminderAt: text('daily_reminder_at'),
+    /** Dzień (lokalny), w którym poszło ostatnie przypomnienie: najwyżej jedno dziennie. */
+    reminderSentOn: date('reminder_sent_on'),
+    /**
+     * Zmiany w kilku przestrzeniach: dla każdego rodzaju (dni wolne, sprinty…) 'ask' = pytaj,
+     * 'this' = tylko bieżąca, 'all' = wszystkie. Brak klucza = pytaj.
+     */
+    workspaceApply: jsonb('workspace_apply')
+      .$type<Partial<Record<string, 'ask' | 'this' | 'all'>>>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    /** Ekran „W czym dziś pracujesz?” przy pierwszym wejściu danego dnia (gdy jest kilka przestrzeni). */
+    askWorkspaceDaily: boolean('ask_workspace_daily').notNull().default(true),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    check('user_settings_week_start', sql`${t.weekStartsOn} between 0 and 6`),
+  ],
+)
+
+/**
+ * Przestrzeń: osobny zestaw projektów, sprintów, rodzajów pracy, statusów, ustawień dnia i wpisów
+ * pod jednym kontem (np. dwóch pracodawców). Konto ma zawsze co najmniej jedną przestrzeń.
+ */
+export const workspaces = pgTable(
+  'workspaces',
+  {
+    id: id(),
+    userId: userId(),
+    name: text('name').notNull(),
+    color: text('color').notNull(),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('workspaces_name_key').on(t.userId, sql`lower(${t.name})`),
+    check('workspaces_name', sql`char_length(${t.name}) between 1 and 40`),
+  ],
+)
+
+/** Ustawienia dnia pracy w przestrzeni (cel godzin, dni robocze, zaokrąglanie, przerwy). */
+export const workspaceSettings = pgTable(
+  'workspace_settings',
+  {
+    workspaceId: uuid('workspace_id')
+      .primaryKey()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    userId: userId(),
     workdayTargetMinutes: smallint('workday_target_minutes')
       .notNull()
       .default(480),
@@ -182,28 +242,20 @@ export const userSettings = pgTable(
       .array()
       .notNull()
       .default(sql`'{1,2,3,4,5}'`),
-    weekStartsOn: smallint('week_starts_on').notNull().default(1),
     timeRoundingMinutes: smallint('time_rounding_minutes').notNull().default(0),
-    timezone: text('timezone').notNull().default('UTC'),
-    locale: text('locale').notNull().default('en'),
-    /** 'HH:MM' albo null = przypomnienie wyłączone. */
-    dailyReminderAt: text('daily_reminder_at'),
-    /** Dzień (lokalny), w którym poszło ostatnie przypomnienie: najwyżej jedno dziennie. */
-    reminderSentOn: date('reminder_sent_on'),
     summaryTemplate: text('summary_template'),
     /** Ile minut przerwy dziennie przysługuje (0 = bez limitu na przerwy). */
     breakMinutes: smallint('break_minutes').notNull().default(30),
     updatedAt: updatedAt(),
   },
   (t) => [
-    check('user_settings_break', sql`${t.breakMinutes} between 0 and 240`),
+    check('workspace_settings_break', sql`${t.breakMinutes} between 0 and 240`),
     check(
-      'user_settings_target',
+      'workspace_settings_target',
       sql`${t.workdayTargetMinutes} between 0 and 1440`,
     ),
-    check('user_settings_week_start', sql`${t.weekStartsOn} between 0 and 6`),
     check(
-      'user_settings_rounding',
+      'workspace_settings_rounding',
       sql`${t.timeRoundingMinutes} in (0, 1, 5, 10, 15, 30)`,
     ),
   ],
@@ -218,11 +270,12 @@ export const storyPointScale = pgTable(
   {
     id: id(),
     userId: userId(),
+    workspaceId: workspaceId(),
     points: points('points').notNull(),
     maxMinutes: integer('max_minutes').notNull(),
   },
   (t) => [
-    uniqueIndex('story_point_scale_points_key').on(t.userId, t.points),
+    uniqueIndex('story_point_scale_points_key').on(t.workspaceId, t.points),
     check(
       'story_point_scale_range',
       sql`${t.points} > 0 and ${t.points} <= 100 and ${t.maxMinutes} between 1 and 100000`,
@@ -235,6 +288,8 @@ export const taskTypes = pgTable(
   {
     id: id(),
     userId: userId(),
+    workspaceId: workspaceId(),
+    syncId: syncId(),
     kind: taskKind('kind').notNull(),
     name: text('name').notNull(),
     color: text('color').notNull(),
@@ -260,7 +315,8 @@ export const taskTypes = pgTable(
     createdAt: createdAt(),
   },
   (t) => [
-    uniqueIndex('task_types_name_key').on(t.userId, sql`lower(${t.name})`),
+    uniqueIndex('task_types_name_key').on(t.workspaceId, sql`lower(${t.name})`),
+    uniqueIndex('task_types_sync_key').on(t.workspaceId, t.syncId),
     check(
       'task_types_sp_default',
       sql`(${t.storyPointsRequirement} <> 'hidden' or ${t.defaultStoryPoints} is null)
@@ -274,6 +330,8 @@ export const taskStatuses = pgTable(
   {
     id: id(),
     userId: userId(),
+    workspaceId: workspaceId(),
+    syncId: syncId(),
     name: text('name').notNull(),
     category: statusCategory('category').notNull(),
     color: text('color').notNull(),
@@ -283,18 +341,23 @@ export const taskStatuses = pgTable(
     archivedAt: timestamp('archived_at', { withTimezone: true }),
   },
   (t) => [
-    uniqueIndex('task_statuses_name_key').on(t.userId, sql`lower(${t.name})`),
-    // Najwyżej jeden status domyślny na użytkownika.
+    uniqueIndex('task_statuses_name_key').on(
+      t.workspaceId,
+      sql`lower(${t.name})`,
+    ),
+    uniqueIndex('task_statuses_sync_key').on(t.workspaceId, t.syncId),
+    // Najwyżej jeden status domyślny w przestrzeni.
     uniqueIndex('task_statuses_default_key')
-      .on(t.userId)
+      .on(t.workspaceId)
       .where(sql`${t.isDefault}`),
   ],
 )
 
 export const sprintCadences = pgTable('sprint_cadences', {
-  userId: uuid('user_id')
+  workspaceId: uuid('workspace_id')
     .primaryKey()
-    .references(() => users.id, { onDelete: 'cascade' }),
+    .references(() => workspaces.id, { onDelete: 'cascade' }),
+  userId: userId(),
   lengthDays: smallint('length_days').notNull(),
   anchorDate: date('anchor_date', { mode: 'string' }).notNull(),
   namePattern: text('name_pattern').notNull(),
@@ -306,6 +369,8 @@ export const sprints = pgTable(
   {
     id: id(),
     userId: userId(),
+    workspaceId: workspaceId(),
+    syncId: syncId(),
     number: integer('number'),
     name: text('name').notNull(),
     goal: text('goal'),
@@ -320,7 +385,8 @@ export const sprints = pgTable(
       .default(sql`'[]'::jsonb`),
   },
   (t) => [
-    index('sprints_user_start_idx').on(t.userId, t.startsOn),
+    index('sprints_user_start_idx').on(t.workspaceId, t.startsOn),
+    uniqueIndex('sprints_sync_key').on(t.workspaceId, t.syncId),
     check('sprints_dates', sql`${t.endsOn} >= ${t.startsOn}`),
   ],
 )
@@ -334,6 +400,7 @@ export const breaks = pgTable(
   {
     id: id(),
     userId: userId(),
+    workspaceId: workspaceId(),
     workDate: date('work_date', { mode: 'string' }).notNull(),
     /** 'HH:MM'; null = przerwa dopisana tylko jako czas trwania. */
     startTime: text('start_time'),
@@ -349,7 +416,7 @@ export const breaks = pgTable(
     createdAt: createdAt(),
   },
   (t) => [
-    index('breaks_user_date').on(t.userId, t.workDate),
+    index('breaks_user_date').on(t.workspaceId, t.workDate),
     uniqueIndex('breaks_one_running')
       .on(t.userId)
       .where(sql`${t.running}`),
@@ -370,13 +437,14 @@ export const daysOff = pgTable(
   {
     id: id(),
     userId: userId(),
+    workspaceId: workspaceId(),
     date: date('date', { mode: 'string' }).notNull(),
     kind: text('kind').notNull(),
     note: text('note'),
     createdAt: createdAt(),
   },
   (t) => [
-    uniqueIndex('days_off_user_date').on(t.userId, t.date),
+    uniqueIndex('days_off_user_date').on(t.workspaceId, t.date),
     check(
       'days_off_kind',
       sql`${t.kind} in ('vacation', 'sick', 'holiday', 'other')`,
@@ -393,15 +461,16 @@ export const projects = pgTable(
   {
     id: id(),
     userId: userId(),
+    workspaceId: workspaceId(),
     name: text('name').notNull(),
     key: text('key'),
     color: text('color').notNull(),
     archivedAt: timestamp('archived_at', { withTimezone: true }),
   },
   (t) => [
-    uniqueIndex('projects_name_key').on(t.userId, sql`lower(${t.name})`),
+    uniqueIndex('projects_name_key').on(t.workspaceId, sql`lower(${t.name})`),
     uniqueIndex('projects_key_key')
-      .on(t.userId, t.key)
+      .on(t.workspaceId, t.key)
       .where(sql`${t.key} is not null`),
   ],
 )
@@ -411,10 +480,15 @@ export const tags = pgTable(
   {
     id: id(),
     userId: userId(),
+    workspaceId: workspaceId(),
+    syncId: syncId(),
     name: text('name').notNull(),
     color: text('color').notNull(),
   },
-  (t) => [uniqueIndex('tags_name_key').on(t.userId, sql`lower(${t.name})`)],
+  (t) => [
+    uniqueIndex('tags_name_key').on(t.workspaceId, sql`lower(${t.name})`),
+    uniqueIndex('tags_sync_key').on(t.workspaceId, t.syncId),
+  ],
 )
 
 // ---------------------------------------------------------------------------
@@ -430,6 +504,7 @@ export const timeEntries = pgTable(
   {
     id: id(),
     userId: userId(),
+    workspaceId: workspaceId(),
     taskTypeId: uuid('task_type_id')
       .notNull()
       .references(() => taskTypes.id),
@@ -475,10 +550,10 @@ export const timeEntries = pgTable(
     updatedAt: updatedAt(),
   },
   (t) => [
-    index('time_entries_user_date_idx').on(t.userId, t.workDate),
-    index('time_entries_user_link_idx').on(t.userId, t.link),
+    index('time_entries_user_date_idx').on(t.workspaceId, t.workDate),
+    index('time_entries_user_link_idx').on(t.workspaceId, t.link),
     index('time_entries_user_paused_idx')
-      .on(t.userId, t.workDate)
+      .on(t.workspaceId, t.workDate)
       .where(sql`${t.paused}`),
     // Najwyżej jeden działający timer na użytkownika.
     uniqueIndex('time_entries_running_key')
@@ -517,6 +592,7 @@ export const quickTemplates = pgTable(
   {
     id: id(),
     userId: userId(),
+    workspaceId: workspaceId(),
     taskTypeId: uuid('task_type_id')
       .notNull()
       .references(() => taskTypes.id, { onDelete: 'cascade' }),
@@ -539,7 +615,7 @@ export const quickTemplates = pgTable(
   },
   (t) => [
     uniqueIndex('quick_templates_hotkey_key')
-      .on(t.userId, t.hotkey)
+      .on(t.workspaceId, t.hotkey)
       .where(sql`${t.hotkey} is not null`),
   ],
 )

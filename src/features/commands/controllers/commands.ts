@@ -22,6 +22,7 @@ import {
   SunMoon,
   Timer,
   Zap,
+  Briefcase,
 } from 'lucide-react'
 import type { QuickTemplate } from '#/features/templates/data/dto'
 import type { Sprint } from '#/features/sprints/data/dto'
@@ -118,6 +119,8 @@ export const KW = {
   clock: 'time format clock 12 24 hour am pm format godziny zegar',
   language: 'language english polish polski angielski jezyk',
   shortcuts: 'keyboard shortcuts hotkeys keys help skroty klawiszowe pomoc',
+  workspace:
+    'workspace switch job client company employer przestrzen przelacz praca klient firma pracodawca',
 }
 
 type AppText = (typeof appMessages)['en']
@@ -129,6 +132,8 @@ export interface PaletteContext {
   settingsText: SettingsText
   /** Podpis polecenia „Zgłoś problem albo pomysł”. */
   feedbackLabel: string
+  /** Przestrzenie: przełączanie i nowa przestrzeń z palety. */
+  workspaces: PaletteWorkspaces
   locale: Locale
   today: string
   isPro: boolean
@@ -152,7 +157,23 @@ export interface PaletteContext {
     setLocale: (locale: Locale) => void
     signOut: () => void
     showShortcuts: () => void
+    switchWorkspace: (id: string) => void
+    newWorkspace: () => void
   }
+}
+
+export interface PaletteWorkspace {
+  id: string
+  name: string
+  /** Alt+Shift+cyfra albo null (dziesiąta i dalsze). */
+  shortcut: string | null
+}
+
+export interface PaletteWorkspaces {
+  items: ReadonlyArray<PaletteWorkspace>
+  currentId: string | null
+  switchLabel: string
+  createLabel: string
 }
 
 /** Słowa zapytania bez wielkości liter i polskich znaków. */
@@ -380,6 +401,29 @@ export function buildCommands(ctx: PaletteContext): Array<Command> {
     keywords: KW.dayOff,
     onlyWhenSearching: true,
     run: go('/app/settings/days-off'),
+  })
+  // Przestrzenie: przełączenie na inną i nowa przestrzeń.
+  for (const w of ctx.workspaces.items) {
+    if (w.id === ctx.workspaces.currentId) continue
+    list.push({
+      id: `ws-${w.id}`,
+      group: 'actions',
+      label: fmt(ctx.workspaces.switchLabel, { name: w.name }),
+      hint: w.shortcut ?? undefined,
+      icon: Briefcase,
+      keywords: KW.workspace,
+      onlyWhenSearching: true,
+      run: () => a.switchWorkspace(w.id),
+    })
+  }
+  list.push({
+    id: 'ws-new',
+    group: 'actions',
+    label: ctx.workspaces.createLabel,
+    icon: Briefcase,
+    keywords: KW.workspace,
+    onlyWhenSearching: true,
+    run: a.newWorkspace,
   })
   list.push({
     id: 'feedback',

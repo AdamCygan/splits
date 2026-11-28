@@ -55,6 +55,10 @@ const en = {
     'On the Free plan you can add entries from the last 7 days. Upgrade to Pro to log older work.',
   'plan.limit_projects':
     'The Free plan includes one project. Archive it or upgrade to Pro for more.',
+  'plan.limit_workspaces':
+    'The Free plan includes one workspace. Upgrade to Pro to keep separate workspaces for each job or client.',
+  'workspace.last':
+    'You need at least one workspace. Create another one before deleting this one.',
   'plan.limit_templates':
     'The Free plan includes two quick templates. Delete one or upgrade to Pro for more.',
   'plan.limit_statuses':
@@ -134,6 +138,10 @@ const pl: ErrorMessages = {
     'W planie Free dodasz wpisy z ostatnich 7 dni. Przejdź na Pro, żeby wpisać starszą pracę.',
   'plan.limit_projects':
     'Plan Free obejmuje jeden projekt. Zarchiwizuj go albo przejdź na Pro, żeby mieć więcej.',
+  'plan.limit_workspaces':
+    'Plan Free obejmuje jedną przestrzeń. Przejdź na Pro, żeby mieć osobne przestrzenie dla każdej pracy albo klienta.',
+  'workspace.last':
+    'Potrzebujesz co najmniej jednej przestrzeni. Najpierw utwórz inną, potem usuń tę.',
   'plan.limit_templates':
     'Plan Free obejmuje dwa szybkie szablony. Usuń jeden albo przejdź na Pro, żeby mieć więcej.',
   'plan.limit_statuses':

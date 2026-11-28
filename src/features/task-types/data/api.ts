@@ -1,22 +1,23 @@
 import { taskTypeSchema } from './dto'
 import type { TaskType, TaskTypeInput } from './dto'
 import { z } from '#/lib/zod'
-import { get, send, archive } from '#/shared/data/http'
-import type { R } from '#/shared/data/http'
+import { get, send, archive, withApply } from '#/shared/data/http'
+import type { ApplyTo, R } from '#/shared/data/http'
 
 export interface TaskTypesApi {
   list: () => R<Array<TaskType>>
-  create: (input: TaskTypeInput) => R<TaskType>
-  update: (id: string, input: TaskTypeInput) => R<TaskType>
-  setArchived: (id: string, archived: boolean) => R<TaskType>
+  create: (input: TaskTypeInput, apply?: ApplyTo) => R<TaskType>
+  update: (id: string, input: TaskTypeInput, apply?: ApplyTo) => R<TaskType>
+  setArchived: (id: string, archived: boolean, apply?: ApplyTo) => R<TaskType>
 }
 
 /** Wywołania API (/api/v1) tej funkcji; kształt odpowiedzi sprawdzają schematy z dto.ts. */
 export const taskTypesApi: TaskTypesApi = {
   list: () => get('/task-types', z.array(taskTypeSchema)),
-  create: (input) => send('POST', '/task-types', taskTypeSchema, input),
-  update: (id, input) =>
-    send('PUT', `/task-types/${id}`, taskTypeSchema, input),
-  setArchived: (id, archived) =>
-    archive('task-types', id, archived, taskTypeSchema),
+  create: (input, apply) =>
+    send('POST', withApply('/task-types', apply), taskTypeSchema, input),
+  update: (id, input, apply) =>
+    send('PUT', withApply(`/task-types/${id}`, apply), taskTypeSchema, input),
+  setArchived: (id, archived, apply) =>
+    archive('task-types', id, archived, taskTypeSchema, apply),
 }

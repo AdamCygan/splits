@@ -6,6 +6,8 @@ export interface AppEnv {
   Variables: {
     locale: Locale
     userId: string
+    /** Bieżąca przestrzeń konta (ciasteczko app_ws, sprawdzone w middleware). */
+    workspaceId: string
     traceId: string
     /** Tylko w /admin: zalogowany administrator (ustawia requireAdmin). */
     admin?: typeof users.$inferSelect

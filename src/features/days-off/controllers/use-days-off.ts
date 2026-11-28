@@ -1,6 +1,6 @@
+import { useApplyMutation } from '#/features/workspaces/controllers/use-apply-mutation'
 import { useFormat, useMessages } from '#/i18n/context'
 import { daysOffMessages } from '#/i18n/messages/days-off'
-import { useDataMutation } from '#/shared/data/mutations'
 import { keys } from '#/shared/data/query-keys'
 import { daysOffApi } from '../data/api'
 import type { DayOff, DayOffInput } from '../data/dto'
@@ -20,13 +20,18 @@ export interface SaveDaysOffOptions {
 export function useSaveDaysOff({ replacing, onSaved }: SaveDaysOffOptions) {
   const t = useMessages(daysOffMessages)
   const format = useFormat()
-  return useDataMutation(
-    async (input: DayOffInput) => {
+  return useApplyMutation(
+    'daysOff',
+    async (input: DayOffInput, apply) => {
       if (replacing) {
-        const removed = await daysOffApi.remove(replacing.from, replacing.to)
+        const removed = await daysOffApi.remove(
+          replacing.from,
+          replacing.to,
+          apply,
+        )
         if (!removed.ok) return removed
       }
-      return daysOffApi.set(input)
+      return daysOffApi.set(input, apply)
     },
     {
       invalidate: [keys.daysOff],
@@ -46,8 +51,9 @@ export interface RemoveDaysOffOptions {
 
 /** Usunięcie dni wolnych z zakresu (jeden dzień albo cały urlop). */
 export function useRemoveDaysOff({ success, onRemoved }: RemoveDaysOffOptions) {
-  return useDataMutation(
-    (range: DateRange) => daysOffApi.remove(range.from, range.to),
+  return useApplyMutation(
+    'daysOff',
+    (range: DateRange, apply) => daysOffApi.remove(range.from, range.to, apply),
     { invalidate: [keys.daysOff], success, onSuccess: onRemoved },
   )
 }

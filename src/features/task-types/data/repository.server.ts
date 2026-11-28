@@ -1,3 +1,5 @@
+import { inScope, owner } from '#/server/db/scope'
+import type { Scope } from '#/server/db/scope'
 import { FREE_LIMITS, hasProAccess } from '#/features/billing/domain/plans'
 import type { TaskTypeInput } from '#/features/task-types/data/dto'
 import { db } from '#/server/db/client'
@@ -10,21 +12,21 @@ import { toTaskType } from './mappers.server'
 import { and, asc, eq, isNull, ne, sql } from 'drizzle-orm'
 
 /** Rekord należy do użytkownika? (id spoza konta traktujemy jak nieistniejące). */
-export async function ownTaskType(tx: Tx, userId: string, id: string) {
+export async function ownTaskType(tx: Tx, scope: Scope, id: string) {
   const [row] = await tx
     .select()
     .from(t.taskTypes)
-    .where(and(eq(t.taskTypes.id, id), eq(t.taskTypes.userId, userId)))
+    .where(and(eq(t.taskTypes.id, id), inScope(t.taskTypes, scope)))
   return row
 }
 
-async function activeCustomTypes(tx: Tx, userId: string) {
+async function activeCustomTypes(tx: Tx, scope: Scope) {
   const [row] = await tx
     .select({ n: sql<number>`count(*)::int` })
     .from(t.taskTypes)
     .where(
       and(
-        eq(t.taskTypes.userId, userId),
+        inScope(t.taskTypes, scope),
         eq(t.taskTypes.isSystem, false),
         isNull(t.taskTypes.archivedAt),
       ),
@@ -32,11 +34,11 @@ async function activeCustomTypes(tx: Tx, userId: string) {
   return row?.n ?? 0
 }
 
-export async function assertTypeSlot(tx: Tx, userId: string) {
-  const user = await currentUser(userId)
+export async function assertTypeSlot(tx: Tx, scope: Scope) {
+  const user = await currentUser(scope.userId)
   if (
     !hasProAccess(user) &&
-    (await activeCustomTypes(tx, userId)) >= FREE_LIMITS.customWorkTypes
+    (await activeCustomTypes(tx, scope)) >= FREE_LIMITS.customWorkTypes
   )
     throw new ApiError('plan.limit_custom_types', 403)
 }
@@ -55,7 +57,7 @@ export function cleanType(input: TaskTypeInput): TaskTypeInput {
 
 export async function assertUniqueTypeName(
   tx: Tx,
-  userId: string,
+  scope: Scope,
   name: string,
   exceptId?: string,
 ) {
@@ -64,7 +66,7 @@ export async function assertUniqueTypeName(
     .from(t.taskTypes)
     .where(
       and(
-        eq(t.taskTypes.userId, userId),
+        inScope(t.taskTypes, scope),
         eq(nameKey(t.taskTypes.name), lowerName(name)),
         exceptId ? ne(t.taskTypes.id, exceptId) : undefined,
       ),
@@ -73,29 +75,29 @@ export async function assertUniqueTypeName(
 }
 
 /** Rodzaje pracy konta w ustalonej kolejności. */
-export async function listTaskTypes(userId: string) {
+export async function listTaskTypes(scope: Scope) {
   const rows = await db
     .select()
     .from(t.taskTypes)
-    .where(eq(t.taskTypes.userId, userId))
+    .where(inScope(t.taskTypes, scope))
     .orderBy(asc(t.taskTypes.sortOrder))
   return rows.map(toTaskType)
 }
 
 /** Nowy własny rodzaj pracy na końcu listy (unikalna nazwa, limit planu Free). */
-export async function createTaskType(userId: string, input: TaskTypeInput) {
+export async function createTaskType(scope: Scope, input: TaskTypeInput) {
   const row = await db.transaction(async (tx) => {
-    await assertUniqueTypeName(tx, userId, input.name)
-    await assertTypeSlot(tx, userId)
+    await assertUniqueTypeName(tx, scope, input.name)
+    await assertTypeSlot(tx, scope)
     const [{ n } = { n: 0 }] = await tx
       .select({ n: sql<number>`count(*)::int` })
       .from(t.taskTypes)
-      .where(eq(t.taskTypes.userId, userId))
+      .where(inScope(t.taskTypes, scope))
     const [created] = await tx
       .insert(t.taskTypes)
       .values({
         ...input,
-        userId,
+        ...owner(scope),
         kind: 'custom',
         isSystem: false,
         sortOrder: n,
@@ -107,13 +109,13 @@ export async function createTaskType(userId: string, input: TaskTypeInput) {
 }
 
 export async function updateTaskType(
-  userId: string,
+  scope: Scope,
   id: string,
   input: TaskTypeInput,
 ) {
   const row = await db.transaction(async (tx) => {
-    if (!(await ownTaskType(tx, userId, id))) throw notFound()
-    await assertUniqueTypeName(tx, userId, input.name, id)
+    if (!(await ownTaskType(tx, scope, id))) throw notFound()
+    await assertUniqueTypeName(tx, scope, input.name, id)
     const [updated] = await tx
       .update(t.taskTypes)
       .set(input)
@@ -126,16 +128,16 @@ export async function updateTaskType(
 
 /** Archiwizacja albo przywrócenie; wbudowanych nie archiwizujemy, przywrócenie liczy się do limitu. */
 export async function setTaskTypeArchived(
-  userId: string,
+  scope: Scope,
   id: string,
   archived: boolean,
 ) {
   const row = await db.transaction(async (tx) => {
-    const type = await ownTaskType(tx, userId, id)
+    const type = await ownTaskType(tx, scope, id)
     if (!type) throw notFound()
     if (type.isSystem && archived) throw conflict('type.system_archive')
     if (!archived && !type.isSystem && type.archivedAt)
-      await assertTypeSlot(tx, userId)
+      await assertTypeSlot(tx, scope)
     const [updated] = await tx
       .update(t.taskTypes)
       .set({ archivedAt: archived ? new Date() : null })

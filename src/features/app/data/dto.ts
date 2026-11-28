@@ -12,6 +12,8 @@ import { templateSchema } from '#/features/templates/data/dto'
 import type { QuickTemplate } from '#/features/templates/data/dto'
 import { timeEntrySchema } from '#/features/time-entries/data/dto'
 import type { TimeEntry } from '#/features/time-entries/data/dto'
+import { workspaceStateSchema } from '#/features/workspaces/data/dto'
+import type { WorkspaceState } from '#/features/workspaces/data/dto'
 import { z } from '#/lib/zod'
 import { dateSchema } from '#/shared/data/dto'
 
@@ -30,7 +32,20 @@ export interface Bootstrap {
   entries: Array<TimeEntry>
   paused: Array<TimeEntry>
   running: TimeEntry | null
+  workspaces: WorkspaceState
+  /** Timer działa w innej przestrzeni niż bieżąca (jeden timer na konto). */
+  runningElsewhere: RunningElsewhere | null
 }
+
+export interface RunningElsewhere {
+  workspaceId: string
+  entry: TimeEntry
+}
+
+export const runningElsewhereSchema = z.object({
+  workspaceId: z.string(),
+  entry: timeEntrySchema,
+})
 
 export const bootstrapSchema = z.object({
   user: userSchema,
@@ -43,4 +58,6 @@ export const bootstrapSchema = z.object({
   entries: z.array(timeEntrySchema),
   paused: z.array(timeEntrySchema),
   running: timeEntrySchema.nullable(),
+  workspaces: workspaceStateSchema,
+  runningElsewhere: runningElsewhereSchema.nullable(),
 })

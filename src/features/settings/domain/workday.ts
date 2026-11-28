@@ -1,3 +1,4 @@
+import type { UserSettings } from '#/features/settings/data/dto'
 import { percentOf } from '#/shared/domain/numbers'
 import type { TaskType } from '#/features/task-types/data/dto'
 import type { TimeEntry } from '#/features/time-entries/data/dto'
@@ -36,4 +37,20 @@ export function dayTotals(
     /** Procent celu dnia (0–100); 0, gdy cel jest wyłączony. */
     progress: percentOf(minutes, targetMinutes, true),
   }
+}
+
+/** Pola dnia pracy, które należą do przestrzeni (reszta ustawień należy do konta). */
+export const WORKSPACE_DAY_FIELDS = [
+  'workdayTargetMinutes',
+  'workingDays',
+  'timeRoundingMinutes',
+  'breakMinutes',
+  'summaryTemplate',
+] as const satisfies ReadonlyArray<keyof UserSettings>
+
+/** Czy zapis zmienia coś w dniu pracy przestrzeni (wtedy pytamy, gdzie zastosować). */
+export function workdayChanged(before: UserSettings, after: UserSettings) {
+  return WORKSPACE_DAY_FIELDS.some(
+    (field) => JSON.stringify(before[field]) !== JSON.stringify(after[field]),
+  )
 }

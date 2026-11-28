@@ -1,8 +1,8 @@
+import { useApplyMutation } from '#/features/workspaces/controllers/use-apply-mutation'
 import { useMessages } from '#/i18n/context'
 import { appMessages } from '#/i18n/messages/app'
 import { settingsMessages } from '#/i18n/messages/settings'
 import { markSetupStep } from '#/features/settings/controllers/setup-progress'
-import { useDataMutation } from '#/shared/data/mutations'
 import { keys } from '#/shared/data/query-keys'
 import { sprintsApi } from '../data/api'
 import type { Sprint, SprintInput } from '../data/dto'
@@ -11,7 +11,7 @@ import type { Sprint, SprintInput } from '../data/dto'
 export function useSaveCadence() {
   const t = useMessages(settingsMessages).sprints
   const app = useMessages(appMessages)
-  return useDataMutation(sprintsApi.setCadence, {
+  return useApplyMutation('sprints', sprintsApi.setCadence, {
     invalidate: [keys.cadence, keys.sprints],
     success: (result) => (result ? t.scheduleSaved : app.status.saved),
     onSuccess: () => markSetupStep('sprints'),
@@ -21,11 +21,15 @@ export function useSaveCadence() {
 /** Usunięcie sprintu z listy. */
 export function useRemoveSprint(onRemoved: () => void) {
   const t = useMessages(settingsMessages).sprints
-  return useDataMutation((id: string) => sprintsApi.remove(id), {
-    invalidate: [keys.sprints],
-    success: t.deleted,
-    onSuccess: onRemoved,
-  })
+  return useApplyMutation(
+    'sprints',
+    (id: string, apply) => sprintsApi.remove(id, apply),
+    {
+      invalidate: [keys.sprints],
+      success: t.deleted,
+      onSuccess: onRemoved,
+    },
+  )
 }
 
 export interface SaveSprintOptions {
@@ -38,9 +42,12 @@ export interface SaveSprintOptions {
 export function useSaveSprint({ sprint, onSaved }: SaveSprintOptions) {
   const t = useMessages(settingsMessages).sprints
   const app = useMessages(appMessages)
-  return useDataMutation(
-    (input: SprintInput) =>
-      sprint ? sprintsApi.update(sprint.id, input) : sprintsApi.create(input),
+  return useApplyMutation(
+    'sprints',
+    (input: SprintInput, apply) =>
+      sprint
+        ? sprintsApi.update(sprint.id, input, apply)
+        : sprintsApi.create(input, apply),
     {
       invalidate: [keys.sprints],
       success: sprint ? app.status.saved : t.created,

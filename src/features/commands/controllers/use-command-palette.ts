@@ -1,3 +1,9 @@
+import {
+  useSwitchWorkspace,
+  useWorkspaces,
+} from '#/features/workspaces/controllers/use-workspaces'
+import { openNewWorkspace } from '#/features/workspaces/controllers/open-workspace-dialog'
+import { workspacesMessages } from '#/i18n/messages/workspaces'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -131,11 +137,24 @@ export function useCommandPaletteViewModel() {
   const resume = useResumeTask()
   const startBreak = useStartBreak()
   const endBreak = useEndBreak()
+  const workspaces = useWorkspaces()
+  const switchWorkspace = useSwitchWorkspace()
+  const workspaceText = useMessages(workspacesMessages)
 
   const ctx: PaletteContext = {
     text: t,
     settingsText,
     feedbackLabel: feedbackText.open,
+    workspaces: {
+      items: workspaces.items.map((w) => ({
+        id: w.id,
+        name: w.name,
+        shortcut: workspaces.shortcutOf(w.id),
+      })),
+      currentId: workspaces.current?.id ?? null,
+      switchLabel: workspaceText.palette.switchTo,
+      createLabel: workspaceText.palette.create,
+    },
     locale,
     today,
     isPro: hasProAccess(user),
@@ -159,6 +178,14 @@ export function useCommandPaletteViewModel() {
       setLocale: (l) => void setLocale(l),
       signOut: () => void signOut().then(() => navigate({ to: '/login' })),
       showShortcuts: () => setHelp(true),
+      switchWorkspace: (id) => {
+        const target = workspaces.items.find((w) => w.id === id)
+        if (target) void switchWorkspace(target)
+      },
+      newWorkspace: () =>
+        workspaces.canCreate
+          ? openNewWorkspace()
+          : void navigate({ to: '/app/settings/plan' }),
     },
   }
 

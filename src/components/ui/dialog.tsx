@@ -122,6 +122,8 @@ interface ConfirmProps {
   onConfirm: () => void
   destructive?: boolean
   busy?: boolean
+  /** Potwierdzenie niedostępne (np. dopóki nie wpiszesz nazwy). */
+  disabled?: boolean
   children?: ReactNode
 }
 
@@ -136,6 +138,7 @@ export function ConfirmDialog({
   onConfirm,
   destructive,
   busy,
+  disabled,
   children,
 }: ConfirmProps) {
   return (
@@ -157,7 +160,7 @@ export function ConfirmDialog({
             </AlertPrimitive.Cancel>
             <Button
               variant={destructive ? 'destructive' : 'default'}
-              disabled={busy}
+              disabled={busy || disabled}
               aria-busy={busy}
               onClick={(e) => {
                 e.preventDefault()

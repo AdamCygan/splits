@@ -1,3 +1,4 @@
+import { scopeOf } from '#/server/http/scope'
 import { Hono } from 'hono'
 import type { AppEnv } from '#/server/http/context'
 import { body } from '#/server/http/inputs'
@@ -10,20 +11,18 @@ import {
 } from '../data/repository.server'
 
 export const projectRoutes = new Hono<AppEnv>()
-  .get('/', async (c) => c.json(await listProjects(c.get('userId'))))
+  .get('/', async (c) => c.json(await listProjects(scopeOf(c))))
   .post('/', async (c) => {
     const input = await body(c, projectInput)
-    return c.json(await createProject(c.get('userId'), input), 201)
+    return c.json(await createProject(scopeOf(c), input), 201)
   })
   .put('/:id', async (c) => {
     const input = await body(c, projectInput)
-    return c.json(
-      await updateProject(c.get('userId'), c.req.param('id'), input),
-    )
+    return c.json(await updateProject(scopeOf(c), c.req.param('id'), input))
   })
   .post('/:id/:action{archive|restore}', async (c) => {
     const archived = c.req.param('action') === 'archive'
     return c.json(
-      await setProjectArchived(c.get('userId'), c.req.param('id'), archived),
+      await setProjectArchived(scopeOf(c), c.req.param('id'), archived),
     )
   })

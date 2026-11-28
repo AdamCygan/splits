@@ -27,6 +27,7 @@ describe('pricing', () => {
     expect(FREE_LIMITS).toEqual({
       historyDays: 7,
       customWorkTypes: 0,
+      workspaces: 1,
       projects: 1,
       quickTemplates: 2,
       statuses: 4,

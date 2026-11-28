@@ -36,5 +36,17 @@ export const archive = <T>(
   id: string,
   archived: boolean,
   schema: z.ZodType<T>,
+  apply?: ApplyTo,
 ) =>
-  send('POST', `/${resource}/${id}/${archived ? 'archive' : 'restore'}`, schema)
+  send(
+    'POST',
+    withApply(`/${resource}/${id}/${archived ? 'archive' : 'restore'}`, apply),
+    schema,
+  )
+
+/** Gdzie trafia zmiana: tylko bieżąca przestrzeń albo wszystkie przestrzenie konta. */
+export type ApplyTo = 'this' | 'all'
+
+/** Adres z ?apply=all, gdy zmiana ma trafić do wszystkich przestrzeni. */
+export const withApply = (path: string, apply: ApplyTo = 'this') =>
+  apply === 'all' ? `${path}${path.includes('?') ? '&' : '?'}apply=all` : path

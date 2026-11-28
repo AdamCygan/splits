@@ -385,7 +385,7 @@ describe('account data export', () => {
     expect(res.headers.get('content-disposition')).toMatch(
       /attachment; filename="timeblame-export-\d{4}-\d{2}-\d{2}\.json"/,
     )
-    expect(res.body).toMatchObject({ format: 'splits-export', version: 1 })
+    expect(res.body).toMatchObject({ format: 'splits-export', version: 2 })
     expect((res.body.timeEntries as Array<unknown>).length).toBeGreaterThan(10)
     expect((res.body.taskTypes as Array<unknown>).length).toBeGreaterThan(3)
     expect(JSON.stringify(res.body)).not.toMatch(

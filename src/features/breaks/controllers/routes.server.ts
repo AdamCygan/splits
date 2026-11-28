@@ -1,3 +1,4 @@
+import { scopeOf } from '#/server/http/scope'
 import {
   listBreaks,
   getRunningBreak,
@@ -15,12 +16,12 @@ export const breakRoutes = new Hono<AppEnv>()
   /** Przerwy z dnia (?date=), od najwcześniejszej. */
   .get('/', async (c) => {
     const { date } = parse(dateQuery, c.req.query())
-    return c.json(await listBreaks(c.get('userId'), date))
+    return c.json(await listBreaks(scopeOf(c), date))
   })
 
   /** Trwająca przerwa albo null. */
   .get('/running', async (c) => {
-    return c.json(await getRunningBreak(c.get('userId')))
+    return c.json(await getRunningBreak(scopeOf(c)))
   })
 
   /**
@@ -28,26 +29,26 @@ export const breakRoutes = new Hono<AppEnv>()
    * zapamiętuje je, żeby „Koniec przerwy” mogło je od razu wznowić.
    */
   .post('/start', async (c) => {
-    const userId = c.get('userId')
-    return c.json(await startBreak(userId), 201)
+    const scope = scopeOf(c)
+    return c.json(await startBreak(scope), 201)
   })
 
   /** Koniec przerwy: czas liczony od startu (co najmniej minuta); opcjonalnie wznawia zadanie. */
   .post('/:id/end', async (c) => {
-    const userId = c.get('userId')
+    const scope = scopeOf(c)
     const { resume } = await body(c, breakEndInput)
-    return c.json(await endBreak(userId, c.req.param('id'), resume))
+    return c.json(await endBreak(scope, c.req.param('id'), resume))
   })
 
   /** Przerwa dopisana po fakcie (czas trwania albo godziny od–do). */
   .post('/', async (c) => {
-    const userId = c.get('userId')
+    const scope = scopeOf(c)
     const input = await body(c, breakInput)
-    return c.json(await addBreak(userId, input), 201)
+    return c.json(await addBreak(scope, input), 201)
   })
 
   .delete('/:id', async (c) => {
-    const userId = c.get('userId')
-    await removeBreak(userId, c.req.param('id'))
+    const scope = scopeOf(c)
+    await removeBreak(scope, c.req.param('id'))
     return c.body(null, 204)
   })

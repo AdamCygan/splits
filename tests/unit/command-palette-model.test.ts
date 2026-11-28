@@ -17,6 +17,15 @@ const ctx = (patch: Partial<PaletteContext> = {}): PaletteContext => ({
   locale: 'en',
   today: '2026-11-26',
   isPro: false,
+  workspaces: {
+    items: [
+      { id: 'w1', name: 'Acme', shortcut: 'Alt+Shift+1' },
+      { id: 'w2', name: 'Globex', shortcut: 'Alt+Shift+2' },
+    ],
+    currentId: 'w1',
+    switchLabel: 'Switch to {name}',
+    createLabel: 'New workspace',
+  },
   running: null,
   paused: [],
   runningBreak: null,
@@ -37,6 +46,8 @@ const ctx = (patch: Partial<PaletteContext> = {}): PaletteContext => ({
     setLocale: vi.fn(),
     signOut: vi.fn(),
     showShortcuts: vi.fn(),
+    switchWorkspace: vi.fn(),
+    newWorkspace: vi.fn(),
   },
   ...patch,
 })
@@ -60,6 +71,20 @@ describe('command palette model', () => {
     expect(search(ctx(), 'dodaj zadanie')[0]).toBe('log')
     expect(search(ctx(), 'urlop')).toContain('day-off')
     expect(search(ctx(), 'wyloguj')).toContain('logout')
+  })
+
+  it('Should switch to another workspace by name or by the word workspace', () => {
+    const c = ctx()
+    expect(search(c, 'globex')).toContain('ws-w2')
+    expect(search(c, 'przestrzen')).toEqual(
+      expect.arrayContaining(['ws-w2', 'ws-new']),
+    )
+    // Bieżącej przestrzeni nie ma na liście.
+    expect(search(c, 'acme')).not.toContain('ws-w1')
+    buildCommands(c)
+      .find((x) => x.id === 'ws-w2')!
+      .run()
+    expect(c.actions.switchWorkspace).toHaveBeenCalledWith('w2')
   })
 
   it('Should put typed-text commands last and turn dates into days', () => {

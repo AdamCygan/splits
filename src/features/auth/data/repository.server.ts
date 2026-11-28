@@ -30,7 +30,7 @@ import {
 
 import type { ClientMeta } from './tokens.server'
 
-import { createWorkspace } from './workspace.server'
+import { createAccountData } from './workspace.server'
 
 import type { requestMeta } from '../controllers/http.server'
 
@@ -189,7 +189,7 @@ export async function createAccount(tx: Tx, input: NewAccount) {
       ...(input.demo ? { isDemo: true, plan: 'pro' as const } : {}),
     })
     .returning()
-  await createWorkspace(
+  await createAccountData(
     tx,
     user!.id,
     input.locale,

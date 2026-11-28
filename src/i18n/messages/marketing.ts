@@ -178,6 +178,7 @@ const en = {
         'Full history: every sprint, month and task',
         'Sprint analytics: SP vs hours per kind of work',
         'CSV export for invoices and reviews',
+        'Separate workspaces for each job or client',
         'Unlimited projects, templates, work types and statuses',
         'Daily email reminders',
         'Priority email support',

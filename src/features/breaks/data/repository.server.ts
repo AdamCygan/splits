@@ -1,3 +1,5 @@
+import { inScope, owner } from '#/server/db/scope'
+import type { Scope } from '#/server/db/scope'
 import { and, asc, eq } from 'drizzle-orm'
 
 import type { WorkBreak } from '#/features/breaks/data/dto'
@@ -41,13 +43,13 @@ export const toBreak = (row: Row): WorkBreak => ({
   resumeEntryId: row.resumeEntryId,
 })
 
-export const mine = (userId: string) => eq(t.breaks.userId, userId)
+export const mine = (scope: Scope) => inScope(t.breaks, scope)
 
-export async function ownBreak(tx: Tx, userId: string, id: string) {
+export async function ownBreak(tx: Tx, scope: Scope, id: string) {
   const [row] = await tx
     .select()
     .from(t.breaks)
-    .where(and(mine(userId), eq(t.breaks.id, id)))
+    .where(and(mine(scope), eq(t.breaks.id, id)))
     .for('update')
   if (!row) throw notFound()
   return row
@@ -55,23 +57,23 @@ export async function ownBreak(tx: Tx, userId: string, id: string) {
 
 /** Przerwy z dnia (?date=), od najwcześniejszej. */
 export async function listBreaks(
-  userId: string,
+  scope: Scope,
   date: z.infer<typeof dateQuery>['date'],
 ) {
   const rows = await db
     .select()
     .from(t.breaks)
-    .where(and(mine(userId), eq(t.breaks.workDate, date)))
+    .where(and(mine(scope), eq(t.breaks.workDate, date)))
     .orderBy(asc(t.breaks.createdAt))
   return rows.map(toBreak)
 }
 
 /** Trwająca przerwa albo null. */
-export async function getRunningBreak(userId: string) {
+export async function getRunningBreak(scope: Scope) {
   const [row] = await db
     .select()
     .from(t.breaks)
-    .where(and(mine(userId), eq(t.breaks.running, true)))
+    .where(and(mine(scope), eq(t.breaks.running, true)))
   return row ? toBreak(row) : null
 }
 
@@ -79,20 +81,21 @@ export async function getRunningBreak(userId: string) {
  * Start przerwy: działający timer zadania zostaje wstrzymany (jak „Wstrzymaj”), a przerwa
  * zapamiętuje je, żeby „Koniec przerwy” mogło je od razu wznowić.
  */
-export async function startBreak(userId: string) {
+export async function startBreak(scope: Scope) {
   const result = await db.transaction(async (tx) => {
     const [running] = await tx
       .select()
       .from(t.breaks)
-      .where(and(mine(userId), eq(t.breaks.running, true)))
+      // Jedna trwająca przerwa na konto, niezależnie od przestrzeni.
+      .where(and(eq(t.breaks.userId, scope.userId), eq(t.breaks.running, true)))
       .for('update')
     if (running) throw new ApiError('break.running', 409)
-    const timezone = await userTimezone(tx, userId)
-    const paused = await stopRunning(tx, userId, timezone)
+    const timezone = await userTimezone(tx, scope)
+    const paused = await stopRunning(tx, scope, timezone)
     const [started] = await tx
       .insert(t.breaks)
       .values({
-        userId,
+        ...owner(scope),
         workDate: todayIn(timezone),
         startTime: nowTimeIn(timezone),
         running: true,
@@ -110,14 +113,14 @@ export async function startBreak(userId: string) {
 
 /** Koniec przerwy: czas liczony od startu (co najmniej minuta); opcjonalnie wznawia zadanie. */
 export async function endBreak(
-  userId: string,
+  scope: Scope,
   id: string,
   resume: z.infer<typeof breakEndInput>['resume'],
 ) {
   const result = await db.transaction(async (tx) => {
-    const row = await ownBreak(tx, userId, id)
+    const row = await ownBreak(tx, scope, id)
     if (!row.running) return { ended: row, resumed: null }
-    const timezone = await userTimezone(tx, userId)
+    const timezone = await userTimezone(tx, scope)
     const minutes = Math.min(
       1440,
       Math.max(
@@ -141,7 +144,7 @@ export async function endBreak(
       .returning()
     const resumed =
       resume && row.resumeEntryId
-        ? (await resumeEntry(tx, userId, row.resumeEntryId)).started
+        ? (await resumeEntry(tx, scope, row.resumeEntryId)).started
         : null
     return { ended: ended!, resumed }
   })
@@ -153,11 +156,11 @@ export async function endBreak(
 
 /** Przerwa dopisana po fakcie (czas trwania albo godziny od–do). */
 export async function addBreak(
-  userId: string,
+  scope: Scope,
   input: z.infer<typeof breakInput>,
 ) {
   const row = await db.transaction(async (tx) => {
-    const timezone = await userTimezone(tx, userId)
+    const timezone = await userTimezone(tx, scope)
     if (input.workDate > todayIn(timezone)) throw invalid('workDate')
     let minutes = input.durationMinutes
     if (input.startTime || input.endTime) {
@@ -171,7 +174,7 @@ export async function addBreak(
     const [created] = await tx
       .insert(t.breaks)
       .values({
-        userId,
+        ...owner(scope),
         workDate: input.workDate,
         startTime: input.startTime,
         endTime: input.endTime,
@@ -183,9 +186,9 @@ export async function addBreak(
   return toBreak(row)
 }
 
-export async function removeBreak(userId: string, id: string) {
+export async function removeBreak(scope: Scope, id: string) {
   await db.transaction(async (tx) => {
-    const row = await ownBreak(tx, userId, id)
+    const row = await ownBreak(tx, scope, id)
     await tx.delete(t.breaks).where(eq(t.breaks.id, row.id))
   })
   return

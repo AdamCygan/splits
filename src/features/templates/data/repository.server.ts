@@ -1,3 +1,5 @@
+import { inScope, owner } from '#/server/db/scope'
+import type { Scope } from '#/server/db/scope'
 import { ownProject } from '#/features/projects/data/repository.server'
 import { ownTaskType } from '#/features/task-types/data/repository.server'
 import { assertFreeSlot } from '#/features/billing/data/limits.server'
@@ -12,19 +14,19 @@ import type { z } from 'zod'
 import type { templateInput } from './inputs.server'
 import { toTemplate } from './mappers.server'
 
-export const templateCount = (tx: Tx, userId: string) =>
+export const templateCount = (tx: Tx, scope: Scope) =>
   countRows(
     tx
       .select({ n: sql<number>`count(*)::int` })
       .from(t.quickTemplates)
-      .where(eq(t.quickTemplates.userId, userId)),
+      .where(inScope(t.quickTemplates, scope)),
   )
 
-export const listTemplates = (tx: Tx, userId: string) =>
+export const listTemplates = (tx: Tx, scope: Scope) =>
   tx
     .select()
     .from(t.quickTemplates)
-    .where(eq(t.quickTemplates.userId, userId))
+    .where(inScope(t.quickTemplates, scope))
     .orderBy(asc(t.quickTemplates.sortOrder))
 
 interface TemplateRefs {
@@ -35,16 +37,16 @@ interface TemplateRefs {
 
 export async function checkTemplate(
   tx: Tx,
-  userId: string,
+  scope: Scope,
   input: TemplateRefs,
   exceptId?: string,
 ) {
-  if (!(await ownTaskType(tx, userId, input.taskTypeId)))
+  if (!(await ownTaskType(tx, scope, input.taskTypeId)))
     throw new ApiError('type.unknown', 400, 'taskTypeId')
-  if (input.projectId && !(await ownProject(tx, userId, input.projectId)))
+  if (input.projectId && !(await ownProject(tx, scope, input.projectId)))
     throw invalid('projectId')
   if (input.hotkey !== null) {
-    const all = await listTemplates(tx, userId)
+    const all = await listTemplates(tx, scope)
     if (all.some((x) => x.id !== exceptId && x.hotkey === input.hotkey))
       throw conflict('hotkey_taken', 'hotkey')
   }
@@ -52,28 +54,28 @@ export async function checkTemplate(
 
 export type TemplateInput = z.infer<typeof templateInput>
 
-const ownTemplate = (userId: string, id: string) =>
-  and(eq(t.quickTemplates.id, id), eq(t.quickTemplates.userId, userId))
+const ownTemplate = (scope: Scope, id: string) =>
+  and(eq(t.quickTemplates.id, id), inScope(t.quickTemplates, scope))
 
 /** Szybkie szablony konta w ustalonej kolejności. */
-export async function getTemplates(userId: string) {
-  return (await listTemplates(db, userId)).map(toTemplate)
+export async function getTemplates(scope: Scope) {
+  return (await listTemplates(db, scope)).map(toTemplate)
 }
 
 /** Nowy szablon na końcu listy (własny rodzaj pracy i projekt, wolny skrót, limit Free). */
-export async function createTemplate(userId: string, input: TemplateInput) {
+export async function createTemplate(scope: Scope, input: TemplateInput) {
   const row = await db.transaction(async (tx) => {
     await assertFreeSlot(
-      userId,
-      () => templateCount(tx, userId),
+      scope.userId,
+      () => templateCount(tx, scope),
       FREE_LIMITS.quickTemplates,
       'plan.limit_templates',
     )
-    await checkTemplate(tx, userId, input)
-    const all = await listTemplates(tx, userId)
+    await checkTemplate(tx, scope, input)
+    const all = await listTemplates(tx, scope)
     const [created] = await tx
       .insert(t.quickTemplates)
-      .values({ ...input, userId, sortOrder: all.length })
+      .values({ ...input, ...owner(scope), sortOrder: all.length })
       .returning()
     return created!
   })
@@ -81,25 +83,25 @@ export async function createTemplate(userId: string, input: TemplateInput) {
 }
 
 /** Nowa kolejność szablonów (wszystkie id konta). */
-export async function reorderTemplates(userId: string, ids: Array<string>) {
+export async function reorderTemplates(scope: Scope, ids: Array<string>) {
   const rows = await db.transaction(async (tx) => {
-    await reorder(tx, t.quickTemplates, userId, ids)
-    return listTemplates(tx, userId)
+    await reorder(tx, t.quickTemplates, scope, ids)
+    return listTemplates(tx, scope)
   })
   return rows.map(toTemplate)
 }
 
 export async function updateTemplate(
-  userId: string,
+  scope: Scope,
   id: string,
   input: TemplateInput,
 ) {
   const row = await db.transaction(async (tx) => {
-    await checkTemplate(tx, userId, input, id)
+    await checkTemplate(tx, scope, input, id)
     const [updated] = await tx
       .update(t.quickTemplates)
       .set(input)
-      .where(ownTemplate(userId, id))
+      .where(ownTemplate(scope, id))
       .returning()
     if (!updated) throw notFound()
     return updated
@@ -107,6 +109,6 @@ export async function updateTemplate(
   return toTemplate(row)
 }
 
-export async function removeTemplate(userId: string, id: string) {
-  await db.delete(t.quickTemplates).where(ownTemplate(userId, id))
+export async function removeTemplate(scope: Scope, id: string) {
+  await db.delete(t.quickTemplates).where(ownTemplate(scope, id))
 }

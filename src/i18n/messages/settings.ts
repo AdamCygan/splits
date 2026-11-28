@@ -13,6 +13,7 @@ const en = {
   },
   sections: {
     overview: { title: 'Overview', text: 'Setup checklist' },
+    workspaces: { title: 'Workspaces', text: 'Separate jobs and clients' },
     workday: { title: 'Workday', text: 'Hours, days, time zone' },
     sprints: { title: 'Sprints', text: 'Schedule and sprint list' },
     daysOff: { title: 'Days off', text: 'Vacation, sick leave, holidays' },
@@ -622,6 +623,7 @@ const pl: SettingsMessages = {
   },
   sections: {
     overview: { title: 'Przegląd', text: 'Lista kroków na start' },
+    workspaces: { title: 'Przestrzenie', text: 'Osobne prace i klienci' },
     workday: { title: 'Dzień pracy', text: 'Godziny, dni, strefa czasowa' },
     sprints: { title: 'Sprinty', text: 'Harmonogram i lista sprintów' },
     daysOff: { title: 'Dni wolne', text: 'Urlop, L4, święta' },

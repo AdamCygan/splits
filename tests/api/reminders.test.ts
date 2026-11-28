@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
 import { db } from '#/server/db/client'
-import { userSettings, users } from '#/server/db/schema'
+import { userSettings, users, workspaceSettings } from '#/server/db/schema'
 import { outbox } from '#/server/email'
 import { runReminders } from '#/server/reminders'
 import { registered } from './helpers'
@@ -15,13 +15,12 @@ async function remindAt(c: ApiClient, time: string) {
   const me = await c.get<{ id: string }>('/account')
   await db
     .update(userSettings)
-    .set({
-      dailyReminderAt: time,
-      timezone: 'UTC',
-      workingDays: [0, 1, 2, 3, 4, 5, 6],
-      workdayTargetMinutes: 480,
-    })
+    .set({ dailyReminderAt: time, timezone: 'UTC' })
     .where(eq(userSettings.userId, me.body.id))
+  await db
+    .update(workspaceSettings)
+    .set({ workingDays: [0, 1, 2, 3, 4, 5, 6], workdayTargetMinutes: 480 })
+    .where(eq(workspaceSettings.userId, me.body.id))
   return me.body.id
 }
 

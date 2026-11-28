@@ -44,12 +44,14 @@ export const hasProAccess = (
 
 /**
  * Limity planu Free (egzekwowane też przez API). Free pokazuje wszystkie ekrany, ale na krótkim
- * oknie: tydzień historii, wbudowane typy pracy i statusy, jeden projekt, dwa szablony.
+ * oknie: tydzień historii, wbudowane typy pracy i statusy, jedna przestrzeń, jeden projekt,
+ * dwa szablony.
  * Eksport CSV i przypomnienia e-mail są tylko w Pro.
  */
 export const FREE_LIMITS = {
   historyDays: 7,
   customWorkTypes: 0,
+  workspaces: 1,
   projects: 1,
   quickTemplates: 2,
   /** Domyślne statusy nowego konta (Do zrobienia, W trakcie, Do review, Gotowe). */

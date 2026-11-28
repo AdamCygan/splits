@@ -1,3 +1,5 @@
+import { inScope, owner } from '#/server/db/scope'
+import type { Scope } from '#/server/db/scope'
 import { assertFreeSlot } from '#/features/billing/data/limits.server'
 import { FREE_LIMITS } from '#/features/billing/domain/plans'
 import { db } from '#/server/db/client'
@@ -9,20 +11,20 @@ import { and, asc, eq, isNull, ne, sql } from 'drizzle-orm'
 import type { ProjectInput } from './dto'
 import { toProject } from './mappers.server'
 
-export async function ownProject(tx: Tx, userId: string, id: string) {
+export async function ownProject(tx: Tx, scope: Scope, id: string) {
   const [row] = await tx
     .select({ id: t.projects.id })
     .from(t.projects)
-    .where(and(eq(t.projects.id, id), eq(t.projects.userId, userId)))
+    .where(and(eq(t.projects.id, id), inScope(t.projects, scope)))
   return row
 }
 
-export const activeProjects = (tx: Tx, userId: string) =>
+export const activeProjects = (tx: Tx, scope: Scope) =>
   countRows(
     tx
       .select({ n: sql<number>`count(*)::int` })
       .from(t.projects)
-      .where(and(eq(t.projects.userId, userId), isNull(t.projects.archivedAt))),
+      .where(and(inScope(t.projects, scope), isNull(t.projects.archivedAt))),
   )
 
 interface ProjectIdentity {
@@ -32,7 +34,7 @@ interface ProjectIdentity {
 
 export async function assertProjectUnique(
   tx: Tx,
-  userId: string,
+  scope: Scope,
   input: ProjectIdentity,
   exceptId?: string,
 ) {
@@ -41,7 +43,7 @@ export async function assertProjectUnique(
     .from(t.projects)
     .where(
       and(
-        eq(t.projects.userId, userId),
+        inScope(t.projects, scope),
         exceptId ? ne(t.projects.id, exceptId) : undefined,
       ),
     )
@@ -51,32 +53,32 @@ export async function assertProjectUnique(
     throw conflict('key_taken', 'key')
 }
 
-const freeProjectSlot = (tx: Tx, userId: string) =>
+const freeProjectSlot = (tx: Tx, scope: Scope) =>
   assertFreeSlot(
-    userId,
-    () => activeProjects(tx, userId),
+    scope.userId,
+    () => activeProjects(tx, scope),
     FREE_LIMITS.projects,
     'plan.limit_projects',
   )
 
 /** Projekty konta, alfabetycznie. */
-export async function listProjects(userId: string) {
+export async function listProjects(scope: Scope) {
   const rows = await db
     .select()
     .from(t.projects)
-    .where(eq(t.projects.userId, userId))
+    .where(inScope(t.projects, scope))
     .orderBy(asc(t.projects.name))
   return rows.map(toProject)
 }
 
 /** Nowy projekt (unikalna nazwa i klucz, limit planu Free). */
-export async function createProject(userId: string, input: ProjectInput) {
+export async function createProject(scope: Scope, input: ProjectInput) {
   const row = await db.transaction(async (tx) => {
-    await freeProjectSlot(tx, userId)
-    await assertProjectUnique(tx, userId, input)
+    await freeProjectSlot(tx, scope)
+    await assertProjectUnique(tx, scope, input)
     const [created] = await tx
       .insert(t.projects)
-      .values({ ...input, userId })
+      .values({ ...input, ...owner(scope) })
       .returning()
     return created!
   })
@@ -84,13 +86,13 @@ export async function createProject(userId: string, input: ProjectInput) {
 }
 
 export async function updateProject(
-  userId: string,
+  scope: Scope,
   id: string,
   input: ProjectInput,
 ) {
   const row = await db.transaction(async (tx) => {
-    if (!(await ownProject(tx, userId, id))) throw notFound()
-    await assertProjectUnique(tx, userId, input, id)
+    if (!(await ownProject(tx, scope, id))) throw notFound()
+    await assertProjectUnique(tx, scope, input, id)
     const [updated] = await tx
       .update(t.projects)
       .set(input)
@@ -103,18 +105,18 @@ export async function updateProject(
 
 /** Archiwizacja albo przywrócenie; przywrócenie liczy się do limitu planu Free. */
 export async function setProjectArchived(
-  userId: string,
+  scope: Scope,
   id: string,
   archived: boolean,
 ) {
-  const mine = and(eq(t.projects.id, id), eq(t.projects.userId, userId))
+  const mine = and(eq(t.projects.id, id), inScope(t.projects, scope))
   const row = await db.transaction(async (tx) => {
     const [project] = await tx
       .select({ archivedAt: t.projects.archivedAt })
       .from(t.projects)
       .where(mine)
     if (!project) throw notFound()
-    if (!archived && project.archivedAt) await freeProjectSlot(tx, userId)
+    if (!archived && project.archivedAt) await freeProjectSlot(tx, scope)
     const [updated] = await tx
       .update(t.projects)
       .set({ archivedAt: archived ? new Date() : null })

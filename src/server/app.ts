@@ -39,6 +39,9 @@ import { startMaintenance } from './maintenance'
 import { installProcessHandlers, reportError } from './monitoring'
 import { launchProblems } from '#/config/launch-check'
 import { feedbackRoutes } from '#/features/feedback/controllers/routes.server'
+import { workspaceRoutes } from '#/features/workspaces/controllers/routes.server'
+import { resolveWorkspace } from '#/features/workspaces/data/repository.server'
+import { WORKSPACE_COOKIE } from '#/features/workspaces/domain/workspaces'
 
 const VERSION = '1.0.0'
 
@@ -120,6 +123,18 @@ const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
   await next()
 }
 
+/**
+ * Bieżąca przestrzeń: z ciasteczka tej przeglądarki, jeśli należy do konta, inaczej pierwsza.
+ * Każde zapytanie o dane pracy filtruje potem po niej (scopeOf).
+ */
+const withWorkspace: MiddlewareHandler<AppEnv> = async (c, next) => {
+  c.set(
+    'workspaceId',
+    await resolveWorkspace(c.get('userId'), getCookie(c, WORKSPACE_COOKIE)),
+  )
+  await next()
+}
+
 const protectedRoutes = {
   '/account': accountRoutes,
   '/settings': settingsRoutes,
@@ -136,6 +151,7 @@ const protectedRoutes = {
   '/billing': billingRoutes,
   '/bootstrap': bootstrapRoutes,
   '/feedback': feedbackRoutes,
+  '/workspaces': workspaceRoutes,
   '/admin': adminRoutes,
 } as const
 
@@ -159,8 +175,8 @@ api.route('/stripe', stripeWebhookRoutes)
 if (serverEnv.testRoutes) api.route('/test', testRoutes)
 
 for (const [path, routes] of Object.entries(protectedRoutes)) {
-  api.use(path, requireAuth)
-  api.use(`${path}/*`, requireAuth)
+  api.use(path, requireAuth, withWorkspace)
+  api.use(`${path}/*`, requireAuth, withWorkspace)
   api.route(path, routes)
 }
 

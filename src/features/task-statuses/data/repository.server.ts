@@ -1,3 +1,5 @@
+import { inScope, owner } from '#/server/db/scope'
+import type { Scope } from '#/server/db/scope'
 import type { TaskStatusInput } from './dto'
 import { toStatus } from './mappers.server'
 import { FREE_LIMITS } from '#/features/billing/domain/plans'
@@ -9,31 +11,28 @@ import * as t from '#/server/db/schema'
 import { conflict, notFound } from '#/server/http/errors'
 import { and, asc, eq, isNull, ne, sql } from 'drizzle-orm'
 
-export const activeStatuses = (tx: Tx, userId: string) =>
+export const activeStatuses = (tx: Tx, scope: Scope) =>
   countRows(
     tx
       .select({ n: sql<number>`count(*)::int` })
       .from(t.taskStatuses)
       .where(
-        and(
-          eq(t.taskStatuses.userId, userId),
-          isNull(t.taskStatuses.archivedAt),
-        ),
+        and(inScope(t.taskStatuses, scope), isNull(t.taskStatuses.archivedAt)),
       ),
   )
 
-export const listStatuses = (tx: Tx, userId: string) =>
+export const listStatuses = (tx: Tx, scope: Scope) =>
   tx
     .select()
     .from(t.taskStatuses)
-    .where(eq(t.taskStatuses.userId, userId))
+    .where(inScope(t.taskStatuses, scope))
     .orderBy(asc(t.taskStatuses.sortOrder))
 
-export async function ownStatus(tx: Tx, userId: string, id: string) {
+export async function ownStatus(tx: Tx, scope: Scope, id: string) {
   const [row] = await tx
     .select()
     .from(t.taskStatuses)
-    .where(and(eq(t.taskStatuses.id, id), eq(t.taskStatuses.userId, userId)))
+    .where(and(eq(t.taskStatuses.id, id), inScope(t.taskStatuses, scope)))
   if (!row) throw notFound()
   return row
 }
@@ -48,7 +47,7 @@ export async function assertNotLastInCategory(
     .from(t.taskStatuses)
     .where(
       and(
-        eq(t.taskStatuses.userId, status.userId),
+        eq(t.taskStatuses.workspaceId, status.workspaceId),
         eq(t.taskStatuses.category, status.category),
         isNull(t.taskStatuses.archivedAt),
         ne(t.taskStatuses.id, status.id),
@@ -57,29 +56,29 @@ export async function assertNotLastInCategory(
   if ((row?.n ?? 0) === 0) throw conflict('status.last_in_category')
 }
 
-const freeStatusSlot = (tx: Tx, userId: string) =>
+const freeStatusSlot = (tx: Tx, scope: Scope) =>
   assertFreeSlot(
-    userId,
-    () => activeStatuses(tx, userId),
+    scope.userId,
+    () => activeStatuses(tx, scope),
     FREE_LIMITS.statuses,
     'plan.limit_statuses',
   )
 
 /** Statusy konta w ustalonej kolejności. */
-export async function getStatuses(userId: string) {
-  return (await listStatuses(db, userId)).map(toStatus)
+export async function getStatuses(scope: Scope) {
+  return (await listStatuses(db, scope)).map(toStatus)
 }
 
 /** Nowy status na końcu listy (unikalna nazwa, limit planu Free). */
-export async function createStatus(userId: string, input: TaskStatusInput) {
+export async function createStatus(scope: Scope, input: TaskStatusInput) {
   const row = await db.transaction(async (tx) => {
-    await freeStatusSlot(tx, userId)
-    const all = await listStatuses(tx, userId)
+    await freeStatusSlot(tx, scope)
+    const all = await listStatuses(tx, scope)
     if (all.some((s) => lowerName(s.name) === lowerName(input.name)))
       throw conflict('name_taken', 'name')
     const [created] = await tx
       .insert(t.taskStatuses)
-      .values({ ...input, userId, sortOrder: all.length })
+      .values({ ...input, ...owner(scope), sortOrder: all.length })
       .returning()
     return created!
   })
@@ -87,23 +86,23 @@ export async function createStatus(userId: string, input: TaskStatusInput) {
 }
 
 /** Nowa kolejność statusów (wszystkie id konta). */
-export async function reorderStatuses(userId: string, ids: Array<string>) {
+export async function reorderStatuses(scope: Scope, ids: Array<string>) {
   const rows = await db.transaction(async (tx) => {
-    await reorder(tx, t.taskStatuses, userId, ids)
-    return listStatuses(tx, userId)
+    await reorder(tx, t.taskStatuses, scope, ids)
+    return listStatuses(tx, scope)
   })
   return rows.map(toStatus)
 }
 
 /** Zmiana statusu; w każdej kategorii musi zostać co najmniej jeden aktywny. */
 export async function updateStatus(
-  userId: string,
+  scope: Scope,
   id: string,
   input: TaskStatusInput,
 ) {
   const row = await db.transaction(async (tx) => {
-    const status = await ownStatus(tx, userId, id)
-    const all = await listStatuses(tx, userId)
+    const status = await ownStatus(tx, scope, id)
+    const all = await listStatuses(tx, scope)
     if (
       all.some(
         (s) => s.id !== id && lowerName(s.name) === lowerName(input.name),
@@ -123,19 +122,19 @@ export async function updateStatus(
 }
 
 /** Status domyślny dla nowych zadań (dokładnie jeden). */
-export async function setDefaultStatus(userId: string, id: string) {
+export async function setDefaultStatus(scope: Scope, id: string) {
   const rows = await db.transaction(async (tx) => {
-    const status = await ownStatus(tx, userId, id)
+    const status = await ownStatus(tx, scope, id)
     if (status.archivedAt) throw notFound()
     await tx
       .update(t.taskStatuses)
       .set({ isDefault: false })
-      .where(eq(t.taskStatuses.userId, userId))
+      .where(inScope(t.taskStatuses, scope))
     await tx
       .update(t.taskStatuses)
       .set({ isDefault: true })
       .where(eq(t.taskStatuses.id, id))
-    return listStatuses(tx, userId)
+    return listStatuses(tx, scope)
   })
   return rows.map(toStatus)
 }
@@ -145,18 +144,18 @@ export async function setDefaultStatus(userId: string, id: string) {
  * przywrócenie liczy się do limitu planu Free.
  */
 export async function setStatusArchived(
-  userId: string,
+  scope: Scope,
   id: string,
   archived: boolean,
 ) {
   const row = await db.transaction(async (tx) => {
-    const status = await ownStatus(tx, userId, id)
+    const status = await ownStatus(tx, scope, id)
     if (archived) {
       if (status.isSystem) throw conflict('status.system_archive')
       if (status.isDefault) throw conflict('status.default_archive')
       await assertNotLastInCategory(tx, status)
     } else if (status.archivedAt) {
-      await freeStatusSlot(tx, userId)
+      await freeStatusSlot(tx, scope)
     }
     const [updated] = await tx
       .update(t.taskStatuses)

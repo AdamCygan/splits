@@ -1,11 +1,11 @@
+import { useApplyMutation } from '#/features/workspaces/controllers/use-apply-mutation'
 import { useCurrentUser } from '#/features/auth/data/session'
 import { FREE_LIMITS, hasProAccess } from '#/features/billing/domain/plans'
 import { markSetupStep } from '#/features/settings/controllers/setup-progress'
 import { useMessages } from '#/i18n/context'
 import { appMessages } from '#/i18n/messages/app'
 import { settingsMessages } from '#/i18n/messages/settings'
-import { useArchive } from '#/shared/controllers/use-archive'
-import { useDataMutation } from '#/shared/data/mutations'
+import { useApplyArchive } from '#/features/workspaces/controllers/use-apply-archive'
 import { keys } from '#/shared/data/query-keys'
 import { taskTypesApi } from '../data/api'
 import type { TaskType, TaskTypeInput } from '../data/dto'
@@ -14,7 +14,7 @@ import type { TaskType, TaskTypeInput } from '../data/dto'
 export function useWorkTypes() {
   const t = useMessages(settingsMessages).workTypes
   const limited = !hasProAccess(useCurrentUser())
-  const archive = useArchive(taskTypesApi.setArchived, {
+  const archive = useApplyArchive('workTypes', taskTypesApi.setArchived, {
     invalidate: keys.taskTypes,
     messages: t,
   })
@@ -36,9 +36,12 @@ export interface SaveWorkTypeOptions {
 export function useSaveWorkType({ type, onSaved }: SaveWorkTypeOptions) {
   const t = useMessages(settingsMessages).workTypes
   const app = useMessages(appMessages)
-  return useDataMutation(
-    (input: TaskTypeInput) =>
-      type ? taskTypesApi.update(type.id, input) : taskTypesApi.create(input),
+  return useApplyMutation(
+    'workTypes',
+    (input: TaskTypeInput, apply) =>
+      type
+        ? taskTypesApi.update(type.id, input, apply)
+        : taskTypesApi.create(input, apply),
     {
       invalidate: [keys.taskTypes],
       success: type ? app.status.saved : t.created,

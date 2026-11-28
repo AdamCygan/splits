@@ -19,7 +19,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { Toaster } from 'sonner'
-import { Logo } from '#/components/brand/logo'
+import { Logo, LogoMark } from '#/components/brand/logo'
 import { AccountMenu } from '#/components/layout/account-menu'
 import { useBootstrap } from '#/features/app/data/bootstrap'
 import {
@@ -45,6 +45,12 @@ import { QueryProvider } from '#/integrations/tanstack-query/query-provider'
 import { openFeedback } from '#/features/feedback/controllers/open-feedback'
 import { FeedbackDialogHost } from '#/features/feedback/views/feedback-dialog'
 import { feedbackMessages } from '#/i18n/messages/feedback'
+import { useWorkspaces } from '#/features/workspaces/controllers/use-workspaces'
+import {
+  RunningElsewhere,
+  WorkspaceHosts,
+} from '#/features/workspaces/views/workspace-hosts'
+import { WorkspaceSwitcher } from '#/features/workspaces/views/workspace-switcher'
 
 /**
  * Panel aplikacji (/app/*). Renderowany tylko w przeglądarce (ssr: false):
@@ -90,6 +96,7 @@ function AppLayout() {
       <AppShell />
       <CommandPalette />
       <FeedbackDialogHost />
+      <WorkspaceHosts />
       <Toaster
         position="bottom-right"
         closeButton
@@ -175,6 +182,8 @@ function AppShell() {
   // Zmiana formatu godziny przerysowuje stronę, żeby wszystkie godziny poszły za nią.
   const clock = useClockPref()
   const section = pathname.split('/').slice(0, 3).join('/')
+  // Zmiana przestrzeni przerysowuje ekrany od zera (dane innej przestrzeni, inny stan formularzy).
+  const workspaceId = useWorkspaces().current?.id ?? ''
 
   if (boot.isPending) return <AppPending />
 
@@ -183,7 +192,7 @@ function AppShell() {
       <div className="flex min-h-dvh">
         {/* Boczne menu (komputer): przyklejone, na pełną wysokość okna */}
         <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-line bg-surface p-4 md:flex">
-          <div className="mb-8 flex items-center justify-between px-2 pt-1">
+          <div className="mb-6 flex items-center justify-between px-2 pt-1">
             <Link
               to="/app"
               aria-label={common.nav.home}
@@ -194,6 +203,9 @@ function AppShell() {
             >
               <Logo />
             </Link>
+          </div>
+          <div className="mb-3">
+            <WorkspaceSwitcher />
           </div>
           {/* Wejście do palety poleceń: widoczne, żeby skrót nie był jedyną drogą. */}
           <button
@@ -251,17 +263,21 @@ function AppShell() {
 
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Górny pasek (telefon) */}
-          <header className="flex items-center justify-between border-b border-line bg-surface px-4 py-3 md:hidden">
-            <Link
-              to="/app"
-              aria-label={common.nav.home}
-              className="rounded-md"
-              // Logo to nie pozycja menu: bez aria-current="page" na każdej stronie.
-              activeOptions={{ exact: true }}
-              activeProps={{ 'aria-current': undefined }}
-            >
-              <Logo />
-            </Link>
+          <header className="flex items-center justify-between gap-2 border-b border-line bg-surface px-4 py-3 md:hidden">
+            <div className="flex min-w-0 items-center gap-2">
+              <Link
+                to="/app"
+                aria-label={common.nav.home}
+                className="shrink-0 rounded-md"
+                // Logo to nie pozycja menu: bez aria-current="page" na każdej stronie.
+                activeOptions={{ exact: true }}
+                activeProps={{ 'aria-current': undefined }}
+              >
+                {/* Na telefonie sam znak: obok jest nazwa przestrzeni. */}
+                <LogoMark className="text-ink" />
+              </Link>
+              <WorkspaceSwitcher compact />
+            </div>
             <div className="flex items-center gap-1">
               {user?.role === 'admin' && (
                 <Link
@@ -287,14 +303,15 @@ function AppShell() {
 
           {user?.isDemo && <DemoBanner onRegister={() => void leaveDemo()} />}
           {user && <AccountNotices user={user} />}
-          <TimerBar />
+          <RunningElsewhere />
+          <TimerBar key={workspaceId} />
           <main
             id="main"
             tabIndex={-1}
             className="flex-1 px-4 pt-6 pb-28 outline-none sm:px-6 md:px-10 md:pt-10 md:pb-12"
           >
             {/* Krótkie wejście przy zmianie zakładki (klucz = sekcja, nie każda podstrona ustawień). */}
-            <div key={`${section}:${clock}`} className="page-in">
+            <div key={`${workspaceId}:${section}:${clock}`} className="page-in">
               <Outlet />
             </div>
           </main>

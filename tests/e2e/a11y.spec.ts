@@ -39,6 +39,7 @@ const appPages = [
   '/app/settings/account',
   '/app/settings/plan',
   '/app/settings/help',
+  '/app/settings/workspaces',
 ]
 
 const themedAppPages = (['light', 'dark'] as const).flatMap((theme) =>

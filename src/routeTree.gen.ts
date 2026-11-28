@@ -53,6 +53,7 @@ import { Route as AppSettingsSummariesRouteImport } from './routes/app/settings/
 import { Route as AppSettingsTemplatesRouteImport } from './routes/app/settings/templates'
 import { Route as AppSettingsWorkTypesRouteImport } from './routes/app/settings/work-types'
 import { Route as AppSettingsWorkdayRouteImport } from './routes/app/settings/workday'
+import { Route as AppSettingsWorkspacesRouteImport } from './routes/app/settings/workspaces'
 import { Route as AppAdminUsersIdRouteImport } from './routes/app/admin/users.$id'
 
 const AuthRoute = AuthRouteImport.update({
@@ -274,6 +275,11 @@ const AppSettingsWorkdayRoute = AppSettingsWorkdayRouteImport.update({
   path: '/workday',
   getParentRoute: () => AppSettingsRouteRoute,
 } as any)
+const AppSettingsWorkspacesRoute = AppSettingsWorkspacesRouteImport.update({
+  id: '/workspaces',
+  path: '/workspaces',
+  getParentRoute: () => AppSettingsRouteRoute,
+} as any)
 const AppAdminUsersIdRoute = AppAdminUsersIdRouteImport.update({
   id: '/users/$id',
   path: '/users/$id',
@@ -321,6 +327,7 @@ export interface FileRoutesByFullPath {
   '/app/settings/templates': typeof AppSettingsTemplatesRoute
   '/app/settings/work-types': typeof AppSettingsWorkTypesRoute
   '/app/settings/workday': typeof AppSettingsWorkdayRoute
+  '/app/settings/workspaces': typeof AppSettingsWorkspacesRoute
   '/app/admin/': typeof AppAdminIndexRoute
   '/app/settings/': typeof AppSettingsIndexRoute
   '/app/admin/users/$id': typeof AppAdminUsersIdRoute
@@ -363,6 +370,7 @@ export interface FileRoutesByTo {
   '/app/settings/templates': typeof AppSettingsTemplatesRoute
   '/app/settings/work-types': typeof AppSettingsWorkTypesRoute
   '/app/settings/workday': typeof AppSettingsWorkdayRoute
+  '/app/settings/workspaces': typeof AppSettingsWorkspacesRoute
   '/app/admin': typeof AppAdminIndexRoute
   '/app/settings': typeof AppSettingsIndexRoute
   '/app/admin/users/$id': typeof AppAdminUsersIdRoute
@@ -411,6 +419,7 @@ export interface FileRoutesById {
   '/app/settings/templates': typeof AppSettingsTemplatesRoute
   '/app/settings/work-types': typeof AppSettingsWorkTypesRoute
   '/app/settings/workday': typeof AppSettingsWorkdayRoute
+  '/app/settings/workspaces': typeof AppSettingsWorkspacesRoute
   '/app/admin/': typeof AppAdminIndexRoute
   '/app/settings/': typeof AppSettingsIndexRoute
   '/app/admin/users/$id': typeof AppAdminUsersIdRoute
@@ -458,6 +467,7 @@ export interface FileRouteTypes {
     | '/app/settings/templates'
     | '/app/settings/work-types'
     | '/app/settings/workday'
+    | '/app/settings/workspaces'
     | '/app/admin/'
     | '/app/settings/'
     | '/app/admin/users/$id'
@@ -500,6 +510,7 @@ export interface FileRouteTypes {
     | '/app/settings/templates'
     | '/app/settings/work-types'
     | '/app/settings/workday'
+    | '/app/settings/workspaces'
     | '/app/admin'
     | '/app/settings'
     | '/app/admin/users/$id'
@@ -547,6 +558,7 @@ export interface FileRouteTypes {
     | '/app/settings/templates'
     | '/app/settings/work-types'
     | '/app/settings/workday'
+    | '/app/settings/workspaces'
     | '/app/admin/'
     | '/app/settings/'
     | '/app/admin/users/$id'
@@ -873,6 +885,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsWorkdayRouteImport
       parentRoute: typeof AppSettingsRouteRoute
     }
+    '/app/settings/workspaces': {
+      id: '/app/settings/workspaces'
+      path: '/workspaces'
+      fullPath: '/app/settings/workspaces'
+      preLoaderRoute: typeof AppSettingsWorkspacesRouteImport
+      parentRoute: typeof AppSettingsRouteRoute
+    }
     '/app/admin/users/$id': {
       id: '/app/admin/users/$id'
       path: '/users/$id'
@@ -914,6 +933,7 @@ interface AppSettingsRouteRouteChildren {
   AppSettingsTemplatesRoute: typeof AppSettingsTemplatesRoute
   AppSettingsWorkTypesRoute: typeof AppSettingsWorkTypesRoute
   AppSettingsWorkdayRoute: typeof AppSettingsWorkdayRoute
+  AppSettingsWorkspacesRoute: typeof AppSettingsWorkspacesRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
 
@@ -930,6 +950,7 @@ const AppSettingsRouteRouteChildren: AppSettingsRouteRouteChildren = {
   AppSettingsTemplatesRoute: AppSettingsTemplatesRoute,
   AppSettingsWorkTypesRoute: AppSettingsWorkTypesRoute,
   AppSettingsWorkdayRoute: AppSettingsWorkdayRoute,
+  AppSettingsWorkspacesRoute: AppSettingsWorkspacesRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
 }
 

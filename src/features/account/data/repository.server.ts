@@ -152,6 +152,8 @@ export async function exportAccount(userId: string) {
     subs,
     daysOff,
     breaks,
+    workspaces,
+    workspaceSettings,
   ] = await Promise.all([
     db.select().from(t.userSettings).where(eq(t.userSettings.userId, userId)),
     db
@@ -200,10 +202,19 @@ export async function exportAccount(userId: string) {
       .from(t.breaks)
       .where(eq(t.breaks.userId, userId))
       .orderBy(asc(t.breaks.workDate), asc(t.breaks.createdAt)),
+    db
+      .select()
+      .from(t.workspaces)
+      .where(eq(t.workspaces.userId, userId))
+      .orderBy(asc(t.workspaces.sortOrder), asc(t.workspaces.createdAt)),
+    db
+      .select()
+      .from(t.workspaceSettings)
+      .where(eq(t.workspaceSettings.userId, userId)),
   ])
   return {
     format: 'splits-export',
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     account: {
       username: user.username,
@@ -214,10 +225,13 @@ export async function exportAccount(userId: string) {
       lastLoginAt: user.lastLoginAt,
     },
     settings: own(settings)[0] ?? null,
+    // Każdy wiersz niżej ma workspaceId: przestrzeń, do której należy.
+    workspaces: own(workspaces),
+    workspaceSettings: own(workspaceSettings),
     storyPointScale: own(scale),
     taskTypes: own(types),
     taskStatuses: own(statuses),
-    sprintCadence: own(cadence)[0] ?? null,
+    sprintCadences: own(cadence),
     sprints: own(sprints),
     projects: own(projects),
     tags: own(tags),

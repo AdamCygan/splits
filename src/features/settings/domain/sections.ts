@@ -1,4 +1,5 @@
 import {
+  Briefcase,
   CalendarOff,
   CalendarRange,
   Clock3,
@@ -22,6 +23,13 @@ export const settingsSections = [
     group: 'start',
     icon: LayoutGrid,
     exact: true,
+  },
+  {
+    to: '/app/settings/workspaces',
+    key: 'workspaces',
+    group: 'start',
+    icon: Briefcase,
+    exact: false,
   },
   {
     to: '/app/settings/workday',

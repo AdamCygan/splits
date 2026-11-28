@@ -5,6 +5,7 @@ import type { Bootstrap } from '#/features/app/data/dto'
 import { setCurrentUser } from '#/features/auth/data/session'
 import { keys } from '#/shared/data/query-keys'
 import { entryKeys } from '#/features/time-entries/data/queries'
+import { workspaceKeys } from '#/features/workspaces/data/queries'
 
 /** Rozkłada odpowiedź /bootstrap do pamięci zapytań, pod te same klucze co pojedyncze endpointy. */
 export function primeCache(client: QueryClient, boot: Bootstrap) {
@@ -17,6 +18,8 @@ export function primeCache(client: QueryClient, boot: Bootstrap) {
   client.setQueryData(entryKeys.day(boot.today), boot.entries)
   client.setQueryData(entryKeys.paused, boot.paused)
   client.setQueryData(entryKeys.running, boot.running)
+  client.setQueryData(workspaceKeys.state, boot.workspaces)
+  client.setQueryData(workspaceKeys.elsewhere, boot.runningElsewhere)
   setCurrentUser(boot.user)
 }
 

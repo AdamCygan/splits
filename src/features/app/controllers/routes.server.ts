@@ -1,3 +1,4 @@
+import { scopeOf } from '#/server/http/scope'
 import { getBootstrap } from '../data/repository.server'
 import { Hono } from 'hono'
 import type { AppEnv } from '#/server/http/context'
@@ -8,6 +9,6 @@ import type { AppEnv } from '#/server/http/context'
  * na ustawienia (strefa czasowa). Tu serwer zna strefę, więc wszystko wraca naraz.
  */
 export const bootstrapRoutes = new Hono<AppEnv>().get('/', async (c) => {
-  const userId = c.get('userId')
-  return c.json(await getBootstrap(userId))
+  const scope = scopeOf(c)
+  return c.json(await getBootstrap(scope))
 })

@@ -1,3 +1,5 @@
+import { inScope, owner } from '#/server/db/scope'
+import type { Scope } from '#/server/db/scope'
 import {
   and,
   asc,
@@ -71,11 +73,11 @@ export interface TaskRef {
   title: string
 }
 
-export async function userTimezone(tx: Tx, userId: string) {
+export async function userTimezone(tx: Tx, scope: Pick<Scope, 'userId'>) {
   const [s] = await tx
     .select({ timezone: t.userSettings.timezone })
     .from(t.userSettings)
-    .where(eq(t.userSettings.userId, userId))
+    .where(eq(t.userSettings.userId, scope.userId))
   return s?.timezone ?? 'UTC'
 }
 
@@ -101,13 +103,13 @@ export const clean = (input: TimeEntryInput) => ({
 /** Te same reguły co formularz (validateEntry) plus własność typu i projektu. */
 export async function check(
   tx: Tx,
-  userId: string,
+  scope: Scope,
   input: TimeEntryInput,
   timezone: string,
 ) {
-  const type = await ownTaskType(tx, userId, input.taskTypeId)
+  const type = await ownTaskType(tx, scope, input.taskTypeId)
   if (!type) throw new ApiError('type.unknown', 400, 'taskTypeId')
-  if (input.projectId && !(await ownProject(tx, userId, input.projectId)))
+  if (input.projectId && !(await ownProject(tx, scope, input.projectId)))
     throw invalid('projectId')
   const issue = validateEntry(input, type)[0]
   if (issue) throw invalid(issue.field)
@@ -121,7 +123,7 @@ export async function check(
     throw invalid('time')
 }
 
-export const mine = (userId: string) => eq(t.timeEntries.userId, userId)
+export const mine = (scope: Scope) => inScope(t.timeEntries, scope)
 
 /**
  * Nowy wpis: timer działa tylko dziś, a plan Free dopisuje wpisy z ostatnich 30 dni
@@ -129,7 +131,7 @@ export const mine = (userId: string) => eq(t.timeEntries.userId, userId)
  */
 export async function checkNewEntryDate(
   tx: Tx,
-  userId: string,
+  scope: Scope,
   input: TimeEntryInput,
   timezone: string,
 ) {
@@ -140,7 +142,7 @@ export async function checkNewEntryDate(
   const [user] = await tx
     .select({ plan: t.users.plan, role: t.users.role })
     .from(t.users)
-    .where(eq(t.users.id, userId))
+    .where(eq(t.users.id, scope.userId))
   if (!hasProAccess(user))
     throw new ApiError('plan.limit_history', 403, 'workDate')
 }
@@ -166,14 +168,20 @@ export function sameTaskAs(ref: TaskRef) {
  */
 export async function stopRunning(
   tx: Tx,
-  userId: string,
+  scope: Scope,
   timezone: string,
   exceptId?: string,
 ) {
   const [running] = await tx
     .select()
     .from(t.timeEntries)
-    .where(and(mine(userId), eq(t.timeEntries.running, true)))
+    // Jeden timer na konto: start w jednej przestrzeni wstrzymuje zadanie z innej.
+    .where(
+      and(
+        eq(t.timeEntries.userId, scope.userId),
+        eq(t.timeEntries.running, true),
+      ),
+    )
     .for('update')
   if (!running || running.id === exceptId) return null
   return stop(tx, running, timezone, true)
@@ -201,25 +209,25 @@ export async function stop(
 /** Oznacza zadanie (wszystkie sesje) jako zakończone albo otwiera je z powrotem. */
 export async function setFinished(
   tx: Tx,
-  userId: string,
+  scope: Scope,
   ref: TaskRef,
   finished: boolean,
 ) {
   const rows = await tx
     .update(t.timeEntries)
     .set({ finishedAt: finished ? new Date() : null })
-    .where(and(mine(userId), sameTaskAs(ref)))
+    .where(and(mine(scope), sameTaskAs(ref)))
     .returning({ id: t.timeEntries.id })
-  if (finished) await clearPaused(tx, userId, ref)
+  if (finished) await clearPaused(tx, scope, ref)
   return rows.length
 }
 
 /** Zadanie znowu ruszyło albo jest skończone: znika z listy wstrzymanych. */
-export async function clearPaused(tx: Tx, userId: string, ref: TaskRef) {
+export async function clearPaused(tx: Tx, scope: Scope, ref: TaskRef) {
   await tx
     .update(t.timeEntries)
     .set({ paused: false })
-    .where(and(mine(userId), eq(t.timeEntries.paused, true), sameTaskAs(ref)))
+    .where(and(mine(scope), eq(t.timeEntries.paused, true), sameTaskAs(ref)))
 }
 
 /** Godzina startu bez zmian = ten sam moment; nowa godzina = przeliczamy od „teraz”. */
@@ -234,11 +242,11 @@ export function timerStart(
   return new Date(startedAtFor(input.startTime, nowTimeIn(timezone)))
 }
 
-export async function ownEntry(tx: Tx, userId: string, id: string) {
+export async function ownEntry(tx: Tx, scope: Scope, id: string) {
   const [entry] = await tx
     .select()
     .from(t.timeEntries)
-    .where(and(eq(t.timeEntries.id, id), mine(userId)))
+    .where(and(eq(t.timeEntries.id, id), mine(scope)))
     .for('update')
   if (!entry) throw notFound()
   return entry
@@ -247,22 +255,22 @@ export async function ownEntry(tx: Tx, userId: string, id: string) {
 /** Nowy działający wpis; poprzedni timer zostaje wstrzymany, a to zadanie znika z wstrzymanych. */
 export async function startTimer(
   tx: Tx,
-  userId: string,
+  scope: Scope,
   input: TimeEntryInput,
   timezone: string,
 ) {
-  await check(tx, userId, input, timezone)
-  await checkNewEntryDate(tx, userId, input, timezone)
-  const stopped = await stopRunning(tx, userId, timezone)
+  await check(tx, scope, input, timezone)
+  await checkNewEntryDate(tx, scope, input, timezone)
+  const stopped = await stopRunning(tx, scope, timezone)
   const values = clean(input)
-  await clearPaused(tx, userId, values)
+  await clearPaused(tx, scope, values)
   // Nowa sesja = praca trwa dalej, więc zakończone zadanie znów jest w toku.
-  await setFinished(tx, userId, values, false)
+  await setFinished(tx, scope, values, false)
   const [started] = await tx
     .insert(t.timeEntries)
     .values({
       ...values,
-      userId,
+      ...owner(scope),
       startedAt: timerStart(input, null, timezone),
     })
     .returning()
@@ -280,21 +288,21 @@ export const timerResult = (r: TimerRows) => ({
 })
 
 /** Wpisy z jednego dnia, najnowsze najpierw (świeży wpis jest na górze listy). */
-export const entriesOn = (tx: Tx, userId: string, date: string) =>
+export const entriesOn = (tx: Tx, scope: Scope, date: string) =>
   tx
     .select()
     .from(t.timeEntries)
-    .where(and(mine(userId), eq(t.timeEntries.workDate, date)))
+    .where(and(mine(scope), eq(t.timeEntries.workDate, date)))
     .orderBy(desc(t.timeEntries.createdAt))
 
 /** Wstrzymane danego dnia: jedna pozycja na zadanie, najświeższe najpierw, najwyżej 5. */
-export async function pausedOn(tx: Tx, userId: string, date: string) {
+export async function pausedOn(tx: Tx, scope: Scope, date: string) {
   const rows = await tx
     .select()
     .from(t.timeEntries)
     .where(
       and(
-        mine(userId),
+        mine(scope),
         eq(t.timeEntries.paused, true),
         eq(t.timeEntries.running, false),
         eq(t.timeEntries.workDate, date),
@@ -316,14 +324,23 @@ export async function pausedOn(tx: Tx, userId: string, date: string) {
  * Wznów: nowa sesja (nowy odcinek czasu) z tym samym tytułem, linkiem, typem, projektem i SP.
  * Działający timer innego zadania zostaje wstrzymany. Używa tego też koniec przerwy.
  */
-export async function resumeEntry(tx: Tx, userId: string, id: string) {
-  const entry = await ownEntry(tx, userId, id)
+export async function resumeEntry(tx: Tx, account: Scope, id: string) {
+  // Koniec przerwy może wznowić zadanie z innej przestrzeni: liczy się przestrzeń wpisu.
+  const [found] = await tx
+    .select({ workspaceId: t.timeEntries.workspaceId })
+    .from(t.timeEntries)
+    .where(
+      and(eq(t.timeEntries.id, id), eq(t.timeEntries.userId, account.userId)),
+    )
+  if (!found) throw notFound()
+  const scope = { userId: account.userId, workspaceId: found.workspaceId }
+  const entry = await ownEntry(tx, scope, id)
   if (entry.running) return { started: entry, stopped: null }
-  const timezone = await userTimezone(tx, userId)
-  const type = await ownTaskType(tx, userId, entry.taskTypeId)
+  const timezone = await userTimezone(tx, scope)
+  const type = await ownTaskType(tx, scope, entry.taskTypeId)
   return startTimer(
     tx,
-    userId,
+    scope,
     {
       taskTypeId: entry.taskTypeId,
       projectId: entry.projectId,
@@ -348,18 +365,18 @@ export async function resumeEntry(tx: Tx, userId: string, id: string) {
   )
 }
 
-export async function getRunningEntry(userId: string) {
+export async function getRunningEntry(scope: Scope) {
   const [row] = await db
     .select()
     .from(t.timeEntries)
-    .where(and(mine(userId), eq(t.timeEntries.running, true)))
+    .where(and(mine(scope), eq(t.timeEntries.running, true)))
   return row ? toEntry(row) : null
 }
 
 /** Wstrzymane dziś zadania (jedna pozycja na zadanie, najświeższe najpierw, najwyżej 5). */
-export async function getPausedToday(userId: string) {
-  const today = todayIn(await userTimezone(db, userId))
-  return (await pausedOn(db, userId, today)).map(toEntry)
+export async function getPausedToday(scope: Scope) {
+  const today = todayIn(await userTimezone(db, scope))
+  return (await pausedOn(db, scope, today)).map(toEntry)
 }
 
 /**
@@ -367,7 +384,7 @@ export async function getPausedToday(userId: string) {
  * i przedłużeń), każde słowo osobno. Filtr w SQL (ILIKE po kolumnach użytkownika),
  * ranking i fragment notatki w domenie.
  */
-export async function searchAll(userId: string, q: string) {
+export async function searchAll(scope: Scope, q: string) {
   const words = searchWords(q).filter((w) => w.length >= 2)
   if (words.length === 0) return []
   const anyField = (w: string) => {
@@ -389,7 +406,7 @@ export async function searchAll(userId: string, q: string) {
       taskTypeId: t.timeEntries.taskTypeId,
     })
     .from(t.timeEntries)
-    .where(and(mine(userId), or(...words.map(anyField))))
+    .where(and(mine(scope), or(...words.map(anyField))))
     .orderBy(desc(t.timeEntries.workDate))
     .limit(400)
   if (hits.length === 0) return []
@@ -403,7 +420,7 @@ export async function searchAll(userId: string, q: string) {
     .from(t.timeEntries)
     .where(
       and(
-        mine(userId),
+        mine(scope),
         links.length
           ? or(
               inArray(t.timeEntries.title, titles),
@@ -418,13 +435,13 @@ export async function searchAll(userId: string, q: string) {
 }
 
 /** Wyszukiwarka zadań (także zakończonych) po tytule albo linku, do kontynuacji pracy. */
-export async function searchTasks(userId: string, pattern: string) {
+export async function searchTasks(scope: Scope, pattern: string) {
   const rows = await db
     .select()
     .from(t.timeEntries)
     .where(
       and(
-        mine(userId),
+        mine(scope),
         or(
           ilike(t.timeEntries.title, pattern),
           ilike(t.timeEntries.link, pattern),
@@ -436,8 +453,8 @@ export async function searchTasks(userId: string, pattern: string) {
   return groupSearchResults(rows.map(toEntry))
 }
 
-export async function getUnfinishedTasks(userId: string) {
-  const today = todayIn(await userTimezone(db, userId))
+export async function getUnfinishedTasks(scope: Scope) {
+  const today = todayIn(await userTimezone(db, scope))
   const recent = await db
     .selectDistinct({
       link: t.timeEntries.link,
@@ -447,7 +464,7 @@ export async function getUnfinishedTasks(userId: string) {
     .from(t.timeEntries)
     .where(
       and(
-        mine(userId),
+        mine(scope),
         gte(t.timeEntries.workDate, addDays(today, -UNFINISHED_LOOKBACK_DAYS)),
       ),
     )
@@ -458,7 +475,7 @@ export async function getUnfinishedTasks(userId: string) {
     .from(t.timeEntries)
     .where(
       and(
-        mine(userId),
+        mine(scope),
         sql`(${sql.join(
           recent.map((r) => sql`(${sameTaskAs(r)})`),
           sql` or `,
@@ -468,25 +485,25 @@ export async function getUnfinishedTasks(userId: string) {
   const types = await db
     .select({ id: t.taskTypes.id, kind: t.taskTypes.kind })
     .from(t.taskTypes)
-    .where(eq(t.taskTypes.userId, userId))
+    .where(inScope(t.taskTypes, scope))
   const kinds = new Map(types.map((x) => [x.id, x.kind]))
   return unfinishedTasks(rows.map(toEntry), today, (id) => kinds.get(id))
 }
 
 /** Zadanie zakończone (`finished: true`) albo z powrotem w toku. */
 export async function finishTask(
-  userId: string,
+  scope: Scope,
   input: z.infer<typeof taskFinishInput>,
 ) {
   const updated = await db.transaction((tx) =>
-    setFinished(tx, userId, input.ref, input.finished),
+    setFinished(tx, scope, input.ref, input.finished),
   )
   if (updated === 0) throw notFound()
   return { updated }
 }
 
 export async function getTaskSessions(
-  userId: string,
+  scope: Scope,
   ref: z.infer<typeof taskRefInput>,
 ) {
   const rows = await db
@@ -494,7 +511,7 @@ export async function getTaskSessions(
     .from(t.timeEntries)
     .where(
       and(
-        mine(userId),
+        mine(scope),
         eq(t.timeEntries.running, false),
         sameTaskAs({ ...ref, link: ref.link ?? null }),
       ),
@@ -504,47 +521,47 @@ export async function getTaskSessions(
 }
 
 export async function createEntry(
-  userId: string,
+  scope: Scope,
   input: z.infer<typeof entryInput>,
 ) {
   const row = await db.transaction(async (tx) => {
-    const timezone = await userTimezone(tx, userId)
+    const timezone = await userTimezone(tx, scope)
     if (input.running)
-      return (await startTimer(tx, userId, input, timezone)).started
-    await check(tx, userId, input, timezone)
-    await checkNewEntryDate(tx, userId, input, timezone)
+      return (await startTimer(tx, scope, input, timezone)).started
+    await check(tx, scope, input, timezone)
+    await checkNewEntryDate(tx, scope, input, timezone)
     const [created] = await tx
       .insert(t.timeEntries)
-      .values({ ...clean(input), userId, startedAt: null })
+      .values({ ...clean(input), ...owner(scope), startedAt: null })
       .returning()
     return created!
   })
   return toEntry(row)
 }
 
-export async function startTimerFor(userId: string, input: TimeEntryInput) {
+export async function startTimerFor(scope: Scope, input: TimeEntryInput) {
   const result = await db.transaction(async (tx) =>
-    startTimer(tx, userId, input, await userTimezone(tx, userId)),
+    startTimer(tx, scope, input, await userTimezone(tx, scope)),
   )
   return timerResult(result)
 }
 
 /** Koniec pracy nad zadaniem: zatrzymany wpis nie trafia do wstrzymanych. */
-export async function stopEntry(userId: string, id: string) {
+export async function stopEntry(scope: Scope, id: string) {
   const row = await db.transaction(async (tx) => {
-    const entry = await ownEntry(tx, userId, id)
+    const entry = await ownEntry(tx, scope, id)
     if (!entry.running) return entry
-    return stop(tx, entry, await userTimezone(tx, userId))
+    return stop(tx, entry, await userTimezone(tx, scope))
   })
   return toEntry(row)
 }
 
 /** Przerwa: sesja się kończy, a zadanie czeka na pasku z przyciskiem „Wznów”. */
-export async function pauseEntry(userId: string, id: string) {
+export async function pauseEntry(scope: Scope, id: string) {
   const row = await db.transaction(async (tx) => {
-    const entry = await ownEntry(tx, userId, id)
+    const entry = await ownEntry(tx, scope, id)
     if (!entry.running) return entry
-    return stop(tx, entry, await userTimezone(tx, userId), true)
+    return stop(tx, entry, await userTimezone(tx, scope), true)
   })
   return toEntry(row)
 }
@@ -553,16 +570,16 @@ export async function pauseEntry(userId: string, id: string) {
  * Wznów: nowa sesja (nowy odcinek czasu) z tym samym tytułem, linkiem, typem, projektem i SP.
  * Działający timer innego zadania zostaje wstrzymany, więc można swobodnie skakać między zadaniami.
  */
-export async function resumeTask(userId: string, id: string) {
-  const result = await db.transaction((tx) => resumeEntry(tx, userId, id))
+export async function resumeTask(scope: Scope, id: string) {
+  const result = await db.transaction((tx) => resumeEntry(tx, scope, id))
   return timerResult(result)
 }
 
 /** Zadanie skończone: znika z paska wstrzymanych (zalogowany czas zostaje). */
-export async function dismissPaused(userId: string, id: string) {
+export async function dismissPaused(scope: Scope, id: string) {
   await db.transaction(async (tx) => {
-    const entry = await ownEntry(tx, userId, id)
-    await setFinished(tx, userId, entry, true)
+    const entry = await ownEntry(tx, scope, id)
+    await setFinished(tx, scope, entry, true)
   })
   return
 }
@@ -572,14 +589,14 @@ export async function dismissPaused(userId: string, id: string) {
  * zadania naraz (zadanie = wpisy z tym samym linkiem, a bez linku z tym samym typem i tytułem).
  */
 export async function deleteTask(
-  userId: string,
+  scope: Scope,
   input: z.infer<typeof taskDeleteInput>,
 ) {
   const deleted = await db
     .delete(t.timeEntries)
     .where(
       and(
-        mine(userId),
+        mine(scope),
         sameTaskAs(input.ref),
         ...(input.date ? [eq(t.timeEntries.workDate, input.date)] : []),
       ),
@@ -590,15 +607,15 @@ export async function deleteTask(
 }
 
 export async function updateTask(
-  userId: string,
+  scope: Scope,
   input: z.infer<typeof taskUpdateInput>,
 ) {
   const rows = await db.transaction(async (tx) => {
-    const timezone = await userTimezone(tx, userId)
+    const timezone = await userTimezone(tx, scope)
     const found = await tx
       .select()
       .from(t.timeEntries)
-      .where(and(mine(userId), sameTaskAs(input.ref)))
+      .where(and(mine(scope), sameTaskAs(input.ref)))
     if (found.length === 0) throw notFound()
     const changes = {
       title: input.title,
@@ -612,7 +629,7 @@ export async function updateTask(
     const updated = []
     for (const row of found) {
       const next: TimeEntryInput = { ...toEntry(row), ...changes }
-      await check(tx, userId, next, timezone)
+      await check(tx, scope, next, timezone)
       const cleaned = clean(next)
       const [saved] = await tx
         .update(t.timeEntries)
@@ -640,12 +657,12 @@ export async function updateTask(
 
 /** Sama notatka (np. odhaczony checkbox na liście), bez walidacji całego wpisu. */
 export async function updateNote(
-  userId: string,
+  scope: Scope,
   id: string,
   note: string | null,
 ) {
   const row = await db.transaction(async (tx) => {
-    const entry = await ownEntry(tx, userId, id)
+    const entry = await ownEntry(tx, scope, id)
     if (!note) {
       const [type] = await tx
         .select({ req: t.taskTypes.descriptionRequirement })
@@ -664,15 +681,15 @@ export async function updateNote(
 }
 
 export async function updateEntry(
-  userId: string,
+  scope: Scope,
   id: string,
   input: z.infer<typeof entryInput>,
 ) {
   const row = await db.transaction(async (tx) => {
-    const entry = await ownEntry(tx, userId, id)
-    const timezone = await userTimezone(tx, userId)
-    await check(tx, userId, input, timezone)
-    if (input.running) await stopRunning(tx, userId, timezone, id)
+    const entry = await ownEntry(tx, scope, id)
+    const timezone = await userTimezone(tx, scope)
+    await check(tx, scope, input, timezone)
+    if (input.running) await stopRunning(tx, scope, timezone, id)
     const [updated] = await tx
       .update(t.timeEntries)
       .set({
@@ -688,18 +705,18 @@ export async function updateEntry(
   return toEntry(row)
 }
 
-export async function deleteEntry(userId: string, id: string) {
+export async function deleteEntry(scope: Scope, id: string) {
   const [row] = await db
     .delete(t.timeEntries)
-    .where(and(eq(t.timeEntries.id, id), mine(userId)))
+    .where(and(eq(t.timeEntries.id, id), mine(scope)))
     .returning({ id: t.timeEntries.id })
   if (!row) throw notFound()
   return
 }
 
 /** Wpisy z jednego dnia, od najnowszych. */
-export async function listEntriesOn(userId: string, date: string) {
-  return (await entriesOn(db, userId, date)).map(toEntry)
+export async function listEntriesOn(scope: Scope, date: string) {
+  return (await entriesOn(db, scope, date)).map(toEntry)
 }
 
 /**
@@ -707,16 +724,16 @@ export async function listEntriesOn(userId: string, date: string) {
  * (jak w cenniku): pilnowane tutaj, nie tylko w interfejsie.
  */
 export async function listEntriesInRange(
-  userId: string,
+  scope: Scope,
   requestedFrom: string,
   to: string,
 ) {
   const [user] = await db
     .select({ plan: t.users.plan, role: t.users.role })
     .from(t.users)
-    .where(eq(t.users.id, userId))
+    .where(eq(t.users.id, scope.userId))
   const oldest = addDays(
-    todayIn(await userTimezone(db, userId)),
+    todayIn(await userTimezone(db, scope)),
     -(FREE_LIMITS.historyDays - 1),
   )
   const from =
@@ -727,7 +744,7 @@ export async function listEntriesInRange(
     .from(t.timeEntries)
     .where(
       and(
-        mine(userId),
+        mine(scope),
         gte(t.timeEntries.workDate, from),
         lte(t.timeEntries.workDate, to),
       ),

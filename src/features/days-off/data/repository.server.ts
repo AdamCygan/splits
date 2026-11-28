@@ -1,3 +1,5 @@
+import { inScope, owner } from '#/server/db/scope'
+import type { Scope } from '#/server/db/scope'
 import { and, asc, between, eq } from 'drizzle-orm'
 import { db } from '#/server/db/client'
 import * as t from '#/server/db/schema'
@@ -10,15 +12,15 @@ const toDayOff = (row: typeof t.daysOff.$inferSelect): DayOff => ({
   note: row.note,
 })
 
-const inRange = (userId: string, from: string, to: string) =>
-  and(eq(t.daysOff.userId, userId), between(t.daysOff.date, from, to))
+const inRange = (scope: Scope, from: string, to: string) =>
+  and(inScope(t.daysOff, scope), between(t.daysOff.date, from, to))
 
 /** Dni wolne konta w zakresie dat, od najwcześniejszego. */
-export async function listDaysOff(userId: string, from: string, to: string) {
+export async function listDaysOff(scope: Scope, from: string, to: string) {
   const rows = await db
     .select()
     .from(t.daysOff)
-    .where(inRange(userId, from, to))
+    .where(inRange(scope, from, to))
     .orderBy(asc(t.daysOff.date))
   return rows.map(toDayOff)
 }
@@ -29,16 +31,16 @@ export async function listDaysOff(userId: string, from: string, to: string) {
  * nowy rodzaj i notatkę. Zwraca zapisane dni, od najwcześniejszego.
  */
 export async function setDaysOff(
-  userId: string,
+  scope: Scope,
   input: DayOffInput,
   length: number,
 ) {
   const note = input.note?.trim() || null
   const rows = await db.transaction(async (tx) => {
     const [settings] = await tx
-      .select({ workingDays: t.userSettings.workingDays })
-      .from(t.userSettings)
-      .where(eq(t.userSettings.userId, userId))
+      .select({ workingDays: t.workspaceSettings.workingDays })
+      .from(t.workspaceSettings)
+      .where(eq(t.workspaceSettings.workspaceId, scope.workspaceId))
     const working = settings?.workingDays ?? [1, 2, 3, 4, 5]
     const dates = Array.from({ length }, (_, i) => addDays(input.from, i))
     const picked =
@@ -46,9 +48,16 @@ export async function setDaysOff(
     if (picked.length === 0) return []
     return tx
       .insert(t.daysOff)
-      .values(picked.map((date) => ({ userId, date, kind: input.kind, note })))
+      .values(
+        picked.map((date) => ({
+          ...owner(scope),
+          date,
+          kind: input.kind,
+          note,
+        })),
+      )
       .onConflictDoUpdate({
-        target: [t.daysOff.userId, t.daysOff.date],
+        target: [t.daysOff.workspaceId, t.daysOff.date],
         set: { kind: input.kind, note },
       })
       .returning()
@@ -57,6 +66,6 @@ export async function setDaysOff(
 }
 
 /** Usuwa dni wolne konta z zakresu (cały urlop albo jeden dzień). */
-export async function removeDaysOff(userId: string, from: string, to: string) {
-  await db.delete(t.daysOff).where(inRange(userId, from, to))
+export async function removeDaysOff(scope: Scope, from: string, to: string) {
+  await db.delete(t.daysOff).where(inRange(scope, from, to))
 }

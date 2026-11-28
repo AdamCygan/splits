@@ -1,21 +1,63 @@
 import type { Locale } from '#/i18n/config'
 import type { Tx } from '#/server/db/client'
 import * as t from '#/server/db/schema'
+import { owner } from '#/server/db/scope'
+import type { Scope } from '#/server/db/scope'
 import { seedWorkspace } from '#/server/seed-data'
+import { defaultWorkspaceName } from '#/features/workspaces/domain/workspaces'
 
-/** Zapisuje dane startowe nowego konta (te same, które widział tryb demo). */
-export async function createWorkspace(
+/**
+ * Dane startowe nowego konta: ustawienia konta i pierwsza przestrzeń z konfiguracją
+ * (te same dane, które widział tryb demo).
+ */
+export async function createAccountData(
   tx: Tx,
   userId: string,
   locale: Locale,
   timezone: string,
   withSamples = false,
 ) {
+  await tx.insert(t.userSettings).values({
+    userId,
+    weekStartsOn: 1,
+    timezone,
+    locale,
+    dailyReminderAt: null,
+  })
+  const [workspace] = await tx
+    .insert(t.workspaces)
+    .values({ userId, name: defaultWorkspaceName(locale), color: '#3D3BF3' })
+    .returning()
+  await seedWorkspaceData(
+    tx,
+    { userId, workspaceId: workspace!.id },
+    locale,
+    timezone,
+    withSamples,
+  )
+  return workspace!
+}
+
+/** Konfiguracja startowa przestrzeni: ustawienia dnia, skala SP, rodzaje pracy, statusy, kadencja. */
+export async function seedWorkspaceData(
+  tx: Tx,
+  scope: Scope,
+  locale: Locale,
+  timezone: string,
+  withSamples = false,
+) {
   const ws = seedWorkspace(locale, withSamples, timezone)
   const own = <T extends object>(rows: Array<T>) =>
-    rows.map((r) => ({ ...r, userId }))
+    rows.map((r) => ({ ...r, ...owner(scope) }))
 
-  await tx.insert(t.userSettings).values({ userId, ...ws.settings })
+  await tx.insert(t.workspaceSettings).values({
+    ...owner(scope),
+    workdayTargetMinutes: ws.settings.workdayTargetMinutes,
+    workingDays: ws.settings.workingDays,
+    timeRoundingMinutes: ws.settings.timeRoundingMinutes,
+    summaryTemplate: ws.settings.summaryTemplate,
+    breakMinutes: ws.settings.breakMinutes,
+  })
   await tx.insert(t.storyPointScale).values(own(ws.spScale))
   await tx.insert(t.taskTypes).values(
     own(ws.taskTypes).map((x) => ({
@@ -30,7 +72,7 @@ export async function createWorkspace(
     })),
   )
   if (ws.cadence)
-    await tx.insert(t.sprintCadences).values({ userId, ...ws.cadence })
+    await tx.insert(t.sprintCadences).values({ ...owner(scope), ...ws.cadence })
   if (ws.projects.length)
     await tx.insert(t.projects).values(
       own(ws.projects).map((x) => ({

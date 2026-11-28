@@ -1,3 +1,5 @@
+import { applyOf, inTargets } from '#/features/workspaces/data/sync.server'
+import { scopeOf } from '#/server/http/scope'
 import { Hono } from 'hono'
 import type { AppEnv } from '#/server/http/context'
 import { ApiError } from '#/server/http/errors'
@@ -7,10 +9,14 @@ import { scaleInput } from '../data/inputs.server'
 import { getScale, replaceScale } from '../data/repository.server'
 
 export const scaleRoutes = new Hono<AppEnv>()
-  .get('/', async (c) => c.json(await getScale(c.get('userId'))))
+  .get('/', async (c) => c.json(await getScale(scopeOf(c))))
   .put('/', async (c) => {
     const { steps } = await body(c, scaleInput)
     if (validateScale(steps).length > 0)
       throw new ApiError('scale.invalid', 400)
-    return c.json(await replaceScale(c.get('userId'), steps))
+    return c.json(
+      await inTargets(scopeOf(c), applyOf(c), (scope) =>
+        replaceScale(scope, steps),
+      ),
+    )
   })
