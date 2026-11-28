@@ -21,7 +21,8 @@ const en = {
     failedTitle: 'We couldn’t start the demo',
     retry: 'Try again',
     register: 'Create a free account',
-    banner: 'You’re in the demo. Sample data, deleted after 24 hours.',
+    badge: 'Demo',
+    banner: 'Sample data, deleted after 24 hours.',
     bannerCta: 'Create a free account',
     restricted:
       'This is a demo account, so this part is switched off. Create a free account to use it.',
@@ -216,7 +217,8 @@ const pl: PanelMessages = {
     failedTitle: 'Nie udało się uruchomić demo',
     retry: 'Spróbuj ponownie',
     register: 'Załóż darmowe konto',
-    banner: 'To wersja demo. Dane są przykładowe i znikną po 24 godzinach.',
+    badge: 'Demo',
+    banner: 'Dane są przykładowe i znikną po 24 godzinach.',
     bannerCta: 'Załóż darmowe konto',
     restricted:
       'To konto demo, więc ta część jest wyłączona. Załóż darmowe konto, żeby z niej korzystać.',

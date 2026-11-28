@@ -9,6 +9,7 @@ import {
 import {
   BarChart3,
   CalendarRange,
+  FlaskConical,
   Clock,
   ListTodo,
   MessageSquarePlus,
@@ -116,16 +117,21 @@ interface DemoBannerProps {
 /** Pasek konta demo: jasno mówi, że dane są przykładowe, i prowadzi do rejestracji. */
 function DemoBanner({ onRegister }: DemoBannerProps) {
   const t = useMessages(panelMessages).demo
+  // Kolor marki zamiast granatu: baner demo nie może wyglądać jak pasek timera pod nim.
   return (
     <div
       role="status"
-      className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 bg-[var(--ink-fixed)] px-4 py-2.5 text-center text-sm text-white"
+      className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 border-b border-white/20 bg-[var(--brand)] px-4 py-2 text-center text-sm text-white"
     >
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2 py-0.5 text-xs font-semibold">
+        <FlaskConical aria-hidden className="size-3.5" />
+        {t.badge}
+      </span>
       <span>{t.banner}</span>
       <button
         type="button"
         onClick={onRegister}
-        className="rounded-md bg-white px-3 py-1 font-semibold text-[var(--ink-fixed)] hover:bg-white/90"
+        className="rounded-md bg-white px-3 py-1 font-semibold text-[var(--brand-strong)] hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       >
         {t.bannerCta}
       </button>

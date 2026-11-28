@@ -197,6 +197,7 @@ function TaskTableRow({ row: r, vm }: TaskTableRowProps) {
       </td>
       <td className="px-3 py-3 text-right font-semibold whitespace-nowrap tabular-nums">
         {format.minutes(r.minutes)}
+        {/* Estymata i różnica w osobnych liniach: w jednej linii (nowrap) rozpychały tabelę na telefonie. */}
         {r.estimateMinutes !== null && (
           <span
             className={cn(
@@ -204,12 +205,13 @@ function TaskTableRow({ row: r, vm }: TaskTableRowProps) {
               r.minutes > r.estimateMinutes ? 'text-warn' : 'text-ink-soft',
             )}
           >
-            {fmt(t.table.estimate, {
-              time: format.minutes(r.estimateMinutes),
-            })}
+            <span className="block">
+              {fmt(t.table.estimate, {
+                time: format.minutes(r.estimateMinutes),
+              })}
+            </span>
             {r.minutes !== r.estimateMinutes && (
-              <>
-                {', '}
+              <span className="block">
                 {fmt(
                   r.minutes > r.estimateMinutes
                     ? t.table.overEstimate
@@ -220,7 +222,7 @@ function TaskTableRow({ row: r, vm }: TaskTableRowProps) {
                     ),
                   },
                 )}
-              </>
+              </span>
             )}
           </span>
         )}

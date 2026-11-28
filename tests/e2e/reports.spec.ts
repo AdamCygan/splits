@@ -68,7 +68,8 @@ test.describe('reports: story points and time per task', () => {
       .getByRole('table')
       .getByRole('row')
       .filter({ hasText: 'PAY-142 Payment gateway integration' })
-    await expect(row.getByText('est. 5h, 55m over est.')).toBeVisible()
+    await expect(row.getByText('est. 5h', { exact: true })).toBeVisible()
+    await expect(row.getByText('55m over est.', { exact: true })).toBeVisible()
     const planning = page
       .getByRole('table')
       .getByRole('row')
@@ -89,7 +90,7 @@ test.describe('reports: story points and time per task', () => {
     await dialog.getByRole('button', { name: 'Save task' }).click()
     await expect(page.getByText('Task updated')).toBeVisible()
     await page.keyboard.press('Escape')
-    await expect(row.getByText('est. 6h, 5m under est.')).toBeVisible()
+    await expect(row.getByText('5m under est.', { exact: true })).toBeVisible()
   })
 
   test('Should open a task from the report to edit it and its time', async ({

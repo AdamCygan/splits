@@ -20,11 +20,12 @@ export function SprintsPage() {
   const vm = useSprintsViewModel()
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-x-4">
         <SectionHeader title={t.title} lead={t.lead} />
+        {/* mb-6: gdy przycisk zawinie się pod nagłówek (telefon), nie przykleja się do karty. */}
         <Link
           to="/app/settings/sprints"
-          className={buttonVariants({ variant: 'outline' })}
+          className={buttonVariants({ variant: 'outline', className: 'mb-6' })}
         >
           <Settings2 aria-hidden />
           {t.manage}
