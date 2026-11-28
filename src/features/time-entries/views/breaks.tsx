@@ -78,13 +78,15 @@ export function BreakBar({ running }: BreakBarProps) {
         >
           {formatClock(day.seconds)}
         </span>
-        <div className="flex shrink-0 flex-wrap gap-2">
+        {/* Telefon: dwa równe przyciski w osobnym wierszu, tekst może się zawinąć, żeby pasek
+            nie rozpychał strony w bok; od sm obok licznika. */}
+        <div className="grid w-full auto-cols-fr grid-flow-col gap-2 sm:flex sm:w-auto sm:shrink-0">
           {running.resumeEntryId && (
             <Button
               variant="outline"
               disabled={end.isPending}
               onClick={() => end.mutate({ id: running.id, resume: false })}
-              className="h-10 border-white/30 bg-transparent px-3 text-white hover:bg-white/10 hover:text-white"
+              className="h-auto min-h-10 border-white/30 bg-transparent px-3 py-1.5 leading-tight whitespace-normal text-white hover:bg-white/10 hover:text-white sm:whitespace-nowrap"
             >
               {t.breaks.endOnly}
             </Button>
@@ -92,7 +94,7 @@ export function BreakBar({ running }: BreakBarProps) {
           <Button
             disabled={end.isPending}
             onClick={() => end.mutate({ id: running.id, resume: true })}
-            className="h-10 bg-white px-4 text-[var(--ink-fixed)] hover:bg-white/90"
+            className="h-auto min-h-10 bg-white px-3 py-1.5 leading-tight whitespace-normal text-[var(--ink-fixed)] hover:bg-white/90 sm:px-4 sm:whitespace-nowrap"
           >
             {running.resumeEntryId ? (
               <>

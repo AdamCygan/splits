@@ -63,7 +63,7 @@ export function WorkspaceSwitcher({ compact = false }: WorkspaceSwitcherProps) {
           className={cn(
             'flex min-w-0 items-center gap-2.5 rounded-lg text-left hover:bg-muted data-[state=open]:bg-muted',
             compact
-              ? 'max-w-[11rem] px-1.5 py-1.5'
+              ? 'max-w-[15rem] px-1.5 py-1.5'
               : 'w-full border border-line px-2 py-2',
           )}
         >
