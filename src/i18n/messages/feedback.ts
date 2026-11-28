@@ -3,7 +3,7 @@ import type { Dictionary } from '../context'
 /** „Zgłoś problem / pomysł”, strona Pomoc i skrzynka zgłoszeń w panelu admina. */
 const en = {
   open: 'Report a problem or idea',
-  openShort: 'Feedback',
+  openShort: 'Report a problem',
   dialog: {
     title: 'Report a problem or idea',
     lead: 'We read every message. Replies come by email and show up in Settings → Help.',
@@ -83,7 +83,7 @@ const en = {
 
 const pl: typeof en = {
   open: 'Zgłoś problem albo pomysł',
-  openShort: 'Zgłoszenie',
+  openShort: 'Zgłoś problem',
   dialog: {
     title: 'Zgłoś problem albo pomysł',
     lead: 'Czytamy każdą wiadomość. Odpowiedź przyjdzie mailem i pojawi się w Ustawienia → Pomoc.',

@@ -110,7 +110,8 @@ function LandingPage() {
           <p className="mt-6 max-w-[52ch] text-lg text-ink-soft sm:text-xl">
             {t.hero.lead}
           </p>
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          {/* Na telefonie oba przyciski na całą szerokość, jeden pod drugim. */}
+          <div className="mt-8 grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-center">
             <Button size="lg" asChild className={brandCta}>
               <Link to="/register">{t.hero.primary}</Link>
             </Button>

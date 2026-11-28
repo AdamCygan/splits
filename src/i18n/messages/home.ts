@@ -4,11 +4,11 @@ import type { Dictionary } from '../context'
 const en = {
   nav: { demo: 'Live demo', start: 'Start free' },
   hero: {
-    title: 'See where your sprint really went.',
-    lead: 'Timeblame is a time tracker for developers. Log tasks, code reviews, pairing and meetings in seconds, then see the hours and story points behind every sprint.',
+    title: 'git blame for your time.',
+    lead: 'Timeblame splits every sprint into tasks, code review, pairing and meetings, so you see where the hours went and what a story point really costs.',
     primary: 'Start free',
     demo: 'Try the live demo',
-    note: 'Free forever, no card needed. The demo opens without signing up.',
+    note: 'Free plan, no card needed. The demo opens without signing up.',
   },
   product: {
     alt: 'The Today screen in Timeblame: time logged against the daily target, planned meetings, quick templates, an unfinished task to pick up and the day’s entries.',
@@ -109,11 +109,11 @@ export type HomeMessages = typeof en
 const pl: HomeMessages = {
   nav: { demo: 'Demo na żywo', start: 'Zacznij za darmo' },
   hero: {
-    title: 'Zobacz, gdzie naprawdę poszedł sprint.',
-    lead: 'Timeblame to tracker czasu dla programistów. Wpisuj taski, code review, pairing i spotkania w kilka sekund, a potem zobacz godziny i story pointy każdego sprintu.',
+    title: 'git blame dla Twojego czasu.',
+    lead: 'Timeblame rozbija każdy sprint na taski, code review, pairing i spotkania, więc widzisz, gdzie poszły godziny i ile naprawdę kosztuje story point.',
     primary: 'Zacznij za darmo',
     demo: 'Wypróbuj demo',
-    note: 'Za darmo na zawsze, bez karty. Demo otwiera się bez rejestracji.',
+    note: 'Plan darmowy, bez karty. Demo otwiera się bez rejestracji.',
   },
   product: {
     alt: 'Ekran Dziś w Timeblame: czas względem dziennego celu, zaplanowane spotkania, szybkie szablony, niedokończone zadanie do podjęcia i wpisy z dnia.',

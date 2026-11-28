@@ -221,43 +221,44 @@ function FreeUsageCard() {
     <SettingsCard title={u.title} lead={u.lead}>
       <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
         {rows?.map((row) => (
-          <div key={row.key}>
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-sm">{u.rows[row.key]}</dt>
-              <dd
-                className={cn(
-                  'text-sm font-medium tabular-nums',
-                  row.full && 'font-semibold',
-                )}
-              >
-                {row.limit === 0
-                  ? u.none
-                  : fmt(u.count, { used: row.used, limit: row.limit })}
-              </dd>
-            </div>
+          <div
+            key={row.key}
+            className="grid grid-cols-[1fr_auto] items-baseline gap-x-3"
+          >
+            <dt className="text-sm">{u.rows[row.key]}</dt>
+            <dd
+              className={cn(
+                'text-sm font-medium tabular-nums',
+                row.full && 'font-semibold',
+              )}
+            >
+              {row.limit === 0
+                ? u.none
+                : fmt(u.count, { used: row.used, limit: row.limit })}
+            </dd>
             {row.limit > 0 && (
-              <ProgressBar
-                className="mt-2"
-                value={(row.used / row.limit) * 100}
-                tone={row.full ? 'warn' : 'ink'}
-              />
+              <dd className="col-span-2 mt-2">
+                <ProgressBar
+                  value={(row.used / row.limit) * 100}
+                  tone={row.full ? 'warn' : 'ink'}
+                />
+              </dd>
             )}
           </div>
         ))}
-        <div className="flex items-baseline justify-between gap-3">
-          <dt className="text-sm">{u.history}</dt>
-          <dd className="text-sm font-medium">
-            {fmt(u.historyValue, { days: FREE_LIMITS.historyDays })}
-          </dd>
-        </div>
-        <div className="flex items-baseline justify-between gap-3">
-          <dt className="text-sm">{u.reminders}</dt>
-          <dd className="text-sm font-medium">{u.proOnly}</dd>
-        </div>
-        <div className="flex items-baseline justify-between gap-3">
-          <dt className="text-sm">{u.csv}</dt>
-          <dd className="text-sm font-medium">{u.proOnly}</dd>
-        </div>
+        {[
+          [u.history, fmt(u.historyValue, { days: FREE_LIMITS.historyDays })],
+          [u.reminders, u.proOnly],
+          [u.csv, u.proOnly],
+        ].map(([label, value]) => (
+          <div
+            key={label}
+            className="grid grid-cols-[1fr_auto] items-baseline gap-x-3"
+          >
+            <dt className="text-sm">{label}</dt>
+            <dd className="text-sm font-medium">{value}</dd>
+          </div>
+        ))}
       </dl>
     </SettingsCard>
   )

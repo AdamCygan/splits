@@ -234,10 +234,11 @@ function AppShell() {
               <button
                 type="button"
                 onClick={() => openFeedback()}
-                className="mb-2 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-ink-soft hover:bg-muted hover:text-ink"
+                title={feedback.open}
+                className="mb-2 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-ink-soft hover:bg-muted hover:text-ink"
               >
-                <MessageSquarePlus aria-hidden className="size-4" />
-                {feedback.open}
+                <MessageSquarePlus aria-hidden className="size-4 shrink-0" />
+                {feedback.openShort}
               </button>
               <AccountMenu
                 user={user}
